@@ -1,0 +1,52 @@
+[
+  {
+    "facility_id": "F01",
+    "zone_id": "Z01",
+    "facility_name": "Kamrangirchar 20-Bed Hospital",
+    "facility_type": "Upazila Health Complex",
+    "total_dengue_beds": 20,
+    "occupied_dengue_beds": 17,
+    "avg_length_of_stay": 4.5,
+    "baseline_daily_dengue_cases": 6
+  },
+  {
+    "facility_id": "F02",
+    "zone_id": "Z02",
+    "facility_name": "Sir Salimullah Medical College Hospital",
+    "facility_type": "District Hospital",
+    "total_dengue_beds": 60,
+    "occupied_dengue_beds": 48,
+    "avg_length_of_stay": 5.0,
+    "baseline_daily_dengue_cases": 14
+  },
+  {
+    "facility_id": "F03",
+    "zone_id": "Z03",
+    "facility_name": "Dhanmondi Primary Health Centre",
+    "facility_type": "Urban Primary Health Care Centre",
+    "total_dengue_beds": 15,
+    "occupied_dengue_beds": 9,
+    "avg_length_of_stay": 3.5,
+    "baseline_daily_dengue_cases": 4
+  },
+  {
+    "facility_id": "F04",
+    "zone_id": "Z04",
+    "facility_name": "Jatrabari General Hospital",
+    "facility_type": "District Hospital",
+    "total_dengue_beds": 40,
+    "occupied_dengue_beds": 31,
+    "avg_length_of_stay": 4.8,
+    "baseline_daily_dengue_cases": 10
+  },
+  {
+    "facility_id": "F05",
+    "zone_id": "Z05",
+    "facility_name": "Lalbagh Urban Health Centre",
+    "facility_type": "Urban Primary Health Care Centre",
+    "total_dengue_beds": 18,
+    "occupied_dengue_beds": 13,
+    "avg_length_of_stay": 4.2,
+    "baseline_daily_dengue_cases": 5
+  }
+]

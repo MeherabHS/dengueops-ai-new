@@ -1,0 +1,84 @@
+{
+  "adapter": "synthetic_benchmark",
+  "config_version": "1.0",
+  "configuration": {
+    "autoregressive_strength": 0.36,
+    "climate_shock_magnitude": 0.0,
+    "climate_strength": 0.42,
+    "config_version": "1.0",
+    "current_reporting_fraction": 0.62,
+    "death_rate": 0.003,
+    "delayed_fraction": 0.38,
+    "facility_pressure_fraction": 0.0,
+    "geography_id": "BGD-DHAKA-SOUTH",
+    "geography_level": "city",
+    "geography_name": "Dhaka South",
+    "invalid_subtype": null,
+    "latitude": 23.7104,
+    "longitude": 90.4074,
+    "max_humidity_pct": 100.0,
+    "max_temperature_c": 40.0,
+    "min_humidity_pct": 35.0,
+    "min_temperature_c": 15.0,
+    "number_of_weeks": 180,
+    "observation_dispersion": 18.0,
+    "replenishment_fraction": 0.0,
+    "replenishment_week": 150,
+    "reporting_delay_weeks": 2,
+    "scenario": "normal",
+    "seed": 42,
+    "simulation_version": "benchmark-v1",
+    "start_week": 1,
+    "start_year": 2021,
+    "stock_stress_fraction": 0.0,
+    "transmission_shock_magnitude": 0.0
+  },
+  "configuration_fingerprint": "9e494fdf986de2725810c500b50ae85f74aa80270b10607aa753388ba25d1a8b",
+  "expected_behavior_summary": {
+    "comparison_scenario": null,
+    "expected_bed_pressure_direction": "baseline",
+    "expected_case_direction": "seasonal",
+    "expected_forecast_direction": "baseline",
+    "expected_relative_severity": "baseline",
+    "expected_replenishment_behavior": "none",
+    "expected_stock_pressure_direction": "baseline",
+    "expected_validation_status": "passed",
+    "invalid_data_subtype": null
+  },
+  "generated_at": "2026-07-13T09:08:42Z",
+  "geography": {
+    "id": "BGD-DHAKA-SOUTH",
+    "latitude": 23.7104,
+    "level": "city",
+    "longitude": 90.4074,
+    "name": "Dhaka South"
+  },
+  "metadata_schema_version": "1.0",
+  "output_files": {
+    "climate_data.csv": "data/climate_data.csv",
+    "dengue_cases.csv": "data/dengue_cases.csv",
+    "facilities.json": "data/facilities.json",
+    "inventory.json": "data/inventory.json",
+    "zones.json": "data/zones.json"
+  },
+  "output_hashes": {
+    "climate_data.csv": "f82a5ff97a4f5086f254efd5a8112dea144b59ebf6ef450ae417fc8c06ce56e4",
+    "dengue_cases.csv": "10d8cc510e6a3cc82391341d8f649a4e38844c85663020009871053f216ee029",
+    "facilities.json": "0812c1d87277d881f3b5b64308f3811930fe8ed4f84d2fd8736733ae83a67c2f",
+    "inventory.json": "993bf9b884b6d435d643123e6d4a79b15332a649fc662a6dc92e8b0146110ba7",
+    "zones.json": "f0acbf5f689755e7c823dd126cc6f5b9a447b5600656163587efba482bc27421"
+  },
+  "period": {
+    "end": {
+      "epi_week": 24,
+      "epi_year": 2024
+    },
+    "start": {
+      "epi_week": 1,
+      "epi_year": 2021
+    }
+  },
+  "scenario": "normal",
+  "seed": 42,
+  "simulation_version": "benchmark-v1"
+}

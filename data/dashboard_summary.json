@@ -1,0 +1,1463 @@
+{
+  "provenance": {
+    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "manifest_path": "data/input_manifest.json",
+    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "case_source": "synthetic_benchmark",
+    "climate_source": "synthetic_benchmark",
+    "operational_source": "synthetic_benchmark",
+    "source_classes": {
+      "cases": "synthetic",
+      "climate": "synthetic",
+      "operational": "synthetic"
+    },
+    "forecast_geography": {
+      "level": "city",
+      "id": "BGD-DHAKA-SOUTH",
+      "name": "Dhaka South"
+    },
+    "validation_status": "passed",
+    "warnings": [],
+    "overrides": [],
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_policy_version": "p1.2b-v1",
+    "adoption_status": "adopted_p1.2b",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "evidence_registry_version": "p0.3c-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "formula_registry_version": "p1.3-v1",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "observed_data_mode": "synthetic",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  },
+  "project": {
+    "title": "DengueOps AI",
+    "subtitle": "Simulation-Based Dengue Surge Preparedness Decision Support for Dhaka South",
+    "track": "Health Data Analytics & Predictive Systems",
+    "conference": "IEEE ICADHI",
+    "mode": "Synthetic Data",
+    "last_updated": "2026-07-13T09:09:26Z",
+    "data_status": "Case source: synthetic_benchmark; climate source: synthetic_benchmark; operational source: synthetic_benchmark. No patient-level data used."
+  },
+  "headline_metrics": {
+    "forecast_cases": 120,
+    "growth_factor": 1.72,
+    "risk_level": "High",
+    "risk_score": 71,
+    "experimental_growth_score": 71,
+    "forecast_growth_category": "High forecast growth",
+    "target_epi_week": 26,
+    "target_epi_year": 2024,
+    "highest_priority_zone": "Benchmark Zone 5",
+    "highest_pressure_facility": "Synthetic Benchmark Facility 01",
+    "critical_supply_alerts": 0,
+    "facilities_with_expected_bed_gap": 0,
+    "total_facilities": 10,
+    "total_public_government_anchors": 0,
+    "critical_priority_zones": 5
+  },
+  "uncertainty": {
+    "method_id": "prequential_expanding_absolute_residual_quantile",
+    "method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range",
+    "point_forecast_raw": 119.53437518984897,
+    "interval_lower_raw": 53.054069227091915,
+    "interval_upper_raw": 186.01468115260604,
+    "point_forecast_reported": 120,
+    "interval_lower_reported": 53,
+    "interval_upper_reported": 187,
+    "lower_clipping_applied": false,
+    "nominal_coverage": 0.9,
+    "observed_historical_coverage": 0.8958333333333334,
+    "evaluated_fold_count": 48,
+    "uncertainty_artifact_path": "data/forecast_uncertainty.json",
+    "uncertainty_artifact_sha256": "740cf86792bc45ee7bfb4cc5333e8e2b5c56731832e1ec5265ec034252df9074",
+    "residual_source_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "is_prediction_interval": false,
+    "calibrated_on_synthetic_data": true,
+    "limitations": [
+      "The empirical range was evaluated using deterministic synthetic rolling-origin Random Forest residuals. Each evaluated fold used only residuals from earlier folds. Temporal dependence and reuse of the folds for model selection limit interpretation. This is not evidence of real-world Dhaka calibration. Historical empirical coverage is not a guarantee of future coverage.",
+      "Targets overlap and residuals are temporally dependent.",
+      "High-incidence and rising-period performance may be weaker.",
+      "The range is not a probability statement and is not a prediction interval.",
+      "The deployment remains a synthetic benchmark-only capability demonstration."
+    ],
+    "covered_fold_count": 43,
+    "calibration_warmup_fold_count": 20,
+    "lower_miss_count": 2,
+    "upper_miss_count": 3,
+    "interval_width_summary": {
+      "average_interval_width": 146.92429694798778,
+      "median_interval_width": 133.18035262412508,
+      "minimum_interval_width": 80.27877645371069,
+      "maximum_interval_width": 249.00190519899652
+    },
+    "average_interval_width": 146.92429694798778,
+    "median_interval_width": 133.18035262412508,
+    "minimum_interval_width": 80.27877645371069,
+    "maximum_interval_width": 249.00190519899652,
+    "uncertainty_method": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "residual_source_artifact_path": "data/candidate_model_comparison.json",
+    "method_label": "Prequential expanding absolute-residual quantile",
+    "range_label": "Empirical forecast range",
+    "method_note": "Temporally evaluated on deterministic synthetic RF rolling residuals. Historical empirical coverage is not a probability guarantee; this is not a prediction interval."
+  },
+  "preparedness_scenarios": {
+    "best_case": {
+      "label": "Lower sensitivity scenario",
+      "forecast_cases": 87,
+      "growth_factor": 1.246,
+      "risk_score": 44,
+      "risk_level": "Moderate",
+      "experimental_growth_score": 44,
+      "forecast_growth_category": "Moderate forecast growth"
+    },
+    "expected_case": {
+      "label": "Point forecast",
+      "forecast_cases": 120,
+      "growth_factor": 1.719,
+      "risk_score": 71,
+      "risk_level": "High",
+      "experimental_growth_score": 71,
+      "forecast_growth_category": "High forecast growth"
+    },
+    "worst_case": {
+      "label": "Upper sensitivity scenario",
+      "forecast_cases": 153,
+      "growth_factor": 2.192,
+      "risk_score": 87,
+      "risk_level": "Critical",
+      "experimental_growth_score": 87,
+      "forecast_growth_category": "Very high forecast growth"
+    },
+    "method": {
+      "type": "legacy_rf_rmse_planning_sensitivity",
+      "source": "selected_random_forest_legacy_holdout",
+      "model": "RandomForestRegressor",
+      "rmse": 33.24672789381382,
+      "uncertainty_pct": 27.7,
+      "status": "operational_planning_compatibility_only_not_forecast_interval",
+      "calibrated": false,
+      "is_prediction_interval": false,
+      "model_binding": {
+        "method": "legacy_selected_model_rmse_sensitivity_band",
+        "model_id": "random_forest",
+        "model_family": "RandomForestRegressor",
+        "model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+        "validation_split": "legacy_final_chronological_20_percent_138_train_35_validation",
+        "validation_matrix_sha256": "d749da62bf6edfc81bab4bcb3731c86f649ae72b2d15628b4f72dc8ae66e329b",
+        "rmse": 33.24672789381382,
+        "legacy": true,
+        "calibrated": false,
+        "is_prediction_interval": false,
+        "calibration_pending_phase": "P1.3"
+      },
+      "note": "Legacy RF RMSE planning sensitivity for operational compatibility only; it is not active forecast uncertainty."
+    },
+    "status": "legacy_rf_rmse_planning_sensitivity_separate_from_forecast_uncertainty"
+  },
+  "workflow_metadata": {
+    "runtime_connector_status": "pending_p1.4",
+    "current_approved_model_id": "random_forest",
+    "current_approved_model_label": "Random Forest",
+    "deployment_context": "synthetic_capability_demonstration",
+    "deployment_gate": "benchmark_only",
+    "forecast_horizon_days": 14,
+    "dataset_reassessment_required": true,
+    "validation_status": "passed",
+    "accepted_period": {
+      "start": {
+        "epi_year": 2021,
+        "epi_week": 6
+      },
+      "end": {
+        "epi_year": 2024,
+        "epi_week": 22
+      }
+    }
+  },
+  "model_evidence": {
+    "best_model": "random_forest",
+    "best_model_display": "Random Forest",
+    "best_model_reason": "Lowest eligible MAE under the declared P1.2A rolling-origin rule.",
+    "validation_design": "68-fold expanding-window rolling-origin candidate comparison",
+    "train_rows": 173,
+    "test_rows": 68,
+    "active_model_mae": 31.726076401608665,
+    "active_model_rmse": 49.55526308662114,
+    "active_rolling_metrics_source": "candidate_model_comparison.json",
+    "legacy_gbr_holdout": {
+      "mae": 28.75,
+      "rmse": 35.9,
+      "status": "historical_compatibility_only"
+    },
+    "mae_reduction_vs_naive_pct": 32.4,
+    "mae_reduction_vs_moving_average_pct": 38.7,
+    "disclaimer": "Validation uses synthetic inputs and demonstrates prototype pipeline behaviour, not real-world accuracy."
+  },
+  "operational_summary": {
+    "total_recommendations": 30,
+    "critical_priority_zones": 5,
+    "facilities_with_expected_bed_gap": 0,
+    "facilities_with_worst_case_bed_gap": 0,
+    "critical_supply_alerts": 0,
+    "highest_priority_zone": "Benchmark Zone 5",
+    "highest_pressure_facility": "Synthetic Benchmark Facility 01"
+  },
+  "ethics_and_assumptions": [
+    "Input data mode is synthetic; exact sources are recorded in artifact provenance.",
+    "No patient-level data is collected or processed.",
+    "Facility identity and readiness status are source-specific; synthetic benchmark facilities are wholly synthetic.",
+    "Facility stock and bed readiness values are synthetic demonstration values.",
+    "Spatial case allocation is a heuristic; zone-level counts are not precision estimates.",
+    "Outputs are simulated planning suggestions and are not approved operational recommendations."
+  ],
+  "rolling_validation": {
+    "primary_validation": false,
+    "evidence_status": "historical_compatibility_only",
+    "active_model_evidence": false,
+    "validation_method": "expanding_window_rolling_origin",
+    "fold_count": 68,
+    "initial_training_window": 104,
+    "horizon_weeks": 2,
+    "step_weeks": 1,
+    "label_availability_policy": "target_label_available_when_target_period_is_at_or_before_forecast_origin",
+    "aggregate_metrics": {
+      "gradient_boosting": {
+        "fold_count": 68,
+        "mae": 33.45498524791433,
+        "rmse": 51.19793472892898,
+        "mape": 34.8344423028676,
+        "mape_included_row_count": 68,
+        "mape_zero_actual_exclusion_count": 0,
+        "wape": 28.24256979339757,
+        "wape_exclusion_reason": null,
+        "median_absolute_error": 25.731839481745702,
+        "absolute_error_standard_deviation": 38.7555477650556,
+        "minimum_absolute_error": 1.2298987500083172,
+        "maximum_absolute_error": 259.0353191448207,
+        "q1_absolute_error": 14.109921153465145,
+        "q3_absolute_error": 37.70340909680314,
+        "iqr_absolute_error": 23.593487943337998
+      },
+      "naive": {
+        "fold_count": 68,
+        "mae": 42.411764705882355,
+        "rmse": 71.27411872482185,
+        "mape": 38.42996094143911,
+        "mape_included_row_count": 68,
+        "mape_zero_actual_exclusion_count": 0,
+        "wape": 35.80384854127871,
+        "wape_exclusion_reason": null,
+        "median_absolute_error": 20.0,
+        "absolute_error_standard_deviation": 57.28212822977924,
+        "minimum_absolute_error": 1.0,
+        "maximum_absolute_error": 343.0,
+        "q1_absolute_error": 10.75,
+        "q3_absolute_error": 47.5,
+        "iqr_absolute_error": 36.75
+      },
+      "moving_average": {
+        "fold_count": 68,
+        "mae": 48.76470588235294,
+        "rmse": 77.04125375025879,
+        "mape": 42.43417952840109,
+        "mape_included_row_count": 68,
+        "mape_zero_actual_exclusion_count": 0,
+        "wape": 41.16697703289882,
+        "wape_exclusion_reason": null,
+        "median_absolute_error": 20.125,
+        "absolute_error_standard_deviation": 59.64359344992032,
+        "minimum_absolute_error": 0.75,
+        "maximum_absolute_error": 264.5,
+        "q1_absolute_error": 9.1875,
+        "q3_absolute_error": 78.0,
+        "iqr_absolute_error": 68.8125
+      }
+    },
+    "model_comparison": [
+      {
+        "model_name": "gradient_boosting",
+        "fold_count": 68,
+        "mae": 33.45498524791433,
+        "rmse": 51.19793472892898,
+        "wape": 28.24256979339757,
+        "median_absolute_error": 25.731839481745702,
+        "improvement_vs_naive_percent": 21.118620081200614,
+        "improvement_vs_moving_average_percent": 31.39508453383069,
+        "wins": 27,
+        "ties": 0,
+        "losses": 41
+      },
+      {
+        "model_name": "naive",
+        "fold_count": 68,
+        "mae": 42.411764705882355,
+        "rmse": 71.27411872482185,
+        "wape": 35.80384854127871,
+        "median_absolute_error": 20.0,
+        "improvement_vs_naive_percent": 0.0,
+        "improvement_vs_moving_average_percent": 13.027744270205062,
+        "wins": 20,
+        "ties": 1,
+        "losses": 47
+      },
+      {
+        "model_name": "moving_average",
+        "fold_count": 68,
+        "mae": 48.76470588235294,
+        "rmse": 77.04125375025879,
+        "wape": 41.16697703289882,
+        "median_absolute_error": 20.125,
+        "improvement_vs_naive_percent": -14.979195561719829,
+        "improvement_vs_moving_average_percent": 0.0,
+        "wins": 20,
+        "ties": 1,
+        "losses": 47
+      }
+    ],
+    "historical_winner": "gradient_boosting",
+    "variability_summary": {
+      "overall": [
+        {
+          "group": "overall",
+          "row_count": 68,
+          "mae": 33.45498524791433,
+          "median_absolute_error": 25.731839481745702,
+          "standard_deviation": 38.7555477650556,
+          "q1": 14.109921153465145,
+          "q3": 37.70340909680314,
+          "iqr": 23.593487943337998,
+          "best_fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
+          "worst_fold_id": "rolling-origin-0031-2023-W37-to-2023-W39"
+        }
+      ],
+      "epidemiological_year": [
+        {
+          "group": "2023",
+          "row_count": 44,
+          "mae": 40.77630892496458,
+          "median_absolute_error": 30.956700746639697,
+          "standard_deviation": 45.5916482975207,
+          "q1": 17.83284646412778,
+          "q3": 42.65475423991396,
+          "iqr": 24.821907775786183,
+          "best_fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
+          "worst_fold_id": "rolling-origin-0031-2023-W37-to-2023-W39"
+        },
+        {
+          "group": "2024",
+          "row_count": 24,
+          "mae": 20.03255850665555,
+          "median_absolute_error": 17.136536788702916,
+          "standard_deviation": 12.90155702732757,
+          "q1": 10.372586366881773,
+          "q3": 27.0117499475057,
+          "iqr": 16.639163580623926,
+          "best_fold_id": "rolling-origin-0049-2024-W03-to-2024-W05",
+          "worst_fold_id": "rolling-origin-0046-2023-W52-to-2024-W02"
+        }
+      ],
+      "target_volume_quartile": [
+        {
+          "group": "2",
+          "row_count": 17,
+          "mae": 13.031386560080842,
+          "median_absolute_error": 11.65266917781419,
+          "standard_deviation": 11.097299317030203,
+          "q1": 5.623939941186428,
+          "q3": 17.064860768057585,
+          "iqr": 11.440920826871157,
+          "best_fold_id": "rolling-origin-0002-2023-W08-to-2023-W10",
+          "worst_fold_id": "rolling-origin-0045-2023-W51-to-2024-W01"
+        },
+        {
+          "group": "1",
+          "row_count": 17,
+          "mae": 24.956240351373516,
+          "median_absolute_error": 23.09021546048639,
+          "standard_deviation": 11.707678752505863,
+          "q1": 14.835983385264285,
+          "q3": 32.04888379683556,
+          "iqr": 17.212900411571276,
+          "best_fold_id": "rolling-origin-0061-2024-W15-to-2024-W17",
+          "worst_fold_id": "rolling-origin-0046-2023-W52-to-2024-W02"
+        },
+        {
+          "group": "3",
+          "row_count": 17,
+          "mae": 33.01617010689978,
+          "median_absolute_error": 32.5832096621065,
+          "standard_deviation": 15.611097253191215,
+          "q1": 23.40841830979832,
+          "q3": 40.59860801236495,
+          "iqr": 17.190189702566627,
+          "best_fold_id": "rolling-origin-0047-2024-W01-to-2024-W03",
+          "worst_fold_id": "rolling-origin-0043-2023-W49-to-2023-W51"
+        },
+        {
+          "group": "4",
+          "row_count": 17,
+          "mae": 62.81614397330319,
+          "median_absolute_error": 33.5843619061348,
+          "standard_deviation": 64.43928561306511,
+          "q1": 27.635345722359148,
+          "q3": 66.15850663527421,
+          "iqr": 38.52316091291506,
+          "best_fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
+          "worst_fold_id": "rolling-origin-0031-2023-W37-to-2023-W39"
+        }
+      ],
+      "trajectory": [
+        {
+          "group": "declining",
+          "row_count": 32,
+          "mae": 28.816095708600425,
+          "median_absolute_error": 25.942893570547454,
+          "standard_deviation": 20.003607427745944,
+          "q1": 16.401186504450404,
+          "q3": 35.11992909261175,
+          "iqr": 18.718742588161344,
+          "best_fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
+          "worst_fold_id": "rolling-origin-0034-2023-W40-to-2023-W42"
+        },
+        {
+          "group": "rising",
+          "row_count": 36,
+          "mae": 37.578442616193364,
+          "median_absolute_error": 25.09387659580421,
+          "standard_deviation": 49.449791873979315,
+          "q1": 11.724405105885777,
+          "q3": 37.70340909680314,
+          "iqr": 25.979003990917363,
+          "best_fold_id": "rolling-origin-0047-2024-W01-to-2024-W03",
+          "worst_fold_id": "rolling-origin-0031-2023-W37-to-2023-W39"
+        }
+      ],
+      "benchmark_scenario": [
+        {
+          "group": "normal",
+          "row_count": 68,
+          "mae": 33.45498524791433,
+          "median_absolute_error": 25.731839481745702,
+          "standard_deviation": 38.7555477650556,
+          "q1": 14.109921153465145,
+          "q3": 37.70340909680314,
+          "iqr": 23.593487943337998,
+          "best_fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
+          "worst_fold_id": "rolling-origin-0031-2023-W37-to-2023-W39"
+        }
+      ],
+      "target_volume_quartile_boundaries": [
+        52.25,
+        79.5,
+        162.75
+      ],
+      "target_volume_quartile_bin_counts": [
+        17,
+        17,
+        17,
+        17
+      ]
+    },
+    "period_summary": {
+      "first_origin": "2023-W07",
+      "first_target": "2023-W09",
+      "final_origin": "2024-W22",
+      "final_target": "2024-W24"
+    },
+    "permutation_stability_status": "not_evaluated_single_row_folds",
+    "limitations": [
+      "Rolling-origin validation repeatedly evaluates unseen future periods, but current results are based on deterministic synthetic benchmark data and do not establish real-world Dhaka performance.",
+      "Real reporting publication delays and revision vintages are not modeled yet.",
+      "Permutation importance was not calculated per fold because each rolling-origin fold contains one validation row, making permutation diagnostics statistically degenerate and unsuitable for temporal-stability claims."
+    ],
+    "legacy_holdout": {
+      "validation_role": "legacy_single_holdout",
+      "validation_method": "time_based_holdout_final_20_percent",
+      "metrics": {
+        "naive": {
+          "mae": 42.51,
+          "rmse": 75.71,
+          "mape": 48.29
+        },
+        "moving_average": {
+          "mae": 46.87,
+          "rmse": 73.48,
+          "mape": 53.91
+        },
+        "gradient_boosting": {
+          "mae": 28.75,
+          "rmse": 35.9,
+          "mape": 42.28
+        }
+      },
+      "uncertainty_input": "not_used_for_active_uncertainty"
+    }
+  },
+  "candidate_model_comparison": {
+    "model_selection_status": "comparison_complete_and_adopted",
+    "comparison_selected_model": "random_forest",
+    "comparison_selected_model_reason": "random_forest had the lowest eligible rolling-origin MAE under the predeclared p1.2a-v1 rule.",
+    "current_forecast_model": "random_forest",
+    "adoption_status": "adopted_p1.2b",
+    "adoption_policy_version": "p1.2b-v1",
+    "selection_policy": {
+      "rule": "lowest_MAE_among_68_fold_eligible_candidates",
+      "tie_sequence": [
+        "rmse",
+        "wape",
+        "median_absolute_error",
+        "maximum_absolute_error",
+        "selection_complexity_rank",
+        "model_id"
+      ],
+      "failed_candidate_ineligible": true,
+      "weighted_score": false
+    },
+    "primary_metric": "MAE",
+    "aggregate_metrics": {
+      "previous_week_naive": {
+        "fold_count": 68,
+        "successful_folds": 68,
+        "failed_folds": 0,
+        "mae": 42.411764705882355,
+        "rmse": 71.27411872482185,
+        "wape": 35.80384854127871,
+        "mape": 38.42996094143911,
+        "median_absolute_error": 20.0,
+        "maximum_absolute_error": 343.0,
+        "minimum_absolute_error": 1.0,
+        "absolute_error_standard_deviation": 57.28212822977924,
+        "q1": 10.75,
+        "q3": 47.5,
+        "iqr": 36.75,
+        "negative_raw_prediction_count": 0,
+        "clipping_count": 0,
+        "convergence_warning_count": 0,
+        "runtime_seconds": 0.0
+      },
+      "moving_average_4w": {
+        "fold_count": 68,
+        "successful_folds": 68,
+        "failed_folds": 0,
+        "mae": 48.76470588235294,
+        "rmse": 77.04125375025879,
+        "wape": 41.16697703289882,
+        "mape": 42.43417952840109,
+        "median_absolute_error": 20.125,
+        "maximum_absolute_error": 264.5,
+        "minimum_absolute_error": 0.75,
+        "absolute_error_standard_deviation": 59.64359344992032,
+        "q1": 9.1875,
+        "q3": 78.0,
+        "iqr": 68.8125,
+        "negative_raw_prediction_count": 0,
+        "clipping_count": 0,
+        "convergence_warning_count": 0,
+        "runtime_seconds": 0.0
+      },
+      "seasonal_naive_52w": {
+        "fold_count": 68,
+        "successful_folds": 68,
+        "failed_folds": 0,
+        "mae": 36.338235294117645,
+        "rmse": 52.39878197955728,
+        "wape": 30.67659838609559,
+        "mape": 38.39245714154843,
+        "median_absolute_error": 26.0,
+        "maximum_absolute_error": 226.0,
+        "minimum_absolute_error": 0.0,
+        "absolute_error_standard_deviation": 37.75135770605501,
+        "q1": 9.75,
+        "q3": 45.0,
+        "iqr": 35.25,
+        "negative_raw_prediction_count": 0,
+        "clipping_count": 0,
+        "convergence_warning_count": 0,
+        "runtime_seconds": 0.0001120999932027189
+      },
+      "ridge_regression": {
+        "fold_count": 68,
+        "successful_folds": 68,
+        "failed_folds": 0,
+        "mae": 35.04808581545584,
+        "rmse": 55.190853558561116,
+        "wape": 29.58745916140282,
+        "mape": 34.068846634267445,
+        "median_absolute_error": 23.686889200444625,
+        "maximum_absolute_error": 274.86370437881135,
+        "minimum_absolute_error": 0.04297289234091295,
+        "absolute_error_standard_deviation": 42.63404739401341,
+        "q1": 9.807661942811809,
+        "q3": 42.37378795548826,
+        "iqr": 32.56612601267645,
+        "negative_raw_prediction_count": 0,
+        "clipping_count": 0,
+        "convergence_warning_count": 0,
+        "runtime_seconds": 0.11426230000142823
+      },
+      "poisson_regression": {
+        "fold_count": 68,
+        "successful_folds": 68,
+        "failed_folds": 0,
+        "mae": 33.31302238983953,
+        "rmse": 53.37788536886228,
+        "wape": 28.122725294960745,
+        "mape": 32.83668582630814,
+        "median_absolute_error": 22.431685827690075,
+        "maximum_absolute_error": 285.5903741529828,
+        "minimum_absolute_error": 0.34933390925004204,
+        "absolute_error_standard_deviation": 41.706608417677074,
+        "q1": 10.595150104060378,
+        "q3": 34.16401646244075,
+        "iqr": 23.56886635838037,
+        "negative_raw_prediction_count": 0,
+        "clipping_count": 0,
+        "convergence_warning_count": 0,
+        "runtime_seconds": 2.3547615999959817
+      },
+      "random_forest": {
+        "fold_count": 68,
+        "successful_folds": 68,
+        "failed_folds": 0,
+        "mae": 31.726076401608665,
+        "rmse": 49.55526308662114,
+        "wape": 26.783031599123394,
+        "mape": 34.634839440791076,
+        "median_absolute_error": 22.102701738885596,
+        "maximum_absolute_error": 261.22750415131503,
+        "minimum_absolute_error": 0.8231799740493955,
+        "absolute_error_standard_deviation": 38.068099187423655,
+        "q1": 12.206125964318717,
+        "q3": 36.41474372951318,
+        "iqr": 24.20861776519446,
+        "negative_raw_prediction_count": 0,
+        "clipping_count": 0,
+        "convergence_warning_count": 0,
+        "runtime_seconds": 13.181831599997167
+      },
+      "gradient_boosting": {
+        "fold_count": 68,
+        "successful_folds": 68,
+        "failed_folds": 0,
+        "mae": 33.45498524791433,
+        "rmse": 51.19793472892898,
+        "wape": 28.24256979339757,
+        "mape": 34.8344423028676,
+        "median_absolute_error": 25.731839481745702,
+        "maximum_absolute_error": 259.0353191448207,
+        "minimum_absolute_error": 1.2298987500083172,
+        "absolute_error_standard_deviation": 38.7555477650556,
+        "q1": 14.109921153465145,
+        "q3": 37.70340909680314,
+        "iqr": 23.593487943337998,
+        "negative_raw_prediction_count": 0,
+        "clipping_count": 0,
+        "convergence_warning_count": 0,
+        "runtime_seconds": 0.0
+      }
+    },
+    "wins_ties_losses": {
+      "previous_week_naive": {
+        "better_fold_count": 33,
+        "tied_fold_count": 0,
+        "worse_fold_count": 35
+      },
+      "moving_average_4w": {
+        "better_fold_count": 29,
+        "tied_fold_count": 0,
+        "worse_fold_count": 39
+      },
+      "seasonal_naive_52w": {
+        "better_fold_count": 30,
+        "tied_fold_count": 0,
+        "worse_fold_count": 38
+      },
+      "ridge_regression": {
+        "better_fold_count": 34,
+        "tied_fold_count": 0,
+        "worse_fold_count": 34
+      },
+      "poisson_regression": {
+        "better_fold_count": 36,
+        "tied_fold_count": 0,
+        "worse_fold_count": 32
+      },
+      "random_forest": {
+        "better_fold_count": 0,
+        "tied_fold_count": 68,
+        "worse_fold_count": 0
+      },
+      "gradient_boosting": {
+        "better_fold_count": 34,
+        "tied_fold_count": 0,
+        "worse_fold_count": 34
+      }
+    },
+    "selection_eligibility": {
+      "previous_week_naive": true,
+      "moving_average_4w": true,
+      "seasonal_naive_52w": true,
+      "ridge_regression": true,
+      "poisson_regression": true,
+      "random_forest": true,
+      "gradient_boosting": true
+    },
+    "model_failures": {
+      "previous_week_naive": [],
+      "moving_average_4w": [],
+      "seasonal_naive_52w": [],
+      "ridge_regression": [],
+      "poisson_regression": [],
+      "random_forest": [],
+      "gradient_boosting": []
+    },
+    "limitations": [
+      "Candidate models were compared on identical leakage-controlled rolling-origin folds using deterministic synthetic benchmark data. The selected model is a technical demonstration choice and does not establish real-world Dhaka superiority.",
+      "Rolling folds and targets are temporally dependent; paired summaries are descriptive and no significance claims are made.",
+      "The comparison winner is not adopted in P1.2A; P0.4 explainability and legacy uncertainty remain bound to Gradient Boosting."
+    ],
+    "warning": "Models were compared on the same deterministic synthetic rolling-origin folds. The selected model is the best-performing demonstration candidate under the declared rule, not a proven real-world dengue model.",
+    "active_model_rolling_metrics": {
+      "fold_count": 68,
+      "successful_folds": 68,
+      "failed_folds": 0,
+      "mae": 31.726076401608665,
+      "rmse": 49.55526308662114,
+      "wape": 26.783031599123394,
+      "mape": 34.634839440791076,
+      "median_absolute_error": 22.102701738885596,
+      "maximum_absolute_error": 261.22750415131503,
+      "minimum_absolute_error": 0.8231799740493955,
+      "absolute_error_standard_deviation": 38.068099187423655,
+      "q1": 12.206125964318717,
+      "q3": 36.41474372951318,
+      "iqr": 24.20861776519446,
+      "negative_raw_prediction_count": 0,
+      "clipping_count": 0,
+      "convergence_warning_count": 0,
+      "runtime_seconds": 13.181831599997167
+    },
+    "uncertainty_source": "Temporally evaluated synthetic empirical forecast range from prior-only Random Forest rolling residuals"
+  },
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "formula_ids_used": [
+    "TARGET.HORIZON.2W",
+    "FEATURE.CASE_LAGS",
+    "FEATURE.CLIMATE_LAGS",
+    "FEATURE.CASE_ROLLING",
+    "FEATURE.GROWTH_RATIOS",
+    "FEATURE.SEASONAL_CYCLIC",
+    "FEATURE.SEASON_FLAGS",
+    "MODEL.SELECTED_MODEL_ADOPTION",
+    "MODEL.BASELINE.NAIVE",
+    "MODEL.BASELINE.MA4",
+    "FORECAST.GROWTH_FACTOR",
+    "FORECAST.GROWTH_CATEGORY",
+    "FORECAST.GROWTH_SCORE",
+    "FORECAST.RMSE_SENSITIVITY",
+    "UNCERTAINTY.TEMPORAL_CALIBRATION",
+    "OPS.EXPOSURE.COMPOSITION",
+    "OPS.EXPOSURE.ANOMALY",
+    "OPS.ALLOCATION.ZONE",
+    "OPS.ALLOCATION.FACILITY",
+    "OPS.ADMISSION_FRACTION",
+    "OPS.BED.DEMAND",
+    "OPS.BED.DEFICIT",
+    "OPS.STOCK.DYNAMIC_DEMAND",
+    "OPS.STOCK.SDH",
+    "OPS.STOCK.THRESHOLDS",
+    "OPS.PRIORITY.SCORE",
+    "OPS.PRIORITY.CATEGORIES",
+    "OPS.DIRECTIVE.TRIGGERS"
+  ],
+  "deployment_gate": "benchmark_only",
+  "formula_validation_status": "governed_provisional",
+  "formula_policy": {
+    "TARGET.HORIZON.2W": {
+      "version": "1.0",
+      "name": "Two-week forecast target",
+      "category": "direct_arithmetic",
+      "evidence_status": "implementation_verified",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "horizon_weeks": 2
+      }
+    },
+    "FEATURE.CASE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate case lag features",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          1,
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CLIMATE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate climate lag features",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CASE_ROLLING": {
+      "version": "1.0",
+      "name": "Candidate prior-case rolling means",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": [
+          3,
+          4,
+          8
+        ]
+      }
+    },
+    "FEATURE.GROWTH_RATIOS": {
+      "version": "1.0",
+      "name": "Candidate lagged growth ratios",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "zero_denominator_default": 1.0
+      }
+    },
+    "FEATURE.SEASONAL_CYCLIC": {
+      "version": "1.0",
+      "name": "Cyclic epidemiological-week encoding",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "weeks_per_year": 52
+      }
+    },
+    "FEATURE.SEASON_FLAGS": {
+      "version": "1.0",
+      "name": "Provisional seasonal calendar flags",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "monsoon_start": 22,
+        "monsoon_end": 38,
+        "post_monsoon_start": 38,
+        "post_monsoon_end": 50
+      }
+    },
+    "MODEL.SELECTED_MODEL_ADOPTION": {
+      "version": "1.0",
+      "name": "Governed selected-model adoption policy",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.NAIVE": {
+      "version": "1.0",
+      "name": "Naive lag baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.MA4": {
+      "version": "1.0",
+      "name": "Four-week moving-average baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_FACTOR": {
+      "version": "1.0",
+      "name": "Provisional forecast growth factor",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "minimum": 0.01,
+        "maximum": 10.0,
+        "zero_reference_default": 1.0,
+        "reference_window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_CATEGORY": {
+      "version": "1.0",
+      "name": "Provisional forecast-growth categories",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "moderate_start": 1.1,
+        "high_start": 1.5,
+        "very_high_start": 2.0
+      }
+    },
+    "FORECAST.GROWTH_SCORE": {
+      "version": "1.0",
+      "name": "Experimental growth score",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "score_cap": 100
+      }
+    },
+    "FORECAST.RMSE_SENSITIVITY": {
+      "version": "1.0",
+      "name": "Legacy RF RMSE planning sensitivity",
+      "category": "unsupported_provisional",
+      "evidence_status": "uncalibrated",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "UNCERTAINTY.TEMPORAL_CALIBRATION": {
+      "version": "1.0",
+      "name": "Prequential synthetic empirical forecast range",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "nominal_coverage": 0.9,
+        "warmup_folds": 20,
+        "residual_count": 68
+      }
+    },
+    "OPS.EXPOSURE.COMPOSITION": {
+      "version": "1.0",
+      "name": "Prototype spatial exposure composition",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "population_weight": 0.4,
+        "density_weight": 0.3,
+        "facility_pressure_weight": 0.2,
+        "mobility_weight": 0.1
+      }
+    },
+    "OPS.EXPOSURE.ANOMALY": {
+      "version": "1.0",
+      "name": "Additive prototype anomaly adjustment",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "operation": "additive"
+      }
+    },
+    "OPS.ALLOCATION.ZONE": {
+      "version": "1.0",
+      "name": "Proportional zone allocation",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.ALLOCATION.FACILITY": {
+      "version": "1.0",
+      "name": "Prototype facility load allocation",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.ADMISSION_FRACTION": {
+      "version": "1.0",
+      "name": "Prototype admission fraction",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "admission_fraction": 1.0
+      }
+    },
+    "OPS.BED.DEMAND": {
+      "version": "1.0",
+      "name": "Illustrative bed-demand estimate",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.BED.DEFICIT": {
+      "version": "1.0",
+      "name": "Positive bed-deficit arithmetic",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "OPS.STOCK.DYNAMIC_DEMAND": {
+      "version": "1.0",
+      "name": "Provisional dynamic stock demand",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "demand_elasticity": 1.0
+      }
+    },
+    "OPS.STOCK.SDH": {
+      "version": "1.0",
+      "name": "Illustrative supply-depletion horizon",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "OPS.STOCK.THRESHOLDS": {
+      "version": "1.0",
+      "name": "Prototype inventory alert thresholds",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "critical_days": 3,
+        "ns1_warning_days": 7,
+        "iv_fluid_warning_days": 5
+      }
+    },
+    "OPS.PRIORITY.SCORE": {
+      "version": "1.0",
+      "name": "Experimental planning-priority score",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "interaction_weight": 200,
+        "exposure_weight": 80,
+        "growth_base_weight": 0.6,
+        "growth_vulnerability_weight": 0.3,
+        "score_cap": 100
+      }
+    },
+    "OPS.PRIORITY.CATEGORIES": {
+      "version": "1.0",
+      "name": "Simulated planning tiers",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "routine_max": 25,
+        "moderate_max": 50,
+        "high_max": 75
+      }
+    },
+    "OPS.DIRECTIVE.TRIGGERS": {
+      "version": "1.0",
+      "name": "Prototype planning-suggestion triggers",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "priority_trigger": 76
+      }
+    }
+  },
+  "feature_importance": {
+    "status": "generated",
+    "title": "Selected Random Forest Feature Diagnostics",
+    "formula_id": "EVIDENCE.FEATURE_IMPORTANCE",
+    "estimator_role": "selected_model_chronological_holdout_validation_instance",
+    "model_id": "random_forest",
+    "model_family": "RandomForestRegressor",
+    "model_version": "p1.2b-v1",
+    "methods": {
+      "primary": {
+        "id": "holdout_permutation_importance",
+        "label": "Holdout permutation importance",
+        "scoring": "neg_mean_absolute_error",
+        "n_repeats": 20,
+        "random_state": 42,
+        "n_jobs": 1,
+        "max_samples": 1.0
+      },
+      "secondary": {
+        "id": "native_random_forest_impurity_importance",
+        "label": "Native Random Forest impurity importance"
+      }
+    },
+    "evaluation_split": "legacy_final_chronological_20_percent",
+    "validation_period": {
+      "start": {
+        "epi_year": 2023,
+        "epi_week": 40
+      },
+      "end": {
+        "epi_year": 2024,
+        "epi_week": 22
+      }
+    },
+    "stability_status": "not_evaluated_across_temporal_folds",
+    "feature_ranking": [
+      {
+        "feature_name": "rainfall_lag_4w",
+        "feature_index": 1,
+        "native_importance": 0.4645192732683217,
+        "permutation_mean": 5.2009127179176575,
+        "permutation_standard_deviation": 2.0982824246289433,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.4645192732683217,
+        "rank_by_permutation": 1,
+        "rank_by_impurity": 1,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "epi_week_sin",
+        "feature_index": 14,
+        "native_importance": 0.10648422822645102,
+        "permutation_mean": 3.9346815641390265,
+        "permutation_standard_deviation": 1.8308156352491674,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.10648422822645102,
+        "rank_by_permutation": 2,
+        "rank_by_impurity": 2,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "rainfall_lag_2w",
+        "feature_index": 0,
+        "native_importance": 0.1517481363989209,
+        "permutation_mean": 1.9000622288040045,
+        "permutation_standard_deviation": 1.2531431266087791,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.1517481363989209,
+        "rank_by_permutation": 3,
+        "rank_by_impurity": 3,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "cases_lag_4w",
+        "feature_index": 8,
+        "native_importance": 0.009334352722296125,
+        "permutation_mean": 1.0242359839964803,
+        "permutation_standard_deviation": 0.22071112230038664,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.009334352722296125,
+        "rank_by_permutation": 4,
+        "rank_by_impurity": 4,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "cases_rolling_8w",
+        "feature_index": 11,
+        "native_importance": 0.015820372775059603,
+        "permutation_mean": 0.7333386829315611,
+        "permutation_standard_deviation": 0.461919680516212,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.015820372775059603,
+        "rank_by_permutation": 5,
+        "rank_by_impurity": 5,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "cases_rolling_4w",
+        "feature_index": 10,
+        "native_importance": 0.006399643175152573,
+        "permutation_mean": 0.6888797428400674,
+        "permutation_standard_deviation": 0.3289994306746661,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.006399643175152573,
+        "rank_by_permutation": 6,
+        "rank_by_impurity": 6,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "cases_rolling_3w",
+        "feature_index": 9,
+        "native_importance": 0.029708095300686754,
+        "permutation_mean": 0.6174781447588519,
+        "permutation_standard_deviation": 0.44748257444959944,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.029708095300686754,
+        "rank_by_permutation": 7,
+        "rank_by_impurity": 7,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "epi_week_cos",
+        "feature_index": 15,
+        "native_importance": 0.014718607301729927,
+        "permutation_mean": 0.29621576346770995,
+        "permutation_standard_deviation": 0.17528566864543504,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.014718607301729927,
+        "rank_by_permutation": 8,
+        "rank_by_impurity": 8,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "growth_rate_2w",
+        "feature_index": 13,
+        "native_importance": 0.010043033367355746,
+        "permutation_mean": 0.2826589872225661,
+        "permutation_standard_deviation": 0.3546027937050798,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.010043033367355746,
+        "rank_by_permutation": 9,
+        "rank_by_impurity": 9,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "temp_lag_4w",
+        "feature_index": 3,
+        "native_importance": 0.010631449510743596,
+        "permutation_mean": 0.11984355597286829,
+        "permutation_standard_deviation": 0.13135360458235387,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.010631449510743596,
+        "rank_by_permutation": 10,
+        "rank_by_impurity": 10,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "cases_lag_1w",
+        "feature_index": 6,
+        "native_importance": 0.03132715986949189,
+        "permutation_mean": 0.11858155284240883,
+        "permutation_standard_deviation": 0.3929642931118583,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.03132715986949189,
+        "rank_by_permutation": 11,
+        "rank_by_impurity": 11,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "humidity_lag_4w",
+        "feature_index": 5,
+        "native_importance": 0.018270240057577464,
+        "permutation_mean": 0.014367913305501823,
+        "permutation_standard_deviation": 0.14603478235127518,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.018270240057577464,
+        "rank_by_permutation": 12,
+        "rank_by_impurity": 12,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "monsoon_flag",
+        "feature_index": 16,
+        "native_importance": 0.0011989411021694743,
+        "permutation_mean": 0.010990788854003064,
+        "permutation_standard_deviation": 0.010686334756191155,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.0011989411021694743,
+        "rank_by_permutation": 13,
+        "rank_by_impurity": 13,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "post_monsoon_flag",
+        "feature_index": 17,
+        "native_importance": 0.0,
+        "permutation_mean": 0.0,
+        "permutation_standard_deviation": 0.0,
+        "permutation_is_negative": false,
+        "impurity_importance": 0.0,
+        "rank_by_permutation": 14,
+        "rank_by_impurity": 14,
+        "rank_disagreement": false,
+        "permutation_is_zero": true
+      },
+      {
+        "feature_name": "cases_lag_2w",
+        "feature_index": 7,
+        "native_importance": 0.007628015362149625,
+        "permutation_mean": -0.05942323606881974,
+        "permutation_standard_deviation": 0.1565418852882494,
+        "permutation_is_negative": true,
+        "impurity_importance": 0.007628015362149625,
+        "rank_by_permutation": 15,
+        "rank_by_impurity": 15,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "temp_lag_2w",
+        "feature_index": 2,
+        "native_importance": 0.025854368248649076,
+        "permutation_mean": -0.0813210953753531,
+        "permutation_standard_deviation": 0.12369385301326492,
+        "permutation_is_negative": true,
+        "impurity_importance": 0.025854368248649076,
+        "rank_by_permutation": 16,
+        "rank_by_impurity": 16,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "humidity_lag_2w",
+        "feature_index": 4,
+        "native_importance": 0.09018378239459146,
+        "permutation_mean": -0.12842089975527388,
+        "permutation_standard_deviation": 0.6760764740737599,
+        "permutation_is_negative": true,
+        "impurity_importance": 0.09018378239459146,
+        "rank_by_permutation": 17,
+        "rank_by_impurity": 17,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      },
+      {
+        "feature_name": "growth_rate_1w",
+        "feature_index": 12,
+        "native_importance": 0.006130300918653169,
+        "permutation_mean": -0.1294089812728016,
+        "permutation_standard_deviation": 0.1165007071314276,
+        "permutation_is_negative": true,
+        "impurity_importance": 0.006130300918653169,
+        "rank_by_permutation": 18,
+        "rank_by_impurity": 18,
+        "rank_disagreement": false,
+        "permutation_is_zero": false
+      }
+    ],
+    "non_causal_warning": "Feature importance is a model diagnostic and does not establish causality, biological mechanism, clinical importance, or stability across seasons.",
+    "split_warning": "These diagnostics describe the selected Random Forest validation-model instance and do not directly explain the separately fitted all-data forecast instance.",
+    "stability_warning": "Random Forest rolling importance stability was not evaluated across temporal folds.",
+    "synthetic_warning": "Rankings may reflect relationships embedded in the synthetic benchmark data and may not transfer to real surveillance data.",
+    "negative_importance_policy": "Negative permutation values are preserved.",
+    "correlated_feature_warning": "Correlated lag features may divide, mask, or substitute for one another in both diagnostic methods.",
+    "causal_interpretation_allowed": false,
+    "provenance": {
+      "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+      "manifest_path": "data/input_manifest.json",
+      "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+      "case_source": "synthetic_benchmark",
+      "climate_source": "synthetic_benchmark",
+      "operational_source": "synthetic_benchmark",
+      "source_classes": {
+        "cases": "synthetic",
+        "climate": "synthetic",
+        "operational": "synthetic"
+      },
+      "forecast_geography": {
+        "level": "city",
+        "id": "BGD-DHAKA-SOUTH",
+        "name": "Dhaka South"
+      },
+      "validation_status": "passed",
+      "warnings": [],
+      "overrides": [],
+      "active_model_id": "random_forest",
+      "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+      "adoption_policy_version": "p1.2b-v1",
+      "adoption_status": "adopted_p1.2b",
+      "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+      "deployment_profile_data_mode": "synthetic_capability_demonstration",
+      "deployment_profile_id": "dhaka_south",
+      "deployment_profile_schema_version": "1.0",
+      "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+      "deployment_profile_status": "active",
+      "evidence_registry_schema_version": "1.0",
+      "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+      "evidence_registry_version": "p0.3c-v1",
+      "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+      "formula_registry_version": "p1.3-v1",
+      "model_card_id": "dhaka_south_random_forest_benchmark",
+      "model_card_version": "p1.3-v1",
+      "observed_data_mode": "synthetic",
+      "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+      "uncertainty_method_version": "p1.3-v1",
+      "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+    },
+    "historical_gbr_evidence": {
+      "artifact_path": "data/model_explainability.json",
+      "status": "historical_compatibility_only",
+      "active_model_evidence": false
+    }
+  },
+  "deployment_profile": {
+    "profile_id": "dhaka_south",
+    "profile_status": "active",
+    "demonstration_status": "synthetic_capability_demonstration",
+    "maturity_statement": "Technically functioning, scenario-tested, formula-governed research prototype.",
+    "demonstration_statement": "This deployment profile uses deterministic synthetic data to demonstrate the complete data-input, validation, forecasting, preparedness-analysis, and notification workflow while authorized real data remain unavailable.",
+    "prohibited_claim": "The profile is not locally calibrated, epidemiologically validated, hospital-approved, or authorized for operational decision-making.",
+    "notification_wording": "Simulated preparedness notification generated for workflow demonstration; no message was sent to an operational recipient.",
+    "deployment_gate": "benchmark_only",
+    "evidence_status": "empty_registry",
+    "approval_status": "not_approved"
+  },
+  "historical_gbr_evidence": {
+    "status": "historical_compatibility_only_not_active_model_evidence",
+    "model_explainability_artifact_path": "data/model_explainability.json",
+    "model_explainability_artifact_sha256": "f727119f317f2b4480bc3596c5e400d4cb5d04697b6ab94eaa4d5751ae3ecc73",
+    "rolling_validation_artifact_path": "data/rolling_validation.json",
+    "validation_metrics_artifact_path": "data/validation_metrics.json"
+  }
+}

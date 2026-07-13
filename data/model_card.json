@@ -1,0 +1,424 @@
+{
+  "model_card_schema_version": "1.0",
+  "model_card_id": "dhaka_south_random_forest_benchmark",
+  "model_card_version": "p1.3-v1",
+  "model_id": "random_forest",
+  "model_version": "p1.3-v1",
+  "deployment_id": "dhaka_south",
+  "model_family": "RandomForestRegressor",
+  "active_model_family": "RandomForestRegressor",
+  "estimator_library": "scikit-learn",
+  "active_model_library": "scikit-learn",
+  "estimator_library_version": "1.9.0",
+  "active_model_library_version": "1.9.0",
+  "target": "target_cases_next_2w",
+  "forecast_horizon": {
+    "value": 14,
+    "unit": "days"
+  },
+  "feature_formula_ids": [
+    "TARGET.HORIZON.2W",
+    "FEATURE.CASE_LAGS",
+    "FEATURE.CLIMATE_LAGS",
+    "FEATURE.CASE_ROLLING",
+    "FEATURE.GROWTH_RATIOS",
+    "FEATURE.SEASONAL_CYCLIC",
+    "FEATURE.SEASON_FLAGS"
+  ],
+  "selected_features": [
+    "rainfall_lag_2w",
+    "rainfall_lag_4w",
+    "temp_lag_2w",
+    "temp_lag_4w",
+    "humidity_lag_2w",
+    "humidity_lag_4w",
+    "cases_lag_1w",
+    "cases_lag_2w",
+    "cases_lag_4w",
+    "cases_rolling_3w",
+    "cases_rolling_4w",
+    "cases_rolling_8w",
+    "growth_rate_1w",
+    "growth_rate_2w",
+    "epi_week_sin",
+    "epi_week_cos",
+    "monsoon_flag",
+    "post_monsoon_flag"
+  ],
+  "training_period": {
+    "start": {
+      "epi_year": 2021,
+      "epi_week": 6
+    },
+    "end": {
+      "epi_year": 2024,
+      "epi_week": 22
+    }
+  },
+  "data_sources": {
+    "cases": "synthetic_benchmark",
+    "climate": "synthetic_benchmark",
+    "operational": "synthetic_benchmark"
+  },
+  "data_mode": "synthetic_capability_demonstration",
+  "observed_data_mode": "synthetic",
+  "validation_method": "expanding_window_rolling_origin_candidate_comparison",
+  "baseline_models": [
+    "previous_week_naive",
+    "moving_average_4w",
+    "seasonal_naive_52w"
+  ],
+  "performance_metrics": {
+    "active_random_forest_rolling": {
+      "fold_count": 68,
+      "successful_folds": 68,
+      "failed_folds": 0,
+      "mae": 31.726076401608665,
+      "rmse": 49.55526308662114,
+      "wape": 26.783031599123394,
+      "mape": 34.634839440791076,
+      "median_absolute_error": 22.102701738885596,
+      "maximum_absolute_error": 261.22750415131503,
+      "minimum_absolute_error": 0.8231799740493955,
+      "absolute_error_standard_deviation": 38.068099187423655,
+      "q1": 12.206125964318717,
+      "q3": 36.41474372951318,
+      "iqr": 24.20861776519446,
+      "negative_raw_prediction_count": 0,
+      "clipping_count": 0,
+      "convergence_warning_count": 0,
+      "runtime_seconds": 13.181831599997167
+    },
+    "legacy_gbr_holdout": {
+      "mae": 28.75,
+      "rmse": 35.9,
+      "mape": 42.28
+    },
+    "legacy_gbr_rolling": {
+      "fold_count": 68,
+      "mae": 33.45498524791433,
+      "rmse": 51.19793472892898,
+      "mape": 34.8344423028676,
+      "mape_included_row_count": 68,
+      "mape_zero_actual_exclusion_count": 0,
+      "wape": 28.24256979339757,
+      "wape_exclusion_reason": null,
+      "median_absolute_error": 25.731839481745702,
+      "absolute_error_standard_deviation": 38.7555477650556,
+      "minimum_absolute_error": 1.2298987500083172,
+      "maximum_absolute_error": 259.0353191448207,
+      "q1_absolute_error": 14.109921153465145,
+      "q3_absolute_error": 37.70340909680314,
+      "iqr_absolute_error": 23.593487943337998
+    },
+    "selected_random_forest_holdout": {
+      "rmse": 33.24672789381382
+    }
+  },
+  "model_selection_status": "comparison_complete_and_adopted",
+  "comparison_selected_model": "random_forest",
+  "current_forecast_model": "random_forest",
+  "selected_model_adoption_status": "adopted_p1.2b",
+  "adoption_status": "adopted_p1.2b",
+  "adoption_policy_version": "p1.2b-v1",
+  "adopted_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+  "candidate_model_comparison_artifact_path": "data/candidate_model_comparison.json",
+  "candidate_model_comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+  "comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+  "candidate_registry_version": "p1.2a-v1",
+  "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+  "candidate_models": [
+    "previous_week_naive",
+    "moving_average_4w",
+    "seasonal_naive_52w",
+    "ridge_regression",
+    "poisson_regression",
+    "random_forest",
+    "gradient_boosting"
+  ],
+  "primary_selection_metric": "MAE",
+  "selection_rule": "lowest rolling-origin MAE among candidates completing all 68 folds; deterministic declared tie sequence",
+  "comparison_selected_model_reason": "random_forest had the lowest eligible rolling-origin MAE under the predeclared p1.2a-v1 rule.",
+  "selected_model_rank": 1,
+  "selected_model_fold_count": 68,
+  "selected_model_failures": 0,
+  "comparison_limitations": [
+    "Candidate models were compared on identical leakage-controlled rolling-origin folds using deterministic synthetic benchmark data. The selected model is a technical demonstration choice and does not establish real-world Dhaka superiority.",
+    "Rolling folds and targets are temporally dependent; paired summaries are descriptive and no significance claims are made.",
+    "The comparison winner is not adopted in P1.2A; P0.4 explainability and legacy uncertainty remain bound to Gradient Boosting."
+  ],
+  "primary_validation_method": "expanding_window_rolling_origin",
+  "rolling_validation_artifact_path": "data/rolling_validation.json",
+  "rolling_validation_artifact_sha256": "5da1fdc63c1c4ac45eed866ed8ffb3409ab64e3ffd03ecb70515514a64d39a56",
+  "rolling_validation_version": "p1.1-v1",
+  "rolling_fold_count": 68,
+  "rolling_initial_training_window": 104,
+  "rolling_step_weeks": 1,
+  "rolling_horizon_weeks": 2,
+  "rolling_aggregate_metrics": {
+    "fold_count": 68,
+    "successful_folds": 68,
+    "failed_folds": 0,
+    "mae": 31.726076401608665,
+    "rmse": 49.55526308662114,
+    "wape": 26.783031599123394,
+    "mape": 34.634839440791076,
+    "median_absolute_error": 22.102701738885596,
+    "maximum_absolute_error": 261.22750415131503,
+    "minimum_absolute_error": 0.8231799740493955,
+    "absolute_error_standard_deviation": 38.068099187423655,
+    "q1": 12.206125964318717,
+    "q3": 36.41474372951318,
+    "iqr": 24.20861776519446,
+    "negative_raw_prediction_count": 0,
+    "clipping_count": 0,
+    "convergence_warning_count": 0,
+    "runtime_seconds": 13.181831599997167
+  },
+  "rolling_baseline_comparison": {
+    "previous_week_naive": {
+      "better_fold_count": 33,
+      "tied_fold_count": 0,
+      "worse_fold_count": 35
+    },
+    "moving_average_4w": {
+      "better_fold_count": 29,
+      "tied_fold_count": 0,
+      "worse_fold_count": 39
+    },
+    "seasonal_naive_52w": {
+      "better_fold_count": 30,
+      "tied_fold_count": 0,
+      "worse_fold_count": 38
+    },
+    "ridge_regression": {
+      "better_fold_count": 34,
+      "tied_fold_count": 0,
+      "worse_fold_count": 34
+    },
+    "poisson_regression": {
+      "better_fold_count": 36,
+      "tied_fold_count": 0,
+      "worse_fold_count": 32
+    },
+    "random_forest": {
+      "better_fold_count": 0,
+      "tied_fold_count": 68,
+      "worse_fold_count": 0
+    },
+    "gradient_boosting": {
+      "better_fold_count": 34,
+      "tied_fold_count": 0,
+      "worse_fold_count": 34
+    }
+  },
+  "performance_variability": {
+    "source": "candidate_model_comparison.json",
+    "active_model": "random_forest"
+  },
+  "native_importance_stability_status": "not_evaluated_across_temporal_folds",
+  "permutation_stability_status": "not_evaluated_single_row_folds",
+  "legacy_validation_method": "time_based_holdout_final_20_percent",
+  "legacy_validation_artifact_path": "data/validation_metrics.json",
+  "validation_limitations": [
+    "Active rolling metrics come from the validated P1.2A candidate comparison.",
+    "P1.1 GBR rolling metrics are historical compatibility evidence only."
+  ],
+  "uncertainty_method": "prequential_expanding_absolute_residual_quantile",
+  "uncertainty_method_version": "p1.3-v1",
+  "uncertainty_status": "temporally_evaluated_synthetic_empirical_range",
+  "nominal_coverage": 0.9,
+  "observed_temporal_coverage": 0.8958333333333334,
+  "covered_fold_count": 43,
+  "evaluated_fold_count": 48,
+  "calibration_warmup_fold_count": 20,
+  "interval_width_summary": {
+    "average_interval_width": 146.92429694798778,
+    "median_interval_width": 133.18035262412508,
+    "minimum_interval_width": 80.27877645371069,
+    "maximum_interval_width": 249.00190519899652
+  },
+  "lower_miss_count": 2,
+  "upper_miss_count": 3,
+  "uncertainty_artifact_path": "data/forecast_uncertainty.json",
+  "uncertainty_artifact_sha256": "740cf86792bc45ee7bfb4cc5333e8e2b5c56731832e1ec5265ec034252df9074",
+  "residual_source_artifact_path": "data/candidate_model_comparison.json",
+  "residual_source_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+  "uncertainty_active_model_binding": {
+    "model_id": "random_forest",
+    "model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71"
+  },
+  "uncertainty_limitations": [
+    "The empirical range was evaluated using deterministic synthetic rolling-origin Random Forest residuals. Each evaluated fold used only residuals from earlier folds. Temporal dependence and reuse of the folds for model selection limit interpretation. This is not evidence of real-world Dhaka calibration. Historical empirical coverage is not a guarantee of future coverage.",
+    "Targets overlap and residuals are temporally dependent.",
+    "High-incidence and rising-period performance may be weaker.",
+    "The range is not a probability statement and is not a prediction interval.",
+    "The deployment remains a synthetic benchmark-only capability demonstration."
+  ],
+  "operational_scenario_relationship": {
+    "forecast_empirical_range_role": "uncertainty_evidence_only",
+    "preparedness_scenario_role": "legacy_rf_rmse_planning_sensitivity",
+    "empirical_range_drives_operational_directives": false
+  },
+  "retained_legacy_rmse_status": "operational_planning_compatibility_only_not_forecast_interval",
+  "is_prediction_interval": false,
+  "calibrated_on_synthetic_data": true,
+  "selected_model_explainability_status": "generated_active_selected_model_diagnostic",
+  "selected_model_explainability_artifact_path": "data/selected_model_explainability.json",
+  "selected_model_explainability_artifact_sha256": "211ae7112aa3ca291a36fa4383d04239551c48c726f18debfc74e0f3fc0e86db",
+  "explainability_status": "generated",
+  "explainability_artifact_path": "data/selected_model_explainability.json",
+  "explainability_artifact_sha256": "211ae7112aa3ca291a36fa4383d04239551c48c726f18debfc74e0f3fc0e86db",
+  "explainability_methods": [
+    "native_random_forest_impurity_importance",
+    "holdout_permutation_importance"
+  ],
+  "explainability_limitations": [
+    "These diagnostics describe the selected Random Forest validation-model instance and do not directly explain the separately fitted all-data forecast instance.",
+    "Feature importance is a model diagnostic and does not establish causality, biological mechanism, clinical importance, or stability across seasons.",
+    "Diagnostics use deterministic synthetic data and one legacy chronological holdout."
+  ],
+  "importance_stability_status": "not_evaluated_across_temporal_folds",
+  "explainability_evaluation": {
+    "estimator_role": "selected_model_chronological_holdout_validation_instance",
+    "training_period": {
+      "start": {
+        "epi_year": 2021,
+        "epi_week": 6
+      },
+      "end": {
+        "epi_year": 2023,
+        "epi_week": 39
+      }
+    },
+    "validation_period": {
+      "start": {
+        "epi_year": 2023,
+        "epi_week": 40
+      },
+      "end": {
+        "epi_year": 2024,
+        "epi_week": 22
+      }
+    },
+    "evaluation_split": "legacy_final_chronological_20_percent",
+    "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
+    "validation_matrix_sha256": "d749da62bf6edfc81bab4bcb3731c86f649ae72b2d15628b4f72dc8ae66e329b"
+  },
+  "retained_legacy_gbr_evidence": {
+    "status": "historical_compatibility_only_not_active_model_evidence",
+    "model_explainability_artifact_path": "data/model_explainability.json",
+    "model_explainability_artifact_sha256": "f727119f317f2b4480bc3596c5e400d4cb5d04697b6ab94eaa4d5751ae3ecc73",
+    "rolling_validation_artifact_path": "data/rolling_validation.json",
+    "validation_metrics_artifact_path": "data/validation_metrics.json"
+  },
+  "forecast_artifact_sha256": "70892c12faa5f3fa1f58556ddd2416636e23b127adab56210f1d0d294983359b",
+  "adoption_limitations": [
+    "Random Forest was selected under the declared P1.2A comparison rule using deterministic synthetic rolling-origin folds and was adopted as the active demonstration model. This does not establish real-world Dhaka superiority.",
+    "Random Forest cannot extrapolate beyond patterns represented in its training data."
+  ],
+  "limitations": [
+    "Random Forest was selected under the declared P1.2A comparison rule using deterministic synthetic rolling-origin folds and was adopted as the active demonstration model. This does not establish real-world Dhaka superiority.",
+    "Data are deterministic synthetic benchmark data.",
+    "No local calibration or institutional approval exists.",
+    "The empirical range was evaluated using deterministic synthetic rolling-origin Random Forest residuals. Each evaluated fold used only residuals from earlier folds. Temporal dependence and reuse of the folds for model selection limit interpretation. This is not evidence of real-world Dhaka calibration. Historical empirical coverage is not a guarantee of future coverage.",
+    "Targets overlap and residuals are temporally dependent.",
+    "High-incidence and rising-period performance may be weaker.",
+    "The range is not a probability statement and is not a prediction interval.",
+    "The deployment remains a synthetic benchmark-only capability demonstration.",
+    "Use restriction: not for clinical or official public-health use.",
+    "Data are deterministic synthetic benchmark data, not authorized surveillance or operational records.",
+    "Primary evaluation and the empirical forecast range use deterministic synthetic rolling-origin evidence; the legacy chronological holdout remains only for selected-model diagnostics and planning compatibility.",
+    "Historical empirical coverage is not a probability guarantee or evidence of real-world Dhaka calibration.",
+    "No institutional approval or local operational calibration exists."
+  ],
+  "intended_use": [
+    "Demonstrate data input, validation, forecasting, preparedness analysis, and simulated preparedness notification using deterministic synthetic data."
+  ],
+  "prohibited_uses": [
+    "Clinical use.",
+    "Official public-health use.",
+    "Automatic real-world resource allocation.",
+    "Claims of local calibration.",
+    "Claims of epidemiological validation.",
+    "Claims of hospital approval.",
+    "Real-recipient automated notification."
+  ],
+  "maturity_statements": {
+    "maturity": "Technically functioning, scenario-tested, formula-governed research prototype.",
+    "demonstration": "This deployment profile uses deterministic synthetic data to demonstrate the complete data-input, validation, forecasting, preparedness-analysis, and notification workflow while authorized real data remain unavailable.",
+    "prohibited_claim": "The profile is not locally calibrated, epidemiologically validated, hospital-approved, or authorized for operational decision-making.",
+    "notification": "Simulated preparedness notification generated for workflow demonstration; no message was sent to an operational recipient."
+  },
+  "deprecated_compatibility_fields": {
+    "debt_id": "TD-P03A-LEGACY-RISK-FIELDS",
+    "status": "open",
+    "legacy_fields": [
+      "risk_level",
+      "risk_score",
+      "recommendations"
+    ],
+    "canonical_fields": [
+      "forecast_growth_category",
+      "experimental_growth_score",
+      "planning_priority_tier",
+      "planning_suggestions"
+    ],
+    "runtime_behavior": "preserved_for_backward_compatibility",
+    "deprecated": true
+  },
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+  "evidence_registry_schema_version": "1.0",
+  "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+  "evidence_ids": [],
+  "approval_record_ids": [],
+  "approval_status": "not_approved",
+  "deployment_gate": "benchmark_only",
+  "provenance": {
+    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "manifest_path": "data/input_manifest.json",
+    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "case_source": "synthetic_benchmark",
+    "climate_source": "synthetic_benchmark",
+    "operational_source": "synthetic_benchmark",
+    "source_classes": {
+      "cases": "synthetic",
+      "climate": "synthetic",
+      "operational": "synthetic"
+    },
+    "forecast_geography": {
+      "level": "city",
+      "id": "BGD-DHAKA-SOUTH",
+      "name": "Dhaka South"
+    },
+    "validation_status": "passed",
+    "warnings": [],
+    "overrides": [],
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_policy_version": "p1.2b-v1",
+    "adoption_status": "adopted_p1.2b",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "evidence_registry_version": "p0.3c-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "formula_registry_version": "p1.3-v1",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "observed_data_mode": "synthetic",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  },
+  "generated_at": "2026-07-13T09:09:26Z"
+}

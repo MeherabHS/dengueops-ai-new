@@ -1,0 +1,577 @@
+{
+  "target": "target_cases_next_2w",
+  "validation_design": "time_based_holdout_final_20_percent",
+  "train_rows": 138,
+  "test_rows": 35,
+  "train_period": {
+    "epi_year_start": 2021,
+    "epi_week_start": 6,
+    "epi_year_end": 2023,
+    "epi_week_end": 39
+  },
+  "test_period": {
+    "epi_year_start": 2023,
+    "epi_week_start": 40,
+    "epi_year_end": 2024,
+    "epi_week_end": 22
+  },
+  "metrics": {
+    "naive": {
+      "mae": 42.51,
+      "rmse": 75.71,
+      "mape": 48.29
+    },
+    "moving_average": {
+      "mae": 46.87,
+      "rmse": 73.48,
+      "mape": 53.91
+    },
+    "gradient_boosting": {
+      "mae": 28.75,
+      "rmse": 35.9,
+      "mape": 42.28
+    }
+  },
+  "best_model": "gradient_boosting",
+  "gbr_params": {
+    "n_estimators": 200,
+    "learning_rate": 0.05,
+    "max_depth": 4,
+    "min_samples_leaf": 3,
+    "subsample": 0.8,
+    "random_state": 42,
+    "loss": "squared_error"
+  },
+  "feature_count": 18,
+  "features_used": [
+    "rainfall_lag_2w",
+    "rainfall_lag_4w",
+    "temp_lag_2w",
+    "temp_lag_4w",
+    "humidity_lag_2w",
+    "humidity_lag_4w",
+    "cases_lag_1w",
+    "cases_lag_2w",
+    "cases_lag_4w",
+    "cases_rolling_3w",
+    "cases_rolling_4w",
+    "cases_rolling_8w",
+    "growth_rate_1w",
+    "growth_rate_2w",
+    "epi_week_sin",
+    "epi_week_cos",
+    "monsoon_flag",
+    "post_monsoon_flag"
+  ],
+  "actual_vs_predicted": [
+    {
+      "epi_year": 2023,
+      "epi_week": 40,
+      "actual": 184,
+      "naive_pred": 527,
+      "moving_average_pred": 367,
+      "ml_pred": 270
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 41,
+      "actual": 269,
+      "naive_pred": 402,
+      "moving_average_pred": 368,
+      "ml_pred": 303
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 42,
+      "actual": 117,
+      "naive_pred": 228,
+      "moving_average_pred": 362,
+      "ml_pred": 185
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 43,
+      "actual": 174,
+      "naive_pred": 184,
+      "moving_average_pred": 335,
+      "ml_pred": 172
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 44,
+      "actual": 126,
+      "naive_pred": 269,
+      "moving_average_pred": 271,
+      "ml_pred": 156
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 45,
+      "actual": 176,
+      "naive_pred": 117,
+      "moving_average_pred": 200,
+      "ml_pred": 152
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 46,
+      "actual": 183,
+      "naive_pred": 174,
+      "moving_average_pred": 186,
+      "ml_pred": 118
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 47,
+      "actual": 111,
+      "naive_pred": 126,
+      "moving_average_pred": 172,
+      "ml_pred": 160
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 48,
+      "actual": 154,
+      "naive_pred": 176,
+      "moving_average_pred": 148,
+      "ml_pred": 107
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 49,
+      "actual": 81,
+      "naive_pred": 183,
+      "moving_average_pred": 165,
+      "ml_pred": 147
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 50,
+      "actual": 100,
+      "naive_pred": 111,
+      "moving_average_pred": 149,
+      "ml_pred": 98
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 51,
+      "actual": 78,
+      "naive_pred": 154,
+      "moving_average_pred": 156,
+      "ml_pred": 132
+    },
+    {
+      "epi_year": 2023,
+      "epi_week": 52,
+      "actual": 44,
+      "naive_pred": 81,
+      "moving_average_pred": 132,
+      "ml_pred": 104
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 1,
+      "actual": 91,
+      "naive_pred": 100,
+      "moving_average_pred": 112,
+      "ml_pred": 81
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 2,
+      "actual": 55,
+      "naive_pred": 78,
+      "moving_average_pred": 103,
+      "ml_pred": 74
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 3,
+      "actual": 62,
+      "naive_pred": 44,
+      "moving_average_pred": 76,
+      "ml_pred": 75
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 4,
+      "actual": 42,
+      "naive_pred": 91,
+      "moving_average_pred": 78,
+      "ml_pred": 67
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 5,
+      "actual": 48,
+      "naive_pred": 55,
+      "moving_average_pred": 67,
+      "ml_pred": 79
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 6,
+      "actual": 29,
+      "naive_pred": 62,
+      "moving_average_pred": 63,
+      "ml_pred": 64
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 7,
+      "actual": 67,
+      "naive_pred": 42,
+      "moving_average_pred": 62,
+      "ml_pred": 60
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 8,
+      "actual": 35,
+      "naive_pred": 48,
+      "moving_average_pred": 52,
+      "ml_pred": 65
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 9,
+      "actual": 38,
+      "naive_pred": 29,
+      "moving_average_pred": 45,
+      "ml_pred": 51
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 10,
+      "actual": 41,
+      "naive_pred": 67,
+      "moving_average_pred": 46,
+      "ml_pred": 60
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 11,
+      "actual": 25,
+      "naive_pred": 35,
+      "moving_average_pred": 45,
+      "ml_pred": 60
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 12,
+      "actual": 55,
+      "naive_pred": 38,
+      "moving_average_pred": 42,
+      "ml_pred": 57
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 13,
+      "actual": 65,
+      "naive_pred": 41,
+      "moving_average_pred": 45,
+      "ml_pred": 61
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 14,
+      "actual": 43,
+      "naive_pred": 25,
+      "moving_average_pred": 35,
+      "ml_pred": 65
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 15,
+      "actual": 37,
+      "naive_pred": 55,
+      "moving_average_pred": 40,
+      "ml_pred": 50
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 16,
+      "actual": 62,
+      "naive_pred": 65,
+      "moving_average_pred": 46,
+      "ml_pred": 61
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 17,
+      "actual": 62,
+      "naive_pred": 43,
+      "moving_average_pred": 47,
+      "ml_pred": 44
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 18,
+      "actual": 65,
+      "naive_pred": 37,
+      "moving_average_pred": 50,
+      "ml_pred": 55
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 19,
+      "actual": 98,
+      "naive_pred": 62,
+      "moving_average_pred": 52,
+      "ml_pred": 80
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 20,
+      "actual": 45,
+      "naive_pred": 62,
+      "moving_average_pred": 51,
+      "ml_pred": 68
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 21,
+      "actual": 71,
+      "naive_pred": 65,
+      "moving_average_pred": 56,
+      "ml_pred": 111
+    },
+    {
+      "epi_year": 2024,
+      "epi_week": 22,
+      "actual": 107,
+      "naive_pred": 98,
+      "moving_average_pred": 72,
+      "ml_pred": 74
+    }
+  ],
+  "notes": [
+    "Validation uses final chronological 20% of available feature rows.",
+    "Time-based holdout only — no random shuffling at any step.",
+    "Results use synthetic case, climate, and operational inputs.",
+    "This validates pipeline behaviour and feature engineering correctness, not deployment-grade epidemiological accuracy.",
+    "Real validation would require multi-year validated DGHS/IEDCR surveillance data."
+  ],
+  "provenance": {
+    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "manifest_path": "data/input_manifest.json",
+    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "case_source": "synthetic_benchmark",
+    "climate_source": "synthetic_benchmark",
+    "operational_source": "synthetic_benchmark",
+    "source_classes": {
+      "cases": "synthetic",
+      "climate": "synthetic",
+      "operational": "synthetic"
+    },
+    "forecast_geography": {
+      "level": "city",
+      "id": "BGD-DHAKA-SOUTH",
+      "name": "Dhaka South"
+    },
+    "validation_status": "passed",
+    "warnings": [],
+    "overrides": [],
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_policy_version": "p1.2b-v1",
+    "adoption_status": "adopted_p1.2b",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "evidence_registry_version": "p0.3c-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "formula_registry_version": "p1.3-v1",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "observed_data_mode": "synthetic",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  },
+  "data_mode": "synthetic",
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "formula_ids_used": [
+    "TARGET.HORIZON.2W",
+    "FEATURE.CASE_LAGS",
+    "FEATURE.CLIMATE_LAGS",
+    "FEATURE.CASE_ROLLING",
+    "FEATURE.GROWTH_RATIOS",
+    "FEATURE.SEASONAL_CYCLIC",
+    "FEATURE.SEASON_FLAGS",
+    "MODEL.GBR.CONFIG",
+    "MODEL.BASELINE.NAIVE",
+    "MODEL.BASELINE.MA4",
+    "METRIC.MAE",
+    "METRIC.RMSE",
+    "METRIC.MAPE"
+  ],
+  "deployment_gate": "benchmark_only",
+  "formula_validation_status": "governed_provisional",
+  "formula_policy": {
+    "TARGET.HORIZON.2W": {
+      "version": "1.0",
+      "name": "Two-week forecast target",
+      "category": "direct_arithmetic",
+      "evidence_status": "implementation_verified",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "horizon_weeks": 2
+      }
+    },
+    "FEATURE.CASE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate case lag features",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          1,
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CLIMATE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate climate lag features",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CASE_ROLLING": {
+      "version": "1.0",
+      "name": "Candidate prior-case rolling means",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": [
+          3,
+          4,
+          8
+        ]
+      }
+    },
+    "FEATURE.GROWTH_RATIOS": {
+      "version": "1.0",
+      "name": "Candidate lagged growth ratios",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "zero_denominator_default": 1.0
+      }
+    },
+    "FEATURE.SEASONAL_CYCLIC": {
+      "version": "1.0",
+      "name": "Cyclic epidemiological-week encoding",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "weeks_per_year": 52
+      }
+    },
+    "FEATURE.SEASON_FLAGS": {
+      "version": "1.0",
+      "name": "Provisional seasonal calendar flags",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "monsoon_start": 22,
+        "monsoon_end": 38,
+        "post_monsoon_start": 38,
+        "post_monsoon_end": 50
+      }
+    },
+    "MODEL.GBR.CONFIG": {
+      "version": "1.0",
+      "name": "Provisional gradient boosting configuration",
+      "category": "locally_estimated_required",
+      "evidence_status": "provisional",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "n_estimators": 200,
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "min_samples_leaf": 3,
+        "subsample": 0.8,
+        "random_state": 42,
+        "loss": "squared_error"
+      }
+    },
+    "MODEL.BASELINE.NAIVE": {
+      "version": "1.0",
+      "name": "Naive lag baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.MA4": {
+      "version": "1.0",
+      "name": "Four-week moving-average baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": 4
+      }
+    },
+    "METRIC.MAE": {
+      "version": "1.0",
+      "name": "Mean absolute error",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "METRIC.RMSE": {
+      "version": "1.0",
+      "name": "Root mean squared error",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "METRIC.MAPE": {
+      "version": "1.0",
+      "name": "Positive-actual mean absolute percentage error",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    }
+  },
+  "validation_role": "legacy_single_holdout",
+  "primary_validation_method": "expanding_window_rolling_origin",
+  "primary_validation_artifact": "data/rolling_validation.json"
+}

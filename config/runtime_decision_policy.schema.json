@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.ai/schemas/runtime_decision_policy.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion","policyId","policyVersion","policyStatus","policySha256","deploymentId","allowedAssessmentPolicyId","allowedAssessmentPolicyVersion","allowedAssessmentPolicySha256","candidateRegistrySha256","decisionScope","recommendationStatusAccepted","recommendationStrengthAccepted","allowedDecisions","allowedDeployableCandidateClasses","currentModelId","currentModelParameterSha256","baselineApprovalAllowed","deploymentWideAdoptionAllowed","institutionalApproval","operatorType","assessmentValiditySeconds","authorizationPolicy","limitations","prohibitedClaims"],
+  "properties": {
+    "schemaVersion":{"const":"1.0"},"policyId":{"const":"RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION"},"policyVersion":{"const":"p1.4d-3-e-v1"},"policyStatus":{"enum":["active","inactive","suspended"]},"policySha256":{"$ref":"#/$defs/sha"},"deploymentId":{"const":"dhaka_south"},
+    "allowedAssessmentPolicyId":{"const":"RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"},"allowedAssessmentPolicyVersion":{"const":"p1.4d-1-v1"},"allowedAssessmentPolicySha256":{"$ref":"#/$defs/sha"},"candidateRegistrySha256":{"$ref":"#/$defs/sha"},"decisionScope":{"const":"one_run"},"recommendationStatusAccepted":{"const":"evidence_only"},"recommendationStrengthAccepted":{"const":"not_available"},
+    "allowedDecisions":{"const":["approve_technical_winner","keep_current_model","defer","reject_assessment"]},"allowedDeployableCandidateClasses":{"const":["deployable_learned_model"]},"currentModelId":{"const":"random_forest"},"currentModelParameterSha256":{"$ref":"#/$defs/sha"},"baselineApprovalAllowed":{"const":false},"deploymentWideAdoptionAllowed":{"const":false},"institutionalApproval":{"const":false},"operatorType":{"const":"trusted_internal_unverified"},"assessmentValiditySeconds":{"type":"integer","minimum":1},
+    "authorizationPolicy":{"type":"object","additionalProperties":false,"required":["scope","oneAuthorizationPerFinalDecision","oneRunPerAuthorization","automaticRetryAllowed","consumeAfterCommittedLatestPointer"],"properties":{"scope":{"const":"one_run"},"oneAuthorizationPerFinalDecision":{"const":true},"oneRunPerAuthorization":{"const":true},"automaticRetryAllowed":{"const":false},"consumeAfterCommittedLatestPointer":{"const":true}}},
+    "limitations":{"type":"array","minItems":3,"items":{"type":"string","minLength":1}},"prohibitedClaims":{"type":"array","minItems":3,"items":{"type":"string","minLength":1}}
+  },
+  "$defs":{"sha":{"type":"string","pattern":"^[a-f0-9]{64}$"}}
+}

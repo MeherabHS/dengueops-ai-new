@@ -1,0 +1,26 @@
+{
+  "comparison_scenario": null,
+  "configuration_fingerprint": "9e494fdf986de2725810c500b50ae85f74aa80270b10607aa753388ba25d1a8b",
+  "expected_bed_pressure_direction": "baseline",
+  "expected_case_direction": "seasonal",
+  "expected_forecast_direction": "baseline",
+  "expected_peak_period": "monsoon_or_post_monsoon",
+  "expected_peak_range": {
+    "max_week": 50,
+    "min_week": 28
+  },
+  "expected_relative_severity": "baseline",
+  "expected_replenishment_behavior": "none",
+  "expected_stock_pressure_direction": "baseline",
+  "expected_validation_status": "passed",
+  "invalid_data_subtype": null,
+  "latent_summary": {
+    "maximum": 299.577,
+    "mean": 130.717,
+    "minimum": 44.236
+  },
+  "scenario": "normal",
+  "schema_version": "1.0",
+  "seed": 42,
+  "simulation_version": "benchmark-v1"
+}

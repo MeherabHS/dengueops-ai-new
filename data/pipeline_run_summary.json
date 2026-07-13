@@ -1,0 +1,202 @@
+{
+  "provenance": {
+    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "manifest_path": "data/input_manifest.json",
+    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "case_source": "synthetic_benchmark",
+    "climate_source": "synthetic_benchmark",
+    "operational_source": "synthetic_benchmark",
+    "source_classes": {
+      "cases": "synthetic",
+      "climate": "synthetic",
+      "operational": "synthetic"
+    },
+    "forecast_geography": {
+      "level": "city",
+      "id": "BGD-DHAKA-SOUTH",
+      "name": "Dhaka South"
+    },
+    "validation_status": "passed",
+    "warnings": [],
+    "overrides": [],
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_policy_version": "p1.2b-v1",
+    "adoption_status": "adopted_p1.2b",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "evidence_registry_version": "p0.3c-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "formula_registry_version": "p1.3-v1",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "observed_data_mode": "synthetic",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  },
+  "run_timestamp": "2026-07-13T09:08:41",
+  "status": "success",
+  "completed_steps": [
+    "generate_benchmark_data",
+    "input_validation",
+    "feature_engineering",
+    "validation_backtest",
+    "candidate_model_comparison",
+    "forecast_model",
+    "uncertainty_engine",
+    "operational_engine",
+    "dashboard_exporter"
+  ],
+  "step_timings_sec": {
+    "generate_benchmark_data": 0.56,
+    "input_validation": 0.04,
+    "feature_engineering": 0.52,
+    "validation_backtest": 10.75,
+    "candidate_model_comparison": 17.87,
+    "forecast_model": 14.84,
+    "uncertainty_engine": 0.17,
+    "operational_engine": 0.58,
+    "dashboard_exporter": 10.54
+  },
+  "generated_files": [
+    "G:\\dengueops-ai-main\\data\\dengue_cases.csv",
+    "G:\\dengueops-ai-main\\data\\climate_data.csv",
+    "G:\\dengueops-ai-main\\data\\input_manifest.json",
+    "G:\\dengueops-ai-main\\data\\model_features.csv",
+    "G:\\dengueops-ai-main\\data\\validation_metrics.json",
+    "G:\\dengueops-ai-main\\data\\rolling_validation.json",
+    "G:\\dengueops-ai-main\\data\\forecast_output.json",
+    "G:\\dengueops-ai-main\\data\\directives.json",
+    "G:\\dengueops-ai-main\\data\\dashboard_summary.json",
+    "G:\\dengueops-ai-main\\data\\model_comparison.json",
+    "G:\\dengueops-ai-main\\data\\chart_data.json"
+  ],
+  "forecast_summary": {
+    "forecast_cases": 120,
+    "growth_factor": 1.72,
+    "risk_level": "High",
+    "risk_score": 71,
+    "experimental_growth_score": 71,
+    "forecast_growth_category": "High forecast growth",
+    "target_epi_week": 26,
+    "target_epi_year": 2024,
+    "best_case": 87,
+    "expected_case": 120,
+    "worst_case": 153
+  },
+  "directives_summary": {
+    "total_facilities": 10,
+    "total_public_government_anchors": 0,
+    "critical_priority_zones": 5,
+    "facilities_with_expected_bed_gap": 0,
+    "facilities_with_worst_case_bed_gap": 0,
+    "critical_supply_alerts": 0,
+    "highest_priority_zone": "Benchmark Zone 5",
+    "highest_pressure_facility": "Synthetic Benchmark Facility 01",
+    "total_recommendations": 30
+  },
+  "rolling_validation": {
+    "status": "generated",
+    "fold_count": 68,
+    "primary_validation": true
+  },
+  "dashboard_outputs": {
+    "dashboard_summary.json": {
+      "exists": true,
+      "size_bytes": 54380
+    },
+    "model_comparison.json": {
+      "exists": true,
+      "size_bytes": 4858
+    },
+    "chart_data.json": {
+      "exists": true,
+      "size_bytes": 40256
+    },
+    "model_card.json": {
+      "exists": true,
+      "size_bytes": 19012
+    },
+    "model_explainability.json": {
+      "exists": true,
+      "size_bytes": 16279
+    },
+    "candidate_model_comparison.json": {
+      "exists": true,
+      "size_bytes": 336795
+    }
+  },
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "formula_ids_used": [
+    "TARGET.HORIZON.2W",
+    "FEATURE.CASE_LAGS",
+    "FEATURE.CLIMATE_LAGS",
+    "FEATURE.CASE_ROLLING",
+    "FEATURE.GROWTH_RATIOS",
+    "FEATURE.SEASONAL_CYCLIC",
+    "FEATURE.SEASON_FLAGS",
+    "MODEL.SELECTED_MODEL_ADOPTION",
+    "MODEL.BASELINE.NAIVE",
+    "MODEL.BASELINE.MA4",
+    "FORECAST.GROWTH_FACTOR",
+    "FORECAST.GROWTH_CATEGORY",
+    "FORECAST.GROWTH_SCORE",
+    "FORECAST.RMSE_SENSITIVITY",
+    "UNCERTAINTY.TEMPORAL_CALIBRATION",
+    "OPS.EXPOSURE.COMPOSITION",
+    "OPS.EXPOSURE.ANOMALY",
+    "OPS.ALLOCATION.ZONE",
+    "OPS.ALLOCATION.FACILITY",
+    "OPS.ADMISSION_FRACTION",
+    "OPS.BED.DEMAND",
+    "OPS.BED.DEFICIT",
+    "OPS.STOCK.DYNAMIC_DEMAND",
+    "OPS.STOCK.SDH",
+    "OPS.STOCK.THRESHOLDS",
+    "OPS.PRIORITY.SCORE",
+    "OPS.PRIORITY.CATEGORIES",
+    "OPS.DIRECTIVE.TRIGGERS"
+  ],
+  "deployment_gate": "benchmark_only",
+  "formula_validation_status": "governed_provisional",
+  "notes": [
+    "Python pipeline generates dashboard-ready JSON outputs.",
+    "Evaluators do not need to inspect terminal outputs.",
+    "The Next.js dashboard visualises forecasts, validation metrics, uncertainty, SDH, bed gaps, and zone/facility directives.",
+    "All readiness and inventory values are synthetic demonstration data.",
+    "Facility identity and readiness status are source-specific; benchmark facilities are wholly synthetic.",
+    "Input data mode: synthetic; exact sources are recorded in provenance."
+  ],
+  "deployment_profile": {
+    "profile_id": "dhaka_south",
+    "profile_status": "active",
+    "demonstration_status": "synthetic_capability_demonstration",
+    "maturity_statement": "Technically functioning, scenario-tested, formula-governed research prototype.",
+    "demonstration_statement": "This deployment profile uses deterministic synthetic data to demonstrate the complete data-input, validation, forecasting, preparedness-analysis, and notification workflow while authorized real data remain unavailable.",
+    "prohibited_claim": "The profile is not locally calibrated, epidemiologically validated, hospital-approved, or authorized for operational decision-making.",
+    "notification_wording": "Simulated preparedness notification generated for workflow demonstration; no message was sent to an operational recipient.",
+    "deployment_gate": "benchmark_only",
+    "evidence_status": "empty_registry",
+    "approval_status": "not_approved"
+  },
+  "explainability": {
+    "status": "generated",
+    "artifact_path": "data/selected_model_explainability.json",
+    "artifact_sha256": "211ae7112aa3ca291a36fa4383d04239551c48c726f18debfc74e0f3fc0e86db",
+    "methods": [
+      "native_random_forest_impurity_importance",
+      "holdout_permutation_importance"
+    ],
+    "estimator_role": "selected_model_chronological_holdout_validation_instance",
+    "stability_status": "not_evaluated_across_temporal_folds",
+    "feature_count": 18
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "profile_schema_version": "1.0",
+  "deployment_id": "dhaka_south",
+  "name": "Dhaka South Synthetic Capability Demonstration",
+  "geography": {"level": "city", "id": "BGD-DHAKA-SOUTH", "name": "Dhaka South"},
+  "timezone": "Asia/Dhaka",
+  "surveillance_frequency": "weekly",
+  "case_definition": "Deterministic synthetic benchmark cases generated for capability demonstration; this is not a clinical case definition or an official surveillance definition.",
+  "data_sources": {
+    "cases": {"source_id": "synthetic_benchmark", "source_type": "synthetic_benchmark"},
+    "climate": {"source_id": "synthetic_benchmark", "source_type": "synthetic_benchmark"},
+    "operational": {"source_id": "synthetic_benchmark", "source_type": "synthetic_benchmark"}
+  },
+  "data_mode": "synthetic_capability_demonstration",
+  "observed_data_mode": "synthetic",
+  "feature_candidates": [
+    "rainfall_lag_2w", "rainfall_lag_4w", "temp_lag_2w", "temp_lag_4w",
+    "humidity_lag_2w", "humidity_lag_4w", "cases_lag_1w", "cases_lag_2w",
+    "cases_lag_4w", "cases_rolling_3w", "cases_rolling_4w", "cases_rolling_8w",
+    "growth_rate_1w", "growth_rate_2w", "epi_week_sin", "epi_week_cos",
+    "monsoon_flag", "post_monsoon_flag"
+  ],
+  "selected_features": [
+    "rainfall_lag_2w", "rainfall_lag_4w", "temp_lag_2w", "temp_lag_4w",
+    "humidity_lag_2w", "humidity_lag_4w", "cases_lag_1w", "cases_lag_2w",
+    "cases_lag_4w", "cases_rolling_3w", "cases_rolling_4w", "cases_rolling_8w",
+    "growth_rate_1w", "growth_rate_2w", "epi_week_sin", "epi_week_cos",
+    "monsoon_flag", "post_monsoon_flag"
+  ],
+  "formula_ids": [
+    "TARGET.HORIZON.2W", "FEATURE.CASE_LAGS", "FEATURE.CLIMATE_LAGS",
+    "FEATURE.CASE_ROLLING", "FEATURE.GROWTH_RATIOS", "FEATURE.SEASONAL_CYCLIC",
+    "FEATURE.SEASON_FLAGS", "MODEL.GBR.CONFIG", "MODEL.BASELINE.NAIVE",
+    "MODEL.BASELINE.MA4", "METRIC.MAE", "METRIC.RMSE", "METRIC.MAPE",
+    "FORECAST.GROWTH_FACTOR", "FORECAST.GROWTH_CATEGORY", "FORECAST.GROWTH_SCORE",
+    "FORECAST.RMSE_SENSITIVITY", "OPS.EXPOSURE.COMPOSITION", "OPS.EXPOSURE.ANOMALY",
+    "OPS.ALLOCATION.ZONE", "OPS.ALLOCATION.FACILITY", "OPS.ADMISSION_FRACTION",
+    "OPS.BED.DEMAND", "OPS.BED.DEFICIT", "OPS.STOCK.DYNAMIC_DEMAND", "OPS.STOCK.SDH",
+    "OPS.STOCK.THRESHOLDS", "OPS.PRIORITY.SCORE", "OPS.PRIORITY.CATEGORIES",
+    "OPS.DIRECTIVE.TRIGGERS", "EVIDENCE.FEATURE_IMPORTANCE", "VALIDATION.ROLLING_ORIGIN", "MODEL.CANDIDATE_COMPARISON",
+    "MODEL.SELECTED_MODEL_ADOPTION", "UNCERTAINTY.TEMPORAL_CALIBRATION"
+  ],
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "evidence_registry_schema_version": "1.0",
+  "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+  "model": {
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "model_id": "random_forest",
+    "model_version": "p1.3-v1",
+    "model_family": "RandomForestRegressor",
+    "estimator_library": "scikit-learn",
+    "model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "validation_method": "expanding_window_rolling_origin",
+    "training_period": "derived_from_current_run"
+  },
+  "operational_parameters": [],
+  "evidence_ids": [],
+  "approval_record_ids": [],
+  "deployment_gate": "benchmark_only",
+  "intended_use": [
+    "Demonstrate data input, validation, forecasting, preparedness analysis, and simulated preparedness notification using deterministic synthetic data."
+  ],
+  "prohibited_uses": [
+    "Clinical use.", "Official public-health use.", "Automatic real-world resource allocation.",
+    "Claims of local calibration.", "Claims of epidemiological validation.", "Claims of hospital approval.",
+    "Real-recipient automated notification."
+  ],
+  "limitations": [
+    "Data are deterministic synthetic benchmark data, not authorized surveillance or operational records.",
+    "Primary evaluation and the empirical forecast range use deterministic synthetic rolling-origin evidence; the legacy chronological holdout remains only for selected-model diagnostics and planning compatibility.",
+    "Historical empirical coverage is not a probability guarantee or evidence of real-world Dhaka calibration.",
+    "No institutional approval or local operational calibration exists."
+  ],
+  "maturity_statements": {
+    "maturity": "Technically functioning, scenario-tested, formula-governed research prototype.",
+    "demonstration": "This deployment profile uses deterministic synthetic data to demonstrate the complete data-input, validation, forecasting, preparedness-analysis, and notification workflow while authorized real data remain unavailable.",
+    "prohibited_claim": "The profile is not locally calibrated, epidemiologically validated, hospital-approved, or authorized for operational decision-making.",
+    "notification": "Simulated preparedness notification generated for workflow demonstration; no message was sent to an operational recipient."
+  },
+  "deprecated_compatibility_fields": {
+    "debt_id": "TD-P03A-LEGACY-RISK-FIELDS",
+    "status": "open",
+    "legacy_fields": ["risk_level", "risk_score", "recommendations"],
+    "canonical_fields": ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"],
+    "runtime_behavior": "preserved_for_backward_compatibility",
+    "deprecated": true
+  },
+  "candidate_comparison": {
+    "candidate_registry_path": "config/candidate_models.json",
+    "candidate_registry_version": "p1.2a-v1",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "enabled_candidate_ids": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"],
+    "comparison_policy_id": "MODEL.CANDIDATE_COMPARISON",
+    "comparison_execution_status": "required_explicit_flag_for_adoption",
+    "comparison_artifact_path": "data/candidate_model_comparison.json",
+    "comparison_artifact_hash_binding": "current_run_exact_bytes_committed_in_model_card",
+    "comparison_selected_model": "random_forest",
+    "adoption_target_model": "random_forest",
+    "selected_model_adoption_status": "adopted_p1.2b",
+    "current_active_forecast_model": "random_forest",
+    "adoption_policy_id": "MODEL.SELECTED_MODEL_ADOPTION",
+    "adoption_policy_version": "p1.2b-v1",
+    "selected_model_explainability_artifact_path": "data/selected_model_explainability.json",
+    "selected_model_explainability_status": "active_selected_model_diagnostic",
+    "selected_model_uncertainty_status": "temporally_evaluated_synthetic_empirical_range",
+    "retained_legacy_gbr_evidence_status": "historical_compatibility_only_not_active_model_evidence",
+    "comparison_limitations": ["Candidate comparison uses deterministic synthetic folds and does not establish real-world superiority."]
+  },
+  "forecast_uncertainty": {
+    "method_id": "prequential_expanding_absolute_residual_quantile",
+    "method_version": "p1.3-v1",
+    "nominal_coverage": 0.9,
+    "calibration_design": "prequential_expanding_window_prior_residuals_only",
+    "warmup_fold_count": 20,
+    "residual_source_artifact_path": "data/candidate_model_comparison.json",
+    "uncertainty_artifact_path": "data/forecast_uncertainty.json",
+    "uncertainty_artifact_hash_binding": "current_run_exact_bytes_committed_in_model_card",
+    "calibration_status": "temporally_evaluated_synthetic_empirical_range",
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "comparison_artifact_path": "data/candidate_model_comparison.json",
+    "operational_scenario_policy": "legacy_rf_rmse_planning_sensitivity_separate_from_forecast_uncertainty",
+    "retained_legacy_rmse_status": "operational_planning_compatibility_only_not_forecast_interval",
+    "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+  },
+  "effective_date": "2026-07-12",
+  "review_date": "2027-01-12",
+  "status": "active"
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "city": "Dhaka South",
+    "current_anomaly_adjustment": -0.05,
+    "density_weight": 0.555,
+    "exposure_index": 0.505,
+    "facility_pressure_weight": 0.47,
+    "mobility_corridor_weight": 0.665,
+    "population_share": 0.24,
+    "vulnerability_weight": 0.445,
+    "zone_id": "BZ01",
+    "zone_name": "Benchmark Zone 1"
+  },
+  {
+    "city": "Dhaka South",
+    "current_anomaly_adjustment": -0.025,
+    "density_weight": 0.63,
+    "exposure_index": 0.6,
+    "facility_pressure_weight": 0.56,
+    "mobility_corridor_weight": 0.61,
+    "population_share": 0.21,
+    "vulnerability_weight": 0.55,
+    "zone_id": "BZ02",
+    "zone_name": "Benchmark Zone 2"
+  },
+  {
+    "city": "Dhaka South",
+    "current_anomaly_adjustment": 0.0,
+    "density_weight": 0.705,
+    "exposure_index": 0.695,
+    "facility_pressure_weight": 0.65,
+    "mobility_corridor_weight": 0.555,
+    "population_share": 0.2,
+    "vulnerability_weight": 0.655,
+    "zone_id": "BZ03",
+    "zone_name": "Benchmark Zone 3"
+  },
+  {
+    "city": "Dhaka South",
+    "current_anomaly_adjustment": 0.025,
+    "density_weight": 0.78,
+    "exposure_index": 0.79,
+    "facility_pressure_weight": 0.74,
+    "mobility_corridor_weight": 0.5,
+    "population_share": 0.18,
+    "vulnerability_weight": 0.76,
+    "zone_id": "BZ04",
+    "zone_name": "Benchmark Zone 4"
+  },
+  {
+    "city": "Dhaka South",
+    "current_anomaly_adjustment": 0.05,
+    "density_weight": 0.855,
+    "exposure_index": 0.885,
+    "facility_pressure_weight": 0.83,
+    "mobility_corridor_weight": 0.445,
+    "population_share": 0.17,
+    "vulnerability_weight": 0.865,
+    "zone_id": "BZ05",
+    "zone_name": "Benchmark Zone 5"
+  }
+]

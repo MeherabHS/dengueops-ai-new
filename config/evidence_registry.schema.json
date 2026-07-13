@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.local/schemas/evidence_registry.schema.json",
+  "title": "DengueOps Evidence Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_registry_schema_version", "evidence_registry_version", "evidence"],
+  "properties": {
+    "evidence_registry_schema_version": {"const": "1.0"},
+    "evidence_registry_version": {"type": "string", "minLength": 1},
+    "evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evidenceRecord"}
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "nullableString": {"type": ["string", "null"]},
+    "evidenceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id", "record_version", "record_status", "title", "source_type",
+        "issuing_organization_or_journal", "publication_year", "geography", "population",
+        "study_design", "variables", "findings_summary", "formula_ids_supported",
+        "applicability", "limitations", "local_transferability", "verification_status",
+        "reviewed_by", "review_date", "document_location", "citation_identifier",
+        "supersedes_evidence_id", "content_sha256"
+      ],
+      "properties": {
+        "evidence_id": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9._-]{2,127}$"},
+        "record_version": {"$ref": "#/$defs/nonEmptyString"},
+        "record_status": {"enum": ["active", "superseded"]},
+        "title": {"$ref": "#/$defs/nonEmptyString"},
+        "source_type": {"enum": [
+          "software_documentation", "international_public_health_guidance", "national_guidance",
+          "peer_reviewed_systematic_review", "peer_reviewed_forecasting_study",
+          "local_empirical_analysis", "meteorological_documentation", "hospital_administrative_data",
+          "inventory_or_procurement_record", "expert_consensus", "institutional_policy",
+          "shadow_validation_result"
+        ]},
+        "issuing_organization_or_journal": {"$ref": "#/$defs/nonEmptyString"},
+        "publication_year": {"type": "integer", "minimum": 1900, "maximum": 2100},
+        "geography": {"$ref": "#/$defs/nonEmptyString"},
+        "population": {"$ref": "#/$defs/nonEmptyString"},
+        "study_design": {"$ref": "#/$defs/nonEmptyString"},
+        "variables": {"type": "array", "items": {"$ref": "#/$defs/nonEmptyString"}, "uniqueItems": true},
+        "findings_summary": {"$ref": "#/$defs/nonEmptyString"},
+        "formula_ids_supported": {"type": "array", "items": {"$ref": "#/$defs/nonEmptyString"}, "uniqueItems": true},
+        "applicability": {"enum": ["general_method", "research_candidate", "bangladesh_context", "dhaka_context", "deployment_specific", "not_transferable"]},
+        "limitations": {"type": "array", "items": {"$ref": "#/$defs/nonEmptyString"}, "minItems": 1},
+        "local_transferability": {"$ref": "#/$defs/nonEmptyString"},
+        "verification_status": {"enum": ["unverified", "under_review", "verified", "rejected", "superseded"]},
+        "reviewed_by": {"$ref": "#/$defs/nullableString"},
+        "review_date": {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
+        "document_location": {"$ref": "#/$defs/nullableString"},
+        "citation_identifier": {"$ref": "#/$defs/nullableString"},
+        "supersedes_evidence_id": {"$ref": "#/$defs/nullableString"},
+        "content_sha256": {"anyOf": [{"type": "string", "pattern": "^[0-9a-f]{64}$"}, {"type": "null"}]}
+      }
+    }
+  }
+}

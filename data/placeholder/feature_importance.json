@@ -1,0 +1,37 @@
+[
+  {
+    "feature": "previous_cases",
+    "label": "Previous Week Cases",
+    "importance": 0.312,
+    "lag_weeks": 1,
+    "description": "Dengue case count from the prior epi week — strongest autoregressive signal."
+  },
+  {
+    "feature": "rainfall_lag_4w",
+    "label": "Rainfall (4-Week Lag)",
+    "importance": 0.241,
+    "lag_weeks": 4,
+    "description": "Cumulative rainfall lagged 4 weeks to align with Aedes mosquito development cycle."
+  },
+  {
+    "feature": "cases_rolling_3w",
+    "label": "Rolling 3-Week Case Mean",
+    "importance": 0.198,
+    "lag_weeks": null,
+    "description": "3-week rolling average smooths noise and captures short-term trend momentum."
+  },
+  {
+    "feature": "humidity_lag_4w",
+    "label": "Humidity (4-Week Lag)",
+    "importance": 0.143,
+    "lag_weeks": 4,
+    "description": "Relative humidity lagged 4 weeks; high humidity accelerates larval development."
+  },
+  {
+    "feature": "epi_week_sin",
+    "label": "Epi Week (Seasonal Encoding)",
+    "importance": 0.106,
+    "lag_weeks": null,
+    "description": "Sine encoding of epi week captures seasonal cyclicity without ordinal bias."
+  }
+]

@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.local/schemas/deployment_profile.schema.json",
+  "title": "DengueOps Deployment Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_schema_version", "deployment_id", "name", "geography", "timezone",
+    "surveillance_frequency", "case_definition", "data_sources", "data_mode",
+    "observed_data_mode", "feature_candidates", "selected_features", "formula_ids",
+    "formula_registry_version", "formula_registry_sha256", "evidence_registry_schema_version",
+    "evidence_registry_sha256", "model", "operational_parameters", "evidence_ids",
+    "approval_record_ids", "deployment_gate", "intended_use", "prohibited_uses",
+    "limitations", "maturity_statements", "deprecated_compatibility_fields", "candidate_comparison", "forecast_uncertainty",
+    "effective_date", "review_date", "status"
+  ],
+  "properties": {
+    "profile_schema_version": {"const": "1.0"},
+    "deployment_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+    "name": {"$ref": "#/$defs/nonEmpty"},
+    "geography": {"$ref": "#/$defs/geography"},
+    "timezone": {"$ref": "#/$defs/nonEmpty"},
+    "surveillance_frequency": {"const": "weekly"},
+    "case_definition": {"$ref": "#/$defs/nonEmpty"},
+    "data_sources": {"$ref": "#/$defs/dataSources"},
+    "data_mode": {"enum": ["synthetic_capability_demonstration", "research_candidate", "locally_calibrated_deployment", "institution_approved_deployment"]},
+    "observed_data_mode": {"enum": ["synthetic", "real", "mixed"]},
+    "feature_candidates": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "uniqueItems": true},
+    "selected_features": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1, "uniqueItems": true},
+    "formula_ids": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1, "uniqueItems": true},
+    "formula_registry_version": {"$ref": "#/$defs/nonEmpty"},
+    "formula_registry_sha256": {"$ref": "#/$defs/sha256"},
+    "evidence_registry_schema_version": {"const": "1.0"},
+    "evidence_registry_sha256": {"$ref": "#/$defs/sha256"},
+    "model": {"$ref": "#/$defs/model"},
+    "operational_parameters": {"type": "array", "items": {"type": "object"}},
+    "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "uniqueItems": true},
+    "approval_record_ids": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "uniqueItems": true},
+    "deployment_gate": {"$ref": "#/$defs/deploymentGate"},
+    "intended_use": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
+    "prohibited_uses": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
+    "limitations": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
+    "maturity_statements": {"$ref": "#/$defs/maturity"},
+    "deprecated_compatibility_fields": {"$ref": "#/$defs/debt"},
+    "candidate_comparison": {"$ref": "#/$defs/candidateComparison"},
+    "forecast_uncertainty": {"$ref": "#/$defs/forecastUncertainty"},
+    "effective_date": {"type": "string", "format": "date"},
+    "review_date": {"type": "string", "format": "date"},
+    "status": {"enum": ["draft", "active", "suspended", "retired", "superseded"]}
+  },
+  "$defs": {
+    "nonEmpty": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "deploymentGate": {"enum": ["benchmark_only", "research_candidate", "locally_backtested", "expert_reviewed", "institution_approved", "shadow_validated", "operational_advisory"]},
+    "geography": {
+      "type": "object", "additionalProperties": false,
+      "required": ["level", "id", "name"],
+      "properties": {"level": {"const": "city"}, "id": {"$ref": "#/$defs/nonEmpty"}, "name": {"$ref": "#/$defs/nonEmpty"}}
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_id", "source_type"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/nonEmpty"},
+        "source_type": {"enum": ["synthetic_benchmark", "synthetic_demo", "public_research", "authorized_surveillance", "authorized_meteorological", "authorized_hospital", "authorized_inventory"]}
+      }
+    },
+    "dataSources": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cases", "climate", "operational"],
+      "properties": {"cases": {"$ref": "#/$defs/source"}, "climate": {"$ref": "#/$defs/source"}, "operational": {"$ref": "#/$defs/source"}}
+    },
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_card_id", "model_card_version", "model_id", "model_version", "model_family", "estimator_library", "model_parameters_sha256", "validation_method", "training_period"],
+      "properties": {
+        "model_card_id": {"$ref": "#/$defs/nonEmpty"}, "model_card_version": {"$ref": "#/$defs/nonEmpty"},
+        "model_id": {"$ref": "#/$defs/nonEmpty"}, "model_version": {"$ref": "#/$defs/nonEmpty"},
+        "model_family": {"$ref": "#/$defs/nonEmpty"}, "estimator_library": {"$ref": "#/$defs/nonEmpty"},
+        "model_parameters_sha256": {"$ref": "#/$defs/sha256"},
+        "validation_method": {"$ref": "#/$defs/nonEmpty"},
+        "training_period": {"enum": ["derived_from_current_run"]}
+      }
+    },
+    "maturity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["maturity", "demonstration", "prohibited_claim", "notification"],
+      "properties": {"maturity": {"$ref": "#/$defs/nonEmpty"}, "demonstration": {"$ref": "#/$defs/nonEmpty"}, "prohibited_claim": {"$ref": "#/$defs/nonEmpty"}, "notification": {"$ref": "#/$defs/nonEmpty"}}
+    },
+    "debt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["debt_id", "status", "legacy_fields", "canonical_fields", "runtime_behavior", "deprecated"],
+      "properties": {
+        "debt_id": {"const": "TD-P03A-LEGACY-RISK-FIELDS"}, "status": {"const": "open"},
+        "legacy_fields": {"const": ["risk_level", "risk_score", "recommendations"]},
+        "canonical_fields": {"const": ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"]},
+        "runtime_behavior": {"const": "preserved_for_backward_compatibility"}, "deprecated": {"const": true}
+      }
+    },
+    "candidateComparison": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_registry_path", "candidate_registry_version", "candidate_registry_sha256", "enabled_candidate_ids", "comparison_policy_id", "comparison_execution_status", "comparison_artifact_path", "comparison_artifact_hash_binding", "comparison_selected_model", "adoption_target_model", "selected_model_adoption_status", "current_active_forecast_model", "adoption_policy_id", "adoption_policy_version", "selected_model_explainability_artifact_path", "selected_model_explainability_status", "selected_model_uncertainty_status", "retained_legacy_gbr_evidence_status", "comparison_limitations"],
+      "properties": {
+        "candidate_registry_path": {"const": "config/candidate_models.json"}, "candidate_registry_version": {"const": "p1.2a-v1"},
+        "candidate_registry_sha256": {"$ref": "#/$defs/sha256"}, "enabled_candidate_ids": {"type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true, "items": {"$ref": "#/$defs/nonEmpty"}},
+        "comparison_policy_id": {"const": "MODEL.CANDIDATE_COMPARISON"}, "comparison_execution_status": {"const": "required_explicit_flag_for_adoption"},
+        "comparison_artifact_path": {"const": "data/candidate_model_comparison.json"}, "comparison_artifact_hash_binding": {"const": "current_run_exact_bytes_committed_in_model_card"},
+        "comparison_selected_model": {"const": "random_forest"}, "adoption_target_model": {"const": "random_forest"},
+        "selected_model_adoption_status": {"const": "adopted_p1.2b"}, "current_active_forecast_model": {"const": "random_forest"},
+        "adoption_policy_id": {"const": "MODEL.SELECTED_MODEL_ADOPTION"}, "adoption_policy_version": {"const": "p1.2b-v1"},
+        "selected_model_explainability_artifact_path": {"const": "data/selected_model_explainability.json"},
+        "selected_model_explainability_status": {"const": "active_selected_model_diagnostic"},
+        "selected_model_uncertainty_status": {"const": "temporally_evaluated_synthetic_empirical_range"},
+        "retained_legacy_gbr_evidence_status": {"const": "historical_compatibility_only_not_active_model_evidence"},
+        "comparison_limitations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonEmpty"}}
+      }
+    },
+    "forecastUncertainty": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method_id", "method_version", "nominal_coverage", "calibration_design", "warmup_fold_count",
+        "residual_source_artifact_path", "uncertainty_artifact_path", "uncertainty_artifact_hash_binding",
+        "calibration_status", "active_model_id", "active_model_parameters_sha256", "comparison_artifact_path",
+        "operational_scenario_policy", "retained_legacy_rmse_status", "feature_order_sha256"],
+      "properties": {
+        "method_id": {"const": "prequential_expanding_absolute_residual_quantile"}, "method_version": {"const": "p1.3-v1"},
+        "nominal_coverage": {"const": 0.9}, "calibration_design": {"const": "prequential_expanding_window_prior_residuals_only"},
+        "warmup_fold_count": {"const": 20}, "residual_source_artifact_path": {"const": "data/candidate_model_comparison.json"},
+        "uncertainty_artifact_path": {"const": "data/forecast_uncertainty.json"},
+        "uncertainty_artifact_hash_binding": {"const": "current_run_exact_bytes_committed_in_model_card"},
+        "calibration_status": {"const": "temporally_evaluated_synthetic_empirical_range"},
+        "active_model_id": {"const": "random_forest"}, "active_model_parameters_sha256": {"$ref": "#/$defs/sha256"},
+        "comparison_artifact_path": {"const": "data/candidate_model_comparison.json"},
+        "operational_scenario_policy": {"const": "legacy_rf_rmse_planning_sensitivity_separate_from_forecast_uncertainty"},
+        "retained_legacy_rmse_status": {"const": "operational_planning_compatibility_only_not_forecast_interval"},
+        "feature_order_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

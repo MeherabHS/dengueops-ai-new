@@ -1,0 +1,298 @@
+{
+  "schema_version": "1.0",
+  "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+  "created_at": "2026-07-13T09:08:42Z",
+  "inputs": {
+    "cases": {
+      "selected_source": "synthetic_benchmark",
+      "detected_source": "synthetic_benchmark",
+      "source_tag": "synthetic_benchmark",
+      "source_class": "synthetic",
+      "files": [
+        {
+          "path": "data/dengue_cases.csv",
+          "sha256": "10d8cc510e6a3cc82391341d8f649a4e38844c85663020009871053f216ee029"
+        }
+      ],
+      "counts": {
+        "rows": 180
+      },
+      "period": {
+        "start": {
+          "epi_year": 2021,
+          "epi_week": 1
+        },
+        "end": {
+          "epi_year": 2024,
+          "epi_week": 24
+        }
+      },
+      "geography": {
+        "level": "city",
+        "id": "BGD-DHAKA-SOUTH",
+        "name": "Dhaka South"
+      },
+      "frequency": "weekly",
+      "units": {
+        "cases": "count/week",
+        "deaths": "count/week"
+      },
+      "validation": {
+        "status": "passed",
+        "warnings": []
+      },
+      "adapter_metadata": {
+        "metadata_schema_version": "1.0",
+        "adapter": "synthetic_benchmark",
+        "simulation_version": "benchmark-v1",
+        "config_version": "1.0",
+        "scenario": "normal",
+        "seed": 42,
+        "configuration_fingerprint": "9e494fdf986de2725810c500b50ae85f74aa80270b10607aa753388ba25d1a8b",
+        "period": {
+          "end": {
+            "epi_week": 24,
+            "epi_year": 2024
+          },
+          "start": {
+            "epi_week": 1,
+            "epi_year": 2021
+          }
+        },
+        "geography": {
+          "id": "BGD-DHAKA-SOUTH",
+          "latitude": 23.7104,
+          "level": "city",
+          "longitude": 90.4074,
+          "name": "Dhaka South"
+        },
+        "output_files": {
+          "climate_data.csv": "data/climate_data.csv",
+          "dengue_cases.csv": "data/dengue_cases.csv",
+          "facilities.json": "data/facilities.json",
+          "inventory.json": "data/inventory.json",
+          "zones.json": "data/zones.json"
+        },
+        "output_hashes": {
+          "climate_data.csv": "f82a5ff97a4f5086f254efd5a8112dea144b59ebf6ef450ae417fc8c06ce56e4",
+          "dengue_cases.csv": "10d8cc510e6a3cc82391341d8f649a4e38844c85663020009871053f216ee029",
+          "facilities.json": "0812c1d87277d881f3b5b64308f3811930fe8ed4f84d2fd8736733ae83a67c2f",
+          "inventory.json": "993bf9b884b6d435d643123e6d4a79b15332a649fc662a6dc92e8b0146110ba7",
+          "zones.json": "f0acbf5f689755e7c823dd126cc6f5b9a447b5600656163587efba482bc27421"
+        }
+      }
+    },
+    "climate": {
+      "selected_source": "synthetic_benchmark",
+      "detected_source": "synthetic_benchmark",
+      "source_tag": "synthetic_benchmark",
+      "source_class": "synthetic",
+      "files": [
+        {
+          "path": "data/climate_data.csv",
+          "sha256": "f82a5ff97a4f5086f254efd5a8112dea144b59ebf6ef450ae417fc8c06ce56e4"
+        }
+      ],
+      "counts": {
+        "rows": 180
+      },
+      "period": {
+        "start": {
+          "epi_year": 2021,
+          "epi_week": 1
+        },
+        "end": {
+          "epi_year": 2024,
+          "epi_week": 24
+        }
+      },
+      "geography": {
+        "level": "city",
+        "id": "BGD-DHAKA-SOUTH",
+        "name": "Dhaka South"
+      },
+      "frequency": "weekly",
+      "units": {
+        "rainfall_mm": "mm/week",
+        "avg_temp_c": "degrees_celsius",
+        "humidity_pct": "percent"
+      },
+      "validation": {
+        "status": "passed",
+        "warnings": []
+      },
+      "adapter_metadata": {
+        "metadata_schema_version": "1.0",
+        "adapter": "synthetic_benchmark",
+        "simulation_version": "benchmark-v1",
+        "config_version": "1.0",
+        "scenario": "normal",
+        "seed": 42,
+        "configuration_fingerprint": "9e494fdf986de2725810c500b50ae85f74aa80270b10607aa753388ba25d1a8b",
+        "period": {
+          "end": {
+            "epi_week": 24,
+            "epi_year": 2024
+          },
+          "start": {
+            "epi_week": 1,
+            "epi_year": 2021
+          }
+        },
+        "geography": {
+          "id": "BGD-DHAKA-SOUTH",
+          "latitude": 23.7104,
+          "level": "city",
+          "longitude": 90.4074,
+          "name": "Dhaka South"
+        },
+        "output_files": {
+          "climate_data.csv": "data/climate_data.csv",
+          "dengue_cases.csv": "data/dengue_cases.csv",
+          "facilities.json": "data/facilities.json",
+          "inventory.json": "data/inventory.json",
+          "zones.json": "data/zones.json"
+        },
+        "output_hashes": {
+          "climate_data.csv": "f82a5ff97a4f5086f254efd5a8112dea144b59ebf6ef450ae417fc8c06ce56e4",
+          "dengue_cases.csv": "10d8cc510e6a3cc82391341d8f649a4e38844c85663020009871053f216ee029",
+          "facilities.json": "0812c1d87277d881f3b5b64308f3811930fe8ed4f84d2fd8736733ae83a67c2f",
+          "inventory.json": "993bf9b884b6d435d643123e6d4a79b15332a649fc662a6dc92e8b0146110ba7",
+          "zones.json": "f0acbf5f689755e7c823dd126cc6f5b9a447b5600656163587efba482bc27421"
+        }
+      }
+    },
+    "operational": {
+      "selected_source": "synthetic_benchmark",
+      "detected_source": "synthetic_benchmark",
+      "source_tag": "synthetic_benchmark",
+      "source_class": "synthetic",
+      "files": [
+        {
+          "path": "data/zones.json",
+          "sha256": "f0acbf5f689755e7c823dd126cc6f5b9a447b5600656163587efba482bc27421"
+        },
+        {
+          "path": "data/facilities.json",
+          "sha256": "0812c1d87277d881f3b5b64308f3811930fe8ed4f84d2fd8736733ae83a67c2f"
+        },
+        {
+          "path": "data/inventory.json",
+          "sha256": "993bf9b884b6d435d643123e6d4a79b15332a649fc662a6dc92e8b0146110ba7"
+        }
+      ],
+      "counts": {
+        "zones": 5,
+        "facilities": 10,
+        "inventory_records": 20
+      },
+      "period": null,
+      "geography": {
+        "level": "city",
+        "id": "BGD-DHAKA-SOUTH",
+        "name": "Dhaka South"
+      },
+      "frequency": null,
+      "units": {
+        "capacity": "beds",
+        "current_stock": "item_units",
+        "baseline_daily_consumption": "item_units/day",
+        "avg_length_of_stay": "days"
+      },
+      "validation": {
+        "status": "passed",
+        "warnings": []
+      },
+      "adapter_metadata": {
+        "metadata_schema_version": "1.0",
+        "adapter": "synthetic_benchmark",
+        "simulation_version": "benchmark-v1",
+        "config_version": "1.0",
+        "scenario": "normal",
+        "seed": 42,
+        "configuration_fingerprint": "9e494fdf986de2725810c500b50ae85f74aa80270b10607aa753388ba25d1a8b",
+        "period": {
+          "end": {
+            "epi_week": 24,
+            "epi_year": 2024
+          },
+          "start": {
+            "epi_week": 1,
+            "epi_year": 2021
+          }
+        },
+        "geography": {
+          "id": "BGD-DHAKA-SOUTH",
+          "latitude": 23.7104,
+          "level": "city",
+          "longitude": 90.4074,
+          "name": "Dhaka South"
+        },
+        "output_files": {
+          "climate_data.csv": "data/climate_data.csv",
+          "dengue_cases.csv": "data/dengue_cases.csv",
+          "facilities.json": "data/facilities.json",
+          "inventory.json": "data/inventory.json",
+          "zones.json": "data/zones.json"
+        },
+        "output_hashes": {
+          "climate_data.csv": "f82a5ff97a4f5086f254efd5a8112dea144b59ebf6ef450ae417fc8c06ce56e4",
+          "dengue_cases.csv": "10d8cc510e6a3cc82391341d8f649a4e38844c85663020009871053f216ee029",
+          "facilities.json": "0812c1d87277d881f3b5b64308f3811930fe8ed4f84d2fd8736733ae83a67c2f",
+          "inventory.json": "993bf9b884b6d435d643123e6d4a79b15332a649fc662a6dc92e8b0146110ba7",
+          "zones.json": "f0acbf5f689755e7c823dd126cc6f5b9a447b5600656163587efba482bc27421"
+        }
+      }
+    }
+  },
+  "cross_source_validation": {
+    "status": "passed",
+    "overlap_weeks": 180,
+    "expected_supervised_rows": 173,
+    "period": {
+      "start": {
+        "epi_year": 2021,
+        "epi_week": 1
+      },
+      "end": {
+        "epi_year": 2024,
+        "epi_week": 24
+      }
+    }
+  },
+  "warnings": [],
+  "overrides": [],
+  "synthetic": {
+    "seed": 42,
+    "scenario": "normal",
+    "simulation_version": "benchmark-v1",
+    "domains": [
+      "cases",
+      "climate",
+      "operational"
+    ]
+  },
+  "governance": {
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "observed_data_mode": "synthetic",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_version": "p0.3c-v1",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "formula_registry_version": "p1.3-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_status": "adopted_p1.2b",
+    "adoption_policy_version": "p1.2b-v1",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  }
+}

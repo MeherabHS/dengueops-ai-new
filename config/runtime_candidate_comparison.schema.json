@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.ai/schemas/runtime_candidate_comparison.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion","assessmentId","jobId","workspaceId","datasetId","deploymentId","assessmentPolicySha256","candidateRegistrySha256","rollingValidationSha256","foldPlanSha256","plannedFoldCount","candidateSetStatus","comparisonPolicy","candidates","selectionEligibleCandidateIds","technicalWinnerModelId","winnerParameterSha256","selectionReason","tieStage","tieResolutionSteps","baselineRequirementSatisfied","learnedModelRequirementSatisfied","automaticAdoptionAllowed","generatedAt"],
+  "properties": {
+    "schemaVersion":{"const":"1.0"}, "assessmentId":{"$ref":"#/$defs/uuid"}, "jobId":{"$ref":"#/$defs/uuid"}, "workspaceId":{"$ref":"#/$defs/uuid"},
+    "datasetId":{"$ref":"#/$defs/sha"}, "deploymentId":{"const":"dhaka_south"}, "assessmentPolicySha256":{"$ref":"#/$defs/sha"},
+    "candidateRegistrySha256":{"$ref":"#/$defs/sha"}, "rollingValidationSha256":{"$ref":"#/$defs/sha"}, "foldPlanSha256":{"$ref":"#/$defs/sha"},
+    "plannedFoldCount":{"const":68}, "candidateSetStatus":{"$ref":"#/$defs/setStatus"},
+    "comparisonPolicy":{"type":"object","additionalProperties":false,"required":["policyId","policyVersion","primaryMetric","tieSequence","tieTolerance","weightedScoring","intersectionOnlyFolds"],"properties":{"policyId":{"const":"RUNTIME.ASSESSMENT.CANDIDATE_COMPARISON"},"policyVersion":{"const":"p1.4d-1-v1"},"primaryMetric":{"const":"mae"},"tieSequence":{"const":["rmse","wape","median_absolute_error","maximum_absolute_error","selection_complexity_rank","model_id"]},"tieTolerance":{"const":1e-9},"weightedScoring":{"const":false},"intersectionOnlyFolds":{"const":false}}},
+    "candidates":{"type":"array","minItems":7,"maxItems":7,"items":{"$ref":"#/$defs/candidate"}},
+    "selectionEligibleCandidateIds":{"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/model"}},
+    "technicalWinnerModelId":{"anyOf":[{"$ref":"#/$defs/model"},{"type":"null"}]}, "winnerParameterSha256":{"anyOf":[{"$ref":"#/$defs/sha"},{"type":"null"}]},
+    "selectionReason":{"type":"string","minLength":1}, "tieStage":{"type":["string","null"]}, "tieResolutionSteps":{"type":"array","items":{"type":"string","minLength":1}},
+    "baselineRequirementSatisfied":{"type":"boolean"}, "learnedModelRequirementSatisfied":{"type":"boolean"}, "automaticAdoptionAllowed":{"const":false}, "generatedAt":{"type":"string","format":"date-time"}
+  },
+  "$defs": {
+    "uuid":{"type":"string","format":"uuid"}, "sha":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "model":{"enum":["previous_week_naive","moving_average_4w","seasonal_naive_52w","ridge_regression","poisson_regression","random_forest","gradient_boosting"]},
+    "setStatus":{"enum":["complete_candidate_set","partial_candidate_set","insufficient_candidate_breadth"]},
+    "metrics":{"type":"object","additionalProperties":false,"required":["mae","rmse","wape","medianAbsoluteError","maximumAbsoluteError","clippingCount","warningCount","runtimeSeconds"],"properties":{"mae":{"type":"number","minimum":0},"rmse":{"type":"number","minimum":0},"wape":{"type":["number","null"],"minimum":0},"medianAbsoluteError":{"type":"number","minimum":0},"maximumAbsoluteError":{"type":"number","minimum":0},"clippingCount":{"type":"integer","minimum":0},"warningCount":{"type":"integer","minimum":0},"runtimeSeconds":{"type":"number","minimum":0}}},
+    "candidate":{"type":"object","additionalProperties":false,"required":["modelId","modelLabel","candidateClass","deployabilityClass","parametersSha256","eligible","completionStatus","reasonCodes","reasons","successfulFolds","failedFolds","selectionEligible","selectionComplexityRank","metrics","executionMode","historicalPredictionsReused","foldWinsTiesLosses"],"properties":{
+      "modelId":{"$ref":"#/$defs/model"}, "modelLabel":{"type":"string","minLength":1}, "candidateClass":{"enum":["naive_baseline","learned_model"]}, "deployabilityClass":{"enum":["baseline_not_runtime_deployable","deployable_learned_model"]},
+      "parametersSha256":{"$ref":"#/$defs/sha"}, "eligible":{"type":"boolean"}, "completionStatus":{"enum":["complete","incomplete","ineligible"]},
+      "reasonCodes":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}}, "reasons":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}},
+      "successfulFolds":{"type":"integer","minimum":0,"maximum":68}, "failedFolds":{"type":"integer","minimum":0,"maximum":68}, "selectionEligible":{"type":"boolean"}, "selectionComplexityRank":{"type":"integer","minimum":1,"maximum":7},
+      "metrics":{"anyOf":[{"$ref":"#/$defs/metrics"},{"type":"null"}]}, "executionMode":{"enum":["fitted_per_fold","deterministic_baseline_per_fold"]}, "historicalPredictionsReused":{"const":false},
+      "foldWinsTiesLosses":{"anyOf":[{"type":"object","additionalProperties":false,"required":["better","tied","worse"],"properties":{"better":{"type":"integer","minimum":0},"tied":{"type":"integer","minimum":0},"worse":{"type":"integer","minimum":0}}},{"type":"null"}]}
+    }}
+  }
+}

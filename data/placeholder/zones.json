@@ -1,0 +1,67 @@
+[
+  {
+    "zone_id": "Z01",
+    "zone_name": "Kamrangirchar",
+    "city": "Dhaka South",
+    "population_share": 0.22,
+    "density_weight": 0.28,
+    "facility_pressure_weight": 0.25,
+    "mobility_corridor_weight": 0.18,
+    "vulnerability_weight": 0.32,
+    "exposure_index": 0.34,
+    "current_anomaly_adjustment": 1.12,
+    "profile": "High-density informal"
+  },
+  {
+    "zone_id": "Z02",
+    "zone_name": "Mitford / Old Dhaka",
+    "city": "Dhaka South",
+    "population_share": 0.19,
+    "density_weight": 0.24,
+    "facility_pressure_weight": 0.30,
+    "mobility_corridor_weight": 0.26,
+    "vulnerability_weight": 0.22,
+    "exposure_index": 0.27,
+    "current_anomaly_adjustment": 1.08,
+    "profile": "Dense commercial-residential"
+  },
+  {
+    "zone_id": "Z03",
+    "zone_name": "Dhanmondi",
+    "city": "Dhaka South",
+    "population_share": 0.18,
+    "density_weight": 0.18,
+    "facility_pressure_weight": 0.20,
+    "mobility_corridor_weight": 0.22,
+    "vulnerability_weight": 0.14,
+    "exposure_index": 0.18,
+    "current_anomaly_adjustment": 0.97,
+    "profile": "Mixed residential-institutional"
+  },
+  {
+    "zone_id": "Z04",
+    "zone_name": "Jatrabari / Sayedabad",
+    "city": "Dhaka South",
+    "population_share": 0.21,
+    "density_weight": 0.22,
+    "facility_pressure_weight": 0.15,
+    "mobility_corridor_weight": 0.24,
+    "vulnerability_weight": 0.21,
+    "exposure_index": 0.24,
+    "current_anomaly_adjustment": 1.05,
+    "profile": "High-density transport hub"
+  },
+  {
+    "zone_id": "Z05",
+    "zone_name": "Lalbagh / Hazaribagh",
+    "city": "Dhaka South",
+    "population_share": 0.20,
+    "density_weight": 0.20,
+    "facility_pressure_weight": 0.22,
+    "mobility_corridor_weight": 0.18,
+    "vulnerability_weight": 0.19,
+    "exposure_index": 0.21,
+    "current_anomaly_adjustment": 1.02,
+    "profile": "Dense industrial-residential"
+  }
+]

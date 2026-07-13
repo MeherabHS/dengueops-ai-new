@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.ai/schemas/runtime_quick_forecast_policy.schema.json",
+  "title": "DengueOps governed Quick Forecast compatibility policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "policy_id", "policy_version", "policy_status", "policy_sha256",
+    "policy_hash_method", "deployment_id", "geography_scope", "effective_state", "intended_use",
+    "runtime_upload_permission", "deployment_gate_compatibility", "approved_model",
+    "candidate_registry_sha256", "feature_contract", "input_contract", "source_scope",
+    "minimum_history", "temporal_quality", "operational_input_policy", "uncertainty_policy",
+    "preparedness_policy", "limitations", "prohibited_claims"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"},
+    "policy_version": {"const": "p1.4c-1-v1"},
+    "policy_status": {"enum": ["active", "inactive", "suspended"]},
+    "policy_sha256": {"$ref": "#/$defs/sha256"},
+    "policy_hash_method": {"const": "sha256_canonical_json_excluding_policy_sha256"},
+    "deployment_id": {"const": "dhaka_south"},
+    "geography_scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["level", "id", "name", "exact_match_required", "cross_deployment_use"],
+      "properties": {
+        "level": {"const": "city"}, "id": {"const": "BGD-DHAKA-SOUTH"},
+        "name": {"const": "Dhaka South"}, "exact_match_required": {"const": true},
+        "cross_deployment_use": {"const": false}
+      }
+    },
+    "effective_state": {"const": "effective_for_declared_synthetic_benchmark_upload_scope_only"},
+    "intended_use": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonEmpty"}},
+    "runtime_upload_permission": {"type": "boolean"},
+    "deployment_gate_compatibility": {"type": "array", "const": ["benchmark_only"]},
+    "approved_model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_id", "model_family", "parameters_sha256", "client_model_selection_allowed", "parameter_override_allowed"],
+      "properties": {
+        "model_id": {"const": "random_forest"}, "model_family": {"const": "RandomForestRegressor"},
+        "parameters_sha256": {"$ref": "#/$defs/sha256"},
+        "client_model_selection_allowed": {"const": false}, "parameter_override_allowed": {"const": false}
+      }
+    },
+    "candidate_registry_sha256": {"$ref": "#/$defs/sha256"},
+    "feature_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["feature_order_sha256", "feature_count", "unsupported_substitution_allowed", "missing_climate_variables_allowed"],
+      "properties": {
+        "feature_order_sha256": {"$ref": "#/$defs/sha256"}, "feature_count": {"const": 18},
+        "unsupported_substitution_allowed": {"const": false}, "missing_climate_variables_allowed": {"const": false}
+      }
+    },
+    "input_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["canonical_contract_version", "target", "forecast_horizon_weeks", "period_contract", "required_case_columns", "required_climate_columns"],
+      "properties": {
+        "canonical_contract_version": {"const": "p1.4b-canonical-upload-v1"},
+        "target": {"const": "target_cases_next_2w"}, "forecast_horizon_weeks": {"const": 2},
+        "period_contract": {"const": "ISO_year_week_with_date_start_equal_to_ISO_Monday_weeks_1_through_52"},
+        "required_case_columns": {"type": "array", "minItems": 13, "maxItems": 13, "uniqueItems": true, "items": {"$ref": "#/$defs/nonEmpty"}},
+        "required_climate_columns": {"type": "array", "minItems": 15, "maxItems": 15, "uniqueItems": true, "items": {"$ref": "#/$defs/nonEmpty"}}
+      }
+    },
+    "source_scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cases", "climate"],
+      "properties": {
+        "cases": {"$ref": "#/$defs/sourceRule"}, "climate": {"$ref": "#/$defs/sourceRule"}
+      }
+    },
+    "minimum_history": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rule_id", "rule_version", "minimum_overlap_weeks", "minimum_labelled_rows", "feature_burn_in_weeks", "target_horizon_weeks", "rationale"],
+      "properties": {
+        "rule_id": {"const": "QUICK_FORECAST.MINIMUM_TWO_SEASON_TRAINING_HISTORY"},
+        "rule_version": {"const": "1.0"}, "minimum_overlap_weeks": {"const": 111},
+        "minimum_labelled_rows": {"const": 104}, "feature_burn_in_weeks": {"const": 5},
+        "target_horizon_weeks": {"const": 2}, "rationale": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "temporal_quality": {
+      "type": "object", "additionalProperties": false,
+      "required": ["chronological_order_required", "duplicate_periods_allowed", "missing_periods_allowed", "contiguous_history_required", "case_climate_alignment_required", "valid_inference_row_required"],
+      "properties": {
+        "chronological_order_required": {"const": true}, "duplicate_periods_allowed": {"const": false},
+        "missing_periods_allowed": {"const": false}, "contiguous_history_required": {"const": true},
+        "case_climate_alignment_required": {"const": true}, "valid_inference_row_required": {"const": true}
+      }
+    },
+    "operational_input_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required_for_point_forecast", "runtime_operational_outputs_allowed"],
+      "properties": {"required_for_point_forecast": {"const": false}, "runtime_operational_outputs_allowed": {"const": false}}
+    },
+    "uncertainty_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["eligible_status", "ineligible_status", "bounds", "inherit_nominal_coverage", "inherit_historical_coverage", "synthetic_p1_3_range_reusable", "rmse_fallback_allowed", "interval_claim_allowed"],
+      "properties": {
+        "eligible_status": {"const": "pending_dataset_specific_calibration"},
+        "ineligible_status": {"const": "unavailable_for_uploaded_dataset"}, "bounds": {"type": "null"},
+        "inherit_nominal_coverage": {"const": false}, "inherit_historical_coverage": {"const": false},
+        "synthetic_p1_3_range_reusable": {"const": false}, "rmse_fallback_allowed": {"const": false},
+        "interval_claim_allowed": {"const": false}
+      }
+    },
+    "preparedness_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "generation_enabled", "bundled_scenarios_reusable", "planning_scenario_policy_approved", "directives_allowed", "facilities_allowed", "alerts_allowed"],
+      "properties": {
+        "status": {"const": "unavailable_missing_planning_policy"}, "generation_enabled": {"const": false},
+        "bundled_scenarios_reusable": {"const": false}, "planning_scenario_policy_approved": {"const": false},
+        "directives_allowed": {"const": false}, "facilities_allowed": {"const": false}, "alerts_allowed": {"const": false}
+      }
+    },
+    "limitations": {"type": "array", "minItems": 4, "items": {"$ref": "#/$defs/nonEmpty"}},
+    "prohibited_claims": {"type": "array", "minItems": 5, "items": {"$ref": "#/$defs/nonEmpty"}}
+  },
+  "$defs": {
+    "nonEmpty": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sourceRule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed_source_types", "allowed_aggregation_methods", "approximated_values_allowed"],
+      "properties": {
+        "allowed_source_types": {"type": "array", "const": ["synthetic_benchmark"]},
+        "allowed_aggregation_methods": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/nonEmpty"}},
+        "approximated_values_allowed": {"const": false}
+      }
+    }
+  }
+}

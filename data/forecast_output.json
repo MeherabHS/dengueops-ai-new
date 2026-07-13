@@ -1,0 +1,449 @@
+{
+  "forecast_id": 1,
+  "date_generated": "2026-07-13T09:09:26Z",
+  "latest_known_epi_year": 2024,
+  "latest_known_epi_week": 24,
+  "training_cutoff_epi_year": 2024,
+  "training_cutoff_epi_week": 22,
+  "target_epi_year": 2024,
+  "target_epi_week": 26,
+  "horizon_days": 14,
+  "target": "target_cases_next_2w",
+  "forecast_origin": {
+    "epi_year": 2024,
+    "epi_week": 24
+  },
+  "training_cutoff": {
+    "epi_year": 2024,
+    "epi_week": 22
+  },
+  "training_rows": 173,
+  "city": "Dhaka South",
+  "forecast_cases": 120,
+  "raw_prediction": 119.53437518984897,
+  "published_prediction": 119.53437518984897,
+  "clipping_applied": false,
+  "reporting_rounding_policy": "nearest_integer_python_round_half_to_even",
+  "growth_factor": 1.72,
+  "risk_score": 71,
+  "risk_level": "High",
+  "experimental_growth_score": 71,
+  "forecast_growth_category": "High forecast growth",
+  "growth_category_status": "unsupported_provisional",
+  "model_name": "RandomForestRegressor",
+  "active_model_id": "random_forest",
+  "current_forecast_model": "random_forest",
+  "model_family": "RandomForestRegressor",
+  "estimator_library": "scikit-learn",
+  "estimator_library_version": "1.9.0",
+  "model_params": {
+    "n_estimators": 200,
+    "max_depth": 4,
+    "min_samples_leaf": 3,
+    "max_features": 1.0,
+    "bootstrap": true,
+    "random_state": 42,
+    "n_jobs": 1,
+    "criterion": "squared_error"
+  },
+  "adopted_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+  "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+  "comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+  "comparison_selected_model": "random_forest",
+  "adoption_status": "adopted_p1.2b",
+  "adoption_policy_version": "p1.2b-v1",
+  "features_used": [
+    "rainfall_lag_2w",
+    "rainfall_lag_4w",
+    "temp_lag_2w",
+    "temp_lag_4w",
+    "humidity_lag_2w",
+    "humidity_lag_4w",
+    "cases_lag_1w",
+    "cases_lag_2w",
+    "cases_lag_4w",
+    "cases_rolling_3w",
+    "cases_rolling_4w",
+    "cases_rolling_8w",
+    "growth_rate_1w",
+    "growth_rate_2w",
+    "epi_week_sin",
+    "epi_week_cos",
+    "monsoon_flag",
+    "post_monsoon_flag"
+  ],
+  "reference_cases_4w_rolling": 69.8,
+  "latest_observed_cases": 107,
+  "baseline_context": {
+    "naive_forecast": 71,
+    "moving_average_forecast": 70
+  },
+  "notes": [
+    "Forecast trained on all available labelled feature rows.",
+    "Inference uses the unchanged latest target-independent feature row.",
+    "Random Forest was selected using deterministic synthetic comparison evidence; no real-world superiority is claimed."
+  ],
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "formula_ids_used": [
+    "TARGET.HORIZON.2W",
+    "FEATURE.CASE_LAGS",
+    "FEATURE.CLIMATE_LAGS",
+    "FEATURE.CASE_ROLLING",
+    "FEATURE.GROWTH_RATIOS",
+    "FEATURE.SEASONAL_CYCLIC",
+    "FEATURE.SEASON_FLAGS",
+    "MODEL.SELECTED_MODEL_ADOPTION",
+    "MODEL.BASELINE.NAIVE",
+    "MODEL.BASELINE.MA4",
+    "FORECAST.GROWTH_FACTOR",
+    "FORECAST.GROWTH_CATEGORY",
+    "FORECAST.GROWTH_SCORE",
+    "FORECAST.RMSE_SENSITIVITY",
+    "UNCERTAINTY.TEMPORAL_CALIBRATION"
+  ],
+  "deployment_gate": "benchmark_only",
+  "formula_validation_status": "governed_provisional",
+  "formula_policy": {
+    "TARGET.HORIZON.2W": {
+      "version": "1.0",
+      "name": "Two-week forecast target",
+      "category": "direct_arithmetic",
+      "evidence_status": "implementation_verified",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "horizon_weeks": 2
+      }
+    },
+    "FEATURE.CASE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate case lag features",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          1,
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CLIMATE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate climate lag features",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CASE_ROLLING": {
+      "version": "1.0",
+      "name": "Candidate prior-case rolling means",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": [
+          3,
+          4,
+          8
+        ]
+      }
+    },
+    "FEATURE.GROWTH_RATIOS": {
+      "version": "1.0",
+      "name": "Candidate lagged growth ratios",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "zero_denominator_default": 1.0
+      }
+    },
+    "FEATURE.SEASONAL_CYCLIC": {
+      "version": "1.0",
+      "name": "Cyclic epidemiological-week encoding",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "weeks_per_year": 52
+      }
+    },
+    "FEATURE.SEASON_FLAGS": {
+      "version": "1.0",
+      "name": "Provisional seasonal calendar flags",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "monsoon_start": 22,
+        "monsoon_end": 38,
+        "post_monsoon_start": 38,
+        "post_monsoon_end": 50
+      }
+    },
+    "MODEL.SELECTED_MODEL_ADOPTION": {
+      "version": "1.0",
+      "name": "Governed selected-model adoption policy",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.NAIVE": {
+      "version": "1.0",
+      "name": "Naive lag baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.MA4": {
+      "version": "1.0",
+      "name": "Four-week moving-average baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_FACTOR": {
+      "version": "1.0",
+      "name": "Provisional forecast growth factor",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "minimum": 0.01,
+        "maximum": 10.0,
+        "zero_reference_default": 1.0,
+        "reference_window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_CATEGORY": {
+      "version": "1.0",
+      "name": "Provisional forecast-growth categories",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "moderate_start": 1.1,
+        "high_start": 1.5,
+        "very_high_start": 2.0
+      }
+    },
+    "FORECAST.GROWTH_SCORE": {
+      "version": "1.0",
+      "name": "Experimental growth score",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "score_cap": 100
+      }
+    },
+    "FORECAST.RMSE_SENSITIVITY": {
+      "version": "1.0",
+      "name": "Legacy RF RMSE planning sensitivity",
+      "category": "unsupported_provisional",
+      "evidence_status": "uncalibrated",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "UNCERTAINTY.TEMPORAL_CALIBRATION": {
+      "version": "1.0",
+      "name": "Prequential synthetic empirical forecast range",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "nominal_coverage": 0.9,
+        "warmup_folds": 20,
+        "residual_count": 68
+      }
+    }
+  },
+  "provenance": {
+    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "manifest_path": "data/input_manifest.json",
+    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "case_source": "synthetic_benchmark",
+    "climate_source": "synthetic_benchmark",
+    "operational_source": "synthetic_benchmark",
+    "source_classes": {
+      "cases": "synthetic",
+      "climate": "synthetic",
+      "operational": "synthetic"
+    },
+    "forecast_geography": {
+      "level": "city",
+      "id": "BGD-DHAKA-SOUTH",
+      "name": "Dhaka South"
+    },
+    "validation_status": "passed",
+    "warnings": [],
+    "overrides": [],
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_policy_version": "p1.2b-v1",
+    "adoption_status": "adopted_p1.2b",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "evidence_registry_version": "p0.3c-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "formula_registry_version": "p1.3-v1",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "observed_data_mode": "synthetic",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  },
+  "data_mode": "synthetic",
+  "preparedness_scenarios": {
+    "best_case": {
+      "label": "Lower sensitivity scenario",
+      "forecast_cases": 87,
+      "growth_factor": 1.246,
+      "risk_score": 44,
+      "risk_level": "Moderate",
+      "experimental_growth_score": 44,
+      "forecast_growth_category": "Moderate forecast growth"
+    },
+    "expected_case": {
+      "label": "Point forecast",
+      "forecast_cases": 120,
+      "growth_factor": 1.719,
+      "risk_score": 71,
+      "risk_level": "High",
+      "experimental_growth_score": 71,
+      "forecast_growth_category": "High forecast growth"
+    },
+    "worst_case": {
+      "label": "Upper sensitivity scenario",
+      "forecast_cases": 153,
+      "growth_factor": 2.192,
+      "risk_score": 87,
+      "risk_level": "Critical",
+      "experimental_growth_score": 87,
+      "forecast_growth_category": "Very high forecast growth"
+    }
+  },
+  "preparedness_scenario_method": {
+    "type": "legacy_rf_rmse_planning_sensitivity",
+    "source": "selected_random_forest_legacy_holdout",
+    "model": "RandomForestRegressor",
+    "rmse": 33.24672789381382,
+    "uncertainty_pct": 27.7,
+    "status": "operational_planning_compatibility_only_not_forecast_interval",
+    "calibrated": false,
+    "is_prediction_interval": false,
+    "model_binding": {
+      "method": "legacy_selected_model_rmse_sensitivity_band",
+      "model_id": "random_forest",
+      "model_family": "RandomForestRegressor",
+      "model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+      "validation_split": "legacy_final_chronological_20_percent_138_train_35_validation",
+      "validation_matrix_sha256": "d749da62bf6edfc81bab4bcb3731c86f649ae72b2d15628b4f72dc8ae66e329b",
+      "rmse": 33.24672789381382,
+      "legacy": true,
+      "calibrated": false,
+      "is_prediction_interval": false,
+      "calibration_pending_phase": "P1.3"
+    },
+    "note": "Legacy RF RMSE planning sensitivity for operational compatibility only; it is not active forecast uncertainty."
+  },
+  "uncertainty_scenarios": {
+    "best_case": {
+      "label": "Lower sensitivity scenario",
+      "forecast_cases": 87,
+      "growth_factor": 1.246,
+      "risk_score": 44,
+      "risk_level": "Moderate",
+      "experimental_growth_score": 44,
+      "forecast_growth_category": "Moderate forecast growth"
+    },
+    "expected_case": {
+      "label": "Point forecast",
+      "forecast_cases": 120,
+      "growth_factor": 1.719,
+      "risk_score": 71,
+      "risk_level": "High",
+      "experimental_growth_score": 71,
+      "forecast_growth_category": "High forecast growth"
+    },
+    "worst_case": {
+      "label": "Upper sensitivity scenario",
+      "forecast_cases": 153,
+      "growth_factor": 2.192,
+      "risk_score": 87,
+      "risk_level": "Critical",
+      "experimental_growth_score": 87,
+      "forecast_growth_category": "Very high forecast growth"
+    }
+  },
+  "uncertainty_scenarios_deprecation": {
+    "deprecated": true,
+    "authoritative_field": "preparedness_scenarios",
+    "status": "compatibility_alias_only_not_forecast_uncertainty"
+  },
+  "uncertainty_status": "temporally_evaluated_synthetic_empirical_range",
+  "forecast_uncertainty": {
+    "method_id": "prequential_expanding_absolute_residual_quantile",
+    "method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range",
+    "point_forecast_raw": 119.53437518984897,
+    "interval_lower_raw": 53.054069227091915,
+    "interval_upper_raw": 186.01468115260604,
+    "point_forecast_reported": 120,
+    "interval_lower_reported": 53,
+    "interval_upper_reported": 187,
+    "lower_clipping_applied": false,
+    "nominal_coverage": 0.9,
+    "observed_historical_coverage": 0.8958333333333334,
+    "evaluated_fold_count": 48,
+    "uncertainty_artifact_path": "data/forecast_uncertainty.json",
+    "uncertainty_artifact_sha256": "740cf86792bc45ee7bfb4cc5333e8e2b5c56731832e1ec5265ec034252df9074",
+    "residual_source_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "is_prediction_interval": false,
+    "calibrated_on_synthetic_data": true,
+    "limitations": [
+      "The empirical range was evaluated using deterministic synthetic rolling-origin Random Forest residuals. Each evaluated fold used only residuals from earlier folds. Temporal dependence and reuse of the folds for model selection limit interpretation. This is not evidence of real-world Dhaka calibration. Historical empirical coverage is not a guarantee of future coverage.",
+      "Targets overlap and residuals are temporally dependent.",
+      "High-incidence and rising-period performance may be weaker.",
+      "The range is not a probability statement and is not a prediction interval.",
+      "The deployment remains a synthetic benchmark-only capability demonstration."
+    ]
+  }
+}

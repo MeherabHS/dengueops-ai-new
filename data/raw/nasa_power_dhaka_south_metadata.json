@@ -1,0 +1,20 @@
+{
+  "source": "NASA POWER (power.larc.nasa.gov)",
+  "community": "RE (Renewable Energy)",
+  "parameters": "PRECTOTCORR,T2M,RH2M,T2M_MAX,T2M_MIN,QV2M",
+  "latitude": 23.7104,
+  "longitude": 90.4074,
+  "start_date": "2014-01-01",
+  "end_date": "2024-12-31",
+  "fetched_at": "2026-05-23T17:20:39Z",
+  "rows": 4018,
+  "variables": {
+    "PRECTOTCORR": "Precipitation Corrected (mm/day)",
+    "T2M": "Temperature at 2 m (C)",
+    "RH2M": "Relative Humidity at 2 m (%)",
+    "T2M_MAX": "Max Temperature at 2 m (C)",
+    "T2M_MIN": "Min Temperature at 2 m (C)",
+    "QV2M": "Specific Humidity at 2 m (g/kg)"
+  },
+  "note": "NASA POWER data is used as a publicly available meteorological input for prototype modeling only. It is not official BMD surveillance data and has not been validated for real-time operational climate monitoring."
+}

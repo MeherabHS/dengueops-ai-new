@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.ai/schemas/runtime_workspace.schema.json",
+  "title": "DengueOps P1.4B runtime validation record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "workspaceId", "datasetId", "deploymentId", "workflowMode",
+    "status", "createdAt", "updatedAt", "files", "normalization", "datasetIdentity",
+    "counts", "issues", "eligibility"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "workspaceId": { "type": "string", "format": "uuid" },
+    "datasetId": { "$ref": "#/$defs/sha256" },
+    "deploymentId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "workflowMode": { "enum": ["quick_forecast", "assess_dataset"] },
+    "status": { "enum": ["ready", "invalid"] },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "acceptedPeriod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$" },
+        "end": { "type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$" }
+      }
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["original", "canonical"],
+      "properties": {
+        "original": { "$ref": "#/$defs/fileHashes" },
+        "canonical": { "$ref": "#/$defs/fileHashes" }
+      }
+    },
+    "normalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyId", "policyVersion", "canonicalContractVersion", "supportedAliases", "behavior"],
+      "properties": {
+        "policyId": { "const": "UPLOAD.CSV.CANONICAL_EXACT_HEADERS" },
+        "policyVersion": { "const": "1.0" },
+        "canonicalContractVersion": { "const": "p1.4b-canonical-upload-v1" },
+        "supportedAliases": { "type": "object", "additionalProperties": { "type": "string" } },
+        "behavior": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true }
+      }
+    },
+    "datasetIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["featureOrderSha256", "target", "horizonWeeks", "validationContractVersion", "geography", "operationalInputBundleSha256"],
+      "properties": {
+        "featureOrderSha256": { "$ref": "#/$defs/sha256" },
+        "target": { "const": "target_cases_next_2w" },
+        "horizonWeeks": { "const": 2 },
+        "validationContractVersion": { "const": "p1.4b-v1" },
+        "geography": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["geography_level", "geography_id", "geography_name"],
+              "properties": {
+                "geography_level": { "type": "string", "minLength": 1 },
+                "geography_id": { "type": "string", "minLength": 1 },
+                "geography_name": { "type": "string", "minLength": 1 }
+              }
+            }
+          ]
+        },
+        "operationalInputBundleSha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caseRows", "climateRows", "overlapWeeks", "labelledRows"],
+      "properties": {
+        "caseRows": { "type": "integer", "minimum": 0 },
+        "climateRows": { "type": "integer", "minimum": 0 },
+        "overlapWeeks": { "type": "integer", "minimum": 0 },
+        "labelledRows": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "issues": { "type": "array", "items": { "$ref": "#/$defs/issue" } },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quickForecast", "assessDataset"],
+      "properties": {
+        "quickForecast": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["eligible", "reasons", "reasonCodes", "approvedModelId", "uncertaintyStatus", "preparednessStatus", "policyId", "policyVersion", "policySha256"],
+          "properties": {
+            "eligible": { "type": "boolean" },
+            "reasons": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "reasonCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+            "approvedModelId": { "const": "random_forest" },
+            "uncertaintyStatus": { "enum": ["pending_dataset_specific_calibration", "unavailable_for_uploaded_dataset"] },
+            "preparednessStatus": { "enum": ["unavailable_missing_planning_policy", "unavailable_for_uploaded_dataset"] },
+            "policyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
+            "policyVersion": { "const": "p1.4c-1-v1" },
+            "policySha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "assessDataset": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["eligible", "assessmentStatus", "labelledRows", "availableFoldCount", "plannedFoldCount", "foldPlan", "candidateSetStatus", "candidateEligibility", "recommendationEligibility", "recommendationStatus", "recommendationStrength", "approvalRequired", "approvalEnabled", "reasonCodes", "reasons", "policyId", "policyVersion", "policySha256"],
+          "properties": {
+            "eligible": { "type": "boolean" },
+            "assessmentStatus": { "enum": ["insufficient_history", "candidate_feasibility_only", "full_assessment_eligible", "partial_candidate_set", "assessment_policy_inactive", "assessment_blocked"] },
+            "labelledRows": { "type": "integer", "minimum": 0 },
+            "availableFoldCount": { "type": "integer", "minimum": 0 },
+            "plannedFoldCount": { "type": "integer", "minimum": 0 },
+            "foldPlan": {
+              "type": "object", "additionalProperties": false,
+              "required": ["trainingWindow", "initialTrainingRows", "embargoRows", "validationRowsPerFold", "stepSizeWeeks", "horizonWeeks", "samePlanForAllCandidates", "maximumFoldCapStatus"],
+              "properties": {
+                "trainingWindow": { "const": "expanding" }, "initialTrainingRows": { "const": 104 },
+                "embargoRows": { "const": 1 }, "validationRowsPerFold": { "const": 1 },
+                "stepSizeWeeks": { "const": 1 }, "horizonWeeks": { "const": 2 },
+                "samePlanForAllCandidates": { "const": true }, "maximumFoldCapStatus": { "const": "governance_pending" }
+              }
+            },
+            "candidateSetStatus": { "enum": ["complete_candidate_set", "partial_candidate_set", "insufficient_candidate_breadth"] },
+            "candidateEligibility": {
+              "type": "object", "additionalProperties": false,
+              "required": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"],
+              "properties": {
+                "previous_week_naive": { "$ref": "#/$defs/candidateEligibility" },
+                "moving_average_4w": { "$ref": "#/$defs/candidateEligibility" },
+                "seasonal_naive_52w": { "$ref": "#/$defs/candidateEligibility" },
+                "ridge_regression": { "$ref": "#/$defs/candidateEligibility" },
+                "poisson_regression": { "$ref": "#/$defs/candidateEligibility" },
+                "random_forest": { "$ref": "#/$defs/candidateEligibility" },
+                "gradient_boosting": { "$ref": "#/$defs/candidateEligibility" }
+              }
+            },
+            "recommendationEligibility": { "const": false },
+            "recommendationStatus": { "enum": ["evidence_only", "no_recommendation"] },
+            "recommendationStrength": { "const": "not_available" },
+            "approvalRequired": { "const": true },
+            "approvalEnabled": { "const": false },
+            "reasonCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+            "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+            "policyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
+            "policyVersion": { "const": "p1.4d-1-v1" },
+            "policySha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "fileHashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dengueSha256", "climateSha256"],
+      "properties": {
+        "dengueSha256": { "$ref": "#/$defs/sha256" },
+        "climateSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "category", "severity", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "category": { "enum": ["file", "schema", "temporal", "alignment", "eligibility"] },
+        "severity": { "enum": ["error", "warning"] },
+        "field": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "candidateEligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligible", "reasonCodes", "reasons", "candidateClass", "deployabilityClassification", "parametersSha256", "minimumTrainingRows"],
+      "properties": {
+        "eligible": { "type": "boolean" },
+        "reasonCodes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "candidateClass": { "enum": ["naive_baseline", "learned_model"] },
+        "deployabilityClassification": { "enum": ["baseline_not_runtime_deployable", "deployable_learned_model"] },
+        "parametersSha256": { "$ref": "#/$defs/sha256" },
+        "minimumTrainingRows": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

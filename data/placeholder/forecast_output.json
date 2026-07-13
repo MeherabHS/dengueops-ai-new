@@ -1,0 +1,33 @@
+{
+  "forecast_id": 1,
+  "date_generated": "2026-05-23T10:00:00",
+  "target_epi_year": 2026,
+  "target_epi_week": 24,
+  "horizon_days": 14,
+  "city": "Dhaka South",
+  "forecast_cases": 1200,
+  "growth_factor": 2.1,
+  "risk_score": 88,
+  "risk_level": "Critical",
+  "model_name": "GradientBoostingRegressor",
+  "uncertainty_scenarios": {
+    "best_case": {
+      "forecast_cases": 950,
+      "growth_factor": 1.7,
+      "risk_score": 72,
+      "risk_level": "High"
+    },
+    "expected_case": {
+      "forecast_cases": 1200,
+      "growth_factor": 2.1,
+      "risk_score": 88,
+      "risk_level": "Critical"
+    },
+    "worst_case": {
+      "forecast_cases": 1480,
+      "growth_factor": 2.6,
+      "risk_score": 96,
+      "risk_level": "Critical"
+    }
+  }
+}

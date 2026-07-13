@@ -1,0 +1,205 @@
+[
+  {
+    "forecast_id": 1,
+    "target_epi_year": 2026,
+    "target_epi_week": 24,
+    "zone_id": "Z01",
+    "zone_name": "Kamrangirchar",
+    "facility_id": "F01",
+    "facility_name": "Kamrangirchar 20-Bed Hospital",
+    "allocated_zone_cases": 408,
+    "exposure_index": 0.34,
+    "priority_score": 1.16,
+    "projected_bed_load": 27,
+    "bed_gap": -7,
+    "sdh_ns1_days": 5,
+    "sdh_iv_fluid_days": 6,
+    "inventory_alerts": [
+      {
+        "item": "NS1/RDT Kit",
+        "sdh_days": 5,
+        "severity": "critical",
+        "message": "NS1/RDT Kit stock depletes in 5 days under surge demand. Immediate resupply required."
+      },
+      {
+        "item": "IV Fluid (500ml)",
+        "sdh_days": 6,
+        "severity": "critical",
+        "message": "IV Fluid stock depletes in 6 days under surge demand. Emergency procurement needed."
+      }
+    ],
+    "recommendations": [
+      "CRITICAL: Activate surge bed protocol — 7 additional dengue beds needed immediately.",
+      "CRITICAL: Emergency resupply of NS1/RDT kits within 48 hours.",
+      "CRITICAL: Emergency resupply of IV Fluids within 48 hours.",
+      "Coordinate patient overflow to Sir Salimullah Medical College Hospital.",
+      "Deploy rapid response vector control team to high-density blocks.",
+      "Conduct community alert campaign targeting waterlogged areas."
+    ],
+    "generation_timestamp": "2026-05-23T10:00:00",
+    "uncertainty_ranges": {
+      "bed_gap_best": -3,
+      "bed_gap_expected": -7,
+      "bed_gap_worst": -12,
+      "ns1_sdh_best": 8,
+      "ns1_sdh_expected": 5,
+      "ns1_sdh_worst": 3
+    }
+  },
+  {
+    "forecast_id": 1,
+    "target_epi_year": 2026,
+    "target_epi_week": 24,
+    "zone_id": "Z02",
+    "zone_name": "Mitford / Old Dhaka",
+    "facility_id": "F02",
+    "facility_name": "Sir Salimullah Medical College Hospital",
+    "allocated_zone_cases": 324,
+    "exposure_index": 0.27,
+    "priority_score": 0.98,
+    "projected_bed_load": 69,
+    "bed_gap": -9,
+    "sdh_ns1_days": 8,
+    "sdh_iv_fluid_days": 9,
+    "inventory_alerts": [
+      {
+        "item": "NS1/RDT Kit",
+        "sdh_days": 8,
+        "severity": "warning",
+        "message": "NS1/RDT Kit stock will deplete in 8 days. Resupply within 3 days recommended."
+      },
+      {
+        "item": "IV Fluid (500ml)",
+        "sdh_days": 9,
+        "severity": "warning",
+        "message": "IV Fluid stock will deplete in 9 days. Resupply within 5 days recommended."
+      }
+    ],
+    "recommendations": [
+      "WARNING: 9 additional dengue beds required within 3 days.",
+      "WARNING: Expedite NS1/RDT kit resupply within 72 hours.",
+      "Prepare overflow ward capacity for dengue surge.",
+      "Increase outpatient dengue surveillance throughput.",
+      "Strengthen vector control near Buriganga riverbank corridor."
+    ],
+    "generation_timestamp": "2026-05-23T10:00:00",
+    "uncertainty_ranges": {
+      "bed_gap_best": -4,
+      "bed_gap_expected": -9,
+      "bed_gap_worst": -16,
+      "ns1_sdh_best": 12,
+      "ns1_sdh_expected": 8,
+      "ns1_sdh_worst": 5
+    }
+  },
+  {
+    "forecast_id": 1,
+    "target_epi_year": 2026,
+    "target_epi_week": 24,
+    "zone_id": "Z03",
+    "zone_name": "Dhanmondi",
+    "facility_id": "F03",
+    "facility_name": "Dhanmondi Primary Health Centre",
+    "allocated_zone_cases": 216,
+    "exposure_index": 0.18,
+    "priority_score": 0.62,
+    "projected_bed_load": 13,
+    "bed_gap": 2,
+    "sdh_ns1_days": 15,
+    "sdh_iv_fluid_days": 17,
+    "inventory_alerts": [],
+    "recommendations": [
+      "Maintain current bed capacity — no immediate gap detected.",
+      "Monitor NS1 stock weekly and plan resupply in 10 days.",
+      "Activate community-level dengue awareness messaging.",
+      "Increase household inspection frequency in lakeside areas."
+    ],
+    "generation_timestamp": "2026-05-23T10:00:00",
+    "uncertainty_ranges": {
+      "bed_gap_best": 5,
+      "bed_gap_expected": 2,
+      "bed_gap_worst": -3,
+      "ns1_sdh_best": 21,
+      "ns1_sdh_expected": 15,
+      "ns1_sdh_worst": 9
+    }
+  },
+  {
+    "forecast_id": 1,
+    "target_epi_year": 2026,
+    "target_epi_week": 24,
+    "zone_id": "Z04",
+    "zone_name": "Jatrabari / Sayedabad",
+    "facility_id": "F04",
+    "facility_name": "Jatrabari General Hospital",
+    "allocated_zone_cases": 288,
+    "exposure_index": 0.24,
+    "priority_score": 0.85,
+    "projected_bed_load": 44,
+    "bed_gap": -4,
+    "sdh_ns1_days": 11,
+    "sdh_iv_fluid_days": 13,
+    "inventory_alerts": [
+      {
+        "item": "NS1/RDT Kit",
+        "sdh_days": 11,
+        "severity": "warning",
+        "message": "NS1/RDT Kit stock will deplete in 11 days. Schedule resupply within 7 days."
+      }
+    ],
+    "recommendations": [
+      "WARNING: 4 additional dengue beds required within 5 days.",
+      "Schedule NS1/RDT kit resupply within 7 days.",
+      "Increase case screening capacity at transport terminals.",
+      "Coordinate with Dhaka South City Corporation for drainage clearance."
+    ],
+    "generation_timestamp": "2026-05-23T10:00:00",
+    "uncertainty_ranges": {
+      "bed_gap_best": -1,
+      "bed_gap_expected": -4,
+      "bed_gap_worst": -9,
+      "ns1_sdh_best": 16,
+      "ns1_sdh_expected": 11,
+      "ns1_sdh_worst": 7
+    }
+  },
+  {
+    "forecast_id": 1,
+    "target_epi_year": 2026,
+    "target_epi_week": 24,
+    "zone_id": "Z05",
+    "zone_name": "Lalbagh / Hazaribagh",
+    "facility_id": "F05",
+    "facility_name": "Lalbagh Urban Health Centre",
+    "allocated_zone_cases": 252,
+    "exposure_index": 0.21,
+    "priority_score": 0.74,
+    "projected_bed_load": 22,
+    "bed_gap": -4,
+    "sdh_ns1_days": 13,
+    "sdh_iv_fluid_days": 17,
+    "inventory_alerts": [
+      {
+        "item": "NS1/RDT Kit",
+        "sdh_days": 13,
+        "severity": "warning",
+        "message": "NS1/RDT Kit stock will deplete in 13 days. Plan resupply within 7 days."
+      }
+    ],
+    "recommendations": [
+      "WARNING: 4 additional dengue beds needed within 1 week.",
+      "Schedule NS1/RDT kit resupply promptly.",
+      "Increase tannery-area vector surveillance and larval source reduction.",
+      "Alert ward health workers to escalate case referrals."
+    ],
+    "generation_timestamp": "2026-05-23T10:00:00",
+    "uncertainty_ranges": {
+      "bed_gap_best": -1,
+      "bed_gap_expected": -4,
+      "bed_gap_worst": -8,
+      "ns1_sdh_best": 19,
+      "ns1_sdh_expected": 13,
+      "ns1_sdh_worst": 8
+    }
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "inventory_id": "INV-F01-NS1",
+    "facility_id": "F01",
+    "item_name": "NS1/RDT Kit",
+    "current_stock": 85,
+    "baseline_daily_consumption": 8,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F01-IVF",
+    "facility_id": "F01",
+    "item_name": "IV Fluid (500ml)",
+    "current_stock": 210,
+    "baseline_daily_consumption": 18,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F02-NS1",
+    "facility_id": "F02",
+    "item_name": "NS1/RDT Kit",
+    "current_stock": 320,
+    "baseline_daily_consumption": 24,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F02-IVF",
+    "facility_id": "F02",
+    "item_name": "IV Fluid (500ml)",
+    "current_stock": 680,
+    "baseline_daily_consumption": 52,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F03-NS1",
+    "facility_id": "F03",
+    "item_name": "NS1/RDT Kit",
+    "current_stock": 60,
+    "baseline_daily_consumption": 6,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F03-IVF",
+    "facility_id": "F03",
+    "item_name": "IV Fluid (500ml)",
+    "current_stock": 140,
+    "baseline_daily_consumption": 12,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F04-NS1",
+    "facility_id": "F04",
+    "item_name": "NS1/RDT Kit",
+    "current_stock": 175,
+    "baseline_daily_consumption": 18,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F04-IVF",
+    "facility_id": "F04",
+    "item_name": "IV Fluid (500ml)",
+    "current_stock": 390,
+    "baseline_daily_consumption": 38,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F05-NS1",
+    "facility_id": "F05",
+    "item_name": "NS1/RDT Kit",
+    "current_stock": 95,
+    "baseline_daily_consumption": 8,
+    "reorder_threshold_days": 7
+  },
+  {
+    "inventory_id": "INV-F05-IVF",
+    "facility_id": "F05",
+    "item_name": "IV Fluid (500ml)",
+    "current_stock": 220,
+    "baseline_daily_consumption": 16,
+    "reorder_threshold_days": 7
+  }
+]

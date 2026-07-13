@@ -1,0 +1,1463 @@
+{
+  "provenance": {
+    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "manifest_path": "data/input_manifest.json",
+    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "case_source": "synthetic_benchmark",
+    "climate_source": "synthetic_benchmark",
+    "operational_source": "synthetic_benchmark",
+    "source_classes": {
+      "cases": "synthetic",
+      "climate": "synthetic",
+      "operational": "synthetic"
+    },
+    "forecast_geography": {
+      "level": "city",
+      "id": "BGD-DHAKA-SOUTH",
+      "name": "Dhaka South"
+    },
+    "validation_status": "passed",
+    "warnings": [],
+    "overrides": [],
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_policy_version": "p1.2b-v1",
+    "adoption_status": "adopted_p1.2b",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "evidence_registry_version": "p0.3c-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "formula_registry_version": "p1.3-v1",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "observed_data_mode": "synthetic",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  },
+  "generated_at": "2026-07-13T10:22:17",
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "deployment_gate": "benchmark_only",
+  "formula_validation_status": "governed_provisional",
+  "formula_policy": {
+    "TARGET.HORIZON.2W": {
+      "version": "1.0",
+      "name": "Two-week forecast target",
+      "category": "direct_arithmetic",
+      "evidence_status": "implementation_verified",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "horizon_weeks": 2
+      }
+    },
+    "FEATURE.CASE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate case lag features",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          1,
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CLIMATE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate climate lag features",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CASE_ROLLING": {
+      "version": "1.0",
+      "name": "Candidate prior-case rolling means",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": [
+          3,
+          4,
+          8
+        ]
+      }
+    },
+    "FEATURE.GROWTH_RATIOS": {
+      "version": "1.0",
+      "name": "Candidate lagged growth ratios",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "zero_denominator_default": 1.0
+      }
+    },
+    "FEATURE.SEASONAL_CYCLIC": {
+      "version": "1.0",
+      "name": "Cyclic epidemiological-week encoding",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "weeks_per_year": 52
+      }
+    },
+    "FEATURE.SEASON_FLAGS": {
+      "version": "1.0",
+      "name": "Provisional seasonal calendar flags",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "monsoon_start": 22,
+        "monsoon_end": 38,
+        "post_monsoon_start": 38,
+        "post_monsoon_end": 50
+      }
+    },
+    "MODEL.SELECTED_MODEL_ADOPTION": {
+      "version": "1.0",
+      "name": "Governed selected-model adoption policy",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.NAIVE": {
+      "version": "1.0",
+      "name": "Naive lag baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.MA4": {
+      "version": "1.0",
+      "name": "Four-week moving-average baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_FACTOR": {
+      "version": "1.0",
+      "name": "Provisional forecast growth factor",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "minimum": 0.01,
+        "maximum": 10.0,
+        "zero_reference_default": 1.0,
+        "reference_window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_CATEGORY": {
+      "version": "1.0",
+      "name": "Provisional forecast-growth categories",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "moderate_start": 1.1,
+        "high_start": 1.5,
+        "very_high_start": 2.0
+      }
+    },
+    "FORECAST.GROWTH_SCORE": {
+      "version": "1.0",
+      "name": "Experimental growth score",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "score_cap": 100
+      }
+    },
+    "FORECAST.RMSE_SENSITIVITY": {
+      "version": "1.0",
+      "name": "Legacy RF RMSE planning sensitivity",
+      "category": "unsupported_provisional",
+      "evidence_status": "uncalibrated",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "UNCERTAINTY.TEMPORAL_CALIBRATION": {
+      "version": "1.0",
+      "name": "Prequential synthetic empirical forecast range",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "nominal_coverage": 0.9,
+        "warmup_folds": 20,
+        "residual_count": 68
+      }
+    },
+    "OPS.EXPOSURE.COMPOSITION": {
+      "version": "1.0",
+      "name": "Prototype spatial exposure composition",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "population_weight": 0.4,
+        "density_weight": 0.3,
+        "facility_pressure_weight": 0.2,
+        "mobility_weight": 0.1
+      }
+    },
+    "OPS.EXPOSURE.ANOMALY": {
+      "version": "1.0",
+      "name": "Additive prototype anomaly adjustment",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "operation": "additive"
+      }
+    },
+    "OPS.ALLOCATION.ZONE": {
+      "version": "1.0",
+      "name": "Proportional zone allocation",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.ALLOCATION.FACILITY": {
+      "version": "1.0",
+      "name": "Prototype facility load allocation",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.ADMISSION_FRACTION": {
+      "version": "1.0",
+      "name": "Prototype admission fraction",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "admission_fraction": 1.0
+      }
+    },
+    "OPS.BED.DEMAND": {
+      "version": "1.0",
+      "name": "Illustrative bed-demand estimate",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.BED.DEFICIT": {
+      "version": "1.0",
+      "name": "Positive bed-deficit arithmetic",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "OPS.STOCK.DYNAMIC_DEMAND": {
+      "version": "1.0",
+      "name": "Provisional dynamic stock demand",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "demand_elasticity": 1.0
+      }
+    },
+    "OPS.STOCK.SDH": {
+      "version": "1.0",
+      "name": "Illustrative supply-depletion horizon",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "OPS.STOCK.THRESHOLDS": {
+      "version": "1.0",
+      "name": "Prototype inventory alert thresholds",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "critical_days": 3,
+        "ns1_warning_days": 7,
+        "iv_fluid_warning_days": 5
+      }
+    },
+    "OPS.PRIORITY.SCORE": {
+      "version": "1.0",
+      "name": "Experimental planning-priority score",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "interaction_weight": 200,
+        "exposure_weight": 80,
+        "growth_base_weight": 0.6,
+        "growth_vulnerability_weight": 0.3,
+        "score_cap": 100
+      }
+    },
+    "OPS.PRIORITY.CATEGORIES": {
+      "version": "1.0",
+      "name": "Simulated planning tiers",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "routine_max": 25,
+        "moderate_max": 50,
+        "high_max": 75
+      }
+    },
+    "OPS.DIRECTIVE.TRIGGERS": {
+      "version": "1.0",
+      "name": "Prototype planning-suggestion triggers",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "priority_trigger": 76
+      }
+    }
+  },
+  "actual_vs_predicted": [
+    {
+      "label": "2023-W07",
+      "actual": 53.0,
+      "naive": 49.0,
+      "moving_average": 59.0,
+      "gradient_boosting": 71.08884169615118
+    },
+    {
+      "label": "2023-W08",
+      "actual": 63.0,
+      "naive": 69.0,
+      "moving_average": 53.5,
+      "gradient_boosting": 61.21218802693249
+    },
+    {
+      "label": "2023-W09",
+      "actual": 60.0,
+      "naive": 67.0,
+      "moving_average": 58.5,
+      "gradient_boosting": 53.39991245562005
+    },
+    {
+      "label": "2023-W10",
+      "actual": 47.0,
+      "naive": 53.0,
+      "moving_average": 59.5,
+      "gradient_boosting": 65.26639018803807
+    },
+    {
+      "label": "2023-W11",
+      "actual": 47.0,
+      "naive": 63.0,
+      "moving_average": 63.0,
+      "gradient_boosting": 70.09021546048639
+    },
+    {
+      "label": "2023-W12",
+      "actual": 59.0,
+      "naive": 60.0,
+      "moving_average": 60.75,
+      "gradient_boosting": 64.1660761426678
+    },
+    {
+      "label": "2023-W13",
+      "actual": 24.0,
+      "naive": 47.0,
+      "moving_average": 55.75,
+      "gradient_boosting": 65.3794777537245
+    },
+    {
+      "label": "2023-W14",
+      "actual": 64.0,
+      "naive": 47.0,
+      "moving_average": 54.25,
+      "gradient_boosting": 58.37606005881357
+    },
+    {
+      "label": "2023-W15",
+      "actual": 76.0,
+      "naive": 59.0,
+      "moving_average": 53.25,
+      "gradient_boosting": 64.34733082218581
+    },
+    {
+      "label": "2023-W16",
+      "actual": 45.0,
+      "naive": 24.0,
+      "moving_average": 44.25,
+      "gradient_boosting": 54.19380487183614
+    },
+    {
+      "label": "2023-W17",
+      "actual": 53.0,
+      "naive": 64.0,
+      "moving_average": 48.5,
+      "gradient_boosting": 70.06486076805759
+    },
+    {
+      "label": "2023-W18",
+      "actual": 50.0,
+      "naive": 76.0,
+      "moving_average": 55.75,
+      "gradient_boosting": 80.38790276783445
+    },
+    {
+      "label": "2023-W19",
+      "actual": 92.0,
+      "naive": 45.0,
+      "moving_average": 52.25,
+      "gradient_boosting": 65.96057825554654
+    },
+    {
+      "label": "2023-W20",
+      "actual": 40.0,
+      "naive": 53.0,
+      "moving_average": 59.5,
+      "gradient_boosting": 81.81308903352448
+    },
+    {
+      "label": "2023-W21",
+      "actual": 125.0,
+      "naive": 50.0,
+      "moving_average": 56.0,
+      "gradient_boosting": 84.40139198763505
+    },
+    {
+      "label": "2023-W22",
+      "actual": 98.0,
+      "naive": 92.0,
+      "moving_average": 60.0,
+      "gradient_boosting": 129.52549872544495
+    },
+    {
+      "label": "2023-W23",
+      "actual": 142.0,
+      "naive": 40.0,
+      "moving_average": 58.75,
+      "gradient_boosting": 121.83502355997835
+    },
+    {
+      "label": "2023-W24",
+      "actual": 166.0,
+      "naive": 125.0,
+      "moving_average": 76.75,
+      "gradient_boosting": 112.14084664132619
+    },
+    {
+      "label": "2023-W25",
+      "actual": 147.0,
+      "naive": 98.0,
+      "moving_average": 88.75,
+      "gradient_boosting": 180.29391354534934
+    },
+    {
+      "label": "2023-W26",
+      "actual": 189.0,
+      "naive": 142.0,
+      "moving_average": 101.25,
+      "gradient_boosting": 164.85166855284504
+    },
+    {
+      "label": "2023-W27",
+      "actual": 148.0,
+      "naive": 166.0,
+      "moving_average": 132.75,
+      "gradient_boosting": 189.51466919440637
+    },
+    {
+      "label": "2023-W28",
+      "actual": 140.0,
+      "naive": 147.0,
+      "moving_average": 138.25,
+      "gradient_boosting": 156.83353085934587
+    },
+    {
+      "label": "2023-W29",
+      "actual": 172.0,
+      "naive": 189.0,
+      "moving_average": 161.0,
+      "gradient_boosting": 152.11959015564076
+    },
+    {
+      "label": "2023-W30",
+      "actual": 165.0,
+      "naive": 148.0,
+      "moving_average": 162.5,
+      "gradient_boosting": 224.82071808490372
+    },
+    {
+      "label": "2023-W31",
+      "actual": 162.0,
+      "naive": 140.0,
+      "moving_average": 156.0,
+      "gradient_boosting": 189.57088074211944
+    },
+    {
+      "label": "2023-W32",
+      "actual": 205.0,
+      "naive": 172.0,
+      "moving_average": 162.25,
+      "gradient_boosting": 250.17974985908242
+    },
+    {
+      "label": "2023-W33",
+      "actual": 286.0,
+      "naive": 165.0,
+      "moving_average": 156.25,
+      "gradient_boosting": 255.8224883512302
+    },
+    {
+      "label": "2023-W34",
+      "actual": 397.0,
+      "naive": 162.0,
+      "moving_average": 159.75,
+      "gradient_boosting": 311.4091317585454
+    },
+    {
+      "label": "2023-W35",
+      "actual": 254.0,
+      "naive": 205.0,
+      "moving_average": 176.0,
+      "gradient_boosting": 281.63534572235915
+    },
+    {
+      "label": "2023-W36",
+      "actual": 289.0,
+      "naive": 286.0,
+      "moving_average": 204.5,
+      "gradient_boosting": 322.03341287224083
+    },
+    {
+      "label": "2023-W37",
+      "actual": 527.0,
+      "naive": 397.0,
+      "moving_average": 262.5,
+      "gradient_boosting": 267.9646808551793
+    },
+    {
+      "label": "2023-W38",
+      "actual": 402.0,
+      "naive": 254.0,
+      "moving_average": 285.5,
+      "gradient_boosting": 214.13077138414334
+    },
+    {
+      "label": "2023-W39",
+      "actual": 228.0,
+      "naive": 289.0,
+      "moving_average": 306.5,
+      "gradient_boosting": 229.22989875000832
+    },
+    {
+      "label": "2023-W40",
+      "actual": 184.0,
+      "naive": 527.0,
+      "moving_average": 366.75,
+      "gradient_boosting": 278.7041183779315
+    },
+    {
+      "label": "2023-W41",
+      "actual": 269.0,
+      "naive": 402.0,
+      "moving_average": 368.0,
+      "gradient_boosting": 302.5843619061348
+    },
+    {
+      "label": "2023-W42",
+      "actual": 117.0,
+      "naive": 228.0,
+      "moving_average": 361.5,
+      "gradient_boosting": 170.46823519141776
+    },
+    {
+      "label": "2023-W43",
+      "actual": 174.0,
+      "naive": 184.0,
+      "moving_average": 335.25,
+      "gradient_boosting": 159.81182475036942
+    },
+    {
+      "label": "2023-W44",
+      "actual": 126.0,
+      "naive": 269.0,
+      "moving_average": 270.75,
+      "gradient_boosting": 161.297326029631
+    },
+    {
+      "label": "2023-W45",
+      "actual": 176.0,
+      "naive": 117.0,
+      "moving_average": 199.5,
+      "gradient_boosting": 144.22066221250117
+    },
+    {
+      "label": "2023-W46",
+      "actual": 183.0,
+      "naive": 174.0,
+      "moving_average": 186.0,
+      "gradient_boosting": 116.84149336472579
+    },
+    {
+      "label": "2023-W47",
+      "actual": 111.0,
+      "naive": 126.0,
+      "moving_average": 171.5,
+      "gradient_boosting": 160.00592782607362
+    },
+    {
+      "label": "2023-W48",
+      "actual": 154.0,
+      "naive": 176.0,
+      "moving_average": 148.25,
+      "gradient_boosting": 121.4167903378935
+    },
+    {
+      "label": "2023-W49",
+      "actual": 81.0,
+      "naive": 183.0,
+      "moving_average": 164.75,
+      "gradient_boosting": 154.16762642101966
+    },
+    {
+      "label": "2023-W50",
+      "actual": 100.0,
+      "naive": 111.0,
+      "moving_average": 149.0,
+      "gradient_boosting": 115.104153439764
+    },
+    {
+      "label": "2023-W51",
+      "actual": 78.0,
+      "naive": 154.0,
+      "moving_average": 156.0,
+      "gradient_boosting": 127.14078652245625
+    },
+    {
+      "label": "2023-W52",
+      "actual": 44.0,
+      "naive": 81.0,
+      "moving_average": 132.25,
+      "gradient_boosting": 93.79301012548912
+    },
+    {
+      "label": "2024-W01",
+      "actual": 91.0,
+      "naive": 100.0,
+      "moving_average": 111.5,
+      "gradient_boosting": 86.03984711763643
+    },
+    {
+      "label": "2024-W02",
+      "actual": 55.0,
+      "naive": 78.0,
+      "moving_average": 103.25,
+      "gradient_boosting": 67.17017021552452
+    },
+    {
+      "label": "2024-W03",
+      "actual": 62.0,
+      "naive": 44.0,
+      "moving_average": 75.75,
+      "gradient_boosting": 59.19154812267033
+    },
+    {
+      "label": "2024-W04",
+      "actual": 42.0,
+      "naive": 91.0,
+      "moving_average": 78.25,
+      "gradient_boosting": 64.10491067966679
+    },
+    {
+      "label": "2024-W05",
+      "actual": 48.0,
+      "naive": 55.0,
+      "moving_average": 67.0,
+      "gradient_boosting": 76.66241002385189
+    },
+    {
+      "label": "2024-W06",
+      "actual": 29.0,
+      "naive": 62.0,
+      "moving_average": 63.0,
+      "gradient_boosting": 61.04888379683556
+    },
+    {
+      "label": "2024-W07",
+      "actual": 67.0,
+      "naive": 42.0,
+      "moving_average": 62.5,
+      "gradient_boosting": 61.98532589360775
+    },
+    {
+      "label": "2024-W08",
+      "actual": 35.0,
+      "naive": 48.0,
+      "moving_average": 51.75,
+      "gradient_boosting": 49.835983385264285
+    },
+    {
+      "label": "2024-W09",
+      "actual": 38.0,
+      "naive": 29.0,
+      "moving_average": 45.25,
+      "gradient_boosting": 58.51116961100768
+    },
+    {
+      "label": "2024-W10",
+      "actual": 41.0,
+      "naive": 67.0,
+      "moving_average": 46.5,
+      "gradient_boosting": 51.79393501817378
+    },
+    {
+      "label": "2024-W11",
+      "actual": 25.0,
+      "naive": 35.0,
+      "moving_average": 44.75,
+      "gradient_boosting": 50.42425721903794
+    },
+    {
+      "label": "2024-W12",
+      "actual": 55.0,
+      "naive": 38.0,
+      "moving_average": 42.25,
+      "gradient_boosting": 43.25168291809036
+    },
+    {
+      "label": "2024-W13",
+      "actual": 65.0,
+      "naive": 41.0,
+      "moving_average": 45.25,
+      "gradient_boosting": 47.1026176025286
+    },
+    {
+      "label": "2024-W14",
+      "actual": 43.0,
+      "naive": 25.0,
+      "moving_average": 34.75,
+      "gradient_boosting": 56.87515886496885
+    },
+    {
+      "label": "2024-W15",
+      "actual": 37.0,
+      "naive": 55.0,
+      "moving_average": 39.75,
+      "gradient_boosting": 46.10854041300576
+    },
+    {
+      "label": "2024-W16",
+      "actual": 62.0,
+      "naive": 65.0,
+      "moving_average": 46.5,
+      "gradient_boosting": 54.18767690106281
+    },
+    {
+      "label": "2024-W17",
+      "actual": 62.0,
+      "naive": 43.0,
+      "moving_average": 47.0,
+      "gradient_boosting": 45.624308820065565
+    },
+    {
+      "label": "2024-W18",
+      "actual": 65.0,
+      "naive": 37.0,
+      "moving_average": 50.0,
+      "gradient_boosting": 58.88004212396265
+    },
+    {
+      "label": "2024-W19",
+      "actual": 98.0,
+      "naive": 62.0,
+      "moving_average": 51.75,
+      "gradient_boosting": 74.59158169020168
+    },
+    {
+      "label": "2024-W20",
+      "actual": 45.0,
+      "naive": 62.0,
+      "moving_average": 51.0,
+      "gradient_boosting": 77.9669467606041
+    },
+    {
+      "label": "2024-W21",
+      "actual": 71.0,
+      "naive": 65.0,
+      "moving_average": 56.5,
+      "gradient_boosting": 97.46152992205697
+    },
+    {
+      "label": "2024-W22",
+      "actual": 107.0,
+      "naive": 98.0,
+      "moving_average": 71.75,
+      "gradient_boosting": 70.26165720838412
+    }
+  ],
+  "model_error_bars": [
+    {
+      "model": "Gradient Boosting Regressor (scikit-learn)",
+      "mae": 33.5,
+      "rmse": 51.2
+    },
+    {
+      "model": "Naive Baseline",
+      "mae": 42.4,
+      "rmse": 71.3
+    },
+    {
+      "model": "Moving Average Baseline (4-week)",
+      "mae": 48.8,
+      "rmse": 77.0
+    }
+  ],
+  "uncertainty_scenarios": [
+    {
+      "scenario": "Lower sensitivity scenario",
+      "forecast_cases": 87,
+      "growth_factor": 1.246,
+      "risk_score": 44,
+      "risk_level": "Moderate"
+    },
+    {
+      "scenario": "Point forecast",
+      "forecast_cases": 120,
+      "growth_factor": 1.719,
+      "risk_score": 71,
+      "risk_level": "High"
+    },
+    {
+      "scenario": "Upper sensitivity scenario",
+      "forecast_cases": 153,
+      "growth_factor": 2.192,
+      "risk_score": 87,
+      "risk_level": "Critical"
+    }
+  ],
+  "zone_priority": [
+    {
+      "zone_name": "Benchmark Zone 1",
+      "priority_score": 100,
+      "allocated_cases": 15.7,
+      "risk_category": "Critical"
+    },
+    {
+      "zone_name": "Benchmark Zone 2",
+      "priority_score": 100,
+      "allocated_cases": 19.9,
+      "risk_category": "Critical"
+    },
+    {
+      "zone_name": "Benchmark Zone 3",
+      "priority_score": 100,
+      "allocated_cases": 24.0,
+      "risk_category": "Critical"
+    },
+    {
+      "zone_name": "Benchmark Zone 4",
+      "priority_score": 100,
+      "allocated_cases": 28.1,
+      "risk_category": "Critical"
+    },
+    {
+      "zone_name": "Benchmark Zone 5",
+      "priority_score": 100,
+      "allocated_cases": 32.3,
+      "risk_category": "Critical"
+    }
+  ],
+  "supply_depletion": [
+    {
+      "facility_name": "Synthetic Benchmark Facility 01",
+      "facility_id": "BF01",
+      "zone_name": "Benchmark Zone 1",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 12.0,
+      "sdh_expected": 8.7,
+      "sdh_worst": 6.8,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 01",
+      "facility_id": "BF01",
+      "zone_name": "Benchmark Zone 1",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 12.0,
+      "sdh_expected": 8.7,
+      "sdh_worst": 6.8,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 02",
+      "facility_id": "BF02",
+      "zone_name": "Benchmark Zone 1",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 12.8,
+      "sdh_expected": 9.3,
+      "sdh_worst": 7.3,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 02",
+      "facility_id": "BF02",
+      "zone_name": "Benchmark Zone 1",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 12.8,
+      "sdh_expected": 9.3,
+      "sdh_worst": 7.3,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 03",
+      "facility_id": "BF03",
+      "zone_name": "Benchmark Zone 2",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 13.6,
+      "sdh_expected": 9.9,
+      "sdh_worst": 7.8,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 03",
+      "facility_id": "BF03",
+      "zone_name": "Benchmark Zone 2",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 13.6,
+      "sdh_expected": 9.9,
+      "sdh_worst": 7.8,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 04",
+      "facility_id": "BF04",
+      "zone_name": "Benchmark Zone 2",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 14.4,
+      "sdh_expected": 10.5,
+      "sdh_worst": 8.2,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 04",
+      "facility_id": "BF04",
+      "zone_name": "Benchmark Zone 2",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 14.4,
+      "sdh_expected": 10.5,
+      "sdh_worst": 8.2,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 05",
+      "facility_id": "BF05",
+      "zone_name": "Benchmark Zone 3",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 15.2,
+      "sdh_expected": 11.1,
+      "sdh_worst": 8.7,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 05",
+      "facility_id": "BF05",
+      "zone_name": "Benchmark Zone 3",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 15.2,
+      "sdh_expected": 11.1,
+      "sdh_worst": 8.7,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 06",
+      "facility_id": "BF06",
+      "zone_name": "Benchmark Zone 3",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 16.1,
+      "sdh_expected": 11.6,
+      "sdh_worst": 9.1,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 06",
+      "facility_id": "BF06",
+      "zone_name": "Benchmark Zone 3",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 16.1,
+      "sdh_expected": 11.6,
+      "sdh_worst": 9.1,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 07",
+      "facility_id": "BF07",
+      "zone_name": "Benchmark Zone 4",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 16.9,
+      "sdh_expected": 12.2,
+      "sdh_worst": 9.6,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 07",
+      "facility_id": "BF07",
+      "zone_name": "Benchmark Zone 4",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 16.9,
+      "sdh_expected": 12.2,
+      "sdh_worst": 9.6,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 08",
+      "facility_id": "BF08",
+      "zone_name": "Benchmark Zone 4",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 17.7,
+      "sdh_expected": 12.8,
+      "sdh_worst": 10.0,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 08",
+      "facility_id": "BF08",
+      "zone_name": "Benchmark Zone 4",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 17.7,
+      "sdh_expected": 12.8,
+      "sdh_worst": 10.0,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 09",
+      "facility_id": "BF09",
+      "zone_name": "Benchmark Zone 5",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 18.5,
+      "sdh_expected": 13.4,
+      "sdh_worst": 10.5,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 09",
+      "facility_id": "BF09",
+      "zone_name": "Benchmark Zone 5",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 18.5,
+      "sdh_expected": 13.4,
+      "sdh_worst": 10.5,
+      "threshold_days": 5
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 10",
+      "facility_id": "BF10",
+      "zone_name": "Benchmark Zone 5",
+      "item_name": "NS1/RDT Kit",
+      "sdh_best": 19.3,
+      "sdh_expected": 14.0,
+      "sdh_worst": 10.9,
+      "threshold_days": 7
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 10",
+      "facility_id": "BF10",
+      "zone_name": "Benchmark Zone 5",
+      "item_name": "IV Fluid (500ml)",
+      "sdh_best": 19.3,
+      "sdh_expected": 14.0,
+      "sdh_worst": 10.9,
+      "threshold_days": 5
+    }
+  ],
+  "bed_gap": [
+    {
+      "facility_name": "Synthetic Benchmark Facility 01",
+      "facility_id": "BF01",
+      "zone_name": "Benchmark Zone 1",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 02",
+      "facility_id": "BF02",
+      "zone_name": "Benchmark Zone 1",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 03",
+      "facility_id": "BF03",
+      "zone_name": "Benchmark Zone 2",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 04",
+      "facility_id": "BF04",
+      "zone_name": "Benchmark Zone 2",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 05",
+      "facility_id": "BF05",
+      "zone_name": "Benchmark Zone 3",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 06",
+      "facility_id": "BF06",
+      "zone_name": "Benchmark Zone 3",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 07",
+      "facility_id": "BF07",
+      "zone_name": "Benchmark Zone 4",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 08",
+      "facility_id": "BF08",
+      "zone_name": "Benchmark Zone 4",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 09",
+      "facility_id": "BF09",
+      "zone_name": "Benchmark Zone 5",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 10",
+      "facility_id": "BF10",
+      "zone_name": "Benchmark Zone 5",
+      "total_beds": 0,
+      "occupied_beds": 0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0
+    }
+  ],
+  "facility_pressure": [
+    {
+      "facility_name": "Synthetic Benchmark Facility 09",
+      "facility_id": "BF09",
+      "zone_name": "Benchmark Zone 5",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 25.5,
+      "projected_bed_load_worst": 27.6,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 10",
+      "facility_id": "BF10",
+      "zone_name": "Benchmark Zone 5",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 22.3,
+      "projected_bed_load_worst": 23.2,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 08",
+      "facility_id": "BF08",
+      "zone_name": "Benchmark Zone 4",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 20.9,
+      "projected_bed_load_worst": 22.3,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 07",
+      "facility_id": "BF07",
+      "zone_name": "Benchmark Zone 4",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 18.9,
+      "projected_bed_load_worst": 20.0,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 06",
+      "facility_id": "BF06",
+      "zone_name": "Benchmark Zone 3",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 17.1,
+      "projected_bed_load_worst": 18.2,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 05",
+      "facility_id": "BF05",
+      "zone_name": "Benchmark Zone 3",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 15.9,
+      "projected_bed_load_worst": 16.7,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 04",
+      "facility_id": "BF04",
+      "zone_name": "Benchmark Zone 2",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 14.9,
+      "projected_bed_load_worst": 15.7,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 03",
+      "facility_id": "BF03",
+      "zone_name": "Benchmark Zone 2",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 13.4,
+      "projected_bed_load_worst": 14.1,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 02",
+      "facility_id": "BF02",
+      "zone_name": "Benchmark Zone 1",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 12.2,
+      "projected_bed_load_worst": 12.8,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    },
+    {
+      "facility_name": "Synthetic Benchmark Facility 01",
+      "facility_id": "BF01",
+      "zone_name": "Benchmark Zone 1",
+      "priority_score": 100,
+      "total_beds": 0,
+      "projected_bed_load_expected": 8.7,
+      "projected_bed_load_worst": 9.1,
+      "facility_anchor_type": "wholly_synthetic_benchmark"
+    }
+  ],
+  "case_trend": [
+    {
+      "label": "2023-W51",
+      "cases": 81,
+      "rainfall_mm": 10.8
+    },
+    {
+      "label": "2023-W52",
+      "cases": 100,
+      "rainfall_mm": 15.3
+    },
+    {
+      "label": "2024-W01",
+      "cases": 78,
+      "rainfall_mm": 4.4
+    },
+    {
+      "label": "2024-W02",
+      "cases": 44,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W03",
+      "cases": 91,
+      "rainfall_mm": 12.3
+    },
+    {
+      "label": "2024-W04",
+      "cases": 55,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W05",
+      "cases": 62,
+      "rainfall_mm": 23.1
+    },
+    {
+      "label": "2024-W06",
+      "cases": 42,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W07",
+      "cases": 48,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W08",
+      "cases": 29,
+      "rainfall_mm": 10.2
+    },
+    {
+      "label": "2024-W09",
+      "cases": 67,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W10",
+      "cases": 35,
+      "rainfall_mm": 11.5
+    },
+    {
+      "label": "2024-W11",
+      "cases": 38,
+      "rainfall_mm": 13.0
+    },
+    {
+      "label": "2024-W12",
+      "cases": 41,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W13",
+      "cases": 25,
+      "rainfall_mm": 15.8
+    },
+    {
+      "label": "2024-W14",
+      "cases": 55,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W15",
+      "cases": 65,
+      "rainfall_mm": 0.0
+    },
+    {
+      "label": "2024-W16",
+      "cases": 43,
+      "rainfall_mm": 34.0
+    },
+    {
+      "label": "2024-W17",
+      "cases": 37,
+      "rainfall_mm": 53.8
+    },
+    {
+      "label": "2024-W18",
+      "cases": 62,
+      "rainfall_mm": 36.9
+    },
+    {
+      "label": "2024-W19",
+      "cases": 62,
+      "rainfall_mm": 52.9
+    },
+    {
+      "label": "2024-W20",
+      "cases": 65,
+      "rainfall_mm": 25.9
+    },
+    {
+      "label": "2024-W21",
+      "cases": 98,
+      "rainfall_mm": 54.3
+    },
+    {
+      "label": "2024-W22",
+      "cases": 45,
+      "rainfall_mm": 68.6
+    },
+    {
+      "label": "2024-W23",
+      "cases": 71,
+      "rainfall_mm": 64.8
+    },
+    {
+      "label": "2024-W24",
+      "cases": 107,
+      "rainfall_mm": 77.3
+    }
+  ]
+}

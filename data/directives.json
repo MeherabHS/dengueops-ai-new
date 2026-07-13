@@ -1,0 +1,1330 @@
+{
+  "provenance": {
+    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "manifest_path": "data/input_manifest.json",
+    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "case_source": "synthetic_benchmark",
+    "climate_source": "synthetic_benchmark",
+    "operational_source": "synthetic_benchmark",
+    "source_classes": {
+      "cases": "synthetic",
+      "climate": "synthetic",
+      "operational": "synthetic"
+    },
+    "forecast_geography": {
+      "level": "city",
+      "id": "BGD-DHAKA-SOUTH",
+      "name": "Dhaka South"
+    },
+    "validation_status": "passed",
+    "warnings": [],
+    "overrides": [],
+    "active_model_id": "random_forest",
+    "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "adoption_policy_version": "p1.2b-v1",
+    "adoption_status": "adopted_p1.2b",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "deployment_profile_data_mode": "synthetic_capability_demonstration",
+    "deployment_profile_id": "dhaka_south",
+    "deployment_profile_schema_version": "1.0",
+    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_status": "active",
+    "evidence_registry_schema_version": "1.0",
+    "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
+    "evidence_registry_version": "p0.3c-v1",
+    "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "formula_registry_version": "p1.3-v1",
+    "model_card_id": "dhaka_south_random_forest_benchmark",
+    "model_card_version": "p1.3-v1",
+    "observed_data_mode": "synthetic",
+    "uncertainty_method_id": "prequential_expanding_absolute_residual_quantile",
+    "uncertainty_method_version": "p1.3-v1",
+    "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
+  },
+  "generated_at": "2026-07-13T09:09:26",
+  "forecast_id": 1,
+  "target_epi_year": 2024,
+  "target_epi_week": 26,
+  "horizon_days": 14,
+  "city": "Dhaka South",
+  "allocation_method": {
+    "type": "spatial_exposure_index",
+    "components": {
+      "population_share": 0.4,
+      "density_weight": 0.3,
+      "facility_pressure_weight": 0.2,
+      "mobility_corridor_weight": 0.1
+    },
+    "note": "Prototype spatial exposure allocation under city-level data constraints. Exposure index is derived from population share, density, facility pressure, and mobility corridor weights. Anomaly adjustment is additive and reflects current-week deviations (e.g. flooding, outbreak reports)."
+  },
+  "scenario_context": {
+    "best_case": {
+      "label": "Lower sensitivity scenario",
+      "forecast_cases": 87,
+      "growth_factor": 1.246,
+      "risk_score": 44,
+      "risk_level": "Moderate",
+      "experimental_growth_score": 44,
+      "forecast_growth_category": "Moderate forecast growth"
+    },
+    "expected_case": {
+      "label": "Point forecast",
+      "forecast_cases": 120,
+      "growth_factor": 1.719,
+      "risk_score": 71,
+      "risk_level": "High",
+      "experimental_growth_score": 71,
+      "forecast_growth_category": "High forecast growth"
+    },
+    "worst_case": {
+      "label": "Upper sensitivity scenario",
+      "forecast_cases": 153,
+      "growth_factor": 2.192,
+      "risk_score": 87,
+      "risk_level": "Critical",
+      "experimental_growth_score": 87,
+      "forecast_growth_category": "Very high forecast growth"
+    }
+  },
+  "scenario_policy": {
+    "authoritative_source": "forecast_output.json#preparedness_scenarios",
+    "method": "legacy_rf_rmse_planning_sensitivity",
+    "forecast_empirical_range_drives_directives": false,
+    "separation_status": "planning_scenarios_separate_from_forecast_uncertainty"
+  },
+  "directives": [
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ01",
+      "zone_name": "Benchmark Zone 1",
+      "zone_profile": "",
+      "facility_id": "BF01",
+      "facility_name": "Synthetic Benchmark Facility 01",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.505,
+      "adjusted_exposure": 0.455,
+      "normalized_exposure": 0.130935,
+      "facility_load_share": 0.4444,
+      "allocated_cases_best": 5.1,
+      "allocated_cases_expected": 7.0,
+      "allocated_cases_worst": 8.9,
+      "zone_allocated_cases_best": 11.4,
+      "zone_allocated_cases_expected": 15.7,
+      "zone_allocated_cases_worst": 20.0,
+      "priority_score": 100,
+      "raw_priority_score": 137.42,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 8.2,
+      "projected_bed_load_expected": 8.7,
+      "projected_bed_load_worst": 9.1,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 55,
+      "dengue_bed_capacity_demo": 21,
+      "occupied_dengue_beds_demo": 7,
+      "avg_length_of_stay": 3.36,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 12.0,
+      "sdh_ns1_expected": 8.7,
+      "sdh_ns1_worst": 6.8,
+      "sdh_iv_fluid_best": 12.0,
+      "sdh_iv_fluid_expected": 8.7,
+      "sdh_iv_fluid_worst": 6.8,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ01",
+      "zone_name": "Benchmark Zone 1",
+      "zone_profile": "",
+      "facility_id": "BF02",
+      "facility_name": "Synthetic Benchmark Facility 02",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.505,
+      "adjusted_exposure": 0.455,
+      "normalized_exposure": 0.130935,
+      "facility_load_share": 0.5556,
+      "allocated_cases_best": 6.3,
+      "allocated_cases_expected": 8.7,
+      "allocated_cases_worst": 11.1,
+      "zone_allocated_cases_best": 11.4,
+      "zone_allocated_cases_expected": 15.7,
+      "zone_allocated_cases_worst": 20.0,
+      "priority_score": 100,
+      "raw_priority_score": 137.42,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 11.6,
+      "projected_bed_load_expected": 12.2,
+      "projected_bed_load_worst": 12.8,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 62,
+      "dengue_bed_capacity_demo": 24,
+      "occupied_dengue_beds_demo": 10,
+      "avg_length_of_stay": 3.52,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 12.8,
+      "sdh_ns1_expected": 9.3,
+      "sdh_ns1_worst": 7.3,
+      "sdh_iv_fluid_best": 12.8,
+      "sdh_iv_fluid_expected": 9.3,
+      "sdh_iv_fluid_worst": 7.3,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ02",
+      "zone_name": "Benchmark Zone 2",
+      "zone_profile": "",
+      "facility_id": "BF03",
+      "facility_name": "Synthetic Benchmark Facility 03",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.6,
+      "adjusted_exposure": 0.575,
+      "normalized_exposure": 0.165468,
+      "facility_load_share": 0.4615,
+      "allocated_cases_best": 6.6,
+      "allocated_cases_expected": 9.2,
+      "allocated_cases_worst": 11.7,
+      "zone_allocated_cases_best": 14.4,
+      "zone_allocated_cases_expected": 19.9,
+      "zone_allocated_cases_worst": 25.3,
+      "priority_score": 100,
+      "raw_priority_score": 168.31,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 12.7,
+      "projected_bed_load_expected": 13.4,
+      "projected_bed_load_worst": 14.1,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 69,
+      "dengue_bed_capacity_demo": 27,
+      "occupied_dengue_beds_demo": 11,
+      "avg_length_of_stay": 3.68,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 13.6,
+      "sdh_ns1_expected": 9.9,
+      "sdh_ns1_worst": 7.8,
+      "sdh_iv_fluid_best": 13.6,
+      "sdh_iv_fluid_expected": 9.9,
+      "sdh_iv_fluid_worst": 7.8,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ02",
+      "zone_name": "Benchmark Zone 2",
+      "zone_profile": "",
+      "facility_id": "BF04",
+      "facility_name": "Synthetic Benchmark Facility 04",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.6,
+      "adjusted_exposure": 0.575,
+      "normalized_exposure": 0.165468,
+      "facility_load_share": 0.5385,
+      "allocated_cases_best": 7.8,
+      "allocated_cases_expected": 10.7,
+      "allocated_cases_worst": 13.6,
+      "zone_allocated_cases_best": 14.4,
+      "zone_allocated_cases_expected": 19.9,
+      "zone_allocated_cases_worst": 25.3,
+      "priority_score": 100,
+      "raw_priority_score": 168.31,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 14.1,
+      "projected_bed_load_expected": 14.9,
+      "projected_bed_load_worst": 15.7,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 76,
+      "dengue_bed_capacity_demo": 30,
+      "occupied_dengue_beds_demo": 12,
+      "avg_length_of_stay": 3.84,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 14.4,
+      "sdh_ns1_expected": 10.5,
+      "sdh_ns1_worst": 8.2,
+      "sdh_iv_fluid_best": 14.4,
+      "sdh_iv_fluid_expected": 10.5,
+      "sdh_iv_fluid_worst": 8.2,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ03",
+      "zone_name": "Benchmark Zone 3",
+      "zone_profile": "",
+      "facility_id": "BF05",
+      "facility_name": "Synthetic Benchmark Facility 05",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.695,
+      "adjusted_exposure": 0.695,
+      "normalized_exposure": 0.2,
+      "facility_load_share": 0.4286,
+      "allocated_cases_best": 7.5,
+      "allocated_cases_expected": 10.3,
+      "allocated_cases_worst": 13.1,
+      "zone_allocated_cases_best": 17.4,
+      "zone_allocated_cases_expected": 24.0,
+      "zone_allocated_cases_worst": 30.6,
+      "priority_score": 100,
+      "raw_priority_score": 203.2,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 15.1,
+      "projected_bed_load_expected": 15.9,
+      "projected_bed_load_worst": 16.7,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 83,
+      "dengue_bed_capacity_demo": 33,
+      "occupied_dengue_beds_demo": 13,
+      "avg_length_of_stay": 4.0,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 15.2,
+      "sdh_ns1_expected": 11.1,
+      "sdh_ns1_worst": 8.7,
+      "sdh_iv_fluid_best": 15.2,
+      "sdh_iv_fluid_expected": 11.1,
+      "sdh_iv_fluid_worst": 8.7,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ03",
+      "zone_name": "Benchmark Zone 3",
+      "zone_profile": "",
+      "facility_id": "BF06",
+      "facility_name": "Synthetic Benchmark Facility 06",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.695,
+      "adjusted_exposure": 0.695,
+      "normalized_exposure": 0.2,
+      "facility_load_share": 0.5714,
+      "allocated_cases_best": 9.9,
+      "allocated_cases_expected": 13.7,
+      "allocated_cases_worst": 17.5,
+      "zone_allocated_cases_best": 17.4,
+      "zone_allocated_cases_expected": 24.0,
+      "zone_allocated_cases_worst": 30.6,
+      "priority_score": 100,
+      "raw_priority_score": 203.2,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 16.0,
+      "projected_bed_load_expected": 17.1,
+      "projected_bed_load_worst": 18.2,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 90,
+      "dengue_bed_capacity_demo": 36,
+      "occupied_dengue_beds_demo": 13,
+      "avg_length_of_stay": 4.16,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 16.1,
+      "sdh_ns1_expected": 11.6,
+      "sdh_ns1_worst": 9.1,
+      "sdh_iv_fluid_best": 16.1,
+      "sdh_iv_fluid_expected": 11.6,
+      "sdh_iv_fluid_worst": 9.1,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ04",
+      "zone_name": "Benchmark Zone 4",
+      "zone_profile": "",
+      "facility_id": "BF07",
+      "facility_name": "Synthetic Benchmark Facility 07",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.79,
+      "adjusted_exposure": 0.815,
+      "normalized_exposure": 0.234532,
+      "facility_load_share": 0.4545,
+      "allocated_cases_best": 9.3,
+      "allocated_cases_expected": 12.8,
+      "allocated_cases_worst": 16.3,
+      "zone_allocated_cases_best": 20.4,
+      "zone_allocated_cases_expected": 28.1,
+      "zone_allocated_cases_worst": 35.9,
+      "priority_score": 100,
+      "raw_priority_score": 242.07,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 17.9,
+      "projected_bed_load_expected": 18.9,
+      "projected_bed_load_worst": 20.0,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 97,
+      "dengue_bed_capacity_demo": 39,
+      "occupied_dengue_beds_demo": 15,
+      "avg_length_of_stay": 4.32,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 16.9,
+      "sdh_ns1_expected": 12.2,
+      "sdh_ns1_worst": 9.6,
+      "sdh_iv_fluid_best": 16.9,
+      "sdh_iv_fluid_expected": 12.2,
+      "sdh_iv_fluid_worst": 9.6,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ04",
+      "zone_name": "Benchmark Zone 4",
+      "zone_profile": "",
+      "facility_id": "BF08",
+      "facility_name": "Synthetic Benchmark Facility 08",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.79,
+      "adjusted_exposure": 0.815,
+      "normalized_exposure": 0.234532,
+      "facility_load_share": 0.5455,
+      "allocated_cases_best": 11.1,
+      "allocated_cases_expected": 15.4,
+      "allocated_cases_worst": 19.6,
+      "zone_allocated_cases_best": 20.4,
+      "zone_allocated_cases_expected": 28.1,
+      "zone_allocated_cases_worst": 35.9,
+      "priority_score": 100,
+      "raw_priority_score": 242.07,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 19.6,
+      "projected_bed_load_expected": 20.9,
+      "projected_bed_load_worst": 22.3,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 104,
+      "dengue_bed_capacity_demo": 42,
+      "occupied_dengue_beds_demo": 16,
+      "avg_length_of_stay": 4.48,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 17.7,
+      "sdh_ns1_expected": 12.8,
+      "sdh_ns1_worst": 10.0,
+      "sdh_iv_fluid_best": 17.7,
+      "sdh_iv_fluid_expected": 12.8,
+      "sdh_iv_fluid_worst": 10.0,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ05",
+      "zone_name": "Benchmark Zone 5",
+      "zone_profile": "",
+      "facility_id": "BF09",
+      "facility_name": "Synthetic Benchmark Facility 09",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.885,
+      "adjusted_exposure": 0.935,
+      "normalized_exposure": 0.269065,
+      "facility_load_share": 0.7,
+      "allocated_cases_best": 16.4,
+      "allocated_cases_expected": 22.6,
+      "allocated_cases_worst": 28.8,
+      "zone_allocated_cases_best": 23.4,
+      "zone_allocated_cases_expected": 32.3,
+      "zone_allocated_cases_worst": 41.2,
+      "priority_score": 100,
+      "raw_priority_score": 284.93,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 23.4,
+      "projected_bed_load_expected": 25.5,
+      "projected_bed_load_worst": 27.6,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 111,
+      "dengue_bed_capacity_demo": 45,
+      "occupied_dengue_beds_demo": 18,
+      "avg_length_of_stay": 4.64,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 18.5,
+      "sdh_ns1_expected": 13.4,
+      "sdh_ns1_worst": 10.5,
+      "sdh_iv_fluid_best": 18.5,
+      "sdh_iv_fluid_expected": 13.4,
+      "sdh_iv_fluid_worst": 10.5,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    },
+    {
+      "forecast_id": 1,
+      "target_epi_year": 2024,
+      "target_epi_week": 26,
+      "zone_id": "BZ05",
+      "zone_name": "Benchmark Zone 5",
+      "zone_profile": "",
+      "facility_id": "BF10",
+      "facility_name": "Synthetic Benchmark Facility 10",
+      "facility_type": "Synthetic Benchmark Care Centre",
+      "facility_anchor_type": "wholly_synthetic_benchmark",
+      "data_status": "synthetic_readiness_profile",
+      "exposure_index": 0.885,
+      "adjusted_exposure": 0.935,
+      "normalized_exposure": 0.269065,
+      "facility_load_share": 0.3,
+      "allocated_cases_best": 7.0,
+      "allocated_cases_expected": 9.7,
+      "allocated_cases_worst": 12.4,
+      "zone_allocated_cases_best": 23.4,
+      "zone_allocated_cases_expected": 32.3,
+      "zone_allocated_cases_worst": 41.2,
+      "priority_score": 100,
+      "raw_priority_score": 284.93,
+      "priority_category": "Critical",
+      "planning_priority_tier": "Highest simulated planning tier",
+      "planning_priority_label": "Experimental planning-priority score",
+      "projected_bed_load_best": 21.4,
+      "projected_bed_load_expected": 22.3,
+      "projected_bed_load_worst": 23.2,
+      "bed_gap_best": 0.0,
+      "bed_gap_expected": 0.0,
+      "bed_gap_worst": 0.0,
+      "general_bed_capacity": 118,
+      "dengue_bed_capacity_demo": 48,
+      "occupied_dengue_beds_demo": 19,
+      "avg_length_of_stay": 4.8,
+      "admission_fraction": 1.0,
+      "bed_demand_label": "Illustrative bed-demand estimate using provisional admission and LOS parameters",
+      "sdh_ns1_best": 19.3,
+      "sdh_ns1_expected": 14.0,
+      "sdh_ns1_worst": 10.9,
+      "sdh_iv_fluid_best": 19.3,
+      "sdh_iv_fluid_expected": 14.0,
+      "sdh_iv_fluid_worst": 10.9,
+      "inventory_alerts": [],
+      "recommendations": [
+        "Prioritize vector-control response in this zone.",
+        "Prepare triage desk and surge OPD workflow.",
+        "Prepare contingency plan under worst-case forecast."
+      ],
+      "planning_suggestions": [
+        {
+          "label": "Prioritize vector-control response in this zone.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare triage desk and surge OPD workflow.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        },
+        {
+          "label": "Prepare contingency plan under worst-case forecast.",
+          "type": "Simulated planning suggestion",
+          "formula_ids": [
+            "OPS.DIRECTIVE.TRIGGERS"
+          ],
+          "deployment_gate": "benchmark_only",
+          "approval_status": "not_approved",
+          "disclaimer": "Prototype trigger condition only; not an operational recommendation."
+        }
+      ],
+      "generation_timestamp": "2026-07-13T09:09:26"
+    }
+  ],
+  "summary": {
+    "total_facilities": 10,
+    "total_public_government_anchors": 0,
+    "critical_priority_zones": 5,
+    "facilities_with_expected_bed_gap": 0,
+    "facilities_with_worst_case_bed_gap": 0,
+    "critical_supply_alerts": 0,
+    "highest_priority_zone": "Benchmark Zone 5",
+    "highest_pressure_facility": "Synthetic Benchmark Facility 01",
+    "total_recommendations": 30
+  },
+  "notes": [
+    "Facility and inventory data are synthetic/demo for prototype demonstration.",
+    "Facility identity and readiness status are source-specific. Synthetic benchmark facilities are wholly synthetic; synthetic demo readiness values do not represent actual records.",
+    "Outputs are simulated planning suggestions, not operational recommendations.",
+    "Spatial case allocation is a heuristic under sub-city data constraints; zone-level counts are not precision estimates.",
+    "Facility-level cases are allocated within a zone using baseline_daily_dengue_cases load shares — larger facilities absorb a proportionally larger share of zone surge.",
+    "Planning sensitivity scenarios use legacy RF holdout RMSE for operational compatibility and are separate from forecast uncertainty.",
+    "Bed gap and SDH calculations assume steady-state surge over the 14-day horizon."
+  ],
+  "formula_registry_version": "p1.3-v1",
+  "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+  "formula_ids_used": [
+    "TARGET.HORIZON.2W",
+    "FEATURE.CASE_LAGS",
+    "FEATURE.CLIMATE_LAGS",
+    "FEATURE.CASE_ROLLING",
+    "FEATURE.GROWTH_RATIOS",
+    "FEATURE.SEASONAL_CYCLIC",
+    "FEATURE.SEASON_FLAGS",
+    "MODEL.SELECTED_MODEL_ADOPTION",
+    "MODEL.BASELINE.NAIVE",
+    "MODEL.BASELINE.MA4",
+    "FORECAST.GROWTH_FACTOR",
+    "FORECAST.GROWTH_CATEGORY",
+    "FORECAST.GROWTH_SCORE",
+    "FORECAST.RMSE_SENSITIVITY",
+    "UNCERTAINTY.TEMPORAL_CALIBRATION",
+    "OPS.EXPOSURE.COMPOSITION",
+    "OPS.EXPOSURE.ANOMALY",
+    "OPS.ALLOCATION.ZONE",
+    "OPS.ALLOCATION.FACILITY",
+    "OPS.ADMISSION_FRACTION",
+    "OPS.BED.DEMAND",
+    "OPS.BED.DEFICIT",
+    "OPS.STOCK.DYNAMIC_DEMAND",
+    "OPS.STOCK.SDH",
+    "OPS.STOCK.THRESHOLDS",
+    "OPS.PRIORITY.SCORE",
+    "OPS.PRIORITY.CATEGORIES",
+    "OPS.DIRECTIVE.TRIGGERS"
+  ],
+  "deployment_gate": "benchmark_only",
+  "formula_validation_status": "governed_provisional",
+  "formula_policy": {
+    "TARGET.HORIZON.2W": {
+      "version": "1.0",
+      "name": "Two-week forecast target",
+      "category": "direct_arithmetic",
+      "evidence_status": "implementation_verified",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "horizon_weeks": 2
+      }
+    },
+    "FEATURE.CASE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate case lag features",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          1,
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CLIMATE_LAGS": {
+      "version": "1.0",
+      "name": "Candidate climate lag features",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "lag_weeks": [
+          2,
+          4
+        ]
+      }
+    },
+    "FEATURE.CASE_ROLLING": {
+      "version": "1.0",
+      "name": "Candidate prior-case rolling means",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": [
+          3,
+          4,
+          8
+        ]
+      }
+    },
+    "FEATURE.GROWTH_RATIOS": {
+      "version": "1.0",
+      "name": "Candidate lagged growth ratios",
+      "category": "data_derived_candidate",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "zero_denominator_default": 1.0
+      }
+    },
+    "FEATURE.SEASONAL_CYCLIC": {
+      "version": "1.0",
+      "name": "Cyclic epidemiological-week encoding",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "weeks_per_year": 52
+      }
+    },
+    "FEATURE.SEASON_FLAGS": {
+      "version": "1.0",
+      "name": "Provisional seasonal calendar flags",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "monsoon_start": 22,
+        "monsoon_end": 38,
+        "post_monsoon_start": 38,
+        "post_monsoon_end": 50
+      }
+    },
+    "MODEL.SELECTED_MODEL_ADOPTION": {
+      "version": "1.0",
+      "name": "Governed selected-model adoption policy",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.NAIVE": {
+      "version": "1.0",
+      "name": "Naive lag baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "MODEL.BASELINE.MA4": {
+      "version": "1.0",
+      "name": "Four-week moving-average baseline",
+      "category": "standard_algorithmic",
+      "evidence_status": "standard_method",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_FACTOR": {
+      "version": "1.0",
+      "name": "Provisional forecast growth factor",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "minimum": 0.01,
+        "maximum": 10.0,
+        "zero_reference_default": 1.0,
+        "reference_window_weeks": 4
+      }
+    },
+    "FORECAST.GROWTH_CATEGORY": {
+      "version": "1.0",
+      "name": "Provisional forecast-growth categories",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "moderate_start": 1.1,
+        "high_start": 1.5,
+        "very_high_start": 2.0
+      }
+    },
+    "FORECAST.GROWTH_SCORE": {
+      "version": "1.0",
+      "name": "Experimental growth score",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "score_cap": 100
+      }
+    },
+    "FORECAST.RMSE_SENSITIVITY": {
+      "version": "1.0",
+      "name": "Legacy RF RMSE planning sensitivity",
+      "category": "unsupported_provisional",
+      "evidence_status": "uncalibrated",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "UNCERTAINTY.TEMPORAL_CALIBRATION": {
+      "version": "1.0",
+      "name": "Prequential synthetic empirical forecast range",
+      "category": "standard_algorithmic",
+      "evidence_status": "policy_defined",
+      "approval_status": "not_required",
+      "deployment_gate": "research_candidate",
+      "parameters": {
+        "nominal_coverage": 0.9,
+        "warmup_folds": 20,
+        "residual_count": 68
+      }
+    },
+    "OPS.EXPOSURE.COMPOSITION": {
+      "version": "1.0",
+      "name": "Prototype spatial exposure composition",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "population_weight": 0.4,
+        "density_weight": 0.3,
+        "facility_pressure_weight": 0.2,
+        "mobility_weight": 0.1
+      }
+    },
+    "OPS.EXPOSURE.ANOMALY": {
+      "version": "1.0",
+      "name": "Additive prototype anomaly adjustment",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "operation": "additive"
+      }
+    },
+    "OPS.ALLOCATION.ZONE": {
+      "version": "1.0",
+      "name": "Proportional zone allocation",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.ALLOCATION.FACILITY": {
+      "version": "1.0",
+      "name": "Prototype facility load allocation",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.ADMISSION_FRACTION": {
+      "version": "1.0",
+      "name": "Prototype admission fraction",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "admission_fraction": 1.0
+      }
+    },
+    "OPS.BED.DEMAND": {
+      "version": "1.0",
+      "name": "Illustrative bed-demand estimate",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {}
+    },
+    "OPS.BED.DEFICIT": {
+      "version": "1.0",
+      "name": "Positive bed-deficit arithmetic",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "OPS.STOCK.DYNAMIC_DEMAND": {
+      "version": "1.0",
+      "name": "Provisional dynamic stock demand",
+      "category": "locally_estimated_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "demand_elasticity": 1.0
+      }
+    },
+    "OPS.STOCK.SDH": {
+      "version": "1.0",
+      "name": "Illustrative supply-depletion horizon",
+      "category": "direct_arithmetic",
+      "evidence_status": "arithmetic_only",
+      "approval_status": "not_approved",
+      "deployment_gate": "research_candidate",
+      "parameters": {}
+    },
+    "OPS.STOCK.THRESHOLDS": {
+      "version": "1.0",
+      "name": "Prototype inventory alert thresholds",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "critical_days": 3,
+        "ns1_warning_days": 7,
+        "iv_fluid_warning_days": 5
+      }
+    },
+    "OPS.PRIORITY.SCORE": {
+      "version": "1.0",
+      "name": "Experimental planning-priority score",
+      "category": "unsupported_provisional",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "interaction_weight": 200,
+        "exposure_weight": 80,
+        "growth_base_weight": 0.6,
+        "growth_vulnerability_weight": 0.3,
+        "score_cap": 100
+      }
+    },
+    "OPS.PRIORITY.CATEGORIES": {
+      "version": "1.0",
+      "name": "Simulated planning tiers",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "routine_max": 25,
+        "moderate_max": 50,
+        "high_max": 75
+      }
+    },
+    "OPS.DIRECTIVE.TRIGGERS": {
+      "version": "1.0",
+      "name": "Prototype planning-suggestion triggers",
+      "category": "institution_configured_required",
+      "evidence_status": "missing",
+      "approval_status": "not_approved",
+      "deployment_gate": "benchmark_only",
+      "parameters": {
+        "priority_trigger": 76
+      }
+    }
+  },
+  "operational_status": "synthetic_prototype_not_approved",
+  "suggestion_label": "Simulated planning suggestion",
+  "non_operational_disclaimer": "Prototype trigger conditions only; institutional approval is required before operational use."
+}

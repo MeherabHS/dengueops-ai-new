@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.local/schemas/candidate_models.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidate_registry_schema_version", "candidate_registry_version", "feature_order_sha256", "target", "horizon_weeks", "output_domain_policy", "candidates"],
+  "properties": {
+    "candidate_registry_schema_version": {"const": "1.0"},
+    "candidate_registry_version": {"const": "p1.2a-v1"},
+    "feature_order_sha256": {"$ref": "#/$defs/sha256"},
+    "target": {"const": "target_cases_next_2w"},
+    "horizon_weeks": {"const": 2},
+    "output_domain_policy": {"const": "preserve_raw_and_publish_maximum_of_zero_and_raw_prediction"},
+    "candidates": {"type": "array", "minItems": 7, "maxItems": 7, "items": {"$ref": "#/$defs/candidate"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nonEmpty": {"type": "string", "minLength": 1},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_id", "model_family", "estimator_library", "estimator_library_version_policy", "parameters", "parameters_sha256", "preprocessing", "negative_prediction_policy", "count_target_suitability", "minimum_training_rows", "enabled", "selection_complexity_rank", "limitations"],
+      "properties": {
+        "model_id": {"enum": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]},
+        "model_family": {"$ref": "#/$defs/nonEmpty"}, "estimator_library": {"$ref": "#/$defs/nonEmpty"},
+        "estimator_library_version_policy": {"$ref": "#/$defs/nonEmpty"}, "parameters": {"type": "object"},
+        "parameters_sha256": {"$ref": "#/$defs/sha256"}, "preprocessing": {"type": "object"},
+        "negative_prediction_policy": {"$ref": "#/$defs/nonEmpty"}, "count_target_suitability": {"$ref": "#/$defs/nonEmpty"},
+        "minimum_training_rows": {"type": "integer", "minimum": 0}, "enabled": {"const": true},
+        "selection_complexity_rank": {"type": "integer", "minimum": 1},
+        "limitations": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1}
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.local/schemas/candidate_model_comparison.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["comparison_schema_version","comparison_version","availability_status","validation_method","fold_count","rolling_validation_artifact_path","rolling_validation_artifact_sha256","rolling_validation_version","fold_reference_policy","candidate_registry_version","candidate_registry_sha256","selection_policy_version","selection_policy","primary_metric","secondary_metrics","tie_tolerance","tie_resolution_steps","candidates","per_fold_predictions","aggregate_metrics","paired_error_differences","wins_ties_losses","model_failures","comparison_selected_model","comparison_selected_model_reason","selected_model_rank","selected_model_parameters_sha256","selection_status","selection_eligibility","adoption_status","current_forecast_model","limitations","deployment_gate","data_mode","observed_data_mode","formula_registry_version","formula_registry_sha256","formula_ids_used","formula_validation_status","formula_policy","deployment_profile_id","deployment_profile_sha256","evidence_registry_sha256","model_card_id","model_card_version","provenance","generated_at"],
+  "properties": {
+    "comparison_schema_version":{"const":"1.0"}, "comparison_version":{"const":"p1.2a-v1"}, "availability_status":{"const":"generated"},
+    "validation_method":{"const":"expanding_window_rolling_origin"}, "fold_count":{"const":68},
+    "rolling_validation_artifact_path":{"const":"data/rolling_validation.json"}, "rolling_validation_artifact_sha256":{"$ref":"#/$defs/sha"},
+    "rolling_validation_version":{"const":"p1.1-v1"}, "fold_reference_policy":{"type":"string"}, "fold_references":{"type":"array","minItems":68,"maxItems":68},
+    "candidate_registry_version":{"const":"p1.2a-v1"}, "candidate_registry_sha256":{"$ref":"#/$defs/sha"},
+    "selection_policy_version":{"const":"p1.2a-v1"}, "selection_policy":{"type":"object"}, "primary_metric":{"const":"MAE"},
+    "secondary_metrics":{"type":"array"}, "tie_tolerance":{"const":1e-9}, "tie_resolution_steps":{"type":"array"}, "candidates":{"type":"array","minItems":7,"maxItems":7},
+    "per_fold_predictions":{"type":"object"}, "aggregate_metrics":{"type":"object"}, "paired_error_differences":{"type":"object"},
+    "wins_ties_losses":{"type":"object"}, "model_failures":{"type":"object"}, "comparison_selected_model":{"type":"string"},
+    "comparison_selected_model_reason":{"type":"string"}, "selected_model_rank":{"type":"integer"}, "selected_model_parameters_sha256":{"$ref":"#/$defs/sha"},
+    "selection_status":{"const":"comparison_complete_not_adopted"}, "selection_eligibility":{"type":"object"},
+    "adoption_status":{"const":"not_adopted_p1.2a"}, "current_forecast_model":{"const":"gradient_boosting"},
+    "limitations":{"type":"array"}, "deployment_gate":{"const":"benchmark_only"}, "data_mode":{"const":"synthetic_capability_demonstration"},
+    "observed_data_mode":{"const":"synthetic"}, "formula_registry_version":{"const":"p1.3-v1"}, "formula_registry_sha256":{"$ref":"#/$defs/sha"},
+    "formula_ids_used":{"type":"array"}, "formula_validation_status":{"type":"string"}, "formula_policy":{"type":"object"},
+    "deployment_profile_id":{"const":"dhaka_south"}, "deployment_profile_sha256":{"$ref":"#/$defs/sha"}, "evidence_registry_sha256":{"$ref":"#/$defs/sha"},
+    "model_card_id":{"type":"string"}, "model_card_version":{"type":"string"}, "provenance":{"type":"object"}, "generated_at":{"type":"string"}
+  },
+  "$defs":{"sha":{"type":"string","pattern":"^[0-9a-f]{64}$"}}
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "baseline_daily_consumption": 4,
+    "current_stock": 60,
+    "facility_id": "BF01",
+    "inventory_id": "BINV-BF01-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 10,
+    "current_stock": 150,
+    "facility_id": "BF01",
+    "inventory_id": "BINV-BF01-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 5,
+    "current_stock": 80,
+    "facility_id": "BF02",
+    "inventory_id": "BINV-BF02-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 12,
+    "current_stock": 192,
+    "facility_id": "BF02",
+    "inventory_id": "BINV-BF02-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 6,
+    "current_stock": 102,
+    "facility_id": "BF03",
+    "inventory_id": "BINV-BF03-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 14,
+    "current_stock": 238,
+    "facility_id": "BF03",
+    "inventory_id": "BINV-BF03-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 7,
+    "current_stock": 126,
+    "facility_id": "BF04",
+    "inventory_id": "BINV-BF04-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 17,
+    "current_stock": 306,
+    "facility_id": "BF04",
+    "inventory_id": "BINV-BF04-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 3,
+    "current_stock": 57,
+    "facility_id": "BF05",
+    "inventory_id": "BINV-BF05-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 7,
+    "current_stock": 133,
+    "facility_id": "BF05",
+    "inventory_id": "BINV-BF05-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 4,
+    "current_stock": 80,
+    "facility_id": "BF06",
+    "inventory_id": "BINV-BF06-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 10,
+    "current_stock": 200,
+    "facility_id": "BF06",
+    "inventory_id": "BINV-BF06-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 5,
+    "current_stock": 105,
+    "facility_id": "BF07",
+    "inventory_id": "BINV-BF07-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 12,
+    "current_stock": 252,
+    "facility_id": "BF07",
+    "inventory_id": "BINV-BF07-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 6,
+    "current_stock": 132,
+    "facility_id": "BF08",
+    "inventory_id": "BINV-BF08-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 14,
+    "current_stock": 308,
+    "facility_id": "BF08",
+    "inventory_id": "BINV-BF08-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 7,
+    "current_stock": 161,
+    "facility_id": "BF09",
+    "inventory_id": "BINV-BF09-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 17,
+    "current_stock": 391,
+    "facility_id": "BF09",
+    "inventory_id": "BINV-BF09-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  },
+  {
+    "baseline_daily_consumption": 3,
+    "current_stock": 72,
+    "facility_id": "BF10",
+    "inventory_id": "BINV-BF10-NS1",
+    "item_name": "NS1/RDT Kit",
+    "reorder_threshold_days": 7
+  },
+  {
+    "baseline_daily_consumption": 7,
+    "current_stock": 168,
+    "facility_id": "BF10",
+    "inventory_id": "BINV-BF10-IVF",
+    "item_name": "IV Fluid (500ml)",
+    "reorder_threshold_days": 5
+  }
+]
