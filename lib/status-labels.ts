@@ -11,7 +11,6 @@ const STATUS_LABELS: Record<string, string> = {
   passed: "Passed",
   success: "Committed successfully",
   active: "Active",
-  pending_p1_4: "Runtime connector pending P1.4",
   complete: "Complete",
   dataset_assessment: "Dataset assessment",
   assessment_queued: "Assessment queued",

@@ -35,6 +35,5 @@ export default function DatasetUploadPanel({ kind, preview, onChange, onRemove }
       <p className={`mt-1 text-xs ${preview.missingColumns.length ? "text-destructive" : "text-success"}`}>{preview.missingColumns.length ? `Missing headers: ${preview.missingColumns.join(", ")}` : "All expected headers are present. This is not governed validation."}</p>
       <Button className="mt-3" variant="secondary" onClick={() => input.current?.click()}>Replace file</Button>
     </div> : null}
-    <button type="button" disabled className="mt-3 text-xs font-semibold text-ink-muted opacity-70" title="Template connector pending">Download template · available in P1.4</button>
   </section>;
 }

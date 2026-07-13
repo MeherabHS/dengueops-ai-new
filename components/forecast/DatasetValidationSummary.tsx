@@ -4,19 +4,21 @@ import EmptyState from "@/components/ui/EmptyState";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type { LocalFilePreview, ServerValidationState, WorkflowMode } from "@/lib/forecast-workflow-types";
 
-export default function DatasetValidationSummary({ files, mode, serverValidation, onMode, onValidate }: {
+export default function DatasetValidationSummary({ files, mode, serverValidation, onMode, onValidate, revalidationRequired }: {
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
   mode: WorkflowMode | null;
   serverValidation: ServerValidationState;
   onMode: (mode: WorkflowMode) => void;
   onValidate: () => void;
+  revalidationRequired: boolean;
 }) {
   if (!files.dengue || !files.climate) return <EmptyState title="Waiting for both files" description="Choose dengue and climate CSV files to complete the local header preview." />;
   const headerWarnings = [...files.dengue.missingColumns, ...files.climate.missingColumns];
   return <div className="space-y-4">
     <div className={`rounded-xl border p-5 ${headerWarnings.length ? "border-warning/25 bg-warning/10" : "border-success/25 bg-success/10"}`} role="status">
-      <div className="flex gap-3">{headerWarnings.length ? <ShieldAlert className="h-5 w-5 text-warning" /> : <CheckCircle2 className="h-5 w-5 text-success" />}<div><h2 className="font-semibold text-ink">Local preview complete</h2><p className="mt-1 text-sm text-ink-muted">{headerWarnings.length ? "Expected headers are missing. Correct the files before future runtime validation." : "Expected headers were detected. Row content has not been governed or accepted."}</p></div></div>
+      <div className="flex gap-3">{headerWarnings.length ? <ShieldAlert className="h-5 w-5 text-warning" /> : <CheckCircle2 className="h-5 w-5 text-success" />}<div><h2 className="font-semibold text-ink">Local preview complete</h2><p className="mt-1 text-sm text-ink-muted">{headerWarnings.length ? "Expected headers are missing. Correct the files before authoritative runtime validation." : "Expected headers were detected. Row content has not been governed or accepted."}</p></div></div>
     </div>
+    {revalidationRequired ? <div className="rounded-xl border border-warning/25 bg-warning/10 p-5" role="status"><h3 className="font-semibold text-ink">Workflow revalidation required</h3><p className="mt-1 text-sm text-ink-muted">Runtime workspaces are workflow-specific. Your selected files are retained, but submit them again to validate the newly selected workflow.</p></div> : null}
     <div className="rounded-xl border border-border-subtle bg-surface-muted p-5">
       <h3 className="font-semibold text-ink">Authoritative validation intent</h3>
       <p className="mt-1 text-sm text-ink-muted">Choose the intended workflow for this validation workspace. The response reports eligibility for both paths.</p>
@@ -54,10 +56,10 @@ function AuthoritativeResult({ response }: { response: Extract<ServerValidationS
           <div><dt className="inline font-medium text-ink">Planned folds: </dt><dd className="inline">{assess.plannedFoldCount || "none"}</dd></div>
           <div><dt className="inline font-medium text-ink">Candidate set: </dt><dd className="inline">{assess.candidateSetStatus === "complete_candidate_set" ? "all seven governed candidates expected" : assess.candidateSetStatus === "partial_candidate_set" ? "partial candidate set" : "insufficient candidate breadth"}</dd></div>
           <div><dt className="inline font-medium text-ink">Recommendation governance: </dt><dd className="inline">{assess.recommendationStatus === "evidence_only" ? "technical evidence only; strength not available" : "no recommendation"}</dd></div>
-          <div><dt className="inline font-medium text-ink">Approval: </dt><dd className="inline">{assess.approvalRequired ? "required before any future adoption; currently disabled" : "not available"}</dd></div>
+          <div><dt className="inline font-medium text-ink">Assessment approval: </dt><dd className="inline">{assess.approvalRequired ? "automatic adoption disabled; a trusted internal one-run decision is evaluated separately after assessment" : "not available"}</dd></div>
         </dl>
         <ul className="mt-3 space-y-1 text-xs text-ink-muted">{assess.reasons.map((reason, index) => <li key={`${assess.reasonCodes[index] ?? "reason"}-${index}`}>• {reason}</li>)}</ul>
-        <p className="mt-3 text-xs text-ink-muted">Validation alone produces no folds, candidates, or winner. An eligible assessment starts only after explicit review and execution.</p>
+        <p className="mt-3 text-xs text-ink-muted">Validation alone produces no folds, candidates, or winner. Assessment, one-run decision recording, and forecast execution each require a later explicit action.</p>
       </div>
     </div>
     {response.issues.length ? <div className="mt-4"><p className="text-sm font-semibold text-ink">Validation issues</p><ul className="mt-2 space-y-1 text-sm text-ink-muted">{response.issues.map((value, index) => <li key={`${value.code}-${index}`}><span className="font-medium text-ink">{value.severity === "error" ? "Error" : "Warning"}:</span> {value.message}</li>)}</ul></div> : <p className="mt-4 text-sm text-success">No authoritative file, schema, temporal, or alignment errors were found.</p>}

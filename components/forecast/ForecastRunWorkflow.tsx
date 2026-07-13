@@ -33,6 +33,8 @@ const initial: ForecastWorkflowState = {
   step: "upload",
   files: {},
   mode: null,
+  validatedWorkflowMode: null,
+  workflowRevalidationRequired: false,
   processingStatus: "idle",
   serverValidation: { status: "idle" },
   workspaceId: null,
@@ -44,7 +46,7 @@ const initial: ForecastWorkflowState = {
 };
 
 function resetValidation(state: ForecastWorkflowState): ForecastWorkflowState {
-  return { ...state, serverValidation: { status: "idle" }, workspaceId: null, datasetId: null, job: null, result: null, assessment: null, approval: null, processingStatus: "idle" };
+  return { ...state, validatedWorkflowMode: null, workflowRevalidationRequired: false, serverValidation: { status: "idle" }, workspaceId: null, datasetId: null, job: null, result: null, assessment: null, approval: null, processingStatus: "idle" };
 }
 
 function reducer(state: ForecastWorkflowState, action: Action): ForecastWorkflowState {
@@ -57,21 +59,27 @@ function reducer(state: ForecastWorkflowState, action: Action): ForecastWorkflow
       return resetValidation({ ...state, files });
     }
     case "mode":
-      return state.mode === action.mode ? state : resetValidation({ ...state, mode: action.mode });
+      if (state.mode === action.mode) return state;
+      if (state.validatedWorkflowMode && state.validatedWorkflowMode !== action.mode) {
+        return { ...resetValidation({ ...state, mode: action.mode }), step: "validate", workflowRevalidationRequired: true };
+      }
+      return resetValidation({ ...state, mode: action.mode });
     case "step":
       return { ...state, step: action.step };
     case "validation_submitting":
-      return { ...state, processingStatus: "validating", serverValidation: { status: "submitting" } };
+      return { ...state, workflowRevalidationRequired: false, processingStatus: "validating", serverValidation: { status: "submitting" } };
     case "validation_response":
       return {
         ...state,
         processingStatus: action.response.status === "ready" ? "ready" : "blocked",
         serverValidation: { status: action.response.status, response: action.response },
+        validatedWorkflowMode: action.response.status === "ready" ? state.mode : null,
+        workflowRevalidationRequired: false,
         workspaceId: action.response.workspaceId,
         datasetId: action.response.datasetId,
       };
     case "validation_failed":
-      return { ...state, processingStatus: "failed", serverValidation: { status: "failed", error: action.error }, workspaceId: null, datasetId: null };
+      return { ...state, validatedWorkflowMode: null, workflowRevalidationRequired: false, processingStatus: "failed", serverValidation: { status: "failed", error: action.error }, workspaceId: null, datasetId: null };
     case "job_queued":
       return { ...state, processingStatus: "queued" };
     case "job_status":
@@ -103,12 +111,21 @@ export default function ForecastRunWorkflow() {
     : state.mode === "assess_dataset"
       ? response?.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible"
       : false;
+  const selectedWorkspaceReady = Boolean(
+    state.mode
+      && response?.status === "ready"
+      && selectedEligible
+      && state.mode === state.validatedWorkflowMode
+      && state.workspaceId
+      && state.datasetId
+      && response.validationRecordSha256,
+  );
   const canNext = state.step === "upload"
     ? both
     : state.step === "validate"
-      ? Boolean(response?.status === "ready" && selectedEligible)
+      ? Boolean(response?.status === "ready")
       : state.step === "choose"
-        ? Boolean(state.mode && selectedEligible)
+        ? selectedWorkspaceReady
         : state.step !== "review";
 
   const validate = async () => {
@@ -138,7 +155,7 @@ export default function ForecastRunWorkflow() {
   };
 
   const runQuickForecast = async () => {
-    if (!response || !state.workspaceId || !state.datasetId || state.mode !== "quick_forecast" || !response.eligibility.quickForecast.eligible) return;
+    if (!response || !state.workspaceId || !state.datasetId || state.mode !== "quick_forecast" || state.validatedWorkflowMode !== "quick_forecast" || !response.eligibility.quickForecast.eligible) return;
     let started;
     try { started = await startQuickForecast({ workspaceId: state.workspaceId, datasetId: state.datasetId, deploymentId: response.deploymentId, validationRecordSha256: response.validationRecordSha256 }); }
     catch { dispatch({ type: "job_failed", message: "The Quick Forecast job could not be queued." }); return; }
@@ -174,7 +191,7 @@ export default function ForecastRunWorkflow() {
   };
 
   const runAssessment = async () => {
-    if (!response || !state.workspaceId || !state.datasetId || state.mode !== "assess_dataset" || response.eligibility.assessDataset.assessmentStatus !== "full_assessment_eligible") return;
+    if (!response || !state.workspaceId || !state.datasetId || state.mode !== "assess_dataset" || state.validatedWorkflowMode !== "assess_dataset" || response.eligibility.assessDataset.assessmentStatus !== "full_assessment_eligible") return;
     let started;
     try { started = await startDatasetAssessment({ workspaceId: state.workspaceId, datasetId: state.datasetId, deploymentId: response.deploymentId, validationRecordSha256: response.validationRecordSha256 }); }
     catch { dispatch({ type: "job_failed", message: "The dataset-assessment job could not be queued." }); return; }
@@ -236,17 +253,18 @@ export default function ForecastRunWorkflow() {
         serverValidation={state.serverValidation}
         onMode={mode => dispatch({ type: "mode", mode })}
         onValidate={() => void validate()}
+        revalidationRequired={state.workflowRevalidationRequired}
       />}
-      {state.step === "choose" && <WorkflowChoice value={state.mode} onChange={mode => dispatch({ type: "mode", mode })} />}
+      {state.step === "choose" && <WorkflowChoice value={state.mode} response={response} validatedWorkflowMode={state.validatedWorkflowMode} onChange={mode => dispatch({ type: "mode", mode })} />}
       {state.step === "review" && <div className="space-y-4">
         <div className="rounded-xl border border-border-subtle bg-surface-muted p-5">
           <h2 className="font-semibold text-ink">Review and execute</h2>
           <p className="mt-2 text-sm text-ink-muted">Files: {state.files.dengue?.file.name ?? "missing"} · {state.files.climate?.file.name ?? "missing"}</p>
-          <p className="mt-1 text-sm text-ink-muted">Workflow: {state.mode === "quick_forecast" ? "Quick Forecast · deployment compatibility required · 2-week horizon" : "Assess Dataset · future candidate assessment · approval required"}</p>
+          <p className="mt-1 text-sm text-ink-muted">Workflow: {state.mode === "quick_forecast" ? "Quick Forecast · deployment compatibility required · 2-week horizon" : "Assess Dataset · governed candidate assessment · one-run decision required"}</p>
           <p className="mt-2 text-xs text-ink-muted">Validated workspace: {state.workspaceId?.slice(0, 8)}… · Dataset: {state.datasetId?.slice(0, 8)}…</p>
         </div>
         <ProcessingState status={state.processingStatus} stage={state.job?.ok ? state.job.progress : undefined} workflow={state.mode} />
-        {state.mode === "quick_forecast" ? <Button disabled={!selectedEligible || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runQuickForecast()}>Start Quick Forecast</Button> : <Button disabled={!selectedEligible || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runAssessment()}>Start Dataset Assessment</Button>}
+        {state.mode === "quick_forecast" ? <Button disabled={!selectedWorkspaceReady || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runQuickForecast()}>Start Quick Forecast</Button> : <Button disabled={!selectedWorkspaceReady || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runAssessment()}>Start Dataset Assessment</Button>}
       </div>}
       {state.step === "results" && (state.mode === "assess_dataset" ? <div className="space-y-5"><ModelSuitabilitySummary assessment={state.assessment} />{state.assessment?<ApprovalPanel assessment={state.assessment} decision={state.approval} busy={["queued","running","committing"].includes(state.processingStatus)} onDecision={(choice,reason)=>void recordDecision(choice,reason)} onForecast={()=>void runApprovedForecast()}/>:null}{state.approval?.forecastAuthorized?<ProcessingState status={state.processingStatus} stage={state.job?.ok?state.job.progress:undefined} workflow="assess_dataset"/>:null}</div> : <ForecastResultSummary result={state.result} />)}
     </div>

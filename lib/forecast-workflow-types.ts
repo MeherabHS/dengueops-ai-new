@@ -60,6 +60,8 @@ export interface ForecastWorkflowState {
   step: WorkflowStep;
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
   mode: WorkflowMode | null;
+  validatedWorkflowMode: WorkflowMode | null;
+  workflowRevalidationRequired: boolean;
   processingStatus: ProcessingStatus;
   serverValidation: ServerValidationState;
   workspaceId: string | null;
