@@ -15,7 +15,7 @@
   "properties": {
     "schema_version": {"const": "1.0"},
     "policy_id": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"},
-    "policy_version": {"const": "p1.4c-1-v1"},
+    "policy_version": {"const": "p1.4f-v1"},
     "policy_status": {"enum": ["active", "inactive", "suspended"]},
     "policy_sha256": {"$ref": "#/$defs/sha256"},
     "policy_hash_method": {"const": "sha256_canonical_json_excluding_policy_sha256"},
@@ -95,13 +95,28 @@
     },
     "uncertainty_policy": {
       "type": "object", "additionalProperties": false,
-      "required": ["eligible_status", "ineligible_status", "bounds", "inherit_nominal_coverage", "inherit_historical_coverage", "synthetic_p1_3_range_reusable", "rmse_fallback_allowed", "interval_claim_allowed"],
+      "required": ["eligible_status", "ineligible_status", "successful_status", "bounds", "inherit_nominal_coverage", "inherit_historical_coverage", "synthetic_p1_3_range_reusable", "rmse_fallback_allowed", "interval_claim_allowed", "dataset_specific_calibration_enabled", "calibration_method", "uncertainty_method", "uncertainty_method_version", "initial_training_rows", "embargo_rows", "validation_rows_per_fold", "fold_step_rows", "required_complete_residual_folds", "calibration_warmup_fold_count", "nominal_coverage", "calibration_score", "signed_residual_definition", "quantile_rank_rule", "interpolation", "raw_interval_rule", "lower_bound_policy", "reported_bounds_policy", "calibrated_on_synthetic_data", "residual_source_artifact_path", "prohibited_methods"],
       "properties": {
         "eligible_status": {"const": "pending_dataset_specific_calibration"},
-        "ineligible_status": {"const": "unavailable_for_uploaded_dataset"}, "bounds": {"type": "null"},
+        "ineligible_status": {"const": "unavailable_for_uploaded_dataset"}, "successful_status": {"const": "available"}, "bounds": {"type": "null"},
         "inherit_nominal_coverage": {"const": false}, "inherit_historical_coverage": {"const": false},
         "synthetic_p1_3_range_reusable": {"const": false}, "rmse_fallback_allowed": {"const": false},
-        "interval_claim_allowed": {"const": false}
+        "interval_claim_allowed": {"const": false}, "dataset_specific_calibration_enabled": {"const": true},
+        "calibration_method": {"const": "prequential_expanding_window_prior_residuals_only"},
+        "uncertainty_method": {"const": "prequential_expanding_absolute_residual_quantile"},
+        "uncertainty_method_version": {"const": "p1.3-v1"},
+        "initial_training_rows": {"const": 104}, "embargo_rows": {"const": 1},
+        "validation_rows_per_fold": {"const": 1}, "fold_step_rows": {"const": 1},
+        "required_complete_residual_folds": {"const": 68}, "calibration_warmup_fold_count": {"const": 20},
+        "nominal_coverage": {"const": 0.9}, "calibration_score": {"const": "absolute_residual"},
+        "signed_residual_definition": {"const": "actual_minus_raw_prediction"},
+        "quantile_rank_rule": {"const": "min(n, ceil((n + 1) * 0.90))"}, "interpolation": {"const": "none"},
+        "raw_interval_rule": {"const": "point_forecast_raw_plus_or_minus_quantile"},
+        "lower_bound_policy": {"const": "clip_raw_lower_at_zero"},
+        "reported_bounds_policy": {"const": "floor_lower_and_ceil_upper"},
+        "calibrated_on_synthetic_data": {"const": true},
+        "residual_source_artifact_path": {"const": "artifacts/forecast_calibration.json"},
+        "prohibited_methods": {"type": "array", "const": ["in_sample_residuals", "random_train_test_split", "rmse_based_empirical_bounds", "bundled_benchmark_bound_reuse", "preparedness_scenario_reuse", "arbitrary_fold_dropping", "quantile_interpolation", "prediction_interval_claim", "successful_calibration_without_exactly_68_residuals"]}
       }
     },
     "preparedness_policy": {

@@ -36,6 +36,7 @@ export async function readLatestDashboard(deploymentId: string): Promise<{ sourc
     if (commit.status !== "committed" || commit.runId !== pointer.runId || commit.datasetId !== pointer.datasetId || commit.deploymentId !== deploymentId || commit.artifactHashes?.["model_card.json"] !== pointer.modelCardSha256 || commit.artifactHashes?.["dashboard_summary.json"] !== pointer.dashboardSummarySha256) throw new Error("commit identity");
     if (approved && (commit.workflowMode !== "approved_assessment_forecast" || commit.decisionId !== pointer.decisionId || commit.assessmentId !== pointer.assessmentId || commit.authorizationId !== pointer.authorizationId || commit.selectedModelId !== pointer.selectedModelId || commit.decisionScope !== "one_run" || commit.deploymentModelAdopted !== false)) throw new Error("approved commit identity");
     if (value.run?.runId !== pointer.runId || value.run?.datasetId !== pointer.datasetId || value.run?.sourceType !== "uploaded") throw new Error("dashboard identity");
+    const calibrated = value.forecast.uncertaintyStatus === "available";
     const dashboard: OverviewViewModel = {
       sourceType: "uploaded",
       latestObservedCases: value.forecast.latestObservedCases,
@@ -45,7 +46,17 @@ export async function readLatestDashboard(deploymentId: string): Promise<{ sourc
       targetPeriod: value.forecast.targetPeriod,
       forecastDirection: value.forecast.direction,
       history: value.history,
-      empiricalRange: { availabilityStatus: value.forecast.uncertaintyStatus, lower: null, upper: null, nominalCoverage: null, historicalCoverage: null, isPredictionInterval: false, reason: "Dataset-specific temporal calibration has not yet been completed." },
+      empiricalRange: {
+        availabilityStatus: value.forecast.uncertaintyStatus,
+        lower: calibrated ? value.forecast.empiricalLower : null,
+        upper: calibrated ? value.forecast.empiricalUpper : null,
+        nominalCoverage: calibrated ? value.forecast.nominalCoverage : null,
+        historicalCoverage: calibrated ? value.forecast.historicalCoverage : null,
+        isPredictionInterval: false,
+        reason: calibrated
+          ? "Dataset-specific empirical range from prior-only rolling-origin residual evidence; historical coverage does not guarantee future coverage."
+          : "Dataset-specific temporal calibration has not yet been completed.",
+      },
       activeModel: { id: value.model.modelId, label: value.model.modelLabel, adoptionStatus: approved ? "Used for this one-run internal decision; deployment model unchanged" : "Approved under Quick Forecast compatibility policy" },
       modelUse: approved ? { workflowMode: "approved_assessment_forecast", technicalWinnerId: value.model.technicalWinnerModelId, decisionId: value.decision.decisionId, assessmentId: value.decision.assessmentId, decisionOutcome: value.decision.outcome, scope: "one_run", deploymentModelUnchanged: true } : { workflowMode: "quick_forecast", technicalWinnerId: null, decisionId: null, assessmentId: null, decisionOutcome: null, scope: "deployment", deploymentModelUnchanged: false },
       deployment: { mode: "Synthetic capability demonstration", gate: "Benchmark only" },

@@ -12,6 +12,13 @@ from typing import Any, Mapping, Sequence
 
 import jsonschema
 
+from empirical_range import (
+    aggregate_prequential_records as _shared_aggregate,
+    build_prequential_evaluation as _shared_prequential_evaluation,
+    construct_raw_interval as _shared_construct_raw_interval,
+    finite_sample_quantile as _shared_finite_sample_quantile,
+)
+
 ROOT = Path(__file__).resolve().parent.parent
 FORECAST_PATH = ROOT / "data" / "forecast_output.json"
 UNCERTAINTY_PATH = ROOT / "data" / "forecast_uncertainty.json"
@@ -165,25 +172,11 @@ def validate_and_load_rf_residuals(
 
 
 def finite_sample_quantile(values: Sequence[float], nominal_coverage: float = NOMINAL_COVERAGE) -> tuple[int, float]:
-    if not values or not 0 < nominal_coverage < 1:
-        raise ValueError("A nonempty residual pool and valid nominal coverage are required.")
-    ordered = sorted(float(value) for value in values)
-    if any(not math.isfinite(value) or value < 0 for value in ordered):
-        raise ValueError("Calibration scores must be finite and nonnegative.")
-    n = len(ordered)
-    rank = min(n, math.ceil((n + 1) * nominal_coverage))
-    return rank, ordered[rank - 1]
+    return _shared_finite_sample_quantile(values, nominal_coverage)
 
 
 def construct_raw_interval(point_raw: float, quantile: float) -> dict[str, Any]:
-    if not math.isfinite(point_raw) or not math.isfinite(quantile) or quantile < 0:
-        raise ValueError("Point prediction and quantile must be finite; quantile must be nonnegative.")
-    lower_unclipped = point_raw - quantile
-    lower = max(0.0, lower_unclipped); upper = point_raw + quantile
-    if lower > upper or not lower <= point_raw <= upper:
-        raise ValueError("Empirical range invariant failed.")
-    return {"lower_raw_unclipped": lower_unclipped, "lower_raw": lower, "upper_raw": upper,
-            "lower_clipping_applied": lower != lower_unclipped}
+    return _shared_construct_raw_interval(point_raw, quantile)
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -191,46 +184,15 @@ def _mean(values: Sequence[float]) -> float:
 
 
 def _aggregate(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    widths = [float(row["upper_raw"]) - float(row["lower_raw"]) for row in records]
-    lower_misses = [float(row["miss_magnitude"]) for row in records if row["miss_direction"] == "lower"]
-    upper_misses = [float(row["miss_magnitude"]) for row in records if row["miss_direction"] == "upper"]
-    covered = sum(bool(row["covered"]) for row in records)
-    return {
-        "nominal_coverage": NOMINAL_COVERAGE, "observed_coverage": covered / len(records),
-        "coverage_gap": covered / len(records) - NOMINAL_COVERAGE,
-        "covered_fold_count": covered, "evaluated_fold_count": len(records),
-        "calibration_warmup_fold_count": WARMUP_FOLDS,
-        "average_interval_width": _mean(widths), "median_interval_width": float(statistics.median(widths)),
-        "minimum_interval_width": min(widths), "maximum_interval_width": max(widths),
-        "lower_miss_count": len(lower_misses), "upper_miss_count": len(upper_misses),
-        "mean_lower_miss_magnitude": _mean(lower_misses), "mean_upper_miss_magnitude": _mean(upper_misses),
-        "residual_count": EXPECTED_FOLDS,
-        "first_evaluated_fold_id": records[0]["fold_id"], "last_evaluated_fold_id": records[-1]["fold_id"],
-    }
+    return _shared_aggregate(records, nominal_coverage=NOMINAL_COVERAGE,
+                             warmup_folds=WARMUP_FOLDS, residual_count=EXPECTED_FOLDS)
 
 
 def build_prequential_evaluation(residuals: Sequence[Mapping[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    if len(residuals) != EXPECTED_FOLDS:
-        raise ValueError("Prequential evaluation requires exactly 68 ordered residuals.")
-    records: list[dict[str, Any]] = []
-    for index in range(WARMUP_FOLDS, EXPECTED_FOLDS):
-        predecessors = [float(row["absolute_residual"]) for row in residuals[:index]]
-        if len(predecessors) != index:
-            raise ValueError("Evaluation fold does not use exactly its predecessor residuals.")
-        rank, quantile = finite_sample_quantile(predecessors)
-        current = residuals[index]; bounds = construct_raw_interval(float(current["raw_prediction"]), quantile)
-        actual = float(current["actual"]); covered = bounds["lower_raw"] <= actual <= bounds["upper_raw"]
-        direction = None; magnitude = 0.0
-        if actual < bounds["lower_raw"]: direction = "lower"; magnitude = bounds["lower_raw"] - actual
-        elif actual > bounds["upper_raw"]: direction = "upper"; magnitude = actual - bounds["upper_raw"]
-        records.append({
-            "fold_id": current["fold_id"], "target_period": current["target_period"], "actual": actual,
-            "raw_prediction": current["raw_prediction"], "prior_residual_count": index,
-            "quantile_rank": rank, "quantile_value": quantile, **bounds,
-            "covered": covered, "miss_direction": direction, "miss_magnitude": magnitude,
-            "case_quartile": current["case_quartile"], "trajectory_category": current["trajectory_category"],
-        })
-    return records, _aggregate(records)
+    return _shared_prequential_evaluation(
+        residuals, expected_folds=EXPECTED_FOLDS, warmup_folds=WARMUP_FOLDS,
+        nominal_coverage=NOMINAL_COVERAGE,
+    )
 
 
 def _strata(records: Sequence[Mapping[str, Any]], key: str) -> list[dict[str, Any]]:

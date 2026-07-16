@@ -23,6 +23,8 @@ test("frontend refresh is gated on completed committed run identity", async () =
 test("uploaded dashboard uses explicit unavailable states", async () => {
   const source = await read("lib/runtime/dashboard-reader.ts");
   assert.match(source, /availabilityStatus: value\.forecast\.uncertaintyStatus/);
+  assert.match(source, /lower: calibrated \? value\.forecast\.empiricalLower : null/);
+  assert.match(source, /historicalCoverage: calibrated \? value\.forecast\.historicalCoverage : null/);
   assert.match(source, /availabilityStatus: value\.preparedness\.availabilityStatus/);
   assert.doesNotMatch(source, /53\s*[–-]\s*187|87\s*\/\s*120\s*\/\s*153/);
 });

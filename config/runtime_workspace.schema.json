@@ -104,7 +104,7 @@
             "uncertaintyStatus": { "enum": ["pending_dataset_specific_calibration", "unavailable_for_uploaded_dataset"] },
             "preparednessStatus": { "enum": ["unavailable_missing_planning_policy", "unavailable_for_uploaded_dataset"] },
             "policyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
-            "policyVersion": { "const": "p1.4c-1-v1" },
+            "policyVersion": { "const": "p1.4f-v1" },
             "policySha256": { "$ref": "#/$defs/sha256" }
           }
         },

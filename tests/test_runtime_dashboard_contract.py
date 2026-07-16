@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 class RuntimeDashboardContractTests(unittest.TestCase):
     def test_runtime_schemas_are_strict_at_top_level(self):
-        for name in ("runtime_job", "runtime_run", "runtime_commit", "runtime_latest", "runtime_forecast_output", "runtime_forecast_uncertainty", "runtime_model_card", "runtime_dashboard_summary"):
+        for name in ("runtime_job", "runtime_run", "runtime_commit", "runtime_latest", "runtime_forecast_output", "runtime_forecast_calibration", "runtime_forecast_uncertainty", "runtime_model_card", "runtime_dashboard_summary"):
             schema = json.loads((ROOT / "config" / f"{name}.schema.json").read_text())
             Draft202012Validator.check_schema(schema)
             self.assertFalse(schema.get("additionalProperties", True), name)

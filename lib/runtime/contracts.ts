@@ -92,7 +92,7 @@ export interface RuntimeEligibility {
       | "unavailable_missing_planning_policy"
       | "unavailable_for_uploaded_dataset";
     policyId: "RUNTIME.QUICK_FORECAST.COMPATIBILITY";
-    policyVersion: "p1.4c-1-v1";
+    policyVersion: "p1.4f-v1";
     policySha256: string;
   };
   assessDataset: RuntimeAssessmentEligibility;
@@ -172,7 +172,7 @@ export interface QuickForecastJobRecord extends RuntimeJobBase {
   runId: string;
   workflowMode: "quick_forecast";
   policyId: "RUNTIME.QUICK_FORECAST.COMPATIBILITY";
-  policyVersion: "p1.4c-1-v1";
+  policyVersion: "p1.4f-v1";
   policySha256: string;
   committedRunId: string | null;
 }

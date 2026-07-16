@@ -1,1 +1,31 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,"required":["schemaVersion","runId","jobId","datasetId","deploymentId","activeModelId","parameterHash","uncertaintyStatus","lowerRaw","upperRaw","lowerReported","upperReported","isPredictionInterval","calibratedOnSyntheticData","nominalCoverage","historicalCoverage","calibrationMethod","residualCount","rmseFallbackAllowed","bundledP13RangeReused","limitations","generatedAt"],"properties":{"schemaVersion":{"const":"1.0"},"runId":{"format":"uuid"},"jobId":{"format":"uuid"},"datasetId":{"$ref":"#/$defs/sha"},"deploymentId":{"const":"dhaka_south"},"activeModelId":{"const":"random_forest"},"parameterHash":{"$ref":"#/$defs/sha"},"uncertaintyStatus":{"const":"pending_dataset_specific_calibration"},"lowerRaw":{"type":"null"},"upperRaw":{"type":"null"},"lowerReported":{"type":"null"},"upperReported":{"type":"null"},"isPredictionInterval":{"const":false},"calibratedOnSyntheticData":{"const":false},"nominalCoverage":{"type":"null"},"historicalCoverage":{"type":"null"},"calibrationMethod":{"type":"null"},"residualCount":{"type":"null"},"rmseFallbackAllowed":{"const":false},"bundledP13RangeReused":{"const":false},"limitations":{"type":"array","minItems":2,"items":{"type":"string"}},"generatedAt":{"format":"date-time"}},"$defs":{"sha":{"type":"string","pattern":"^[a-f0-9]{64}$"}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "jobId", "datasetId", "deploymentId", "activeModelId", "parameterHash", "uncertaintyStatus", "lowerRaw", "upperRaw", "lowerReported", "upperReported", "isPredictionInterval", "calibratedOnSyntheticData", "nominalCoverage", "historicalCoverage", "calibrationMethod", "residualCount", "coveredFoldCount", "calibrationWarmupFoldCount", "lowerMissCount", "upperMissCount", "intervalWidthSummary", "uncertaintyMethod", "uncertaintyMethodVersion", "residualSourceArtifactPath", "residualSourceArtifactSha256", "rmseFallbackAllowed", "bundledP13RangeReused", "limitations", "generatedAt"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "runId": {"format": "uuid"}, "jobId": {"format": "uuid"},
+    "datasetId": {"$ref": "#/$defs/sha"}, "deploymentId": {"const": "dhaka_south"},
+    "activeModelId": {"const": "random_forest"}, "parameterHash": {"$ref": "#/$defs/sha"},
+    "uncertaintyStatus": {"enum": ["available", "pending_dataset_specific_calibration"]},
+    "lowerRaw": {"type": ["number", "null"], "minimum": 0}, "upperRaw": {"type": ["number", "null"], "minimum": 0},
+    "lowerReported": {"type": ["integer", "null"], "minimum": 0}, "upperReported": {"type": ["integer", "null"], "minimum": 0},
+    "isPredictionInterval": {"const": false}, "calibratedOnSyntheticData": {"type": "boolean"},
+    "nominalCoverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1}, "historicalCoverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "calibrationMethod": {"type": ["string", "null"]}, "residualCount": {"type": ["integer", "null"], "minimum": 0},
+    "coveredFoldCount": {"type": ["integer", "null"], "minimum": 0}, "calibrationWarmupFoldCount": {"type": ["integer", "null"], "minimum": 0},
+    "lowerMissCount": {"type": ["integer", "null"], "minimum": 0}, "upperMissCount": {"type": ["integer", "null"], "minimum": 0},
+    "intervalWidthSummary": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/widths"}]},
+    "uncertaintyMethod": {"type": ["string", "null"]}, "uncertaintyMethodVersion": {"type": ["string", "null"]},
+    "residualSourceArtifactPath": {"type": ["string", "null"]}, "residualSourceArtifactSha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha"}]},
+    "rmseFallbackAllowed": {"const": false}, "bundledP13RangeReused": {"const": false},
+    "limitations": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}}, "generatedAt": {"format": "date-time"}
+  },
+  "allOf": [
+    {"if": {"properties": {"uncertaintyStatus": {"const": "available"}}}, "then": {"properties": {"lowerRaw": {"type": "number", "minimum": 0}, "upperRaw": {"type": "number", "minimum": 0}, "lowerReported": {"type": "integer", "minimum": 0}, "upperReported": {"type": "integer", "minimum": 0}, "calibratedOnSyntheticData": {"const": true}, "nominalCoverage": {"const": 0.9}, "historicalCoverage": {"type": "number", "minimum": 0, "maximum": 1}, "calibrationMethod": {"const": "prequential_expanding_window_prior_residuals_only"}, "residualCount": {"const": 68}, "coveredFoldCount": {"type": "integer", "minimum": 0, "maximum": 48}, "calibrationWarmupFoldCount": {"const": 20}, "lowerMissCount": {"type": "integer", "minimum": 0, "maximum": 48}, "upperMissCount": {"type": "integer", "minimum": 0, "maximum": 48}, "intervalWidthSummary": {"$ref": "#/$defs/widths"}, "uncertaintyMethod": {"const": "prequential_expanding_absolute_residual_quantile"}, "uncertaintyMethodVersion": {"const": "p1.3-v1"}, "residualSourceArtifactPath": {"const": "artifacts/forecast_calibration.json"}, "residualSourceArtifactSha256": {"$ref": "#/$defs/sha"}}}},
+    {"if": {"properties": {"uncertaintyStatus": {"const": "pending_dataset_specific_calibration"}}}, "then": {"properties": {"lowerRaw": {"type": "null"}, "upperRaw": {"type": "null"}, "lowerReported": {"type": "null"}, "upperReported": {"type": "null"}, "calibratedOnSyntheticData": {"const": false}, "nominalCoverage": {"type": "null"}, "historicalCoverage": {"type": "null"}, "calibrationMethod": {"type": "null"}, "residualCount": {"type": "null"}, "coveredFoldCount": {"type": "null"}, "calibrationWarmupFoldCount": {"type": "null"}, "lowerMissCount": {"type": "null"}, "upperMissCount": {"type": "null"}, "intervalWidthSummary": {"type": "null"}, "uncertaintyMethod": {"type": "null"}, "uncertaintyMethodVersion": {"type": "null"}, "residualSourceArtifactPath": {"type": "null"}, "residualSourceArtifactSha256": {"type": "null"}}}}
+  ],
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "widths": {"type": "object", "additionalProperties": false, "required": ["average", "median", "minimum", "maximum"], "properties": {"average": {"type": "number", "minimum": 0}, "median": {"type": "number", "minimum": 0}, "minimum": {"type": "number", "minimum": 0}, "maximum": {"type": "number", "minimum": 0}}}
+  }
+}

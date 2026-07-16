@@ -67,6 +67,13 @@ class RuntimeQuickForecastPolicyTests(unittest.TestCase):
         self.assertEqual(self.policy["approved_model"]["model_id"], "random_forest")
         self.assertEqual(self.policy["approved_model"]["parameters_sha256"], "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0")
         self.assertEqual(self.policy["candidate_registry_sha256"], self.registry_sha)
+        self.assertEqual(self.policy["policy_version"], "p1.4f-v1")
+        uncertainty = self.policy["uncertainty_policy"]
+        self.assertEqual((uncertainty["required_complete_residual_folds"], uncertainty["calibration_warmup_fold_count"], uncertainty["nominal_coverage"]), (68, 20, 0.9))
+        self.assertEqual(uncertainty["uncertainty_method"], "prequential_expanding_absolute_residual_quantile")
+        self.assertEqual(uncertainty["uncertainty_method_version"], "p1.3-v1")
+        self.assertIn("preparedness_scenario_reuse", uncertainty["prohibited_methods"])
+        self.assertFalse(uncertainty["rmse_fallback_allowed"])
         self.assertTrue(self.policy["runtime_upload_permission"])
 
     def test_exact_compatible_scope_is_eligible_but_outputs_remain_unavailable(self):

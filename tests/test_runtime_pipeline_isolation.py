@@ -13,6 +13,13 @@ class RuntimePipelineIsolationTests(unittest.TestCase):
             self.assertNotIn(f"from {prohibited}", combined)
         self.assertNotIn('ROOT / "data"', combined)
 
+    def test_shared_empirical_module_has_no_global_artifact_io(self):
+        source = (ROOT / "analytics" / "empirical_range.py").read_text(encoding="utf-8")
+        self.assertNotIn('ROOT / "data"', source)
+        self.assertNotIn("write_text(", source)
+        self.assertNotIn("write_bytes(", source)
+        self.assertNotIn("to_csv(", source)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -16,6 +16,22 @@ import numpy as np
 import pandas as pd
 
 from feature_engineering import FEATURE_COLUMNS, build_features, build_inference_features
+from empirical_range import (
+    HORIZON_WEEKS as CALIBRATION_HORIZON_WEEKS,
+    INITIAL_TRAINING_ROWS,
+    EMBARGO_ROWS,
+    FOLD_STEP_ROWS,
+    METHOD_ID,
+    METHOD_VERSION,
+    NOMINAL_COVERAGE,
+    REQUIRED_RESIDUALS,
+    WARMUP_FOLDS,
+    advance_iso_period,
+    build_prequential_evaluation,
+    construct_raw_interval,
+    finite_sample_quantile,
+    generate_runtime_rf_residuals,
+)
 from model_factory import build_candidate_estimator, load_and_validate_candidate_registry
 from runtime_commit import atomic_json, commit_runtime_run, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
@@ -29,11 +45,6 @@ def _now() -> str:
 
 def _period(year: int, week: int) -> str:
     return f"{year}-W{week:02d}"
-
-
-def _advance_period(year: int, week: int, amount: int) -> tuple[int, int]:
-    ordinal = year * 52 + (week - 1) + amount
-    return ordinal // 52, ordinal % 52 + 1
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -152,6 +163,24 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if not np.isfinite(X.to_numpy()).all() or not np.isfinite(y.to_numpy()).all() or (y < 0).any():
         raise ValueError("Training data contains invalid values.")
     inference_row = latest.loc[FEATURE_COLUMNS].to_frame().T.astype(float)
+    _update_job(job_path, job, progress="generating_temporal_calibration_folds")
+    calibration_result = generate_runtime_rf_residuals(
+        training, registry, registry_sha256=registry_hash,
+        expected_registry_sha256=policy["candidate_registry_sha256"],
+        expected_parameters_sha256=policy["approved_model"]["parameters_sha256"],
+        feature_order=FEATURE_COLUMNS, target_column=TARGET,
+    )
+    calibration_available = calibration_result["status"] == "available"
+    prequential_records: list[dict[str, Any]] = []
+    calibration_metrics: dict[str, Any] | None = None
+    final_quantile_rank: int | None = None
+    final_quantile_value: float | None = None
+    if calibration_available:
+        _update_job(job_path, job, progress="evaluating_random_forest_calibration")
+        prequential_records, calibration_metrics = build_prequential_evaluation(calibration_result["residuals"])
+        final_quantile_rank, final_quantile_value = finite_sample_quantile(
+            [row["absolute_residual"] for row in calibration_result["residuals"]]
+        )
     estimator = build_candidate_estimator("random_forest", registry)
     _update_job(job_path, job, progress="training_approved_model")
     estimator.fit(X, y)
@@ -163,7 +192,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     reported = int(round(published))
     latest_cases = int(latest["cases"])
     direction = "Increasing" if reported > latest_cases else "Decreasing" if reported < latest_cases else "Stable"
-    target_year, target_week = _advance_period(int(latest["epi_year"]), int(latest["epi_week"]), HORIZON_WEEKS)
+    target_year, target_week = advance_iso_period(int(latest["epi_year"]), int(latest["epi_week"]), HORIZON_WEEKS)
     target_period = _period(target_year, target_week)
     feature_bytes = training.to_csv(index=False, lineterminator="\n").encode("utf-8")
     feature_matrix_hash = hashlib.sha256(feature_bytes).hexdigest()
@@ -176,7 +205,6 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     artifacts = staging / "artifacts"
-    (artifacts / "model_features.csv").write_bytes(feature_bytes)
     input_manifest = {
         "schemaVersion": "1.0", "runId": job["runId"], "datasetId": job["datasetId"],
         "validationRecordSha256": job["validationRecordSha256"],
@@ -184,7 +212,57 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "featureOrderSha256": feature_hash, "generatedAt": generated_at,
     }
     _write_json_artifact(artifacts / "input_manifest.json", input_manifest)
+    (artifacts / "model_features.csv").write_bytes(feature_bytes)
     policy_identity = {"id": policy["policy_id"], "version": policy["policy_version"], "sha256": policy_hash}
+    available_fold_count = max(0, len(training) - INITIAL_TRAINING_ROWS - EMBARGO_ROWS)
+    calibration_limitations = ([
+        "The empirical range uses only dataset-specific out-of-sample Random Forest rolling-origin residuals.",
+        "Targets overlap and residuals are temporally dependent; historical coverage does not guarantee future coverage.",
+        "The range is not a probability statement or prediction interval.",
+        "The currently governed uploaded source scope is deterministic synthetic benchmark data.",
+        "Preparedness scenarios, bundled bounds, and RMSE sensitivity are not calibration inputs.",
+    ] if calibration_available else [
+        f"Dataset-specific calibration requires exactly 68 complete residual folds; this dataset provides {available_fold_count}.",
+        "No partial residual pool, benchmark range, preparedness scenario, or RMSE fallback was used.",
+    ])
+    width_summary = None if calibration_metrics is None else {
+        "average": calibration_metrics["average_interval_width"],
+        "median": calibration_metrics["median_interval_width"],
+        "minimum": calibration_metrics["minimum_interval_width"],
+        "maximum": calibration_metrics["maximum_interval_width"],
+    }
+    calibration_artifact = {
+        "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
+        "deploymentProfileId": job["deploymentId"], "policyId": policy["policy_id"], "policyVersion": policy["policy_version"],
+        "policySha256": policy_hash, "modelId": "random_forest", "modelFamily": "RandomForestRegressor",
+        "modelParametersSha256": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash,
+        "featureOrder": list(FEATURE_COLUMNS), "featureOrderSha256": feature_hash, "targetColumn": TARGET,
+        "forecastHorizonWeeks": CALIBRATION_HORIZON_WEEKS, "initialTrainingRows": INITIAL_TRAINING_ROWS,
+        "embargoRows": EMBARGO_ROWS, "foldStepRows": FOLD_STEP_ROWS, "requiredResidualCount": REQUIRED_RESIDUALS,
+        "calibrationWarmupFoldCount": WARMUP_FOLDS, "nominalCoverage": NOMINAL_COVERAGE,
+        "calibrationMethod": "prequential_expanding_window_prior_residuals_only", "uncertaintyMethod": METHOD_ID,
+        "uncertaintyMethodVersion": METHOD_VERSION, "calibrationStatus": calibration_result["status"],
+        "residualCount": len(calibration_result["folds"]), "foldPlanSha256": calibration_result["foldPlanSha256"],
+        "finalQuantileRank": final_quantile_rank, "finalQuantileValue": final_quantile_value,
+        "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
+        "coveredFoldCount": None if calibration_metrics is None else calibration_metrics["covered_fold_count"],
+        "evaluatedFoldCount": None if calibration_metrics is None else calibration_metrics["evaluated_fold_count"],
+        "lowerMissCount": None if calibration_metrics is None else calibration_metrics["lower_miss_count"],
+        "upperMissCount": None if calibration_metrics is None else calibration_metrics["upper_miss_count"],
+        "intervalWidthSummary": width_summary, "generatedAt": generated_at,
+        "limitations": calibration_limitations, "folds": calibration_result["folds"],
+    }
+    _write_json_artifact(artifacts / "forecast_calibration.json", calibration_artifact)
+    calibration_sha = sha256_file(artifacts / "forecast_calibration.json")
+    if calibration_available:
+        _update_job(job_path, job, progress="finalizing_empirical_range")
+        bounds = construct_raw_interval(raw, float(final_quantile_value))
+        lower_raw, upper_raw = bounds["lower_raw"], bounds["upper_raw"]
+        lower_reported, upper_reported = math.floor(lower_raw), math.ceil(upper_raw)
+        uncertainty_status = "available"
+    else:
+        lower_raw = upper_raw = lower_reported = upper_reported = None
+        uncertainty_status = "pending_dataset_specific_calibration"
     forecast = {
         "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
         "deploymentId": job["deploymentId"], "sourceType": "uploaded", "workflowMode": "quick_forecast",
@@ -195,24 +273,34 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "horizonWeeks": HORIZON_WEEKS, "forecastGrowthCategory": direction,
         "reportingRoundingPolicy": "nearest_integer_python_round_half_to_even", "clippingApplied": raw != published,
         "generatedAt": generated_at, "preparednessAvailability": "unavailable_missing_planning_policy",
-        "uncertaintyAvailability": "pending_dataset_specific_calibration",
+        "uncertaintyAvailability": uncertainty_status,
     }
     _write_json_artifact(artifacts / "forecast_output.json", forecast)
     uncertainty = {
         "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
         "deploymentId": job["deploymentId"], "activeModelId": "random_forest", "parameterHash": candidate["parameters_sha256"],
-        "uncertaintyStatus": "pending_dataset_specific_calibration", "lowerRaw": None, "upperRaw": None,
-        "lowerReported": None, "upperReported": None, "isPredictionInterval": False,
-        "calibratedOnSyntheticData": False, "nominalCoverage": None, "historicalCoverage": None,
-        "calibrationMethod": None, "residualCount": None, "rmseFallbackAllowed": False,
-        "bundledP13RangeReused": False, "limitations": [
-            "Dataset-specific temporal calibration has not yet been completed.",
-            "No synthetic benchmark range, coverage result, or RMSE fallback is inherited by this uploaded-data forecast.",
-        ], "generatedAt": generated_at,
+        "uncertaintyStatus": uncertainty_status, "lowerRaw": lower_raw, "upperRaw": upper_raw,
+        "lowerReported": lower_reported, "upperReported": upper_reported, "isPredictionInterval": False,
+        "calibratedOnSyntheticData": calibration_available,
+        "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
+        "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
+        "calibrationMethod": "prequential_expanding_window_prior_residuals_only" if calibration_available else None,
+        "residualCount": REQUIRED_RESIDUALS if calibration_available else None,
+        "coveredFoldCount": None if calibration_metrics is None else calibration_metrics["covered_fold_count"],
+        "calibrationWarmupFoldCount": WARMUP_FOLDS if calibration_available else None,
+        "lowerMissCount": None if calibration_metrics is None else calibration_metrics["lower_miss_count"],
+        "upperMissCount": None if calibration_metrics is None else calibration_metrics["upper_miss_count"],
+        "intervalWidthSummary": width_summary, "uncertaintyMethod": METHOD_ID if calibration_available else None,
+        "uncertaintyMethodVersion": METHOD_VERSION if calibration_available else None,
+        "residualSourceArtifactPath": "artifacts/forecast_calibration.json" if calibration_available else None,
+        "residualSourceArtifactSha256": calibration_sha if calibration_available else None,
+        "rmseFallbackAllowed": False, "bundledP13RangeReused": False,
+        "limitations": calibration_limitations, "generatedAt": generated_at,
     }
     _write_json_artifact(artifacts / "forecast_uncertainty.json", uncertainty)
     history = [{"period": _period(int(row.epi_year), int(row.epi_week)), "cases": int(row.cases)} for row in cases.tail(52).itertuples()]
-    chart = {"schemaVersion": "1.0", "runId": job["runId"], "history": history, "forecast": {"period": target_period, "cases": reported}, "empiricalRange": None}
+    chart = {"schemaVersion": "1.0", "runId": job["runId"], "history": history, "forecast": {"period": target_period, "cases": reported},
+        "empiricalRange": {"lower": lower_reported, "upper": upper_reported} if calibration_available else None}
     _write_json_artifact(artifacts / "chart_data.json", chart)
     dashboard = {
         "schemaVersion": "1.0", "run": {"runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
@@ -223,25 +311,30 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "suitabilityStatus": "approved_under_quick_forecast_compatibility_policy", "comparisonPerformed": False},
         "forecast": {"latestObservedCases": latest_cases, "forecastRaw": raw, "forecastReported": reported,
             "targetPeriod": target_period, "target": TARGET, "horizonWeeks": 2, "direction": direction,
-            "uncertaintyStatus": "pending_dataset_specific_calibration", "empiricalLower": None, "empiricalUpper": None},
+            "uncertaintyStatus": uncertainty_status, "empiricalLower": lower_reported, "empiricalUpper": upper_reported,
+            "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
+            "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
+            "isPredictionInterval": False},
         "history": history,
         "preparedness": {"availabilityStatus": "unavailable_missing_planning_policy", "scenarios": None, "counts": None, "facilities": [], "alerts": []},
         "evidence": {"validation": {"sha256": job["validationRecordSha256"], "acceptedPeriod": validation.get("acceptedPeriod")},
-            "policy": policy_identity, "modelCard": {"path": "artifacts/model_card.json"},
+            "policy": policy_identity, "calibration": {"path": "artifacts/forecast_calibration.json", "sha256": calibration_sha},
+            "modelCard": {"path": "artifacts/model_card.json"},
             "provenance": {"datasetId": job["datasetId"], "inputManifest": "artifacts/input_manifest.json"}},
         "limitations": ["Approved deployment model used under the governed Quick Forecast compatibility policy.",
-            "No dataset-specific model comparison was performed.", "Uncertainty and preparedness are unavailable for this uploaded-data run."],
+            "No dataset-specific model comparison was performed.", *calibration_limitations,
+            "Official preparedness is unavailable because no runtime planning policy is approved."],
     }
     _write_json_artifact(artifacts / "dashboard_summary.json", dashboard)
     pipeline_summary = {"schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "status": "commit_ready",
-        "steps": ["input_revalidated", "features_built", "approved_model_trained", "point_forecast_generated", "artifacts_validated"],
-        "candidateComparisonPerformed": False, "uncertaintyCalibrationPerformed": False, "operationalEngineExecuted": False,
+        "steps": ["input_revalidated", "features_built", "temporal_calibration_evaluated", "approved_model_trained", "point_forecast_generated", "artifacts_validated"],
+        "candidateComparisonPerformed": False, "uncertaintyCalibrationPerformed": calibration_available, "operationalEngineExecuted": False,
         "generatedAt": generated_at}
     _write_json_artifact(artifacts / "pipeline_run_summary.json", pipeline_summary)
     approved_model = {"schemaVersion": "1.0", "modelId": "random_forest", "modelFamily": "RandomForestRegressor",
         "parameterHash": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash, "policy": policy_identity}
     atomic_json(staging / "metadata" / "approved_model.json", approved_model)
-    publication_sequence = ["input_manifest.json", "model_features.csv", "forecast_output.json", "forecast_uncertainty.json",
+    publication_sequence = ["input_manifest.json", "model_features.csv", "forecast_calibration.json", "forecast_output.json", "forecast_uncertainty.json",
         "chart_data.json", "dashboard_summary.json", "pipeline_run_summary.json", "model_card.json"]
     run_record = {"schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
@@ -258,14 +351,22 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "candidateRegistrySha256": registry_hash, "runtimeLibrary": "scikit-learn"},
         "features": {"count": 18, "orderSha256": feature_hash}, "target": TARGET, "horizonWeeks": 2,
         "training": training_identity, "policy": policy_identity, "comparisonPerformed": False, "bestModelClaim": False,
-        "uncertaintyStatus": "pending_dataset_specific_calibration", "preparednessStatus": "unavailable_missing_planning_policy",
+        "uncertaintyStatus": uncertainty_status,
+        "calibration": {"artifactPath": "artifacts/forecast_calibration.json", "artifactSha256": calibration_sha,
+            "status": uncertainty_status, "methodId": METHOD_ID if calibration_available else None,
+            "methodVersion": METHOD_VERSION if calibration_available else None,
+            "residualCount": REQUIRED_RESIDUALS if calibration_available else None,
+            "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
+            "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
+            "isPredictionInterval": False, "limitations": calibration_limitations},
+        "preparednessStatus": "unavailable_missing_planning_policy",
         "inputHashes": {"originalDengue": validation["files"]["original"]["dengueSha256"], "originalClimate": validation["files"]["original"]["climateSha256"],
             "canonicalDengue": validation["files"]["canonical"]["dengueSha256"], "canonicalClimate": validation["files"]["canonical"]["climateSha256"]},
         "artifactHashes": artifact_hashes, "commitReadiness": "ready_for_runtime_commit",
         "intendedUse": "Approved deployment model used under the governed Quick Forecast compatibility policy.",
         "limitations": ["Random Forest is not claimed to be the best model for this uploaded dataset.",
             "The upload is restricted to the exact synthetic-benchmark-compatible source contract.",
-            "Dataset-specific uncertainty calibration has not been performed.",
+            "Dataset-specific uncertainty calibration is available only when exactly 68 complete folds are validated.",
             "Preparedness outputs are unavailable because no runtime planning-scenario policy is approved."],
         "generatedAt": _now(),
     }

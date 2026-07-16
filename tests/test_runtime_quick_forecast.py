@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
+import pandas as pd
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "analytics"))
 
@@ -21,7 +23,7 @@ def iso_now():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def build_ready_runtime(base: Path):
+def build_ready_runtime(base: Path, row_count: int | None = None):
     runtime = base / "runtime"
     workspace_id, job_id, run_id = (str(uuid.uuid4()) for _ in range(3))
     workspace = runtime / "workspaces" / workspace_id
@@ -31,6 +33,9 @@ def build_ready_runtime(base: Path):
     climate = workspace / "inputs/original/climate.csv"
     shutil.copy2(ROOT / "data/dengue_cases.csv", dengue)
     shutil.copy2(ROOT / "data/climate_data.csv", climate)
+    if row_count is not None:
+        pd.read_csv(dengue).head(row_count).to_csv(dengue, index=False)
+        pd.read_csv(climate).head(row_count).to_csv(climate, index=False)
     created = iso_now()
     result = validate(SimpleNamespace(
         workspace_root=str(workspace), workspace_id=workspace_id, created_at=created,
@@ -59,7 +64,7 @@ def build_ready_runtime(base: Path):
 
 
 class RuntimeQuickForecastTests(unittest.TestCase):
-    def test_isolated_point_forecast_commit_has_no_uncertainty_or_preparedness(self):
+    def test_isolated_point_forecast_commit_has_dataset_calibration_and_no_preparedness(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime, workspace, job_path, job = build_ready_runtime(Path(directory))
             outcome = execute(SimpleNamespace(runtime_root=str(runtime), job_record=str(job_path), workspace=str(workspace), staging=str(runtime / "staging" / job["runId"])))
@@ -69,16 +74,42 @@ class RuntimeQuickForecastTests(unittest.TestCase):
             uncertainty = json.loads((run / "artifacts/forecast_uncertainty.json").read_text())
             dashboard = json.loads((run / "artifacts/dashboard_summary.json").read_text())
             card = json.loads((run / "artifacts/model_card.json").read_text())
+            calibration = json.loads((run / "artifacts/forecast_calibration.json").read_text())
+            pipeline = json.loads((run / "artifacts/pipeline_run_summary.json").read_text())
+            commit = json.loads((run / "metadata/commit.json").read_text())
             self.assertEqual(forecast["activeModelId"], "random_forest")
             self.assertEqual(forecast["trainingDataIdentity"]["trainingRowCount"], 173)
-            self.assertIsNone(uncertainty["lowerRaw"])
+            self.assertEqual(uncertainty["uncertaintyStatus"], "available")
+            self.assertEqual(calibration["residualCount"], 68)
+            self.assertEqual(len(calibration["folds"]), 68)
+            self.assertLessEqual(0, uncertainty["lowerRaw"])
+            self.assertLessEqual(uncertainty["lowerRaw"], forecast["forecastRaw"])
+            self.assertLessEqual(forecast["forecastRaw"], uncertainty["upperRaw"])
+            self.assertTrue(pipeline["uncertaintyCalibrationPerformed"])
             self.assertFalse(uncertainty["bundledP13RangeReused"])
+            self.assertFalse(uncertainty["rmseFallbackAllowed"])
+            self.assertEqual(card["calibration"]["artifactSha256"], commit["artifactHashes"]["forecast_calibration.json"])
             self.assertIsNone(dashboard["preparedness"]["scenarios"])
+            self.assertEqual(dashboard["preparedness"]["availabilityStatus"], "unavailable_missing_planning_policy")
             self.assertEqual(dashboard["preparedness"]["facilities"], [])
             self.assertFalse(card["comparisonPerformed"])
             self.assertFalse(card["bestModelClaim"])
             self.assertFalse((run / "artifacts/candidate_model_comparison.json").exists())
             self.assertFalse((run / "artifacts/directives.json").exists())
+
+    def test_insufficient_history_retains_pending_null_bounds(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime, workspace, job_path, job = build_ready_runtime(Path(directory), row_count=111)
+            execute(SimpleNamespace(runtime_root=str(runtime), job_record=str(job_path), workspace=str(workspace), staging=str(runtime / "staging" / job["runId"])))
+            run = runtime / "runs" / job["runId"]
+            uncertainty = json.loads((run / "artifacts/forecast_uncertainty.json").read_text())
+            calibration = json.loads((run / "artifacts/forecast_calibration.json").read_text())
+            pipeline = json.loads((run / "artifacts/pipeline_run_summary.json").read_text())
+            self.assertEqual(uncertainty["uncertaintyStatus"], "pending_dataset_specific_calibration")
+            self.assertTrue(all(uncertainty[key] is None for key in ("lowerRaw", "upperRaw", "lowerReported", "upperReported", "nominalCoverage", "historicalCoverage")))
+            self.assertEqual(calibration["residualCount"], 0)
+            self.assertEqual(calibration["folds"], [])
+            self.assertFalse(pipeline["uncertaintyCalibrationPerformed"])
 
 
 if __name__ == "__main__":
