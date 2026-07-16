@@ -1,6 +1,6 @@
 {
   "forecast_id": 1,
-  "date_generated": "2026-07-13T09:09:26Z",
+  "date_generated": "2026-07-16T17:27:22Z",
   "latest_known_epi_year": 2024,
   "latest_known_epi_week": 24,
   "training_cutoff_epi_year": 2024,
@@ -25,8 +25,6 @@
   "clipping_applied": false,
   "reporting_rounding_policy": "nearest_integer_python_round_half_to_even",
   "growth_factor": 1.72,
-  "risk_score": 71,
-  "risk_level": "High",
   "experimental_growth_score": 71,
   "forecast_growth_category": "High forecast growth",
   "growth_category_status": "unsupported_provisional",
@@ -48,7 +46,7 @@
   },
   "adopted_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
   "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
-  "comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+  "comparison_artifact_sha256": "aca48af0fca992968a59f2c12845960520248bdfab851b7cddc6d7192a12352e",
   "comparison_selected_model": "random_forest",
   "adoption_status": "adopted_p1.2b",
   "adoption_policy_version": "p1.2b-v1",
@@ -287,9 +285,9 @@
     }
   },
   "provenance": {
-    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "run_id": "01fa6a19-6e56-40ae-a53a-b750ff16513c",
     "manifest_path": "data/input_manifest.json",
-    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "manifest_sha256": "ad0de553e9752af9c5aa71881d7e5053bc4beddec405864829e5f8435da2c77f",
     "case_source": "synthetic_benchmark",
     "climate_source": "synthetic_benchmark",
     "operational_source": "synthetic_benchmark",
@@ -313,8 +311,8 @@
     "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
     "deployment_profile_data_mode": "synthetic_capability_demonstration",
     "deployment_profile_id": "dhaka_south",
-    "deployment_profile_schema_version": "1.0",
-    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_schema_version": "1.1",
+    "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
     "deployment_profile_status": "active",
     "evidence_registry_schema_version": "1.0",
     "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
@@ -334,8 +332,6 @@
       "label": "Lower sensitivity scenario",
       "forecast_cases": 87,
       "growth_factor": 1.246,
-      "risk_score": 44,
-      "risk_level": "Moderate",
       "experimental_growth_score": 44,
       "forecast_growth_category": "Moderate forecast growth"
     },
@@ -343,8 +339,6 @@
       "label": "Point forecast",
       "forecast_cases": 120,
       "growth_factor": 1.719,
-      "risk_score": 71,
-      "risk_level": "High",
       "experimental_growth_score": 71,
       "forecast_growth_category": "High forecast growth"
     },
@@ -352,8 +346,6 @@
       "label": "Upper sensitivity scenario",
       "forecast_cases": 153,
       "growth_factor": 2.192,
-      "risk_score": 87,
-      "risk_level": "Critical",
       "experimental_growth_score": 87,
       "forecast_growth_category": "Very high forecast growth"
     }
@@ -387,8 +379,6 @@
       "label": "Lower sensitivity scenario",
       "forecast_cases": 87,
       "growth_factor": 1.246,
-      "risk_score": 44,
-      "risk_level": "Moderate",
       "experimental_growth_score": 44,
       "forecast_growth_category": "Moderate forecast growth"
     },
@@ -396,8 +386,6 @@
       "label": "Point forecast",
       "forecast_cases": 120,
       "growth_factor": 1.719,
-      "risk_score": 71,
-      "risk_level": "High",
       "experimental_growth_score": 71,
       "forecast_growth_category": "High forecast growth"
     },
@@ -405,8 +393,6 @@
       "label": "Upper sensitivity scenario",
       "forecast_cases": 153,
       "growth_factor": 2.192,
-      "risk_score": 87,
-      "risk_level": "Critical",
       "experimental_growth_score": 87,
       "forecast_growth_category": "Very high forecast growth"
     }
@@ -432,8 +418,8 @@
     "observed_historical_coverage": 0.8958333333333334,
     "evaluated_fold_count": 48,
     "uncertainty_artifact_path": "data/forecast_uncertainty.json",
-    "uncertainty_artifact_sha256": "740cf86792bc45ee7bfb4cc5333e8e2b5c56731832e1ec5265ec034252df9074",
-    "residual_source_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+    "uncertainty_artifact_sha256": "9994cdee7b89a55f307bed45f45e1a593d85c2130874048f34b52614c24181be",
+    "residual_source_artifact_sha256": "aca48af0fca992968a59f2c12845960520248bdfab851b7cddc6d7192a12352e",
     "active_model_id": "random_forest",
     "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
     "is_prediction_interval": false,

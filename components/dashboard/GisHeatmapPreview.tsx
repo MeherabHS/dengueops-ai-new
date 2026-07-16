@@ -71,7 +71,7 @@ export default function GisHeatmapPreview({ zones, surgeKey }: Props) {
         {LAYOUT.map(({ zone, col, row }) => {
           const z = zoneMap[zone];
           if (!z) return null;
-          const heat = heatColor(z.adjusted_priority);
+          const heat = heatColor(z.adjustedPlanningPriority);
           const isAffected = z.modifier > 1.0;
           return (
             <div
@@ -96,14 +96,14 @@ export default function GisHeatmapPreview({ zones, surgeKey }: Props) {
                   {zone}
                 </p>
                 <span className={`inline-block rounded-full px-1.5 py-0.5 text-[9px] font-bold ${heat.badge}`}>
-                  {z.adjusted_risk}
+                  {z.planningPriorityTier}
                 </span>
               </div>
 
               <div className="mt-2 space-y-0.5">
                 <div className="flex justify-between text-[10px]">
                   <span className="text-slate-500">Priority</span>
-                  <span className={`font-bold ${heat.text}`}>{z.adjusted_priority}</span>
+                  <span className={`font-bold ${heat.text}`}>{z.adjustedPlanningPriority}</span>
                 </div>
                 <div className="flex justify-between text-[10px]">
                   <span className="text-slate-500">Proj. Cases</span>
@@ -115,11 +115,11 @@ export default function GisHeatmapPreview({ zones, surgeKey }: Props) {
               <div className="mt-2 h-1.5 rounded-full bg-white/60 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
-                    z.adjusted_priority >= 76 ? "bg-red-500" :
-                    z.adjusted_priority >= 51 ? "bg-orange-500" :
-                    z.adjusted_priority >= 26 ? "bg-yellow-400" : "bg-slate-400"
+                    z.adjustedPlanningPriority >= 76 ? "bg-red-500" :
+                    z.adjustedPlanningPriority >= 51 ? "bg-orange-500" :
+                    z.adjustedPlanningPriority >= 26 ? "bg-yellow-400" : "bg-slate-400"
                   }`}
-                  style={{ width: `${z.adjusted_priority}%` }}
+                  style={{ width: `${z.adjustedPlanningPriority}%` }}
                 />
               </div>
             </div>

@@ -250,6 +250,14 @@ def validate_model_card_against_profile(model_card: dict[str, Any], profile: Map
         errors.append("Model card evidence IDs do not match deployment profile.")
     if model_card.get("approval_record_ids") != profile["approval_record_ids"]:
         errors.append("Model card approval records do not match deployment profile.")
+    if model_card.get("deprecated_compatibility_fields") != profile["deprecated_compatibility_fields"]:
+        errors.append("Model card technical-debt status does not match deployment profile.")
+    debt = profile["deprecated_compatibility_fields"]
+    if debt.get("status") == "resolved" and (
+        debt.get("legacy_fields_emitted") is not False
+        or debt.get("compatibility_alias_emission") != "prohibited"
+    ):
+        errors.append("Resolved canonical-only profile permits legacy compatibility aliases.")
     provenance = model_card.get("provenance", {})
     for key in ("deployment_profile_sha256", "formula_registry_sha256", "evidence_registry_sha256", "model_card_id", "model_card_version"):
         if provenance.get(key) != expected.get(key):

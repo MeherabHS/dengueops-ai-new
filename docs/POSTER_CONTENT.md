@@ -63,7 +63,7 @@ Spatial Allocation → SDH + Bed Load → Directives
 Dynamic Daily Demand = Baseline Consumption × Growth Factor
 SDH = Current Stock / Dynamic Daily Demand
 Projected Bed Load = Occupied Beds + (Daily Cases × Avg LOS)
-Priority Score = Risk Score × (1 + Vulnerability Weight)
+Planning Priority Score = Experimental Growth Score × (1 + Vulnerability Weight)
 ```
 
 **Feature Engineering:**

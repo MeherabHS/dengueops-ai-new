@@ -1,8 +1,8 @@
 {
   "provenance": {
-    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "run_id": "01fa6a19-6e56-40ae-a53a-b750ff16513c",
     "manifest_path": "data/input_manifest.json",
-    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "manifest_sha256": "ad0de553e9752af9c5aa71881d7e5053bc4beddec405864829e5f8435da2c77f",
     "case_source": "synthetic_benchmark",
     "climate_source": "synthetic_benchmark",
     "operational_source": "synthetic_benchmark",
@@ -26,8 +26,8 @@
     "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
     "deployment_profile_data_mode": "synthetic_capability_demonstration",
     "deployment_profile_id": "dhaka_south",
-    "deployment_profile_schema_version": "1.0",
-    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_schema_version": "1.1",
+    "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
     "deployment_profile_status": "active",
     "evidence_registry_schema_version": "1.0",
     "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
@@ -47,14 +47,12 @@
     "track": "Health Data Analytics & Predictive Systems",
     "conference": "IEEE ICADHI",
     "mode": "Synthetic Data",
-    "last_updated": "2026-07-13T09:09:26Z",
+    "last_updated": "2026-07-16T17:27:22Z",
     "data_status": "Case source: synthetic_benchmark; climate source: synthetic_benchmark; operational source: synthetic_benchmark. No patient-level data used."
   },
   "headline_metrics": {
     "forecast_cases": 120,
     "growth_factor": 1.72,
-    "risk_level": "High",
-    "risk_score": 71,
     "experimental_growth_score": 71,
     "forecast_growth_category": "High forecast growth",
     "target_epi_week": 26,
@@ -82,8 +80,8 @@
     "observed_historical_coverage": 0.8958333333333334,
     "evaluated_fold_count": 48,
     "uncertainty_artifact_path": "data/forecast_uncertainty.json",
-    "uncertainty_artifact_sha256": "740cf86792bc45ee7bfb4cc5333e8e2b5c56731832e1ec5265ec034252df9074",
-    "residual_source_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+    "uncertainty_artifact_sha256": "9994cdee7b89a55f307bed45f45e1a593d85c2130874048f34b52614c24181be",
+    "residual_source_artifact_sha256": "aca48af0fca992968a59f2c12845960520248bdfab851b7cddc6d7192a12352e",
     "active_model_id": "random_forest",
     "active_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
     "is_prediction_interval": false,
@@ -121,8 +119,6 @@
       "label": "Lower sensitivity scenario",
       "forecast_cases": 87,
       "growth_factor": 1.246,
-      "risk_score": 44,
-      "risk_level": "Moderate",
       "experimental_growth_score": 44,
       "forecast_growth_category": "Moderate forecast growth"
     },
@@ -130,8 +126,6 @@
       "label": "Point forecast",
       "forecast_cases": 120,
       "growth_factor": 1.719,
-      "risk_score": 71,
-      "risk_level": "High",
       "experimental_growth_score": 71,
       "forecast_growth_category": "High forecast growth"
     },
@@ -139,8 +133,6 @@
       "label": "Upper sensitivity scenario",
       "forecast_cases": 153,
       "growth_factor": 2.192,
-      "risk_score": 87,
-      "risk_level": "Critical",
       "experimental_growth_score": 87,
       "forecast_growth_category": "Very high forecast growth"
     },
@@ -210,7 +202,7 @@
     "disclaimer": "Validation uses synthetic inputs and demonstrates prototype pipeline behaviour, not real-world accuracy."
   },
   "operational_summary": {
-    "total_recommendations": 30,
+    "total_planning_suggestions": 30,
     "critical_priority_zones": 5,
     "facilities_with_expected_bed_gap": 0,
     "facilities_with_worst_case_bed_gap": 0,
@@ -589,7 +581,7 @@
         "negative_raw_prediction_count": 0,
         "clipping_count": 0,
         "convergence_warning_count": 0,
-        "runtime_seconds": 0.0001120999932027189
+        "runtime_seconds": 0.00012089999472664203
       },
       "ridge_regression": {
         "fold_count": 68,
@@ -609,7 +601,7 @@
         "negative_raw_prediction_count": 0,
         "clipping_count": 0,
         "convergence_warning_count": 0,
-        "runtime_seconds": 0.11426230000142823
+        "runtime_seconds": 0.12068450000151643
       },
       "poisson_regression": {
         "fold_count": 68,
@@ -629,7 +621,7 @@
         "negative_raw_prediction_count": 0,
         "clipping_count": 0,
         "convergence_warning_count": 0,
-        "runtime_seconds": 2.3547615999959817
+        "runtime_seconds": 2.6998302999963926
       },
       "random_forest": {
         "fold_count": 68,
@@ -649,7 +641,7 @@
         "negative_raw_prediction_count": 0,
         "clipping_count": 0,
         "convergence_warning_count": 0,
-        "runtime_seconds": 13.181831599997167
+        "runtime_seconds": 13.930713200001264
       },
       "gradient_boosting": {
         "fold_count": 68,
@@ -751,7 +743,7 @@
       "negative_raw_prediction_count": 0,
       "clipping_count": 0,
       "convergence_warning_count": 0,
-      "runtime_seconds": 13.181831599997167
+      "runtime_seconds": 13.930713200001264
     },
     "uncertainty_source": "Temporally evaluated synthetic empirical forecast range from prior-only Random Forest rolling residuals"
   },
@@ -1394,9 +1386,9 @@
     "correlated_feature_warning": "Correlated lag features may divide, mask, or substitute for one another in both diagnostic methods.",
     "causal_interpretation_allowed": false,
     "provenance": {
-      "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+      "run_id": "01fa6a19-6e56-40ae-a53a-b750ff16513c",
       "manifest_path": "data/input_manifest.json",
-      "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+      "manifest_sha256": "ad0de553e9752af9c5aa71881d7e5053bc4beddec405864829e5f8435da2c77f",
       "case_source": "synthetic_benchmark",
       "climate_source": "synthetic_benchmark",
       "operational_source": "synthetic_benchmark",
@@ -1420,8 +1412,8 @@
       "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
       "deployment_profile_data_mode": "synthetic_capability_demonstration",
       "deployment_profile_id": "dhaka_south",
-      "deployment_profile_schema_version": "1.0",
-      "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+      "deployment_profile_schema_version": "1.1",
+      "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
       "deployment_profile_status": "active",
       "evidence_registry_schema_version": "1.0",
       "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
@@ -1456,7 +1448,7 @@
   "historical_gbr_evidence": {
     "status": "historical_compatibility_only_not_active_model_evidence",
     "model_explainability_artifact_path": "data/model_explainability.json",
-    "model_explainability_artifact_sha256": "f727119f317f2b4480bc3596c5e400d4cb5d04697b6ab94eaa4d5751ae3ecc73",
+    "model_explainability_artifact_sha256": "1b5c048076e5a325e6ef5fed87b903de145b1a6172685a4b7f3f7947cf0570f4",
     "rolling_validation_artifact_path": "data/rolling_validation.json",
     "validation_metrics_artifact_path": "data/validation_metrics.json"
   }

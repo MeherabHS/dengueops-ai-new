@@ -235,13 +235,13 @@ export default function FacilityReadinessView({ directives }: Props) {
                   </div>
                 </div>
 
-                {d.recommendations.length > 0 && (
+                {d.planning_suggestions.length > 0 && (
                   <div className="pt-2 border-t border-slate-100">
                     <ul className="space-y-1">
-                      {d.recommendations.slice(0, 2).map((rec, i) => (
+                      {d.planning_suggestions.slice(0, 2).map((suggestion, i) => (
                         <li key={i} className="text-[11px] text-slate-600 flex gap-1.5">
                           <span className="text-sky-500 font-bold shrink-0">→</span>
-                          {rec}
+                          <span title={`${suggestion.approval_status}: ${suggestion.disclaimer}`}>{suggestion.label}</span>
                         </li>
                       ))}
                     </ul>

@@ -47,7 +47,7 @@ zone priority scores, and actionable directives."
 
 **Narration:**
 "The dashboard shows the current forecast: 1,200 cases forecasted for Epi Week 24,
-a 2.1× growth factor versus baseline, and a Critical risk score of 88 out of 100.
+a 2.1× growth factor versus baseline, a Very high forecast growth category, and an Experimental Growth Score of 88 out of 100. The score is provisional, not a probability or validated risk score.
 
 The scenario selector lets planners toggle between best-case, expected, and worst-case
 projections — giving a range of preparedness requirements rather than a single point estimate."

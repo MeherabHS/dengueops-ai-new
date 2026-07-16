@@ -7,7 +7,7 @@ const ROLES = [
     subtitle: "Primary operational users",
     uses: [
       "Zone priority ranking and exposure indices",
-      "Vector-control deployment recommendations",
+      "Simulated vector-control planning suggestions",
       "Area-level surge risk and growth factor",
       "Early warning based on 14-day forecast",
     ],
@@ -120,7 +120,7 @@ export default function UserRolesSection() {
             <span className="font-semibold">Operational design principle: </span>
             Operational users are not expected to code, clean CSV files, or run scripts during
             an outbreak. The analytics pipeline is maintained by technical/MIS staff, while
-            hospital and public health users receive translated action recommendations through
+            hospital and public health users receive simulated planning suggestions through
             the dashboard.
           </p>
         </div>

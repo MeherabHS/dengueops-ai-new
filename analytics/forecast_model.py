@@ -170,8 +170,8 @@ def generate_forecast(training_df: pd.DataFrame, inference_row: pd.Series, model
         "training_rows": len(training_df), "city": str(inference_row["city"]),
         "forecast_cases": forecast_cases, "raw_prediction": raw, "published_prediction": published,
         "clipping_applied": raw != published, "reporting_rounding_policy": REPORTING_ROUNDING_POLICY,
-        "growth_factor": growth, "risk_score": risk_score, "risk_level": risk_level,
-        "experimental_growth_score": risk_score, "forecast_growth_category": GROWTH_CATEGORY_LABELS[risk_level],
+        "growth_factor": growth, "experimental_growth_score": risk_score,
+        "forecast_growth_category": GROWTH_CATEGORY_LABELS[risk_level],
         "growth_category_status": "unsupported_provisional", "model_name": model.__class__.__name__,
         "active_model_id": model_id, "current_forecast_model": model_id,
         "model_family": governance.get("model_family", model.__class__.__name__),
@@ -200,8 +200,8 @@ def generate_forecast(training_df: pd.DataFrame, inference_row: pd.Series, model
 
 def _scenario(label: str, cases: int, reference: float) -> dict:
     growth = compute_growth_factor(cases, reference); risk, score = classify_risk(growth)
-    return {"label": label, "forecast_cases": cases, "growth_factor": growth, "risk_score": score,
-            "risk_level": risk, "experimental_growth_score": score,
+    return {"label": label, "forecast_cases": cases, "growth_factor": growth,
+            "experimental_growth_score": score,
             "forecast_growth_category": GROWTH_CATEGORY_LABELS[risk]}
 
 
@@ -303,7 +303,9 @@ def build_model_card(profile: dict, provenance: dict, validation: dict, training
     active_metrics = comparison["aggregate_metrics"][ACTIVE_MODEL_ID]
     mandatory = "Random Forest was selected under the declared P1.2A comparison rule using deterministic synthetic rolling-origin folds and was adopted as the active demonstration model. This does not establish real-world Dhaka superiority."
     card = {
-        "model_card_schema_version": "1.0", "model_card_id": profile["model"]["model_card_id"],
+        "model_card_schema_version": (
+            "1.1" if profile["deprecated_compatibility_fields"]["status"] == "resolved" else "1.0"
+        ), "model_card_id": profile["model"]["model_card_id"],
         "model_card_version": profile["model"]["model_card_version"], "model_id": ACTIVE_MODEL_ID,
         "model_version": profile["model"]["model_version"], "deployment_id": profile["deployment_id"],
         "model_family": "RandomForestRegressor", "active_model_family": "RandomForestRegressor",

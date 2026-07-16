@@ -87,7 +87,7 @@ export default function TechnicalValidationView() {
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{labels[key]}</p>
                 <p className="text-2xl font-extrabold text-slate-900">{sc.forecast_cases.toLocaleString()}</p>
                 <p className="text-xs text-slate-500 mt-1">
-                  GF {sc.growth_factor.toFixed(3)}× · {sc.risk_level} · {sc.risk_score}/100
+                  GF {sc.growth_factor.toFixed(3)}× · {sc.forecast_growth_category} · {sc.experimental_growth_score}/100
                 </p>
               </div>
             );
@@ -134,7 +134,7 @@ export default function TechnicalValidationView() {
           />
           <FormulaCard
             title="Priority Score"
-            formula="risk_score x (1 + vulnerability_weight)"
+            formula="experimental_growth_score x (1 + vulnerability_weight)"
             note="Vulnerability-gated zone urgency"
           />
           <FormulaCard

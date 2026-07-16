@@ -288,8 +288,8 @@ From the most recent available feature row (2026 W22):
 | Target week | 2026 W24 |
 | Forecast cases | 234 |
 | Growth factor | 1.498× (vs 4-week rolling mean of 156) |
-| Risk level | Moderate |
-| Risk score | 60 / 100 |
+| Forecast growth category | Moderate forecast growth |
+| Experimental growth score | 60 / 100 (provisional; not a probability or validated risk score) |
 
 ### Limitations of synthetic/demo data
 
@@ -327,7 +327,7 @@ as the sole input to resource allocation decisions:
 
 By converting the point forecast into a three-scenario band, DengueOps AI allows
 operations staff to ask: *"Are we prepared for the worst case? Does our readiness
-change between moderate and high risk levels?"* This is the core operational value
+change between moderate and high forecast-growth categories?"* This is the core operational value
 of the uncertainty layer.
 
 ### How P1.3 empirical forecast uncertainty is estimated
@@ -352,7 +352,7 @@ chronological 20% holdout test period (Phase 3 backtest):
 
 The current band width is **±67.8 cases (±29% of the 234-case forecast)**:
 
-| Scenario | Cases | Growth Factor | Risk Level | Risk Score |
+| Scenario | Cases | Growth Factor | Forecast Growth Category | Experimental Growth Score |
 |----------|-------|--------------|------------|------------|
 | Best Case | 166 | 1.063× | Low | 34 |
 | Expected Case | 234 | 1.498× | Moderate | 60 |
@@ -485,14 +485,14 @@ is concurrent occupancy versus physical capacity.
 
 ### Vulnerability-gated priority scores
 
-`priority_score = risk_score × (1 + vulnerability_weight)`
+`priority_score = experimental_growth_score × (1 + vulnerability_weight)`
 
 Zones with higher structural vulnerability (informal settlements, limited
 facility access) receive elevated priority scores even at the same forecast
-risk level. This gates urgency by Social Determinants of Health (SDH) principles
+forecast-growth category. This gates urgency by Social Determinants of Health (SDH) principles
 — equitable response means pre-empting cascade failure in the most fragile zones.
 
-**Priority scores (expected scenario, risk_score = 60):**
+**Priority scores (expected scenario, experimental_growth_score = 60):**
 
 | Zone | Vulnerability | Raw Score | Capped | Category |
 |------|--------------|-----------|--------|----------|
@@ -515,7 +515,7 @@ risk level. This gates urgency by Social Determinants of Health (SDH) principles
 All five facilities show expected bed gaps — consistent with facilities already
 near capacity (Kamrangirchar: 16/20 beds, Mitford: 51/65) before the surge.
 
-**Recommendations generated per zone:**
+**Simulated planning suggestions generated per zone (not institution-approved):**
 - All zones: *Activate additional dengue beds or referral protocol.*
 - Kamrangirchar: *Prioritize vector-control response in this zone.* (Critical priority)
 - All zones: *Prepare contingency plan under worst-case forecast.* (RL=High across all)

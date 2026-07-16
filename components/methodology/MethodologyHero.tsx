@@ -47,7 +47,7 @@ export default function MethodologyHero() {
         <p className="text-xs text-sky-300 leading-relaxed">
           RMSE values, MAE comparisons, and model evidence are included for technical evaluators
           and IEEE reviewers. Operational users — public health officials and hospital
-          administrators — receive translated preparedness recommendations through the dashboard&apos;s
+          administrators — receive simulated preparedness planning suggestions through the dashboard&apos;s
           role-based views, not raw model metrics.
         </p>
       </div>

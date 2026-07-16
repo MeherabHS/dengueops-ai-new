@@ -5,7 +5,7 @@
   "validation_method": "expanding_window_rolling_origin",
   "fold_count": 68,
   "rolling_validation_artifact_path": "data/rolling_validation.json",
-  "rolling_validation_artifact_sha256": "5da1fdc63c1c4ac45eed866ed8ffb3409ab64e3ffd03ecb70515514a64d39a56",
+  "rolling_validation_artifact_sha256": "e2f0583d539ad339df20d9c7583c7e7abf36e5a68c2bb868657494ee89f54f69",
   "rolling_validation_version": "p1.1-v1",
   "fold_reference_policy": "exact_fold_ids_and_matrix_hashes_reference_p1.1",
   "fold_references": [
@@ -2881,7 +2881,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.3999997463542968e-06,
         "seasonal_source_period": "2022-W09",
         "seasonal_source_row_id": "2022-W09"
       },
@@ -2900,7 +2900,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 2.099999619531445e-06,
+        "runtime_seconds": 2.0000006770715117e-06,
         "seasonal_source_period": "2022-W10",
         "seasonal_source_row_id": "2022-W10"
       },
@@ -2919,7 +2919,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7999991541728377e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2022-W11",
         "seasonal_source_row_id": "2022-W11"
       },
@@ -2938,7 +2938,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.4999986888142303e-06,
         "seasonal_source_period": "2022-W12",
         "seasonal_source_row_id": "2022-W12"
       },
@@ -2957,7 +2957,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W13",
         "seasonal_source_row_id": "2022-W13"
       },
@@ -2976,7 +2976,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.3000008038943633e-06,
+        "runtime_seconds": 1.7000002117129043e-06,
         "seasonal_source_period": "2022-W14",
         "seasonal_source_row_id": "2022-W14"
       },
@@ -2995,7 +2995,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2022-W15",
         "seasonal_source_row_id": "2022-W15"
       },
@@ -3014,7 +3014,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.6000012692529708e-06,
+        "runtime_seconds": 2.0000006770715117e-06,
         "seasonal_source_period": "2022-W16",
         "seasonal_source_row_id": "2022-W16"
       },
@@ -3033,7 +3033,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2022-W17",
         "seasonal_source_row_id": "2022-W17"
       },
@@ -3052,7 +3052,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2022-W18",
         "seasonal_source_row_id": "2022-W18"
       },
@@ -3090,7 +3090,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.6999983927235007e-06,
+        "runtime_seconds": 1.8000009731622413e-06,
         "seasonal_source_period": "2022-W20",
         "seasonal_source_row_id": "2022-W20"
       },
@@ -3109,7 +3109,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 2.0000006770715117e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W21",
         "seasonal_source_row_id": "2022-W21"
       },
@@ -3128,7 +3128,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.7000002117129043e-06,
         "seasonal_source_period": "2022-W22",
         "seasonal_source_row_id": "2022-W22"
       },
@@ -3147,7 +3147,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.7000002117129043e-06,
         "seasonal_source_period": "2022-W23",
         "seasonal_source_row_id": "2022-W23"
       },
@@ -3166,7 +3166,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.999998858082108e-06,
         "seasonal_source_period": "2022-W24",
         "seasonal_source_row_id": "2022-W24"
       },
@@ -3185,7 +3185,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.3999997463542968e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2022-W25",
         "seasonal_source_row_id": "2022-W25"
       },
@@ -3204,7 +3204,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W26",
         "seasonal_source_row_id": "2022-W26"
       },
@@ -3223,7 +3223,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W27",
         "seasonal_source_row_id": "2022-W27"
       },
@@ -3242,7 +3242,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W28",
         "seasonal_source_row_id": "2022-W28"
       },
@@ -3280,7 +3280,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7999991541728377e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2022-W30",
         "seasonal_source_row_id": "2022-W30"
       },
@@ -3337,7 +3337,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.7000002117129043e-06,
         "seasonal_source_period": "2022-W33",
         "seasonal_source_row_id": "2022-W33"
       },
@@ -3356,7 +3356,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.7000002117129043e-06,
         "seasonal_source_period": "2022-W34",
         "seasonal_source_row_id": "2022-W34"
       },
@@ -3375,7 +3375,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.6000012692529708e-06,
+        "runtime_seconds": 1.4999986888142303e-06,
         "seasonal_source_period": "2022-W35",
         "seasonal_source_row_id": "2022-W35"
       },
@@ -3394,7 +3394,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.8000009731622413e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2022-W36",
         "seasonal_source_row_id": "2022-W36"
       },
@@ -3413,7 +3413,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.6999983927235007e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W37",
         "seasonal_source_row_id": "2022-W37"
       },
@@ -3432,7 +3432,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.9000017346115783e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2022-W38",
         "seasonal_source_row_id": "2022-W38"
       },
@@ -3451,7 +3451,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W39",
         "seasonal_source_row_id": "2022-W39"
       },
@@ -3470,7 +3470,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 2.399998265900649e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2022-W40",
         "seasonal_source_row_id": "2022-W40"
       },
@@ -3489,7 +3489,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2022-W41",
         "seasonal_source_row_id": "2022-W41"
       },
@@ -3508,7 +3508,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2022-W42",
         "seasonal_source_row_id": "2022-W42"
       },
@@ -3527,7 +3527,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.8000009731622413e-06,
+        "runtime_seconds": 2.099999619531445e-06,
         "seasonal_source_period": "2022-W43",
         "seasonal_source_row_id": "2022-W43"
       },
@@ -3546,7 +3546,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.7999991541728377e-06,
         "seasonal_source_period": "2022-W44",
         "seasonal_source_row_id": "2022-W44"
       },
@@ -3565,7 +3565,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.8000009731622413e-06,
         "seasonal_source_period": "2022-W45",
         "seasonal_source_row_id": "2022-W45"
       },
@@ -3584,7 +3584,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.999998858082108e-06,
         "seasonal_source_period": "2022-W46",
         "seasonal_source_row_id": "2022-W46"
       },
@@ -3603,7 +3603,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 3.399998604436405e-06,
         "seasonal_source_period": "2022-W47",
         "seasonal_source_row_id": "2022-W47"
       },
@@ -3622,7 +3622,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.4999986888142303e-06,
         "seasonal_source_period": "2022-W48",
         "seasonal_source_row_id": "2022-W48"
       },
@@ -3641,7 +3641,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.8999999156221747e-06,
+        "runtime_seconds": 2.4000000848900527e-06,
         "seasonal_source_period": "2022-W49",
         "seasonal_source_row_id": "2022-W49"
       },
@@ -3660,7 +3660,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.6000012692529708e-06,
         "seasonal_source_period": "2022-W50",
         "seasonal_source_row_id": "2022-W50"
       },
@@ -3679,7 +3679,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2022-W51",
         "seasonal_source_row_id": "2022-W51"
       },
@@ -3698,7 +3698,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 2.599999788799323e-06,
         "seasonal_source_period": "2022-W52",
         "seasonal_source_row_id": "2022-W52"
       },
@@ -3717,7 +3717,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.6999983927235007e-06,
+        "runtime_seconds": 2.200000380980782e-06,
         "seasonal_source_period": "2023-W01",
         "seasonal_source_row_id": "2023-W01"
       },
@@ -3736,7 +3736,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.4999986888142303e-06,
         "seasonal_source_period": "2023-W02",
         "seasonal_source_row_id": "2023-W02"
       },
@@ -3755,7 +3755,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.6000012692529708e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2023-W03",
         "seasonal_source_row_id": "2023-W03"
       },
@@ -3793,7 +3793,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.7999991541728377e-06,
         "seasonal_source_period": "2023-W05",
         "seasonal_source_row_id": "2023-W05"
       },
@@ -3812,7 +3812,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.5000005078036338e-06,
         "seasonal_source_period": "2023-W06",
         "seasonal_source_row_id": "2023-W06"
       },
@@ -3831,7 +3831,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.8000009731622413e-06,
         "seasonal_source_period": "2023-W07",
         "seasonal_source_row_id": "2023-W07"
       },
@@ -3850,7 +3850,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2023-W08",
         "seasonal_source_row_id": "2023-W08"
       },
@@ -3869,7 +3869,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.3999997463542968e-06,
+        "runtime_seconds": 1.6999983927235007e-06,
         "seasonal_source_period": "2023-W09",
         "seasonal_source_row_id": "2023-W09"
       },
@@ -3888,7 +3888,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2023-W10",
         "seasonal_source_row_id": "2023-W10"
       },
@@ -3907,7 +3907,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2023-W11",
         "seasonal_source_row_id": "2023-W11"
       },
@@ -3926,7 +3926,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2023-W12",
         "seasonal_source_row_id": "2023-W12"
       },
@@ -3945,7 +3945,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.8999999156221747e-06,
+        "runtime_seconds": 1.4999986888142303e-06,
         "seasonal_source_period": "2023-W13",
         "seasonal_source_row_id": "2023-W13"
       },
@@ -3964,7 +3964,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.6000012692529708e-06,
         "seasonal_source_period": "2023-W14",
         "seasonal_source_row_id": "2023-W14"
       },
@@ -3983,7 +3983,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2023-W15",
         "seasonal_source_row_id": "2023-W15"
       },
@@ -4002,7 +4002,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.7000002117129043e-06,
+        "runtime_seconds": 1.7999991541728377e-06,
         "seasonal_source_period": "2023-W16",
         "seasonal_source_row_id": "2023-W16"
       },
@@ -4021,7 +4021,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.6000012692529708e-06,
+        "runtime_seconds": 2.200000380980782e-06,
         "seasonal_source_period": "2023-W17",
         "seasonal_source_row_id": "2023-W17"
       },
@@ -4040,7 +4040,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 2.599999788799323e-06,
+        "runtime_seconds": 2.4000000848900527e-06,
         "seasonal_source_period": "2023-W18",
         "seasonal_source_row_id": "2023-W18"
       },
@@ -4059,7 +4059,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.7000002117129043e-06,
         "seasonal_source_period": "2023-W19",
         "seasonal_source_row_id": "2023-W19"
       },
@@ -4078,7 +4078,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.8000009731622413e-06,
+        "runtime_seconds": 2.0000006770715117e-06,
         "seasonal_source_period": "2023-W20",
         "seasonal_source_row_id": "2023-W20"
       },
@@ -4097,7 +4097,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5999994502635673e-06,
+        "runtime_seconds": 1.8999999156221747e-06,
         "seasonal_source_period": "2023-W21",
         "seasonal_source_row_id": "2023-W21"
       },
@@ -4116,7 +4116,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.5000005078036338e-06,
+        "runtime_seconds": 1.5999994502635673e-06,
         "seasonal_source_period": "2023-W22",
         "seasonal_source_row_id": "2023-W22"
       },
@@ -4135,7 +4135,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.4999986888142303e-06,
+        "runtime_seconds": 1.6000012692529708e-06,
         "seasonal_source_period": "2023-W23",
         "seasonal_source_row_id": "2023-W23"
       },
@@ -4175,7 +4175,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0020382999991852557
+        "runtime_seconds": 0.0020399000004545087
       },
       {
         "fold_id": "rolling-origin-0002-2023-W08-to-2023-W10",
@@ -4192,7 +4192,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016102000008686446
+        "runtime_seconds": 0.0016875999990588753
       },
       {
         "fold_id": "rolling-origin-0003-2023-W09-to-2023-W11",
@@ -4209,7 +4209,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015615000011166558
+        "runtime_seconds": 0.0015800000001036096
       },
       {
         "fold_id": "rolling-origin-0004-2023-W10-to-2023-W12",
@@ -4226,7 +4226,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001554799999212264
+        "runtime_seconds": 0.0015333999999711523
       },
       {
         "fold_id": "rolling-origin-0005-2023-W11-to-2023-W13",
@@ -4243,7 +4243,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015483000006497605
+        "runtime_seconds": 0.0015722999996796716
       },
       {
         "fold_id": "rolling-origin-0006-2023-W12-to-2023-W14",
@@ -4260,7 +4260,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001525499999843305
+        "runtime_seconds": 0.0016083999998954823
       },
       {
         "fold_id": "rolling-origin-0007-2023-W13-to-2023-W15",
@@ -4277,7 +4277,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015347999997175066
+        "runtime_seconds": 0.001956100000825245
       },
       {
         "fold_id": "rolling-origin-0008-2023-W14-to-2023-W16",
@@ -4294,7 +4294,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016305999997712206
+        "runtime_seconds": 0.0017545000009704381
       },
       {
         "fold_id": "rolling-origin-0009-2023-W15-to-2023-W17",
@@ -4311,7 +4311,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015996999991330085
+        "runtime_seconds": 0.0016076000010798452
       },
       {
         "fold_id": "rolling-origin-0010-2023-W16-to-2023-W18",
@@ -4328,7 +4328,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001559399999678135
+        "runtime_seconds": 0.0015659999990020879
       },
       {
         "fold_id": "rolling-origin-0011-2023-W17-to-2023-W19",
@@ -4345,7 +4345,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001536899999337038
+        "runtime_seconds": 0.0020416000006662216
       },
       {
         "fold_id": "rolling-origin-0012-2023-W18-to-2023-W20",
@@ -4362,7 +4362,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015509999993810197
+        "runtime_seconds": 0.001715899999908288
       },
       {
         "fold_id": "rolling-origin-0013-2023-W19-to-2023-W21",
@@ -4379,7 +4379,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001569500000186963
+        "runtime_seconds": 0.0016646999993099598
       },
       {
         "fold_id": "rolling-origin-0014-2023-W20-to-2023-W22",
@@ -4396,7 +4396,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015633000002708286
+        "runtime_seconds": 0.0015978000010363758
       },
       {
         "fold_id": "rolling-origin-0015-2023-W21-to-2023-W23",
@@ -4413,7 +4413,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015155000000959262
+        "runtime_seconds": 0.001582500000949949
       },
       {
         "fold_id": "rolling-origin-0016-2023-W22-to-2023-W24",
@@ -4430,7 +4430,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015330000005633337
+        "runtime_seconds": 0.0018318000002182089
       },
       {
         "fold_id": "rolling-origin-0017-2023-W23-to-2023-W25",
@@ -4447,7 +4447,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016294999986712355
+        "runtime_seconds": 0.0017344999996566912
       },
       {
         "fold_id": "rolling-origin-0018-2023-W24-to-2023-W26",
@@ -4464,7 +4464,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015449999991687946
+        "runtime_seconds": 0.0015318999994633486
       },
       {
         "fold_id": "rolling-origin-0019-2023-W25-to-2023-W27",
@@ -4481,7 +4481,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015946999992593192
+        "runtime_seconds": 0.001972300000488758
       },
       {
         "fold_id": "rolling-origin-0020-2023-W26-to-2023-W28",
@@ -4498,7 +4498,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015452000006916933
+        "runtime_seconds": 0.0015375999992102152
       },
       {
         "fold_id": "rolling-origin-0021-2023-W27-to-2023-W29",
@@ -4515,7 +4515,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015998999988369178
+        "runtime_seconds": 0.001977199999600998
       },
       {
         "fold_id": "rolling-origin-0022-2023-W28-to-2023-W30",
@@ -4532,7 +4532,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001617199999600416
+        "runtime_seconds": 0.0015418999992107274
       },
       {
         "fold_id": "rolling-origin-0023-2023-W29-to-2023-W31",
@@ -4549,7 +4549,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015335000007326016
+        "runtime_seconds": 0.0015471999995497754
       },
       {
         "fold_id": "rolling-origin-0024-2023-W30-to-2023-W32",
@@ -4566,7 +4566,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015392000004794681
+        "runtime_seconds": 0.001573699999426026
       },
       {
         "fold_id": "rolling-origin-0025-2023-W31-to-2023-W33",
@@ -4583,7 +4583,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015223000009427778
+        "runtime_seconds": 0.0015292000007320894
       },
       {
         "fold_id": "rolling-origin-0026-2023-W32-to-2023-W34",
@@ -4600,7 +4600,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015135000012378441
+        "runtime_seconds": 0.0015999000006559072
       },
       {
         "fold_id": "rolling-origin-0027-2023-W33-to-2023-W35",
@@ -4617,7 +4617,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015392000004794681
+        "runtime_seconds": 0.0015337000004365109
       },
       {
         "fold_id": "rolling-origin-0028-2023-W34-to-2023-W36",
@@ -4634,7 +4634,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015217000000120606
+        "runtime_seconds": 0.0015563000015390571
       },
       {
         "fold_id": "rolling-origin-0029-2023-W35-to-2023-W37",
@@ -4651,7 +4651,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015888000016275328
+        "runtime_seconds": 0.001539700000648736
       },
       {
         "fold_id": "rolling-origin-0030-2023-W36-to-2023-W38",
@@ -4668,7 +4668,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016412999993917765
+        "runtime_seconds": 0.00155570000060834
       },
       {
         "fold_id": "rolling-origin-0031-2023-W37-to-2023-W39",
@@ -4685,7 +4685,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015655000006518094
+        "runtime_seconds": 0.001752100000885548
       },
       {
         "fold_id": "rolling-origin-0032-2023-W38-to-2023-W40",
@@ -4702,7 +4702,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.007833100000425475
+        "runtime_seconds": 0.0015583000003971392
       },
       {
         "fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
@@ -4719,7 +4719,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015911000009509735
+        "runtime_seconds": 0.0016857999999047024
       },
       {
         "fold_id": "rolling-origin-0034-2023-W40-to-2023-W42",
@@ -4736,7 +4736,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015394999991258373
+        "runtime_seconds": 0.0015726000001450302
       },
       {
         "fold_id": "rolling-origin-0035-2023-W41-to-2023-W43",
@@ -4753,7 +4753,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016328999990946613
+        "runtime_seconds": 0.0035291000003780937
       },
       {
         "fold_id": "rolling-origin-0036-2023-W42-to-2023-W44",
@@ -4770,7 +4770,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016023000007407973
+        "runtime_seconds": 0.0017389999993611127
       },
       {
         "fold_id": "rolling-origin-0037-2023-W43-to-2023-W45",
@@ -4787,7 +4787,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001565800001117168
+        "runtime_seconds": 0.001995300000999123
       },
       {
         "fold_id": "rolling-origin-0038-2023-W44-to-2023-W46",
@@ -4804,7 +4804,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015598999998474028
+        "runtime_seconds": 0.001602899999852525
       },
       {
         "fold_id": "rolling-origin-0039-2023-W45-to-2023-W47",
@@ -4821,7 +4821,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015509000004385598
+        "runtime_seconds": 0.002682700000150362
       },
       {
         "fold_id": "rolling-origin-0040-2023-W46-to-2023-W48",
@@ -4838,7 +4838,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015526999995927326
+        "runtime_seconds": 0.0017060000009223586
       },
       {
         "fold_id": "rolling-origin-0041-2023-W47-to-2023-W49",
@@ -4855,7 +4855,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001622499999939464
+        "runtime_seconds": 0.0017820000011852244
       },
       {
         "fold_id": "rolling-origin-0042-2023-W48-to-2023-W50",
@@ -4872,7 +4872,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015791000005265232
+        "runtime_seconds": 0.0016018999995139893
       },
       {
         "fold_id": "rolling-origin-0043-2023-W49-to-2023-W51",
@@ -4889,7 +4889,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015643999995518243
+        "runtime_seconds": 0.0017305999990639975
       },
       {
         "fold_id": "rolling-origin-0044-2023-W50-to-2023-W52",
@@ -4906,7 +4906,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016114999998535495
+        "runtime_seconds": 0.0017618000001675682
       },
       {
         "fold_id": "rolling-origin-0045-2023-W51-to-2024-W01",
@@ -4923,7 +4923,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016482999999425374
+        "runtime_seconds": 0.0023123999999370426
       },
       {
         "fold_id": "rolling-origin-0046-2023-W52-to-2024-W02",
@@ -4940,7 +4940,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015571000003546942
+        "runtime_seconds": 0.0017008999984682305
       },
       {
         "fold_id": "rolling-origin-0047-2024-W01-to-2024-W03",
@@ -4957,7 +4957,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015918999997666106
+        "runtime_seconds": 0.00182439999844064
       },
       {
         "fold_id": "rolling-origin-0048-2024-W02-to-2024-W04",
@@ -4974,7 +4974,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015289000002667308
+        "runtime_seconds": 0.0020136999992246274
       },
       {
         "fold_id": "rolling-origin-0049-2024-W03-to-2024-W05",
@@ -4991,7 +4991,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001550300001326832
+        "runtime_seconds": 0.0018130999997083563
       },
       {
         "fold_id": "rolling-origin-0050-2024-W04-to-2024-W06",
@@ -5008,7 +5008,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0017026000004989328
+        "runtime_seconds": 0.001623799998924369
       },
       {
         "fold_id": "rolling-origin-0051-2024-W05-to-2024-W07",
@@ -5025,7 +5025,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016080000004876638
+        "runtime_seconds": 0.0017441999989387114
       },
       {
         "fold_id": "rolling-origin-0052-2024-W06-to-2024-W08",
@@ -5042,7 +5042,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016233000005740905
+        "runtime_seconds": 0.001590300000316347
       },
       {
         "fold_id": "rolling-origin-0053-2024-W07-to-2024-W09",
@@ -5059,7 +5059,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015488999997614883
+        "runtime_seconds": 0.0016262999997707084
       },
       {
         "fold_id": "rolling-origin-0054-2024-W08-to-2024-W10",
@@ -5076,7 +5076,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015726999990874901
+        "runtime_seconds": 0.0016782000002422137
       },
       {
         "fold_id": "rolling-origin-0055-2024-W09-to-2024-W11",
@@ -5093,7 +5093,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015538000006927177
+        "runtime_seconds": 0.001823099999455735
       },
       {
         "fold_id": "rolling-origin-0056-2024-W10-to-2024-W12",
@@ -5110,7 +5110,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016034999989642529
+        "runtime_seconds": 0.0024326999991899356
       },
       {
         "fold_id": "rolling-origin-0057-2024-W11-to-2024-W13",
@@ -5127,7 +5127,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016317000008712057
+        "runtime_seconds": 0.001593999999386142
       },
       {
         "fold_id": "rolling-origin-0058-2024-W12-to-2024-W14",
@@ -5144,7 +5144,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015743000003567431
+        "runtime_seconds": 0.0019023000004381174
       },
       {
         "fold_id": "rolling-origin-0059-2024-W13-to-2024-W15",
@@ -5161,7 +5161,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016429999996034894
+        "runtime_seconds": 0.0017062999995687278
       },
       {
         "fold_id": "rolling-origin-0060-2024-W14-to-2024-W16",
@@ -5178,7 +5178,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001626600000236067
+        "runtime_seconds": 0.0016811000004963716
       },
       {
         "fold_id": "rolling-origin-0061-2024-W15-to-2024-W17",
@@ -5195,7 +5195,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0016704999998182757
+        "runtime_seconds": 0.001674799999818788
       },
       {
         "fold_id": "rolling-origin-0062-2024-W16-to-2024-W18",
@@ -5212,7 +5212,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0017127999999502208
+        "runtime_seconds": 0.0023995000010472722
       },
       {
         "fold_id": "rolling-origin-0063-2024-W17-to-2024-W19",
@@ -5229,7 +5229,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015554999990854412
+        "runtime_seconds": 0.0018000000000029104
       },
       {
         "fold_id": "rolling-origin-0064-2024-W18-to-2024-W20",
@@ -5246,7 +5246,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015590000002703164
+        "runtime_seconds": 0.0017145000001619337
       },
       {
         "fold_id": "rolling-origin-0065-2024-W19-to-2024-W21",
@@ -5263,7 +5263,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015741999995952938
+        "runtime_seconds": 0.0017150999992736615
       },
       {
         "fold_id": "rolling-origin-0066-2024-W20-to-2024-W22",
@@ -5280,7 +5280,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0017021999992721248
+        "runtime_seconds": 0.002160800000638119
       },
       {
         "fold_id": "rolling-origin-0067-2024-W21-to-2024-W23",
@@ -5297,7 +5297,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0015619999994669342
+        "runtime_seconds": 0.0016661999998177635
       },
       {
         "fold_id": "rolling-origin-0068-2024-W22-to-2024-W24",
@@ -5314,7 +5314,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.001626699999178527
+        "runtime_seconds": 0.001715800000965828
       }
     ],
     "poisson_regression": [
@@ -5333,7 +5333,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 1.2352687999991758
+        "runtime_seconds": 1.2607195999989926
       },
       {
         "fold_id": "rolling-origin-0002-2023-W08-to-2023-W10",
@@ -5350,7 +5350,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.018659900000784546
+        "runtime_seconds": 0.02451639999890176
       },
       {
         "fold_id": "rolling-origin-0003-2023-W09-to-2023-W11",
@@ -5367,7 +5367,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017779300000256626
+        "runtime_seconds": 0.02411279999978433
       },
       {
         "fold_id": "rolling-origin-0004-2023-W10-to-2023-W12",
@@ -5384,7 +5384,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017946099998880527
+        "runtime_seconds": 0.021255900001051486
       },
       {
         "fold_id": "rolling-origin-0005-2023-W11-to-2023-W13",
@@ -5401,7 +5401,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016514799999640672
+        "runtime_seconds": 0.01955459999953746
       },
       {
         "fold_id": "rolling-origin-0006-2023-W12-to-2023-W14",
@@ -5418,7 +5418,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01649589999942691
+        "runtime_seconds": 0.02173210000000836
       },
       {
         "fold_id": "rolling-origin-0007-2023-W13-to-2023-W15",
@@ -5435,7 +5435,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017361300000629853
+        "runtime_seconds": 0.01958120000017516
       },
       {
         "fold_id": "rolling-origin-0008-2023-W14-to-2023-W16",
@@ -5452,7 +5452,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015934099999867612
+        "runtime_seconds": 0.02103050000005169
       },
       {
         "fold_id": "rolling-origin-0009-2023-W15-to-2023-W17",
@@ -5469,7 +5469,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016122600000016973
+        "runtime_seconds": 0.021087699999043252
       },
       {
         "fold_id": "rolling-origin-0010-2023-W16-to-2023-W18",
@@ -5486,7 +5486,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014425900000787806
+        "runtime_seconds": 0.02002340000035474
       },
       {
         "fold_id": "rolling-origin-0011-2023-W17-to-2023-W19",
@@ -5503,7 +5503,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01570960000026389
+        "runtime_seconds": 0.02095549999830837
       },
       {
         "fold_id": "rolling-origin-0012-2023-W18-to-2023-W20",
@@ -5520,7 +5520,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016627700000753975
+        "runtime_seconds": 0.020649599999160273
       },
       {
         "fold_id": "rolling-origin-0013-2023-W19-to-2023-W21",
@@ -5537,7 +5537,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016816000001199427
+        "runtime_seconds": 0.022299700000075973
       },
       {
         "fold_id": "rolling-origin-0014-2023-W20-to-2023-W22",
@@ -5554,7 +5554,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015597399999023764
+        "runtime_seconds": 0.021653300000252784
       },
       {
         "fold_id": "rolling-origin-0015-2023-W21-to-2023-W23",
@@ -5571,7 +5571,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0142095999999583
+        "runtime_seconds": 0.019100100000287057
       },
       {
         "fold_id": "rolling-origin-0016-2023-W22-to-2023-W24",
@@ -5588,7 +5588,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017135599999164697
+        "runtime_seconds": 0.02100590000009106
       },
       {
         "fold_id": "rolling-origin-0017-2023-W23-to-2023-W25",
@@ -5605,7 +5605,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015036699998745462
+        "runtime_seconds": 0.020882000000710832
       },
       {
         "fold_id": "rolling-origin-0018-2023-W24-to-2023-W26",
@@ -5622,7 +5622,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.019088600000031875
+        "runtime_seconds": 0.02172479999899224
       },
       {
         "fold_id": "rolling-origin-0019-2023-W25-to-2023-W27",
@@ -5639,7 +5639,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014878699999826495
+        "runtime_seconds": 0.020078399998965324
       },
       {
         "fold_id": "rolling-origin-0020-2023-W26-to-2023-W28",
@@ -5656,7 +5656,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014915199999450124
+        "runtime_seconds": 0.018931399999928544
       },
       {
         "fold_id": "rolling-origin-0021-2023-W27-to-2023-W29",
@@ -5673,7 +5673,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017813899999964633
+        "runtime_seconds": 0.02240470000106143
       },
       {
         "fold_id": "rolling-origin-0022-2023-W28-to-2023-W30",
@@ -5690,7 +5690,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01827449999836972
+        "runtime_seconds": 0.021028200000728248
       },
       {
         "fold_id": "rolling-origin-0023-2023-W29-to-2023-W31",
@@ -5707,7 +5707,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.018912300000010873
+        "runtime_seconds": 0.024519900000086636
       },
       {
         "fold_id": "rolling-origin-0024-2023-W30-to-2023-W32",
@@ -5724,7 +5724,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014643499998783227
+        "runtime_seconds": 0.0189976999990904
       },
       {
         "fold_id": "rolling-origin-0025-2023-W31-to-2023-W33",
@@ -5741,7 +5741,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016847400000187918
+        "runtime_seconds": 0.02074429999993299
       },
       {
         "fold_id": "rolling-origin-0026-2023-W32-to-2023-W34",
@@ -5758,7 +5758,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015691300000980846
+        "runtime_seconds": 0.019797200000539306
       },
       {
         "fold_id": "rolling-origin-0027-2023-W33-to-2023-W35",
@@ -5775,7 +5775,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016747100000429782
+        "runtime_seconds": 0.020843499998591142
       },
       {
         "fold_id": "rolling-origin-0028-2023-W34-to-2023-W36",
@@ -5792,7 +5792,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01450459999978193
+        "runtime_seconds": 0.019151299999066396
       },
       {
         "fold_id": "rolling-origin-0029-2023-W35-to-2023-W37",
@@ -5809,7 +5809,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014956400000301073
+        "runtime_seconds": 0.019104900000456837
       },
       {
         "fold_id": "rolling-origin-0030-2023-W36-to-2023-W38",
@@ -5826,7 +5826,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017371299998558243
+        "runtime_seconds": 0.02328769999985525
       },
       {
         "fold_id": "rolling-origin-0031-2023-W37-to-2023-W39",
@@ -5843,7 +5843,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016575300000113202
+        "runtime_seconds": 0.02146539999921515
       },
       {
         "fold_id": "rolling-origin-0032-2023-W38-to-2023-W40",
@@ -5860,7 +5860,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.059914800000115065
+        "runtime_seconds": 0.024234399999841116
       },
       {
         "fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
@@ -5877,7 +5877,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01675230000000738
+        "runtime_seconds": 0.022730400000000373
       },
       {
         "fold_id": "rolling-origin-0034-2023-W40-to-2023-W42",
@@ -5894,7 +5894,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.021135400000275695
+        "runtime_seconds": 0.02708330000132264
       },
       {
         "fold_id": "rolling-origin-0035-2023-W41-to-2023-W43",
@@ -5911,7 +5911,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017597600000954117
+        "runtime_seconds": 0.06090060000133235
       },
       {
         "fold_id": "rolling-origin-0036-2023-W42-to-2023-W44",
@@ -5928,7 +5928,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01766959999986284
+        "runtime_seconds": 0.02441969999927096
       },
       {
         "fold_id": "rolling-origin-0037-2023-W43-to-2023-W45",
@@ -5945,7 +5945,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01811459999953513
+        "runtime_seconds": 0.025154000000839005
       },
       {
         "fold_id": "rolling-origin-0038-2023-W44-to-2023-W46",
@@ -5962,7 +5962,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016798800001197378
+        "runtime_seconds": 0.02329929999905289
       },
       {
         "fold_id": "rolling-origin-0039-2023-W45-to-2023-W47",
@@ -5979,7 +5979,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01894700000048033
+        "runtime_seconds": 0.024206000000049244
       },
       {
         "fold_id": "rolling-origin-0040-2023-W46-to-2023-W48",
@@ -5996,7 +5996,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.017460199998822645
+        "runtime_seconds": 0.023364199998468393
       },
       {
         "fold_id": "rolling-origin-0041-2023-W47-to-2023-W49",
@@ -6013,7 +6013,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01650580000023183
+        "runtime_seconds": 0.021166500000617816
       },
       {
         "fold_id": "rolling-origin-0042-2023-W48-to-2023-W50",
@@ -6030,7 +6030,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014735799999471055
+        "runtime_seconds": 0.018379700000878074
       },
       {
         "fold_id": "rolling-origin-0043-2023-W49-to-2023-W51",
@@ -6047,7 +6047,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015259300000252551
+        "runtime_seconds": 0.02050789999884728
       },
       {
         "fold_id": "rolling-origin-0044-2023-W50-to-2023-W52",
@@ -6064,7 +6064,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.0146669000005204
+        "runtime_seconds": 0.020723400000861147
       },
       {
         "fold_id": "rolling-origin-0045-2023-W51-to-2024-W01",
@@ -6081,7 +6081,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01493540000046778
+        "runtime_seconds": 0.020382700000482146
       },
       {
         "fold_id": "rolling-origin-0046-2023-W52-to-2024-W02",
@@ -6098,7 +6098,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015908800000033807
+        "runtime_seconds": 0.020418699999936507
       },
       {
         "fold_id": "rolling-origin-0047-2024-W01-to-2024-W03",
@@ -6115,7 +6115,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014440900000408874
+        "runtime_seconds": 0.018846999999368563
       },
       {
         "fold_id": "rolling-origin-0048-2024-W02-to-2024-W04",
@@ -6132,7 +6132,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01610140000047977
+        "runtime_seconds": 0.01859589999912714
       },
       {
         "fold_id": "rolling-origin-0049-2024-W03-to-2024-W05",
@@ -6149,7 +6149,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015137800000957213
+        "runtime_seconds": 0.018789800000377
       },
       {
         "fold_id": "rolling-origin-0050-2024-W04-to-2024-W06",
@@ -6166,7 +6166,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014844999999695574
+        "runtime_seconds": 0.01960740000140504
       },
       {
         "fold_id": "rolling-origin-0051-2024-W05-to-2024-W07",
@@ -6183,7 +6183,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015369299999292707
+        "runtime_seconds": 0.019456699999864213
       },
       {
         "fold_id": "rolling-origin-0052-2024-W06-to-2024-W08",
@@ -6200,7 +6200,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015127799999390845
+        "runtime_seconds": 0.019466499999907683
       },
       {
         "fold_id": "rolling-origin-0053-2024-W07-to-2024-W09",
@@ -6217,7 +6217,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015402199998789001
+        "runtime_seconds": 0.019710000000486616
       },
       {
         "fold_id": "rolling-origin-0054-2024-W08-to-2024-W10",
@@ -6234,7 +6234,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01688809999905061
+        "runtime_seconds": 0.019454199999017874
       },
       {
         "fold_id": "rolling-origin-0055-2024-W09-to-2024-W11",
@@ -6251,7 +6251,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015292800000679563
+        "runtime_seconds": 0.0192879999995057
       },
       {
         "fold_id": "rolling-origin-0056-2024-W10-to-2024-W12",
@@ -6268,7 +6268,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01452919999974256
+        "runtime_seconds": 0.020322000000305707
       },
       {
         "fold_id": "rolling-origin-0057-2024-W11-to-2024-W13",
@@ -6285,7 +6285,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016962300000159303
+        "runtime_seconds": 0.020726700000523124
       },
       {
         "fold_id": "rolling-origin-0058-2024-W12-to-2024-W14",
@@ -6302,7 +6302,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014275200001065969
+        "runtime_seconds": 0.020048899999892456
       },
       {
         "fold_id": "rolling-origin-0059-2024-W13-to-2024-W15",
@@ -6319,7 +6319,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.016064299999925424
+        "runtime_seconds": 0.020344800001112162
       },
       {
         "fold_id": "rolling-origin-0060-2024-W14-to-2024-W16",
@@ -6336,7 +6336,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015616099999533617
+        "runtime_seconds": 0.019109700000626617
       },
       {
         "fold_id": "rolling-origin-0061-2024-W15-to-2024-W17",
@@ -6353,7 +6353,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01445899999998801
+        "runtime_seconds": 0.020956099999239086
       },
       {
         "fold_id": "rolling-origin-0062-2024-W16-to-2024-W18",
@@ -6370,7 +6370,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014150999999401392
+        "runtime_seconds": 0.01909180000075139
       },
       {
         "fold_id": "rolling-origin-0063-2024-W17-to-2024-W19",
@@ -6387,7 +6387,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.015182700000877958
+        "runtime_seconds": 0.021370200000092154
       },
       {
         "fold_id": "rolling-origin-0064-2024-W18-to-2024-W20",
@@ -6404,7 +6404,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01629250000041793
+        "runtime_seconds": 0.021798200001285295
       },
       {
         "fold_id": "rolling-origin-0065-2024-W19-to-2024-W21",
@@ -6421,7 +6421,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.012955399999555084
+        "runtime_seconds": 0.01780979999966803
       },
       {
         "fold_id": "rolling-origin-0066-2024-W20-to-2024-W22",
@@ -6438,7 +6438,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014038699999218807
+        "runtime_seconds": 0.019221499998820946
       },
       {
         "fold_id": "rolling-origin-0067-2024-W21-to-2024-W23",
@@ -6455,7 +6455,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.01232479999998759
+        "runtime_seconds": 0.017665299999862327
       },
       {
         "fold_id": "rolling-origin-0068-2024-W22-to-2024-W24",
@@ -6472,7 +6472,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.014041399999769055
+        "runtime_seconds": 0.01893930000005639
       }
     ],
     "random_forest": [
@@ -6491,7 +6491,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18448480000006384
+        "runtime_seconds": 0.17990410000129486
       },
       {
         "fold_id": "rolling-origin-0002-2023-W08-to-2023-W10",
@@ -6508,7 +6508,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18614890000026207
+        "runtime_seconds": 0.182664100000693
       },
       {
         "fold_id": "rolling-origin-0003-2023-W09-to-2023-W11",
@@ -6525,7 +6525,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18794119999984105
+        "runtime_seconds": 0.17722999999932654
       },
       {
         "fold_id": "rolling-origin-0004-2023-W10-to-2023-W12",
@@ -6542,7 +6542,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19421700000020792
+        "runtime_seconds": 0.19204089999948337
       },
       {
         "fold_id": "rolling-origin-0005-2023-W11-to-2023-W13",
@@ -6559,7 +6559,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.17901030000030005
+        "runtime_seconds": 0.1768566999999166
       },
       {
         "fold_id": "rolling-origin-0006-2023-W12-to-2023-W14",
@@ -6576,7 +6576,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18213920000016515
+        "runtime_seconds": 0.19318229999953473
       },
       {
         "fold_id": "rolling-origin-0007-2023-W13-to-2023-W15",
@@ -6593,7 +6593,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18186380000042845
+        "runtime_seconds": 0.19968770000014047
       },
       {
         "fold_id": "rolling-origin-0008-2023-W14-to-2023-W16",
@@ -6610,7 +6610,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.17559860000073968
+        "runtime_seconds": 0.19234309999956167
       },
       {
         "fold_id": "rolling-origin-0009-2023-W15-to-2023-W17",
@@ -6627,7 +6627,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18003450000105659
+        "runtime_seconds": 0.18066560000079335
       },
       {
         "fold_id": "rolling-origin-0010-2023-W16-to-2023-W18",
@@ -6644,7 +6644,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.1797698999998829
+        "runtime_seconds": 0.18395830000008573
       },
       {
         "fold_id": "rolling-origin-0011-2023-W17-to-2023-W19",
@@ -6661,7 +6661,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18276939999850583
+        "runtime_seconds": 0.19230769999921904
       },
       {
         "fold_id": "rolling-origin-0012-2023-W18-to-2023-W20",
@@ -6678,7 +6678,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18842529999892577
+        "runtime_seconds": 0.193830700000035
       },
       {
         "fold_id": "rolling-origin-0013-2023-W19-to-2023-W21",
@@ -6695,7 +6695,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18093749999934516
+        "runtime_seconds": 0.1983870999993087
       },
       {
         "fold_id": "rolling-origin-0014-2023-W20-to-2023-W22",
@@ -6712,7 +6712,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.17882210000061605
+        "runtime_seconds": 0.19702940000024682
       },
       {
         "fold_id": "rolling-origin-0015-2023-W21-to-2023-W23",
@@ -6729,7 +6729,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18568580000101065
+        "runtime_seconds": 0.1878405000006751
       },
       {
         "fold_id": "rolling-origin-0016-2023-W22-to-2023-W24",
@@ -6746,7 +6746,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.1860515000007581
+        "runtime_seconds": 0.19110929999988002
       },
       {
         "fold_id": "rolling-origin-0017-2023-W23-to-2023-W25",
@@ -6763,7 +6763,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19256689999929222
+        "runtime_seconds": 0.1783419999992475
       },
       {
         "fold_id": "rolling-origin-0018-2023-W24-to-2023-W26",
@@ -6780,7 +6780,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18481680000149936
+        "runtime_seconds": 0.18316080000113288
       },
       {
         "fold_id": "rolling-origin-0019-2023-W25-to-2023-W27",
@@ -6797,7 +6797,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18826829999852635
+        "runtime_seconds": 0.1841363999992609
       },
       {
         "fold_id": "rolling-origin-0020-2023-W26-to-2023-W28",
@@ -6814,7 +6814,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19028890000117826
+        "runtime_seconds": 0.19083370000043942
       },
       {
         "fold_id": "rolling-origin-0021-2023-W27-to-2023-W29",
@@ -6831,7 +6831,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18963499999881606
+        "runtime_seconds": 0.19169940000028873
       },
       {
         "fold_id": "rolling-origin-0022-2023-W28-to-2023-W30",
@@ -6848,7 +6848,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18703690000074857
+        "runtime_seconds": 0.19110259999979462
       },
       {
         "fold_id": "rolling-origin-0023-2023-W29-to-2023-W31",
@@ -6865,7 +6865,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19443070000124862
+        "runtime_seconds": 0.18548390000069048
       },
       {
         "fold_id": "rolling-origin-0024-2023-W30-to-2023-W32",
@@ -6882,7 +6882,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18698500000027707
+        "runtime_seconds": 0.18923270000050252
       },
       {
         "fold_id": "rolling-origin-0025-2023-W31-to-2023-W33",
@@ -6899,7 +6899,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20005739999942307
+        "runtime_seconds": 0.18255320000025677
       },
       {
         "fold_id": "rolling-origin-0026-2023-W32-to-2023-W34",
@@ -6916,7 +6916,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18862739999894984
+        "runtime_seconds": 0.19859490000089863
       },
       {
         "fold_id": "rolling-origin-0027-2023-W33-to-2023-W35",
@@ -6933,7 +6933,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19525380000050063
+        "runtime_seconds": 0.1887931999990542
       },
       {
         "fold_id": "rolling-origin-0028-2023-W34-to-2023-W36",
@@ -6950,7 +6950,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18545129999984056
+        "runtime_seconds": 0.18087830000149552
       },
       {
         "fold_id": "rolling-origin-0029-2023-W35-to-2023-W37",
@@ -6967,7 +6967,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18988999999965017
+        "runtime_seconds": 0.18114319999949657
       },
       {
         "fold_id": "rolling-origin-0030-2023-W36-to-2023-W38",
@@ -6984,7 +6984,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18579370000043127
+        "runtime_seconds": 0.19935249999980442
       },
       {
         "fold_id": "rolling-origin-0031-2023-W37-to-2023-W39",
@@ -7001,7 +7001,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19125619999977062
+        "runtime_seconds": 0.195971199998894
       },
       {
         "fold_id": "rolling-origin-0032-2023-W38-to-2023-W40",
@@ -7018,7 +7018,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20200339999973949
+        "runtime_seconds": 0.1983767000001535
       },
       {
         "fold_id": "rolling-origin-0033-2023-W39-to-2023-W41",
@@ -7035,7 +7035,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19314989999838872
+        "runtime_seconds": 0.19182639999962703
       },
       {
         "fold_id": "rolling-origin-0034-2023-W40-to-2023-W42",
@@ -7052,7 +7052,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19644770000013523
+        "runtime_seconds": 0.24369430000115244
       },
       {
         "fold_id": "rolling-origin-0035-2023-W41-to-2023-W43",
@@ -7069,7 +7069,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.208842399999412
+        "runtime_seconds": 0.2253858999993099
       },
       {
         "fold_id": "rolling-origin-0036-2023-W42-to-2023-W44",
@@ -7086,7 +7086,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.1941410999988875
+        "runtime_seconds": 0.2223111000002973
       },
       {
         "fold_id": "rolling-origin-0037-2023-W43-to-2023-W45",
@@ -7103,7 +7103,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18603819999952975
+        "runtime_seconds": 0.21751539999968372
       },
       {
         "fold_id": "rolling-origin-0038-2023-W44-to-2023-W46",
@@ -7120,7 +7120,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19153950000145414
+        "runtime_seconds": 0.21036889999959385
       },
       {
         "fold_id": "rolling-origin-0039-2023-W45-to-2023-W47",
@@ -7137,7 +7137,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19731599999977334
+        "runtime_seconds": 0.21615570000176376
       },
       {
         "fold_id": "rolling-origin-0040-2023-W46-to-2023-W48",
@@ -7154,7 +7154,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.1982256999999663
+        "runtime_seconds": 0.2158730999999534
       },
       {
         "fold_id": "rolling-origin-0041-2023-W47-to-2023-W49",
@@ -7171,7 +7171,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20465340000009746
+        "runtime_seconds": 0.2029050000001007
       },
       {
         "fold_id": "rolling-origin-0042-2023-W48-to-2023-W50",
@@ -7188,7 +7188,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19395780000013474
+        "runtime_seconds": 0.2051134000012098
       },
       {
         "fold_id": "rolling-origin-0043-2023-W49-to-2023-W51",
@@ -7205,7 +7205,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18702370000028168
+        "runtime_seconds": 0.2159174999997049
       },
       {
         "fold_id": "rolling-origin-0044-2023-W50-to-2023-W52",
@@ -7222,7 +7222,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19555469999977504
+        "runtime_seconds": 0.22083980000024894
       },
       {
         "fold_id": "rolling-origin-0045-2023-W51-to-2024-W01",
@@ -7239,7 +7239,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20037289999891073
+        "runtime_seconds": 0.27022089999991294
       },
       {
         "fold_id": "rolling-origin-0046-2023-W52-to-2024-W02",
@@ -7256,7 +7256,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.18803209999896353
+        "runtime_seconds": 0.2165275000006659
       },
       {
         "fold_id": "rolling-origin-0047-2024-W01-to-2024-W03",
@@ -7273,7 +7273,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.2093325999994704
+        "runtime_seconds": 0.22330540000075416
       },
       {
         "fold_id": "rolling-origin-0048-2024-W02-to-2024-W04",
@@ -7290,7 +7290,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19432230000165873
+        "runtime_seconds": 0.2177096999985224
       },
       {
         "fold_id": "rolling-origin-0049-2024-W03-to-2024-W05",
@@ -7307,7 +7307,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.2033940999990591
+        "runtime_seconds": 0.21966260000044713
       },
       {
         "fold_id": "rolling-origin-0050-2024-W04-to-2024-W06",
@@ -7324,7 +7324,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20396119999895745
+        "runtime_seconds": 0.20961910000005446
       },
       {
         "fold_id": "rolling-origin-0051-2024-W05-to-2024-W07",
@@ -7341,7 +7341,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19587109999883978
+        "runtime_seconds": 0.21655550000104995
       },
       {
         "fold_id": "rolling-origin-0052-2024-W06-to-2024-W08",
@@ -7358,7 +7358,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19080120000035095
+        "runtime_seconds": 0.21914699999979348
       },
       {
         "fold_id": "rolling-origin-0053-2024-W07-to-2024-W09",
@@ -7375,7 +7375,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19642600000042876
+        "runtime_seconds": 0.21966389999943203
       },
       {
         "fold_id": "rolling-origin-0054-2024-W08-to-2024-W10",
@@ -7392,7 +7392,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20049099999960163
+        "runtime_seconds": 0.20598449999852164
       },
       {
         "fold_id": "rolling-origin-0055-2024-W09-to-2024-W11",
@@ -7409,7 +7409,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20623350000096252
+        "runtime_seconds": 0.2104445000004489
       },
       {
         "fold_id": "rolling-origin-0056-2024-W10-to-2024-W12",
@@ -7426,7 +7426,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19362230000115233
+        "runtime_seconds": 0.20808579999902577
       },
       {
         "fold_id": "rolling-origin-0057-2024-W11-to-2024-W13",
@@ -7443,7 +7443,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19351099999948929
+        "runtime_seconds": 0.2124521999994613
       },
       {
         "fold_id": "rolling-origin-0058-2024-W12-to-2024-W14",
@@ -7460,7 +7460,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.2027011999998649
+        "runtime_seconds": 0.21409639999910723
       },
       {
         "fold_id": "rolling-origin-0059-2024-W13-to-2024-W15",
@@ -7477,7 +7477,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20811529999991762
+        "runtime_seconds": 0.2171189000000595
       },
       {
         "fold_id": "rolling-origin-0060-2024-W14-to-2024-W16",
@@ -7494,7 +7494,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.23124670000106562
+        "runtime_seconds": 0.2637059999997291
       },
       {
         "fold_id": "rolling-origin-0061-2024-W15-to-2024-W17",
@@ -7511,7 +7511,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.22435269999914453
+        "runtime_seconds": 0.22307499999988067
       },
       {
         "fold_id": "rolling-origin-0062-2024-W16-to-2024-W18",
@@ -7528,7 +7528,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.1983935999996902
+        "runtime_seconds": 0.2213160000010248
       },
       {
         "fold_id": "rolling-origin-0063-2024-W17-to-2024-W19",
@@ -7545,7 +7545,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20256770000014512
+        "runtime_seconds": 0.2180781000006391
       },
       {
         "fold_id": "rolling-origin-0064-2024-W18-to-2024-W20",
@@ -7562,7 +7562,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20582719999947585
+        "runtime_seconds": 0.2195718000002671
       },
       {
         "fold_id": "rolling-origin-0065-2024-W19-to-2024-W21",
@@ -7579,7 +7579,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.20158430000083172
+        "runtime_seconds": 0.21681379999972705
       },
       {
         "fold_id": "rolling-origin-0066-2024-W20-to-2024-W22",
@@ -7596,7 +7596,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19911409999986063
+        "runtime_seconds": 0.21902570000020205
       },
       {
         "fold_id": "rolling-origin-0067-2024-W21-to-2024-W23",
@@ -7613,7 +7613,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19867340000018885
+        "runtime_seconds": 0.2151732999991509
       },
       {
         "fold_id": "rolling-origin-0068-2024-W22-to-2024-W24",
@@ -7630,7 +7630,7 @@
         "fold_status": "success",
         "warnings": [],
         "failure_reason": null,
-        "runtime_seconds": 0.19973249999929976
+        "runtime_seconds": 0.2267608999991353
       }
     ],
     "gradient_boosting": [
@@ -8851,7 +8851,7 @@
       "negative_raw_prediction_count": 0,
       "clipping_count": 0,
       "convergence_warning_count": 0,
-      "runtime_seconds": 0.0001120999932027189
+      "runtime_seconds": 0.00012089999472664203
     },
     "ridge_regression": {
       "fold_count": 68,
@@ -8871,7 +8871,7 @@
       "negative_raw_prediction_count": 0,
       "clipping_count": 0,
       "convergence_warning_count": 0,
-      "runtime_seconds": 0.11426230000142823
+      "runtime_seconds": 0.12068450000151643
     },
     "poisson_regression": {
       "fold_count": 68,
@@ -8891,7 +8891,7 @@
       "negative_raw_prediction_count": 0,
       "clipping_count": 0,
       "convergence_warning_count": 0,
-      "runtime_seconds": 2.3547615999959817
+      "runtime_seconds": 2.6998302999963926
     },
     "random_forest": {
       "fold_count": 68,
@@ -8911,7 +8911,7 @@
       "negative_raw_prediction_count": 0,
       "clipping_count": 0,
       "convergence_warning_count": 0,
-      "runtime_seconds": 13.181831599997167
+      "runtime_seconds": 13.930713200001264
     },
     "gradient_boosting": {
       "fold_count": 68,
@@ -9127,14 +9127,14 @@
     }
   },
   "deployment_profile_id": "dhaka_south",
-  "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+  "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
   "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
   "model_card_id": "dhaka_south_random_forest_benchmark",
   "model_card_version": "p1.3-v1",
   "provenance": {
-    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "run_id": "01fa6a19-6e56-40ae-a53a-b750ff16513c",
     "manifest_path": "data/input_manifest.json",
-    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "manifest_sha256": "ad0de553e9752af9c5aa71881d7e5053bc4beddec405864829e5f8435da2c77f",
     "case_source": "synthetic_benchmark",
     "climate_source": "synthetic_benchmark",
     "operational_source": "synthetic_benchmark",
@@ -9158,8 +9158,8 @@
     "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
     "deployment_profile_data_mode": "synthetic_capability_demonstration",
     "deployment_profile_id": "dhaka_south",
-    "deployment_profile_schema_version": "1.0",
-    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_schema_version": "1.1",
+    "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
     "deployment_profile_status": "active",
     "evidence_registry_schema_version": "1.0",
     "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
@@ -9173,5 +9173,5 @@
     "uncertainty_method_version": "p1.3-v1",
     "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
   },
-  "generated_at": "2026-07-13T09:09:11Z"
+  "generated_at": "2026-07-16T17:27:07Z"
 }

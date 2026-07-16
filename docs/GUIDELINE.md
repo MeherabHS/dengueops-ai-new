@@ -66,7 +66,7 @@ These cards answer the most important questions at a glance:
 |------|-------------------|
 | Forecasted Cases | Projected dengue cases in the next 14 days |
 | Growth Factor | How fast cases are rising vs the last 4-week average |
-| Risk Level | Overall outbreak risk (Low / Moderate / High / Critical) |
+| Forecast Growth Category | Experimental forecast-growth band; not an official outbreak classification |
 | Critical Supply Alerts | Items falling below a 7-day stock threshold |
 | Highest Priority Zone | The zone needing the most urgent attention |
 | Highest Pressure Facility | The facility with the most expected bed deficit |
@@ -224,7 +224,7 @@ The numbers reflect a realistic prototype pipeline, not a validated live surveil
 No. The analytics pipeline is run separately by technical staff. The dashboard is a read-only interface — just open it in a browser.
 
 **Q: What does "human-in-the-loop" mean?**
-It means the system never takes action on its own. It surfaces alerts and recommendations. A qualified person — a public health official, hospital administrator, or analyst — always reviews and decides before anything happens in the real world.
+It means the system never takes action on its own. It surfaces alerts and simulated planning suggestions without institutional approval. A qualified person — a public health official, hospital administrator, or analyst — always reviews and decides before anything happens in the real world.
 
 **Q: What is the surge simulation for?**
 It's a planning rehearsal tool. Instead of waiting for a crisis, public health teams can simulate *"what if Kamrangirchar sees a 30% spike?"* and see which facilities need pre-positioning, which zones need vector-control escalation, and what the bed pressure would look like.

@@ -1,15 +1,19 @@
 import { clsx } from "clsx";
-import type { RiskLevel } from "@/lib/types";
-import { getRiskColor } from "@/lib/risk-utils";
+import type { ForecastGrowthCategory } from "@/lib/types";
 
 interface RiskBadgeProps {
-  level: RiskLevel;
+  level: ForecastGrowthCategory;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
 export default function RiskBadge({ level, size = "md", className }: RiskBadgeProps) {
-  const colors = getRiskColor(level);
+  const colors = {
+    "Low forecast growth": { bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300" },
+    "Moderate forecast growth": { bg: "bg-yellow-100", text: "text-yellow-800", border: "border-yellow-300" },
+    "High forecast growth": { bg: "bg-orange-100", text: "text-orange-800", border: "border-orange-300" },
+    "Very high forecast growth": { bg: "bg-red-100", text: "text-red-800", border: "border-red-300" },
+  }[level];
 
   return (
     <span

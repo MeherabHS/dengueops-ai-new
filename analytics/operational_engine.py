@@ -319,7 +319,7 @@ def _priority_category(score: float) -> str:
 
 
 def calculate_priority(
-    risk_score: int,
+    experimental_growth_score: int,
     vulnerability_weight: float,
     exposure_index: float = 0.0,
 ) -> tuple[int, float, str]:
@@ -334,7 +334,7 @@ def calculate_priority(
       structural = (exposure_index × vulnerability_weight × 200)
                  + (exposure_index × 80)
 
-      forecast_driven = risk_score × (0.60 + vulnerability_weight × 0.30)
+      forecast_driven = experimental_growth_score × (0.60 + vulnerability_weight × 0.30)
 
       raw_priority = structural + forecast_driven
       priority_score = min(100, round(raw_priority))
@@ -357,25 +357,25 @@ def calculate_priority(
     total score below the 100 cap at moderate risk levels, ensuring all five
     zones remain meaningfully differentiated across the full forecast range.
 
-    At low-season risk (risk_score ≈ 5), typical outputs:
+    At low forecast growth (experimental_growth_score ≈ 5), typical outputs:
       Kamrangirchar (exp=0.27, vuln=0.33) → priority ≈ 43  (Moderate)
       Dhanmondi (exp=0.18, vuln=0.13)     → priority ≈ 22  (Routine)
 
-    At moderate outbreak (risk_score ≈ 60):
+    At moderate forecast growth (experimental_growth_score ≈ 60):
       Kamrangirchar → priority ≈ 81  (Critical)
       Mitford       → priority ≈ 72  (High)
       Jatrabari     → priority ≈ 66  (High)
       Lalbagh       → priority ≈ 65  (High)
       Dhanmondi     → priority ≈ 57  (High)
 
-    At high outbreak (risk_score ≈ 82):
+    At high forecast growth (experimental_growth_score ≈ 82):
       Kamrangirchar → priority ≈ 96  (Critical)
       Dhanmondi     → priority ≈ 71  (High)
 
     Parameters
     ----------
-    risk_score : int
-        Risk score (0–100) from the uncertainty scenario.
+    experimental_growth_score : int
+        Provisional growth score (0–100) from the preparedness scenario.
     vulnerability_weight : float
         Zone-level vulnerability weight from zones.json (e.g. 0.33).
     exposure_index : float
@@ -395,7 +395,7 @@ def calculate_priority(
     # Forecast-driven urgency — scaled by 0.6 base + 0.3 × vulnerability.
     # Multiplier kept below 1.0 so that even at Moderate risk (score≈60) the
     # total can land in the High band without always hitting the 100 cap.
-    forecast_driven = risk_score * (
+    forecast_driven = experimental_growth_score * (
         float(get_parameter("OPS.PRIORITY.SCORE", "growth_base_weight"))
         + vulnerability_weight * float(get_parameter("OPS.PRIORITY.SCORE", "growth_vulnerability_weight"))
     )
@@ -507,8 +507,8 @@ def generate_recommendations(
     bed_gap_expected: float,
     bed_gap_worst: float,
     priority_score: int,
-    expected_risk_level: str,
-    worst_risk_level: str,
+    expected_growth_category: str,
+    worst_growth_category: str,
 ) -> list[str]:
     """
     Generate plain-language operational recommendations for one facility.
@@ -551,11 +551,11 @@ def generate_recommendations(
         recs.append("Prioritize vector-control response in this zone.")
 
     # Rule 6 — Expected risk level
-    if expected_risk_level in ("High", "Critical"):
+    if expected_growth_category in ("High forecast growth", "Very high forecast growth"):
         recs.append("Prepare triage desk and surge OPD workflow.")
 
     # Rule 7 — Worst-case risk level
-    if worst_risk_level in ("High", "Critical"):
+    if worst_growth_category in ("High forecast growth", "Very high forecast growth"):
         recs.append("Prepare contingency plan under worst-case forecast.")
 
     # Rule 8 — No escalation needed
@@ -617,13 +617,9 @@ def build_directives(
     gf_expected = float(scenarios_raw["expected_case"]["growth_factor"])
     gf_worst    = float(scenarios_raw["worst_case"]["growth_factor"])
 
-    rs_best     = int(scenarios_raw["best_case"]["risk_score"])
-    rs_expected = int(scenarios_raw["expected_case"]["risk_score"])
-    rs_worst    = int(scenarios_raw["worst_case"]["risk_score"])
-
-    rl_best     = scenarios_raw["best_case"]["risk_level"]
-    rl_expected = scenarios_raw["expected_case"]["risk_level"]
-    rl_worst    = scenarios_raw["worst_case"]["risk_level"]
+    score_expected = int(scenarios_raw["expected_case"]["experimental_growth_score"])
+    category_expected = scenarios_raw["expected_case"]["forecast_growth_category"]
+    category_worst = scenarios_raw["worst_case"]["forecast_growth_category"]
 
     horizon_days = int(forecast.get("horizon_days", 14))
 
@@ -678,7 +674,7 @@ def build_directives(
         vuln  = float(zone.get("vulnerability_weight", 0.0))
         expo  = float(zone.get("exposure_index", 0.0))
         priority_capped, priority_raw, priority_category = calculate_priority(
-            rs_expected, vuln, exposure_index=expo
+            score_expected, vuln, exposure_index=expo
         )
 
         # ── Facility load shares within this zone ─────────────────────────────
@@ -746,8 +742,8 @@ def build_directives(
                 bed_gap_expected=bg_exp,
                 bed_gap_worst=bg_worst,
                 priority_score=priority_capped,
-                expected_risk_level=rl_expected,
-                worst_risk_level=rl_worst,
+                expected_growth_category=category_expected,
+                worst_growth_category=category_worst,
             )
             planning_suggestions = [
                 {
@@ -816,7 +812,6 @@ def build_directives(
                 # ─ Alerts and recommendations ─
                 "inventory_alerts":     inv_alerts,
                 # TD-P03A-LEGACY-RISK-FIELDS: compatibility only; use planning_suggestions.
-                "recommendations":      recs,
                 "planning_suggestions": planning_suggestions,
                 "generation_timestamp": now_ts,
             })
@@ -838,7 +833,7 @@ def build_directives(
     # highest_pressure_facility: facility with largest expected bed gap
     highest_pressure_facility = max(directives, key=lambda d: d["bed_gap_expected"])["facility_name"]
 
-    total_recs = sum(len(d["recommendations"]) for d in directives)
+    total_planning_suggestions = sum(len(d["planning_suggestions"]) for d in directives)
 
     summary = {
         "total_facilities":                   total_fac,
@@ -849,7 +844,7 @@ def build_directives(
         "critical_supply_alerts":             critical_alerts,
         "highest_priority_zone":              highest_priority_zone,
         "highest_pressure_facility":          highest_pressure_facility,
-        "total_recommendations":              total_recs,
+        "total_planning_suggestions":         total_planning_suggestions,
     }
 
     # ── Wrap into final output dict ───────────────────────────────────────────
@@ -953,7 +948,7 @@ def main() -> int:
     print(f"    Bed gaps (expected)       : {s['facilities_with_expected_bed_gap']} facilities")
     print(f"    Bed gaps (worst case)     : {s['facilities_with_worst_case_bed_gap']} facilities")
     print(f"    Critical supply alerts    : {s['critical_supply_alerts']}")
-    print(f"    Total recommendations     : {s['total_recommendations']}")
+    print(f"    Total planning suggestions: {s['total_planning_suggestions']}")
     print(f"  {'-'*66}")
 
     print()

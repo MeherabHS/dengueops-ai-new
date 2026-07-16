@@ -1,5 +1,5 @@
 {
-  "profile_schema_version": "1.0",
+  "profile_schema_version": "1.1",
   "deployment_id": "dhaka_south",
   "name": "Dhaka South Synthetic Capability Demonstration",
   "geography": {"level": "city", "id": "BGD-DHAKA-SOUTH", "name": "Dhaka South"},
@@ -81,11 +81,12 @@
   },
   "deprecated_compatibility_fields": {
     "debt_id": "TD-P03A-LEGACY-RISK-FIELDS",
-    "status": "open",
-    "legacy_fields": ["risk_level", "risk_score", "recommendations"],
+    "status": "resolved",
     "canonical_fields": ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"],
-    "runtime_behavior": "preserved_for_backward_compatibility",
-    "deprecated": true
+    "new_artifact_contract": "canonical_authoritative_fields_only",
+    "legacy_fields_emitted": false,
+    "historical_artifacts_rewritten": false,
+    "compatibility_alias_emission": "prohibited"
   },
   "candidate_comparison": {
     "candidate_registry_path": "config/candidate_models.json",

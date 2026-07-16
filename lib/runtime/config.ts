@@ -16,6 +16,10 @@ export interface RuntimeConfig {
   internalOperatorId: string;
   decisionValiditySeconds: number;
   decisionReasonMaxLength: number;
+  internalMonitoringEnabled: boolean;
+  internalMonitoringSecret: string;
+  internalMonitoringOperatorId: string;
+  forecastOutcomeTimeoutSeconds: number;
   defaultDeploymentId: string;
 }
 
@@ -65,6 +69,12 @@ export function loadRuntimeConfig(requirePython = true): RuntimeConfig {
       500,
     );
   }
+  const internalMonitoringEnabled = process.env.DENGUEOPS_INTERNAL_MONITORING_ENABLED?.trim().toLowerCase() === "true";
+  const internalMonitoringSecret = process.env.DENGUEOPS_INTERNAL_MONITORING_SECRET?.trim() || "";
+  const internalMonitoringOperatorId = process.env.DENGUEOPS_INTERNAL_MONITORING_OPERATOR_ID?.trim() || "";
+  if (internalMonitoringEnabled && (internalMonitoringSecret.length < 16 || !internalMonitoringOperatorId || internalMonitoringOperatorId.length > 128)) {
+    throw new RuntimePublicError("invalid_monitoring_configuration", "configuration", "Enabled outcome monitoring requires a 16-character secret and bounded operator identifier.", 503);
+  }
   return {
     repositoryRoot,
     runtimeRoot,
@@ -80,6 +90,10 @@ export function loadRuntimeConfig(requirePython = true): RuntimeConfig {
     internalOperatorId: process.env.DENGUEOPS_INTERNAL_OPERATOR_ID?.trim() || "",
     decisionValiditySeconds: positiveInteger(process.env.DENGUEOPS_DECISION_VALIDITY_SECONDS, 2_592_000, "DENGUEOPS_DECISION_VALIDITY_SECONDS"),
     decisionReasonMaxLength: positiveInteger(process.env.DENGUEOPS_DECISION_REASON_MAX_LENGTH, 1000, "DENGUEOPS_DECISION_REASON_MAX_LENGTH"),
+    internalMonitoringEnabled,
+    internalMonitoringSecret,
+    internalMonitoringOperatorId,
+    forecastOutcomeTimeoutSeconds: positiveInteger(process.env.DENGUEOPS_FORECAST_OUTCOME_TIMEOUT_SECONDS, 120, "DENGUEOPS_FORECAST_OUTCOME_TIMEOUT_SECONDS"),
     defaultDeploymentId: process.env.DENGUEOPS_DEFAULT_DEPLOYMENT_ID?.trim() || "dhaka_south",
   };
 }

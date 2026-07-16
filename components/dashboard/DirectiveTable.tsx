@@ -45,10 +45,10 @@ export default function DirectiveTable({ directives }: Props) {
               </div>
             )}
             <ul className="space-y-1">
-              {d.recommendations.map((rec, i) => (
+              {d.planning_suggestions.map((suggestion, i) => (
                 <li key={i} className="flex gap-2 text-xs text-slate-600">
                   <span className="text-sky-600 font-bold shrink-0">{i + 1}.</span>
-                  {rec}
+                  <span title={`${suggestion.approval_status}: ${suggestion.disclaimer}`}>{suggestion.label}</span>
                 </li>
               ))}
             </ul>

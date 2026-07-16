@@ -21,7 +21,7 @@ const OUTPUT_LAYERS = [
     label: "Operational layer",
     color: "border-sky-200 bg-sky-50",
     labelColor: "text-sky-600",
-    items: ["Risk level", "SDH", "Bed gap", "Priority score", "Recommendations"],
+    items: ["Experimental forecast-growth category", "SDH", "Bed gap", "Planning-priority score", "Simulated planning suggestions"],
   },
   {
     label: "Decision layer",

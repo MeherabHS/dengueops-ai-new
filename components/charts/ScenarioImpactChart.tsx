@@ -40,9 +40,9 @@ function barFill(score: number, isBaseline: boolean): string {
 export default function ScenarioImpactChart({ zones, isNormal }: Props) {
   const data = zones.map((z) => ({
     name: SHORT[z.zone_name] ?? z.zone_name,
-    Baseline: z.baseline_priority,
-    Adjusted: isNormal ? null : z.adjusted_priority,
-    adjScore: z.adjusted_priority,
+    Baseline: z.baselinePlanningPriority,
+    Adjusted: isNormal ? null : z.adjustedPlanningPriority,
+    adjScore: z.adjustedPlanningPriority,
   }));
 
   return (

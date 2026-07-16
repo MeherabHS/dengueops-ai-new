@@ -12,9 +12,9 @@ const growthThresholds = formulaPolicy["FORECAST.GROWTH_CATEGORY"]?.parameters ?
 const priorityThresholds = formulaPolicy["OPS.PRIORITY.CATEGORIES"]?.parameters ?? {};
 const stockThresholds = formulaPolicy["OPS.STOCK.THRESHOLDS"]?.parameters ?? {};
 
-// ─── Risk level rules ───────────────────────────────────────────────────────
+// ─── Forecast-growth category rules ─────────────────────────────────────────
 
-const RISK_RULES = [
+const GROWTH_CATEGORY_RULES = [
   { range: `growth_factor < ${growthThresholds.moderate_start ?? 1.1}`, level: "Low forecast growth", color: "bg-emerald-100 text-emerald-700 border-emerald-300" },
   { range: `${growthThresholds.moderate_start ?? 1.1} ≤ growth_factor < ${growthThresholds.high_start ?? 1.5}`, level: "Moderate forecast growth", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
   { range: `${growthThresholds.high_start ?? 1.5} ≤ growth_factor < ${growthThresholds.very_high_start ?? 2}`, level: "High forecast growth", color: "bg-orange-100 text-orange-700 border-orange-300" },
@@ -56,19 +56,19 @@ export default function OperationalLogicSection() {
               { symbol: "Forecast Cases",    definition: "ML model 14-day ahead prediction" },
               { symbol: "cases_rolling_4w",  definition: "4-week rolling mean of recent observed cases" },
             ]}
-            note="Growth factor > 1.0 indicates surge above recent baseline. Used for risk classification and supply demand adjustment."
+            note="Growth factor > 1.0 indicates growth above recent baseline. Used for the provisional forecast-growth category and supply demand adjustment."
           />
           <FormulaCard
             title="Experimental Growth Score (0–100)"
             formula="Experimental Growth Score = governed provisional piecewise_linear(growth_factor)"
-            note="Unsupported provisional score used only in benchmark/research presentation. It is not risk or probability."
+            note="Unsupported provisional score used only in benchmark/research presentation. It is not a probability or a validated risk score."
           />
         </div>
 
         <div className="mb-8">
           <p className="text-sm font-semibold text-slate-700 mb-3">Provisional forecast-growth categories</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {RISK_RULES.map((r) => (
+            {GROWTH_CATEGORY_RULES.map((r) => (
               <div key={r.level} className={`rounded-xl border ${r.color} px-4 py-3 text-center`}>
                 <p className="text-xs font-bold mb-1">{r.level}</p>
                 <p className="text-[10px] font-mono">{r.range}</p>
@@ -119,7 +119,7 @@ export default function OperationalLogicSection() {
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">{sc.label}</p>
                 <p className="text-2xl font-bold text-slate-900">{sc.data.forecast_cases?.toLocaleString()}</p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  GF {sc.data.growth_factor?.toFixed(3)}× · {sc.data.risk_level} · {sc.data.risk_score}/100
+                  GF {sc.data.growth_factor?.toFixed(3)}× · {sc.data.forecast_growth_category} · {sc.data.experimental_growth_score}/100
                 </p>
               </div>
             ))}
@@ -292,7 +292,7 @@ export default function OperationalLogicSection() {
             title="Experimental Planning-Priority Score"
             formula="exposure×vulnerability×200 + exposure×80 + growth_score×(0.60 + vulnerability×0.30), capped at 100"
             variables={[
-              { symbol: "Risk Score",          definition: "Normalised 0–100 risk score from the forecast engine" },
+              { symbol: "Experimental Growth Score", definition: "Provisional 0–100 forecast-growth transformation; not a probability or validated risk score" },
               { symbol: "Vulnerability Weight", definition: "Zone composite vulnerability index (0–1)" },
             ]}
             note="Benchmark-only heuristic. Coefficients and tiers are not validated or institution-approved."

@@ -1,7 +1,9 @@
 """Validate and atomically commit isolated P1.4D-2 assessment evidence."""
 from __future__ import annotations
 
+import csv
 import json
+import math
 import os
 import stat
 from pathlib import Path
@@ -11,6 +13,18 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from runtime_commit import atomic_json, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
+from feature_engineering import FEATURE_COLUMNS
+from runtime_assessment_evidence import (
+    AssessmentEvidenceError,
+    aggregate_candidate,
+    fold_plan_sha256,
+    selection_eligible,
+    select_technical_winner,
+    validate_fold_identities,
+    validate_folds_against_feature_rows,
+    validate_prediction_record,
+)
+from runtime_validate import TARGET
 
 
 SCHEMAS = {
@@ -36,9 +50,11 @@ class RuntimeAssessmentCommitError(RuntimeError):
 
 
 def _json(path: Path) -> dict[str, Any]:
+    def reject_constant(value: str) -> None:
+        raise ValueError(f"Non-standard JSON numeric constant: {value}.")
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        value = json.loads(path.read_text(encoding="utf-8"), parse_constant=reject_constant)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         raise RuntimeAssessmentCommitError(f"Invalid assessment JSON: {path.name}.") from exc
     if not isinstance(value, dict):
         raise RuntimeAssessmentCommitError(f"Assessment JSON must be an object: {path.name}.")
@@ -78,36 +94,117 @@ def _make_immutable(root: Path) -> None:
     root.chmod(0o555)
 
 
-def _reconcile(rolling: dict[str, Any], comparison: dict[str, Any], recommendation: dict[str, Any]) -> None:
+def _same_metrics(actual: dict[str, Any] | None, expected: dict[str, Any] | None) -> bool:
+    if actual is None or expected is None:
+        return actual is expected
+    if set(actual) != set(expected):
+        return False
+    for key, expected_value in expected.items():
+        actual_value = actual[key]
+        if isinstance(expected_value, float):
+            if not isinstance(actual_value, (int, float)) or not math.isfinite(float(actual_value)):
+                return False
+            if float(actual_value) != expected_value:
+                return False
+        elif actual_value != expected_value:
+            return False
+    return True
+
+
+def _reconcile(
+    rolling: dict[str, Any], comparison: dict[str, Any], recommendation: dict[str, Any],
+    feature_rows: list[dict[str, str]],
+) -> None:
     folds = rolling["folds"]
     candidate_ids = rolling["candidateIds"]
-    if rolling["plannedFoldCount"] != 68 or len(folds) != 68 or len(candidate_ids) != 7:
-        raise RuntimeAssessmentCommitError("Assessment must contain the governed 68-fold, seven-candidate plan.")
-    if len({fold["foldId"] for fold in folds}) != 68:
-        raise RuntimeAssessmentCommitError("Assessment fold identities are not unique.")
-    records: dict[str, list[dict[str, Any]]] = {model_id: [] for model_id in candidate_ids}
-    for sequence, fold in enumerate(folds, 1):
-        if fold["sequence"] != sequence:
-            raise RuntimeAssessmentCommitError("Assessment fold sequence is not deterministic.")
-        predictions = fold["predictions"]
-        if len(predictions) != 7 or {item["modelId"] for item in predictions} != set(candidate_ids):
-            raise RuntimeAssessmentCommitError("Every assessment fold must contain every governed candidate exactly once.")
-        for item in predictions:
-            records[item["modelId"]].append(item)
+    if rolling["plannedFoldCount"] != 68:
+        raise RuntimeAssessmentCommitError("Assessment must contain the governed 68-fold plan.")
+    try:
+        actuals, records = validate_fold_identities(folds, candidate_ids)
+        validate_folds_against_feature_rows(folds, feature_rows, FEATURE_COLUMNS, TARGET)
+    except AssessmentEvidenceError as exc:
+        raise RuntimeAssessmentCommitError(f"Assessment fold evidence is invalid: {exc}.") from exc
+    computed_fold_hash = fold_plan_sha256(folds)
+    if computed_fold_hash != rolling["foldPlanSha256"] or computed_fold_hash != comparison["foldPlanSha256"] \
+            or computed_fold_hash != recommendation["foldPlanSha256"]:
+        raise RuntimeAssessmentCommitError("Assessment fold-plan SHA-256 does not match canonical fold evidence.")
     summaries = {item["modelId"]: item for item in comparison["candidates"]}
     if set(summaries) != set(candidate_ids):
         raise RuntimeAssessmentCommitError("Candidate comparison does not reconcile with the fold plan.")
+    recomputed: list[dict[str, Any]] = []
     for model_id, candidate_records in records.items():
+        try:
+            for actual, record in zip(actuals, candidate_records):
+                validate_prediction_record(model_id, actual, record)
+        except (AssessmentEvidenceError, TypeError, ValueError, KeyError) as exc:
+            raise RuntimeAssessmentCommitError(f"Candidate fold evidence is invalid: {model_id}: {exc}.") from exc
         successful = sum(item["foldStatus"] in {"success", "warning"} for item in candidate_records)
         failed = len(candidate_records) - successful
         summary = summaries[model_id]
         if (summary["successfulFolds"], summary["failedFolds"]) != (successful, failed):
             raise RuntimeAssessmentCommitError(f"Candidate fold totals do not reconcile: {model_id}.")
-        if summary["selectionEligible"] and (not summary["eligible"] or successful != 68 or failed != 0):
-            raise RuntimeAssessmentCommitError(f"Incomplete candidate is selection eligible: {model_id}.")
-    winner = comparison["technicalWinnerModelId"]
+        if summary["eligible"] is not True:
+            raise RuntimeAssessmentCommitError(f"Governed full-assessment candidate was marked preflight-ineligible: {model_id}.")
+        try:
+            metrics = aggregate_candidate(candidate_records, actuals)
+        except AssessmentEvidenceError as exc:
+            raise RuntimeAssessmentCommitError(f"Candidate aggregate is invalid: {model_id}: {exc}.") from exc
+        if not _same_metrics(summary["metrics"], metrics):
+            raise RuntimeAssessmentCommitError(f"Candidate aggregate metrics do not reconcile: {model_id}.")
+        eligible = selection_eligible(
+            policy_eligible=True, successful_folds=successful, failed_folds=failed, metrics=metrics,
+        )
+        if summary["selectionEligible"] is not eligible:
+            raise RuntimeAssessmentCommitError(f"Candidate selection eligibility does not reconcile: {model_id}.")
+        expected_completion = "complete" if successful == 68 and failed == 0 else "incomplete"
+        if summary["completionStatus"] != expected_completion:
+            raise RuntimeAssessmentCommitError(f"Candidate completion status does not reconcile: {model_id}.")
+        recomputed.append({**summary, "metrics": metrics, "selectionEligible": eligible})
+
+    complete = [candidate for candidate in recomputed if candidate["selectionEligible"]]
+    baseline_ids = {"previous_week_naive", "moving_average_4w", "seasonal_naive_52w"}
+    learned_ids = {"ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"}
+    baseline_ok = any(candidate["modelId"] in baseline_ids for candidate in complete)
+    learned_ok = any(candidate["modelId"] in learned_ids for candidate in complete)
+    expected_set_status = (
+        "insufficient_candidate_breadth" if len(complete) < 2 or not baseline_ok or not learned_ok
+        else "complete_candidate_set" if len(complete) == 7
+        else "partial_candidate_set"
+    )
+    if comparison["candidateSetStatus"] != expected_set_status \
+            or comparison["baselineRequirementSatisfied"] is not baseline_ok \
+            or comparison["learnedModelRequirementSatisfied"] is not learned_ok:
+        raise RuntimeAssessmentCommitError("Candidate-set eligibility gates do not reconcile.")
+    winner, tie_stage, tie_steps, eligible_ids = (
+        select_technical_winner(recomputed) if baseline_ok and learned_ok else (None, None, [], [])
+    )
+    if comparison["selectionEligibleCandidateIds"] != eligible_ids \
+            or comparison["technicalWinnerModelId"] != winner \
+            or comparison["tieStage"] != tie_stage \
+            or comparison["tieResolutionSteps"] != tie_steps:
+        raise RuntimeAssessmentCommitError("Technical-winner selection does not reconcile with candidate evidence.")
     if winner is not None and not summaries[winner]["selectionEligible"]:
         raise RuntimeAssessmentCommitError("Technical winner is not selection eligible.")
+    winner_candidate = summaries.get(winner) if winner else None
+    if comparison["winnerParameterSha256"] != (winner_candidate["parametersSha256"] if winner_candidate else None):
+        raise RuntimeAssessmentCommitError("Winner parameter identity does not reconcile.")
+
+    winner_records = records.get(winner, []) if winner else []
+    for candidate in recomputed:
+        expected_counts = None
+        if winner:
+            better = tied = worse = 0
+            for record, selected in zip(records[candidate["modelId"]], winner_records):
+                if record["absoluteError"] is None or selected["absoluteError"] is None:
+                    continue
+                difference = float(record["absoluteError"]) - float(selected["absoluteError"])
+                better += difference < -1e-9
+                tied += abs(difference) <= 1e-9
+                worse += difference > 1e-9
+            expected_counts = {"better": better, "tied": tied, "worse": worse}
+        if candidate["foldWinsTiesLosses"] != expected_counts:
+            raise RuntimeAssessmentCommitError(f"Fold wins/ties/losses do not reconcile: {candidate['modelId']}.")
+
     if recommendation["technicalWinnerModelId"] != winner:
         raise RuntimeAssessmentCommitError("Recommendation winner differs from comparison evidence.")
     expected_status = "evidence_only" if winner else "no_recommendation"
@@ -117,6 +214,30 @@ def _reconcile(rolling: dict[str, Any], comparison: dict[str, Any], recommendati
         raise RuntimeAssessmentCommitError("Recommendation strength or approval exceeded the governed phase.")
     if recommendation["adoptionStatus"] != "not_adopted":
         raise RuntimeAssessmentCommitError("Assessment evidence cannot adopt a model.")
+    if recommendation["winnerParameterSha256"] != (winner_candidate["parametersSha256"] if winner_candidate else None):
+        raise RuntimeAssessmentCommitError("Recommendation winner parameters do not reconcile.")
+    runner_up = min(
+        (candidate for candidate in complete if candidate["modelId"] != winner),
+        key=lambda candidate: candidate["metrics"]["mae"],
+        default=None,
+    ) if winner else None
+    winner_mae = winner_candidate["metrics"]["mae"] if winner_candidate else None
+    runner_mae = runner_up["metrics"]["mae"] if runner_up else None
+    expected_inputs = {
+        "winnerMae": winner_mae,
+        "runnerUpMae": runner_mae,
+        "absoluteMaeGap": (runner_mae - winner_mae) if winner_mae is not None and runner_mae is not None else None,
+        "relativeMaeGap": ((runner_mae - winner_mae) / runner_mae) if winner_mae is not None and runner_mae not in {None, 0} else None,
+        "successfulFoldRatio": 1.0 if winner else None,
+        "failedFoldCount": winner_candidate["failedFolds"] if winner_candidate else 68,
+        "clippingCount": winner_candidate["metrics"]["clippingCount"] if winner_candidate else 0,
+        "warningCount": winner_candidate["metrics"]["warningCount"] if winner_candidate else 0,
+        "candidateBreadth": len(complete),
+        "tieBreakStageUsed": tie_stage,
+        "datasetFoldCount": 68,
+    }
+    if recommendation["evidenceInputs"] != expected_inputs:
+        raise RuntimeAssessmentCommitError("Recommendation evidence inputs do not reconcile with candidate metrics.")
 
 
 def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[str, Any]) -> dict[str, Any]:
@@ -148,7 +269,12 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
         raise RuntimeAssessmentCommitError("Assessment fold-plan identity mismatch.")
     if summary["candidates"] != comparison["candidates"] or summary["technicalWinnerModelId"] != comparison["technicalWinnerModelId"]:
         raise RuntimeAssessmentCommitError("Compact assessment summary differs from comparison evidence.")
-    _reconcile(rolling, comparison, recommendation)
+    try:
+        with (artifacts / "model_features.csv").open("r", encoding="utf-8", newline="") as handle:
+            feature_rows = list(csv.DictReader(handle))
+    except (OSError, UnicodeDecodeError, csv.Error) as exc:
+        raise RuntimeAssessmentCommitError("Assessment feature matrix is not valid canonical CSV.") from exc
+    _reconcile(rolling, comparison, recommendation, feature_rows)
     sequence = assessment.get("artifactPublicationSequence", [])
     if not sequence or sequence[-1] != "assessment_summary.json":
         raise RuntimeAssessmentCommitError("Assessment summary was not published last among evidence artifacts.")

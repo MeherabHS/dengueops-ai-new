@@ -50,6 +50,28 @@ class BenchmarkPipelineTest(unittest.TestCase):
         self.assertEqual((forecast["latest_known_epi_year"], forecast["latest_known_epi_week"]), (2024, 24))
         self.assertEqual((forecast["target_epi_year"], forecast["target_epi_week"]), (2024, 26))
         self.assertEqual(len(forecast["features_used"]), 18)
+        self.assertEqual(forecast["forecast_growth_category"], "High forecast growth")
+        self.assertEqual(forecast["experimental_growth_score"], 71)
+        self.assertNotIn("risk_level", forecast)
+        self.assertNotIn("risk_score", forecast)
+
+    def test_canonical_bundle_validation_fails_closed(self):
+        good = {
+            "forecast_output.json": {
+                "forecast_growth_category": "Low forecast growth",
+                "experimental_growth_score": 1,
+                "preparedness_scenarios": {},
+                "uncertainty_scenarios": {},
+            },
+            "directives.json": {"directives": []},
+        }
+        run_pipeline._validate_canonical_generated_bundle(good)
+        missing = json.loads(json.dumps(good)); del missing["forecast_output.json"]["forecast_growth_category"]
+        with self.assertRaisesRegex(ValueError, "missing canonical field"):
+            run_pipeline._validate_canonical_generated_bundle(missing)
+        legacy = json.loads(json.dumps(good)); legacy["forecast_output.json"]["risk_score"] = 1
+        with self.assertRaisesRegex(ValueError, "prohibited legacy"):
+            run_pipeline._validate_canonical_generated_bundle(legacy)
 
 
 if __name__ == "__main__":

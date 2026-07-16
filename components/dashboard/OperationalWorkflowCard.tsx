@@ -71,7 +71,7 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
     bullets: [
       "Pre-computed JSON — zero wait for users",
       "Zone priorities, SDH timelines, bed gaps",
-      "Translated action recommendations per role",
+      "Simulated planning suggestions per role",
     ],
     accentClass: "border-emerald-300",
     iconBgClass: "bg-emerald-100 text-emerald-700",
@@ -191,7 +191,7 @@ export default function OperationalWorkflowCard({ compact = false }: Props) {
             </span>{" "}
             The analytics pipeline is maintained by technical/MIS staff, while
             hospital and public health users receive translated action
-            recommendations.
+            simulated planning suggestions.
           </p>
         </div>
 

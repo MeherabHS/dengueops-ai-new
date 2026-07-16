@@ -115,12 +115,12 @@ export default function PipelineStatusPanel() {
               <span className="font-bold">{fs.growth_factor.toFixed(3)}×</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Risk Level</span>
+              <span className="text-slate-500">Forecast Growth Category</span>
               <span className={`font-semibold ${
-                fs.risk_level === "Critical" ? "text-red-700" :
-                fs.risk_level === "High" ? "text-orange-700" :
-                fs.risk_level === "Moderate" ? "text-yellow-700" : "text-emerald-700"
-              }`}>{fs.risk_level} ({fs.risk_score}/100)</span>
+                fs.forecast_growth_category === "Very high forecast growth" ? "text-red-700" :
+                fs.forecast_growth_category === "High forecast growth" ? "text-orange-700" :
+                fs.forecast_growth_category === "Moderate forecast growth" ? "text-yellow-700" : "text-emerald-700"
+              }`}>{fs.forecast_growth_category} ({fs.experimental_growth_score}/100)</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Target</span>
@@ -157,7 +157,7 @@ export default function PipelineStatusPanel() {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Total Recommendations</span>
-              <span className="font-mono">{ds.total_recommendations}</span>
+              <span className="font-mono">{ds.total_planning_suggestions}</span>
             </div>
           </div>
         </div>

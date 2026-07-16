@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "deploymentId",
+    "policyId",
+    "policyVersion",
+    "policySha256",
+    "generatedAt",
+    "eligibilityAsOf",
+    "evaluatedForecastCount",
+    "totalEligibleForecastCount",
+    "pendingOutcomeCount",
+    "cumulativeMAE",
+    "cumulativeRMSE",
+    "cumulativeBias",
+    "cumulativeMPE",
+    "cumulativeMAPE",
+    "percentageMetricEvaluatedCount",
+    "zeroObservedCount",
+    "empiricalRangeEvaluatedCount",
+    "empiricalRangeCoveredCount",
+    "empiricalCoverage",
+    "lowerMissCount",
+    "upperMissCount",
+    "earliestEvaluatedTargetPeriod",
+    "latestEvaluatedTargetPeriod",
+    "modelBreakdowns",
+    "forecastPolicyBreakdowns",
+    "uncertaintyStatusBreakdowns",
+    "includedOutcomes",
+    "outcomeSetSha256",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "deploymentId": { "const": "dhaka_south" },
+    "policyId": { "const": "RUNTIME.FORECAST_OUTCOME.MONITORING" },
+    "policyVersion": { "const": "p1.4g-v1" },
+    "policySha256": { "$ref": "#/$defs/sha" },
+    "generatedAt": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "eligibilityAsOf": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "evaluatedForecastCount": { "type": "integer", "minimum": 1 },
+    "totalEligibleForecastCount": { "type": "integer", "minimum": 1 },
+    "pendingOutcomeCount": { "type": "integer", "minimum": 0 },
+    "cumulativeMAE": { "type": "number", "minimum": 0 },
+    "cumulativeRMSE": { "type": "number", "minimum": 0 },
+    "cumulativeBias": { "type": "number" },
+    "cumulativeMPE": { "type": ["number", "null"] },
+    "cumulativeMAPE": { "type": ["number", "null"], "minimum": 0 },
+    "percentageMetricEvaluatedCount": { "type": "integer", "minimum": 0 },
+    "zeroObservedCount": { "type": "integer", "minimum": 0 },
+    "empiricalRangeEvaluatedCount": { "type": "integer", "minimum": 0 },
+    "empiricalRangeCoveredCount": { "type": "integer", "minimum": 0 },
+    "empiricalCoverage": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "lowerMissCount": { "type": "integer", "minimum": 0 },
+    "upperMissCount": { "type": "integer", "minimum": 0 },
+    "earliestEvaluatedTargetPeriod": { "$ref": "#/$defs/period" },
+    "latestEvaluatedTargetPeriod": { "$ref": "#/$defs/period" },
+    "modelBreakdowns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/breakdown" }
+    },
+    "forecastPolicyBreakdowns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/breakdown" }
+    },
+    "uncertaintyStatusBreakdowns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/breakdown" }
+    },
+    "includedOutcomes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["outcomeId", "outcomeEvidenceSha256"],
+        "properties": {
+          "outcomeId": { "format": "uuid" },
+          "outcomeEvidenceSha256": { "$ref": "#/$defs/sha" }
+        }
+      }
+    },
+    "outcomeSetSha256": { "$ref": "#/$defs/sha" },
+    "limitations": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "period": { "type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$" },
+    "breakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "evaluatedForecastCount",
+        "cumulativeMAE",
+        "cumulativeRMSE",
+        "cumulativeBias"
+      ],
+      "properties": {
+        "identity": { "type": "string", "minLength": 1 },
+        "evaluatedForecastCount": { "type": "integer", "minimum": 1 },
+        "cumulativeMAE": { "type": "number", "minimum": 0 },
+        "cumulativeRMSE": { "type": "number", "minimum": 0 },
+        "cumulativeBias": { "type": "number" }
+      }
+    }
+  }
+}

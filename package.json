@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:runtime-routes": "node --test tests/runtime_routes.test.mjs tests/runtime_quick_routes.test.mjs tests/runtime_assessment_routes.test.mjs tests/runtime_decision_routes.test.mjs",
+    "test:runtime-routes": "node --test tests/runtime_routes.test.mjs tests/runtime_quick_routes.test.mjs tests/runtime_assessment_routes.test.mjs tests/runtime_decision_routes.test.mjs tests/runtime_outcome_routes.test.mjs",
     "runtime:worker": "python analytics/runtime_worker.py"
   },
   "dependencies": {

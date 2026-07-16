@@ -37,7 +37,7 @@
     "explainability_evaluation", "provenance", "generated_at"
   ],
   "properties": {
-    "model_card_schema_version": {"const": "1.0"}, "model_card_id": {"$ref": "#/$defs/nonEmpty"},
+    "model_card_schema_version": {"enum": ["1.0", "1.1"]}, "model_card_id": {"$ref": "#/$defs/nonEmpty"},
     "model_card_version": {"$ref": "#/$defs/nonEmpty"}, "model_id": {"$ref": "#/$defs/nonEmpty"},
     "model_version": {"$ref": "#/$defs/nonEmpty"}, "deployment_id": {"$ref": "#/$defs/nonEmpty"},
     "model_family": {"$ref": "#/$defs/nonEmpty"}, "estimator_library": {"$ref": "#/$defs/nonEmpty"},
@@ -99,7 +99,8 @@
     "limitations": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
     "intended_use": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
     "prohibited_uses": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
-    "maturity_statements": {"type": "object"}, "deprecated_compatibility_fields": {"type": "object"},
+    "maturity_statements": {"type": "object"},
+    "deprecated_compatibility_fields": {"oneOf": [{"$ref": "#/$defs/openDebt"}, {"$ref": "#/$defs/resolvedDebt"}]},
     "formula_registry_version": {"$ref": "#/$defs/nonEmpty"}, "formula_registry_sha256": {"$ref": "#/$defs/sha256"},
     "deployment_profile_sha256": {"$ref": "#/$defs/sha256"}, "evidence_registry_schema_version": {"const": "1.0"},
     "evidence_registry_sha256": {"$ref": "#/$defs/sha256"}, "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "uniqueItems": true},
@@ -115,9 +116,40 @@
     "explainability_evaluation": {"$ref": "#/$defs/explainabilityEvaluation"},
     "provenance": {"type": "object"}, "generated_at": {"type": "string", "format": "date-time"}
   },
+  "allOf": [
+    {
+      "if": {"properties": {"model_card_schema_version": {"const": "1.0"}}},
+      "then": {"properties": {"deprecated_compatibility_fields": {"$ref": "#/$defs/openDebt"}}}
+    },
+    {
+      "if": {"properties": {"model_card_schema_version": {"const": "1.1"}}},
+      "then": {"properties": {"deprecated_compatibility_fields": {"$ref": "#/$defs/resolvedDebt"}}}
+    }
+  ],
   "$defs": {
     "nonEmpty": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "period": {"type": "object", "additionalProperties": false, "required": ["epi_year", "epi_week"], "properties": {"epi_year": {"type": "integer"}, "epi_week": {"type": "integer", "minimum": 1, "maximum": 52}}},
+    "openDebt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["debt_id", "status", "legacy_fields", "canonical_fields", "runtime_behavior", "deprecated"],
+      "properties": {
+        "debt_id": {"const": "TD-P03A-LEGACY-RISK-FIELDS"}, "status": {"const": "open"},
+        "legacy_fields": {"const": ["risk_level", "risk_score", "recommendations"]},
+        "canonical_fields": {"const": ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"]},
+        "runtime_behavior": {"const": "preserved_for_backward_compatibility"}, "deprecated": {"const": true}
+      }
+    },
+    "resolvedDebt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["debt_id", "status", "canonical_fields", "new_artifact_contract", "legacy_fields_emitted", "historical_artifacts_rewritten", "compatibility_alias_emission"],
+      "properties": {
+        "debt_id": {"const": "TD-P03A-LEGACY-RISK-FIELDS"}, "status": {"const": "resolved"},
+        "canonical_fields": {"const": ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"]},
+        "new_artifact_contract": {"const": "canonical_authoritative_fields_only"},
+        "legacy_fields_emitted": {"const": false}, "historical_artifacts_rewritten": {"const": false},
+        "compatibility_alias_emission": {"const": "prohibited"}
+      }
+    },
     "periodRange": {"type": "object", "additionalProperties": false, "required": ["start", "end"], "properties": {"start": {"$ref": "#/$defs/period"}, "end": {"$ref": "#/$defs/period"}}},
     "explainabilityEvaluation": {
       "type": "object", "additionalProperties": false,

@@ -36,6 +36,45 @@ import type {
 } from "./types";
 import type { EvidenceViewModel, OverviewViewModel, PreparednessViewModel } from "./forecast-workflow-types";
 
+const prohibitedKeys = new Set(["risk_level", "risk_score", "recommendations"]);
+const assertRecord = (value: unknown, label: string): Record<string, unknown> => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object.`);
+  return value as Record<string, unknown>;
+};
+const rejectLegacyAliases = (value: unknown, label: string): void => {
+  if (Array.isArray(value)) {
+    value.forEach((child) => rejectLegacyAliases(child, label));
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, child] of Object.entries(value)) {
+    if (prohibitedKeys.has(key)) throw new Error(`${label} contains prohibited legacy field ${key}.`);
+    rejectLegacyAliases(child, label);
+  }
+};
+const requireCanonicalForecastFields = (value: unknown, label: string): void => {
+  const record = assertRecord(value, label);
+  if (typeof record.forecast_growth_category !== "string"
+      || typeof record.experimental_growth_score !== "number"
+      || !Number.isFinite(record.experimental_growth_score)) {
+    throw new Error(`${label} is missing canonical forecast growth fields.`);
+  }
+};
+
+rejectLegacyAliases(forecastOutputRaw, "forecast_output.json");
+rejectLegacyAliases(directivesFileRaw, "directives.json");
+rejectLegacyAliases(dashboardSummaryRaw, "dashboard_summary.json");
+rejectLegacyAliases(chartDataRaw, "chart_data.json");
+rejectLegacyAliases(pipelineRunSummaryRaw, "pipeline_run_summary.json");
+requireCanonicalForecastFields(forecastOutputRaw, "forecast_output.json");
+for (const scenario of Object.values(assertRecord(assertRecord(forecastOutputRaw, "forecast_output.json").preparedness_scenarios, "preparedness_scenarios"))) {
+  requireCanonicalForecastFields(scenario, "preparedness scenario");
+}
+const directivesRecord = assertRecord(directivesFileRaw, "directives.json");
+if (!Array.isArray(directivesRecord.directives) || directivesRecord.directives.some((item) => !Array.isArray(assertRecord(item, "directive").planning_suggestions))) {
+  throw new Error("directives.json is missing canonical planning_suggestions.");
+}
+
 const directivesFile = directivesFileRaw as unknown as { directives: Directive[]; summary: Record<string, number | string> };
 const dashboardSummaryTyped = dashboardSummaryRaw as unknown as DashboardSummary;
 

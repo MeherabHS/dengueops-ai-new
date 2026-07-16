@@ -33,7 +33,7 @@ export default function OperationalWorkflowAssumption() {
         <p className="text-xs text-sky-800 leading-relaxed">
           Operational users are not expected to code, clean CSV files, or run scripts during
           an outbreak. The analytics pipeline is maintained by technical/MIS staff, while
-          hospital and public health users receive translated action recommendations.
+          hospital and public health users receive simulated planning suggestions without institutional approval.
         </p>
       </div>
 

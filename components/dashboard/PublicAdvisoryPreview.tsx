@@ -1,7 +1,7 @@
 import { Users, Info, ShieldCheck, Stethoscope, Bug, Droplets, CheckCircle2 } from "lucide-react";
 import RiskBadge from "@/components/ui/RiskBadge";
 import type { ForecastOutput } from "@/lib/types";
-import type { RiskLevel } from "@/lib/types";
+import type { ForecastGrowthCategory } from "@/lib/types";
 
 interface Props {
   forecast: ForecastOutput;
@@ -26,32 +26,32 @@ const SEEK_CARE_STEPS = [
 
 // ── Translated risk messages ──────────────────────────────────────────────
 
-const RISK_MESSAGES: Record<RiskLevel, { headline: string; body: string; actionLabel: string }> = {
-  Low: {
-    headline: "Dengue activity is low in your area.",
-    body: "Current surveillance data suggests dengue activity is within normal seasonal levels. Maintain routine prevention practices.",
+const GROWTH_MESSAGES: Record<ForecastGrowthCategory, { headline: string; body: string; actionLabel: string }> = {
+  "Low forecast growth": {
+    headline: "The prototype forecast indicates low growth.",
+    body: "This experimental synthetic demonstration does not establish current surveillance conditions. Maintain routine prevention practices.",
     actionLabel: "Routine vigilance",
   },
-  Moderate: {
-    headline: "Dengue activity is moderate. Stay alert.",
-    body: "Case counts are rising above seasonal baseline. Increase preventive measures and seek care early if you develop fever.",
+  "Moderate forecast growth": {
+    headline: "The prototype forecast indicates moderate growth.",
+    body: "This provisional category is not an official outbreak classification. Continue preventive measures and seek care early if you develop fever.",
     actionLabel: "Heightened vigilance",
   },
-  High: {
-    headline: "Dengue activity is elevated. Take action now.",
-    body: "There is a confirmed surge in dengue cases in Dhaka South. Eliminate breeding sites immediately and seek care if symptomatic.",
+  "High forecast growth": {
+    headline: "The prototype forecast indicates high growth.",
+    body: "This synthetic demonstration does not confirm a dengue surge. Eliminate breeding sites and seek care if symptomatic.",
     actionLabel: "Immediate prevention action",
   },
-  Critical: {
-    headline: "Dengue surge alert. Seek care at the first sign of fever.",
-    body: "Dengue case counts are critically elevated. Do not wait for symptoms to worsen. Visit your nearest health facility immediately if you have fever.",
+  "Very high forecast growth": {
+    headline: "The prototype forecast indicates very high growth.",
+    body: "This experimental category is not an operational alert. Do not wait for symptoms to worsen; seek qualified medical care if you have fever.",
     actionLabel: "Urgent — seek care early",
   },
 };
 
 export default function PublicAdvisoryPreview({ forecast }: Props) {
   const sc = forecast.uncertainty_scenarios.expected_case;
-  const riskMsg = RISK_MESSAGES[sc.risk_level];
+  const growthMessage = GROWTH_MESSAGES[sc.forecast_growth_category];
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -84,11 +84,11 @@ export default function PublicAdvisoryPreview({ forecast }: Props) {
       {/* ── Risk status card ─────────────────────────────────────────── */}
       <div
         className={`rounded-2xl border-2 p-6 shadow-sm ${
-          sc.risk_level === "Critical"
+          sc.forecast_growth_category === "Very high forecast growth"
             ? "border-red-300 bg-red-50"
-            : sc.risk_level === "High"
+            : sc.forecast_growth_category === "High forecast growth"
             ? "border-orange-300 bg-orange-50"
-            : sc.risk_level === "Moderate"
+            : sc.forecast_growth_category === "Moderate forecast growth"
             ? "border-yellow-300 bg-yellow-50"
             : "border-emerald-300 bg-emerald-50"
         }`}
@@ -96,26 +96,26 @@ export default function PublicAdvisoryPreview({ forecast }: Props) {
         <div className="flex items-start gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <RiskBadge level={sc.risk_level} size="md" />
+              <RiskBadge level={sc.forecast_growth_category} size="md" />
               <span
                 className={`text-xs font-semibold uppercase tracking-wider ${
-                  sc.risk_level === "Critical"
+                  sc.forecast_growth_category === "Very high forecast growth"
                     ? "text-red-700"
-                    : sc.risk_level === "High"
+                    : sc.forecast_growth_category === "High forecast growth"
                     ? "text-orange-700"
-                    : sc.risk_level === "Moderate"
+                    : sc.forecast_growth_category === "Moderate forecast growth"
                     ? "text-yellow-700"
                     : "text-emerald-700"
                 }`}
               >
-                {riskMsg.actionLabel}
+                {growthMessage.actionLabel}
               </span>
             </div>
             <h2 className="text-lg font-bold text-slate-900 leading-snug">
-              {riskMsg.headline}
+              {growthMessage.headline}
             </h2>
             <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-              {riskMsg.body}
+              {growthMessage.body}
             </p>
           </div>
         </div>

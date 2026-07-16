@@ -38,13 +38,13 @@ export default function ForecastSummary({ forecast, directives, scenario }: Prop
         variant={sc.growth_factor >= 2 ? "critical" : sc.growth_factor >= 1.5 ? "warning" : "success"}
       />
       <MetricCard
-        title="Risk Level"
-        value={<RiskBadge level={sc.risk_level} size="sm" />}
-        subtitle={`Risk score: ${sc.risk_score}/100`}
+        title="Forecast Growth Category"
+        value={<RiskBadge level={sc.forecast_growth_category} size="sm" />}
+        subtitle={`Experimental growth score: ${sc.experimental_growth_score}/100`}
         variant={
-          sc.risk_level === "Critical"
+          sc.forecast_growth_category === "Very high forecast growth"
             ? "critical"
-            : sc.risk_level === "High"
+            : sc.forecast_growth_category === "High forecast growth"
             ? "warning"
             : "default"
         }

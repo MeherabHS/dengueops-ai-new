@@ -1,4 +1,4 @@
-import type { RiskLevel, NavLink, ScenarioKey } from "./types";
+import type { NavLink, ScenarioKey } from "./types";
 
 export const PROJECT_TITLE = "DengueOps AI";
 export const PROJECT_SUBTITLE =
@@ -9,33 +9,6 @@ export const TARGET_CITY = "Dhaka South";
 
 // ─── Risk level palette ────────────────────────────────────────────────────
 // Tailwind class strings (bg, text, border)
-export const RISK_COLORS: Record<RiskLevel, { bg: string; text: string; border: string; hex: string }> = {
-  Low: {
-    bg: "bg-emerald-100",
-    text: "text-emerald-800",
-    border: "border-emerald-300",
-    hex: "#10b981",
-  },
-  Moderate: {
-    bg: "bg-yellow-100",
-    text: "text-yellow-800",
-    border: "border-yellow-300",
-    hex: "#f59e0b",
-  },
-  High: {
-    bg: "bg-orange-100",
-    text: "text-orange-800",
-    border: "border-orange-300",
-    hex: "#f97316",
-  },
-  Critical: {
-    bg: "bg-red-100",
-    text: "text-red-800",
-    border: "border-red-300",
-    hex: "#ef4444",
-  },
-};
-
 // ─── Scenario display ──────────────────────────────────────────────────────
 export const SCENARIO_LABELS: Record<ScenarioKey, string> = {
   best_case: "Planning Low",

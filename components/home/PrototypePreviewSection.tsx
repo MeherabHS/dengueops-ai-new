@@ -28,17 +28,17 @@ const METRICS: PreviewMetric[] = [
   },
   {
     icon: <TrendingUp className="h-5 w-5" />,
-    label: "Risk Level",
-    value: hm.risk_level ?? "—",
-    sub: `Risk score: ${hm.risk_score ?? "—"} / 100`,
+    label: "Forecast Growth Category",
+    value: hm.forecast_growth_category ?? "—",
+    sub: `Experimental growth score: ${hm.experimental_growth_score ?? "—"} / 100 — provisional, not a probability or a validated risk score`,
     accent:
-      hm.risk_level === "High" || hm.risk_level === "Critical"
+      hm.forecast_growth_category === "High forecast growth" || hm.forecast_growth_category === "Very high forecast growth"
         ? "border-orange-200 bg-orange-50"
-        : hm.risk_level === "Moderate"
+        : hm.forecast_growth_category === "Moderate forecast growth"
         ? "border-yellow-200 bg-yellow-50"
         : "border-emerald-200 bg-emerald-50",
     iconColor:
-      hm.risk_level === "High" || hm.risk_level === "Critical"
+      hm.forecast_growth_category === "High forecast growth" || hm.forecast_growth_category === "Very high forecast growth"
         ? "text-orange-600"
         : "text-yellow-600",
   },

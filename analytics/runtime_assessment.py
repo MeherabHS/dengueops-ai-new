@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
 import shutil
 import sys
 import time
@@ -21,6 +20,15 @@ from sklearn.exceptions import ConvergenceWarning
 from feature_engineering import FEATURE_COLUMNS, build_features
 from model_factory import build_candidate_estimator, load_and_validate_candidate_registry
 from runtime_assessment_commit import commit_runtime_assessment
+from runtime_assessment_evidence import (
+    aggregate_candidate,
+    failed_prediction,
+    fold_plan_sha256,
+    matrix_sha256,
+    prediction_evidence,
+    selection_eligible,
+    select_technical_winner,
+)
 from runtime_assessment_policy import evaluate_assessment_policy, load_and_validate_assessment_policy
 from runtime_commit import atomic_json, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
@@ -53,11 +61,6 @@ def _json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _canonical_sha(value: Any) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
 def _period(row: Mapping[str, Any] | pd.Series) -> str:
     return f"{int(row['epi_year'])}-W{int(row['epi_week']):02d}"
 
@@ -69,11 +72,7 @@ def _advance_period(row: Mapping[str, Any] | pd.Series, weeks: int) -> str:
 
 
 def _matrix_sha(frame: pd.DataFrame) -> str:
-    rows = [{
-        "epi_year": int(row["epi_year"]), "epi_week": int(row["epi_week"]),
-        "features": [float(row[name]) for name in FEATURE_COLUMNS], "target": float(row[TARGET]),
-    } for _, row in frame.iterrows()]
-    return _canonical_sha(rows)
+    return matrix_sha256(frame.to_dict("records"), FEATURE_COLUMNS, TARGET)
 
 
 def _single(frame: pd.DataFrame, column: str) -> str | None:
@@ -127,80 +126,19 @@ def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tu
         })
     if len(descriptors) != 68:
         raise ValueError("The governed assessment must produce exactly 68 folds.")
-    public = [{key: value for key, value in descriptor.items() if key not in {"trainStartIndex", "trainEndExclusive", "embargoIndex", "validationIndex"}} for descriptor in descriptors]
-    return tuple(descriptors), _canonical_sha(public)
+    return tuple(descriptors), fold_plan_sha256(descriptors)
 
 
 def _prediction(model_id: str, actual: float, raw: float, runtime: float, warning_codes: list[str]) -> dict[str, Any]:
-    if not math.isfinite(raw):
-        raise ValueError("nonfinite_prediction")
-    if model_id in {"previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "poisson_regression", "random_forest"} and raw < 0:
-        raise ValueError("prohibited_negative_prediction")
-    published = max(0.0, raw)
-    signed = published - actual
-    return {
-        "modelId": model_id, "foldStatus": "warning" if warning_codes else "success",
-        "rawPrediction": raw, "publishedPrediction": published, "clippingApplied": raw < 0,
-        "signedError": signed, "absoluteError": abs(signed), "squaredError": signed * signed,
-        "failureReasonCode": None, "warningCodes": warning_codes, "runtimeSeconds": runtime,
-    }
+    return prediction_evidence(model_id, actual, raw, runtime, warning_codes)
 
 
 def _failed(model_id: str, reason: str, runtime: float = 0.0, warnings_: list[str] | None = None) -> dict[str, Any]:
-    return {
-        "modelId": model_id, "foldStatus": "failed", "rawPrediction": None, "publishedPrediction": None,
-        "clippingApplied": False, "signedError": None, "absoluteError": None, "squaredError": None,
-        "failureReasonCode": reason, "warningCodes": warnings_ or [], "runtimeSeconds": runtime,
-    }
+    return failed_prediction(model_id, reason, runtime, warnings_)
 
 
 def _aggregate(records: list[dict[str, Any]], actuals: list[float]) -> dict[str, Any] | None:
-    successful = [record for record in records if record["foldStatus"] in {"success", "warning"}]
-    if not successful:
-        return None
-    absolute = np.asarray([record["absoluteError"] for record in successful], dtype=float)
-    squared = np.asarray([record["squaredError"] for record in successful], dtype=float)
-    successful_actuals = [actual for actual, record in zip(actuals, records) if record["foldStatus"] in {"success", "warning"}]
-    denominator = float(sum(successful_actuals))
-    return {
-        "mae": float(absolute.mean()), "rmse": float(np.sqrt(squared.mean())),
-        "wape": float(100 * absolute.sum() / denominator) if denominator else None,
-        "medianAbsoluteError": float(np.median(absolute)), "maximumAbsoluteError": float(absolute.max()),
-        "clippingCount": sum(bool(record["clippingApplied"]) for record in successful),
-        "warningCount": sum(len(record["warningCodes"]) for record in successful),
-        "runtimeSeconds": float(sum(record["runtimeSeconds"] for record in records)),
-    }
-
-
-def select_technical_winner(candidate_results: list[dict[str, Any]], tolerance: float = 1e-9) -> tuple[str | None, str | None, list[str], list[str]]:
-    remaining = [candidate for candidate in candidate_results if candidate["selectionEligible"]]
-    if len(remaining) < 2:
-        return None, None, [], []
-    steps: list[str] = []
-    stages = (
-        ("mae", "mae"), ("rmse", "rmse"), ("wape", "wape"),
-        ("median_absolute_error", "medianAbsoluteError"), ("maximum_absolute_error", "maximumAbsoluteError"),
-    )
-    tie_stage: str | None = None
-    for stage, key in stages:
-        values = [candidate["metrics"].get(key) for candidate in remaining]
-        if any(value is None or not math.isfinite(float(value)) for value in values):
-            return None, stage, steps + [f"{stage}: unavailable metric prevented deterministic selection"], [candidate["modelId"] for candidate in remaining]
-        best = min(float(value) for value in values)
-        remaining = [candidate for candidate in remaining if abs(float(candidate["metrics"][key]) - best) <= tolerance]
-        steps.append(f"{stage}: retained {','.join(candidate['modelId'] for candidate in remaining)}")
-        tie_stage = stage
-        if len(remaining) == 1:
-            return remaining[0]["modelId"], tie_stage, steps, [candidate["modelId"] for candidate in candidate_results if candidate["selectionEligible"]]
-    best_rank = min(candidate["selectionComplexityRank"] for candidate in remaining)
-    remaining = [candidate for candidate in remaining if candidate["selectionComplexityRank"] == best_rank]
-    steps.append(f"selection_complexity_rank: retained {','.join(candidate['modelId'] for candidate in remaining)}")
-    tie_stage = "selection_complexity_rank"
-    if len(remaining) > 1:
-        remaining.sort(key=lambda candidate: candidate["modelId"])
-        steps.append(f"model_id: retained {remaining[0]['modelId']}")
-        tie_stage = "model_id"
-    return remaining[0]["modelId"], tie_stage, steps, [candidate["modelId"] for candidate in candidate_results if candidate["selectionEligible"]]
+    return aggregate_candidate(records, actuals)
 
 
 def _schema_validate(value: dict[str, Any], schema_name: str) -> None:
@@ -308,7 +246,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
 
     for model_id in CANDIDATE_IDS:
         _update_job(job_path, job, progress=f"evaluating_{model_id}")
-        if _canonical_sha([{key: value for key, value in item.items() if key not in {"trainStartIndex", "trainEndExclusive", "embargoIndex", "validationIndex"}} for item in plan]) != frozen_plan_hash:
+        if fold_plan_sha256(plan) != frozen_plan_hash:
             raise ValueError("The common fold plan changed before candidate execution.")
         preflight = eligibility[model_id]
         if not preflight["eligible"]:
@@ -348,7 +286,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             except Exception as exc:
                 reason = str(exc) if str(exc) in {"seasonal_source_missing", "convergence_failure", "nonfinite_prediction", "prohibited_negative_prediction"} else "candidate_execution_failed"
                 predictions[model_id].append(_failed(model_id, reason, time.perf_counter() - started, warning_codes))
-        if _canonical_sha([{key: value for key, value in item.items() if key not in {"trainStartIndex", "trainEndExclusive", "embargoIndex", "validationIndex"}} for item in plan]) != frozen_plan_hash:
+        if fold_plan_sha256(plan) != frozen_plan_hash:
             raise ValueError("Candidate execution changed the common fold plan.")
 
     _update_job(job_path, job, progress="aggregating_metrics")
@@ -368,7 +306,10 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "reasonCodes": preflight["reasonCodes"] if not preflight["eligible"] else sorted({record["failureReasonCode"] for record in records if record["failureReasonCode"]}) or ["candidate_completed_all_folds"],
             "reasons": preflight["reasons"] if not preflight["eligible"] else (["Candidate completed every fold in the immutable common plan."] if failed == 0 else ["Candidate did not complete every fold and is not selection eligible."]),
             "successfulFolds": successful, "failedFolds": failed,
-            "selectionEligible": bool(preflight["eligible"] and successful == 68 and failed == 0 and metrics is not None),
+            "selectionEligible": selection_eligible(
+                policy_eligible=bool(preflight["eligible"]), successful_folds=successful,
+                failed_folds=failed, metrics=metrics,
+            ),
             "selectionComplexityRank": candidate["selection_complexity_rank"], "metrics": metrics,
             "executionMode": "fitted_per_fold" if model_id in LEARNED_IDS else "deterministic_baseline_per_fold",
             "historicalPredictionsReused": False,

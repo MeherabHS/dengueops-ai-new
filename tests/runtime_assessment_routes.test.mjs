@@ -15,9 +15,23 @@ test("assessment start accepts identities only and queues without executing Pyth
 
 test("assessment result is compact, hash-verified, and no-store", async () => {
   const source = await read("app/api/runtime/assessments/[assessmentId]/route.ts");
-  assert.match(source, /artifactHashes/);
+  assert.match(source, /readVerifiedAssessment/);
+  assert.match(source, /assessmentSummarySha256/);
   assert.match(source, /Cache-Control.*no-store/s);
   assert.doesNotMatch(source, /rolling_validation\.json|uploaded rows|stdout\.log/);
+});
+
+test("assessment result adds governed order and redacted workflow state", async () => {
+  const source = await read("app/api/runtime/assessments/[assessmentId]/route.ts");
+  assert.match(source, /deriveAssessmentDisplayOrder/);
+  assert.match(source, /displayRank/);
+  assert.match(source, /technicalWinnerDeployable/);
+  assert.match(source, /currentApprovedModel/);
+  assert.match(source, /readVerifiedAssessmentDecisionState/);
+  assert.match(source, /authorizationStatus/);
+  assert.match(source, /committedRunId/);
+  assert.match(source, /assessmentPolicy/);
+  assert.doesNotMatch(source, /operatorIdentifier|internalDecisionSecret|reason:/);
 });
 
 test("frontend assessment completion never refreshes Overview", async () => {

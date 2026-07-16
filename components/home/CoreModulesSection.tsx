@@ -52,7 +52,7 @@ const MODULES = [
     icon: <Zap className="h-6 w-6" />,
     title: "Operational Directives",
     tag: "analytics/operational_engine.py",
-    desc: "Translates risk and readiness outputs into recommendations: reorder NS1/RDT kits, reorder IV fluids, activate additional beds, prepare referral protocol, prioritise vector-control response.",
+    desc: "Translates forecast-growth and readiness outputs into simulated planning suggestions: reorder NS1/RDT kits, reorder IV fluids, activate additional beds, prepare referral protocol, prioritise vector-control response. These prototype outputs have no institutional approval.",
     accent: "border-emerald-200 bg-emerald-50/60",
     iconColor: "text-emerald-600 bg-emerald-100",
   },

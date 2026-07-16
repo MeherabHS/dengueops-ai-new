@@ -27,9 +27,19 @@ class DeploymentProfileTest(unittest.TestCase):
             validate_deployment_profile(value)
 
     def test_dhaka_south_profile_passes(self):
+        self.assertEqual(self.profile["profile_schema_version"], "1.1")
         self.assertEqual(self.profile["deployment_gate"], "benchmark_only")
         self.assertEqual(self.profile["observed_data_mode"], "synthetic")
         self.assertEqual(self.profile["evidence_ids"], [])
+        debt = self.profile["deprecated_compatibility_fields"]
+        self.assertEqual(debt["status"], "resolved")
+        self.assertFalse(debt["legacy_fields_emitted"])
+        self.assertFalse(debt["historical_artifacts_rewritten"])
+        self.assertEqual(debt["compatibility_alias_emission"], "prohibited")
+
+    def test_resolved_profile_cannot_reopen_alias_emission(self):
+        self.assert_invalid(lambda p: p["deprecated_compatibility_fields"].__setitem__("legacy_fields_emitted", True))
+        self.assert_invalid(lambda p: p["deprecated_compatibility_fields"].__setitem__("compatibility_alias_emission", "allowed"))
 
     def test_unknown_profile_and_path_traversal_fail(self):
         with self.assertRaisesRegex(DeploymentProfileError, "Unknown"):

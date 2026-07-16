@@ -78,7 +78,7 @@ export default function FacilityReadinessTable({ directives }: Props) {
           {sorted.map((d, i) => {
             const ns1Exp = d.sdh_ns1_expected ?? 0;
             const ivfExp = d.sdh_iv_fluid_expected ?? 0;
-            const keyRec = d.recommendations[0] ?? "—";
+            const keyRec = d.planning_suggestions[0]?.label ?? "—";
             const genCap = d.general_bed_capacity;
 
             return (

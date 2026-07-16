@@ -46,8 +46,8 @@ DengueOps AI is a simulation-based public health decision-support prototype. It 
 | Output | Method | Used For |
 |--------|--------|---------|
 | 14-day dengue forecast | GradientBoostingRegressor | Baseline for all downstream metrics |
-| Growth factor | Forecast / 4-week rolling avg | Risk level classification |
-| Risk score (0–100) | Piecewise linear scale | Zone and city-level alert |
+| Growth factor | Forecast / 4-week rolling avg | Experimental forecast-growth category |
+| Experimental growth score (0–100) | Provisional piecewise linear scale; not a probability or validated risk score | Benchmark planning input |
 | Uncertainty band | RMSE-derived best/expected/worst | Planning range |
 | SDH — NS1/RDT | Stock / dynamic demand | Supply alert threshold |
 | SDH — IV fluids | Stock / dynamic demand | Supply alert threshold |
@@ -226,7 +226,7 @@ Dhaka lag is currently claimed.
 | `uncertainty_scenarios` | Best, expected, worst case objects |
 | `uncertainty_method` | RMSE source, uncertainty %, prototype note |
 
-### Risk Level Classification
+### Forecast Growth Category (Experimental)
 
 | Growth Factor | Experimental Growth Score | Provisional Forecast-Growth Category |
 |--------------|-----------------|------------|
@@ -284,7 +284,7 @@ Where `RMSE = 67.8 cases` (from chronological validation).
 
 ### Current Output (Example)
 
-| Scenario | Forecast Cases | Growth Factor | Risk Level |
+| Scenario | Forecast Cases | Growth Factor | Forecast Growth Category |
 |----------|---------------|---------------|------------|
 | Lower sensitivity scenario | 166 | 1.063 | Low forecast growth |
 | Expected Case | 234 | 1.498 | Moderate |
@@ -418,7 +418,7 @@ Capped at 100.
 
 Each zone carries a `vulnerability_weight` from `zones.json`. Zones with higher density, informality, or facility pressure are weighted more.
 
-**Design note:** The vulnerability weight is *gated* — it amplifies risk score but does not create priority from zero. A zone with low forecast risk will not dominate response priorities simply because of its vulnerability profile.
+**Design note:** The vulnerability weight is *gated* — it amplifies the experimental growth score but does not create priority from zero. A zone with low forecast growth will not dominate response priorities simply because of its vulnerability profile.
 
 ---
 
@@ -501,7 +501,7 @@ Hero → Problem → Solution Workflow → Core Modules → Comparison → Data 
 | Top Header | Branding, conference, pipeline info |
 | Banners | Data mode, ethics, assumption notices |
 | Forecast Scenario Selector | Best / Expected / Worst — drives metric cards |
-| 8 Metric Cards | Cases, growth factor, risk level, supply alerts, zone, facility |
+| 8 Metric Cards | Cases, growth factor, experimental forecast-growth category, supply alerts, zone, facility |
 | Forecast Uncertainty | 3 scenario cards + uncertainty band chart |
 | Surge Simulation | 5-scenario selector, explanation card, zone priority heatmap, before/after chart, zone impact table |
 | Operational Workflow | Pipeline step summary |

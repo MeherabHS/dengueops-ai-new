@@ -58,7 +58,7 @@ export default function AboutPage() {
         </p>
         <p className="text-xs text-sky-300 leading-relaxed">
           They are included for technical validation and evaluator transparency.
-          Operational users receive translated action recommendations — zone priorities,
+          Operational users receive simulated planning suggestions — zone priorities,
           supply depletion timelines, bed pressure signals, and plain-language directives.
           The dashboard uses role-based tabs to serve each audience with only the information
           relevant to their decision-making context.
@@ -66,7 +66,7 @@ export default function AboutPage() {
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
         {[
-          { role: "Operational Command", audience: "Public health officials, DSCC vector-control teams, emergency planners", sees: "Zone priorities, risk levels, directives, scenario projections" },
+          { role: "Operational Command", audience: "Public health officials, DSCC vector-control teams, emergency planners", sees: "Planning priorities, experimental forecast-growth categories, directives, scenario projections" },
           { role: "Facility Readiness", audience: "Hospital administrators, diagnostic centre managers", sees: "NS1/RDT SDH, IV fluid SDH, bed load, bed gap, supply alerts" },
           { role: "Public Advisory", audience: "Future citizen-facing layer (preview)", sees: "Simplified risk status, prevention guidance, when to seek care" },
           { role: "Technical Validation", audience: "IEEE judges, researchers, MSc evaluators", sees: "MAE, RMSE, MAPE, backtest results, feature importance, uncertainty methodology" },

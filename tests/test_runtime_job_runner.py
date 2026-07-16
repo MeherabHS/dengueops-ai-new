@@ -8,7 +8,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "analytics"))
 from runtime_worker import claim_one, ensure_structure, run_once
+from runtime_quick_forecast import execute as execute_forecast
+from tests.test_runtime_forecast_outcome import build_outcome_job
 from tests.test_runtime_quick_forecast import build_ready_runtime
+from types import SimpleNamespace
 
 
 class RuntimeJobRunnerTests(unittest.TestCase):
@@ -41,6 +44,19 @@ class RuntimeJobRunnerTests(unittest.TestCase):
             value = json.loads(completed.read_text())
             self.assertEqual(value["status"], "completed")
             self.assertEqual(value["committedRunId"], job["runId"])
+
+    def test_worker_executes_outcome_without_validation_workspace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, workspace, forecast_path, forecast_job = build_ready_runtime(Path(directory))
+            execute_forecast(SimpleNamespace(runtime_root=str(root), job_record=str(forecast_path), workspace=str(workspace), staging=str(root / "staging" / forecast_job["runId"])))
+            outcome_job, running = build_outcome_job(root, forecast_job, record_id="worker-observation")
+            outcome_job.update(status="queued", progress="queued", claimedAt=None, startedAt=None, heartbeatAt=None, workerId=None)
+            pending=root/"jobs/pending"/running.name;pending.write_text(json.dumps(outcome_job));running.unlink()
+            self.assertTrue(run_once(root,"outcome-worker"))
+            completed=root/"jobs/completed"/pending.name
+            self.assertTrue(completed.exists(),(root/"jobs/failed"/pending.name).read_text() if (root/"jobs/failed"/pending.name).exists() else "missing")
+            value=json.loads(completed.read_text());self.assertEqual(value["committedOutcomeId"],outcome_job["outcomeId"])
+            self.assertTrue((root/"deployments/dhaka_south/monitoring/latest.json").exists())
 
 
 if __name__ == "__main__":

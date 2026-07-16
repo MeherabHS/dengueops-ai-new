@@ -73,7 +73,22 @@ export function runtimeCollectionPaths(runtimeRoot: string) {
     authorizationState: assertContained(root, path.join(root, "authorization-state")),
     deployments: assertContained(root, path.join(root, "deployments")),
     locks: assertContained(root, path.join(root, "locks")),
+    outcomeStaging: assertContained(root, path.join(root, "outcome-staging")),
+    forecastOutcomes: assertContained(root, path.join(root, "forecast-outcomes")),
   };
+}
+
+export function forecastOutcomePaths(runtimeRoot: string, outcomeId: string) {
+  const collections = runtimeCollectionPaths(runtimeRoot);
+  const staging = uuidPath(collections.outcomeStaging, outcomeId, "outcome");
+  const committed = uuidPath(collections.forecastOutcomes, outcomeId, "outcome");
+  return { staging, committed, observation: assertContained(committed, path.join(committed, "artifacts", "observation.json")), evaluation: assertContained(committed, path.join(committed, "artifacts", "outcome_evaluation.json")), summary: assertContained(committed, path.join(committed, "artifacts", "monitoring_summary.json")), commit: assertContained(committed, path.join(committed, "metadata", "commit.json")) };
+}
+
+export function monitoringPaths(runtimeRoot: string, deploymentId: string) {
+  const deployment = deploymentRuntimePaths(runtimeRoot, deploymentId);
+  const root = assertContained(deployment.root, path.join(deployment.root, "monitoring"));
+  return { root, latest: assertContained(root, path.join(root, "latest.json")), commitLock: assertContained(root, path.join(root, "locks", "commit.lock")) };
 }
 
 function uuidPath(root: string, value: string, label: string): string {

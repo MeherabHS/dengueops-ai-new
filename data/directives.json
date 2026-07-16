@@ -1,8 +1,8 @@
 {
   "provenance": {
-    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "run_id": "01fa6a19-6e56-40ae-a53a-b750ff16513c",
     "manifest_path": "data/input_manifest.json",
-    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "manifest_sha256": "ad0de553e9752af9c5aa71881d7e5053bc4beddec405864829e5f8435da2c77f",
     "case_source": "synthetic_benchmark",
     "climate_source": "synthetic_benchmark",
     "operational_source": "synthetic_benchmark",
@@ -26,8 +26,8 @@
     "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
     "deployment_profile_data_mode": "synthetic_capability_demonstration",
     "deployment_profile_id": "dhaka_south",
-    "deployment_profile_schema_version": "1.0",
-    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_schema_version": "1.1",
+    "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
     "deployment_profile_status": "active",
     "evidence_registry_schema_version": "1.0",
     "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
@@ -41,7 +41,7 @@
     "uncertainty_method_version": "p1.3-v1",
     "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
   },
-  "generated_at": "2026-07-13T09:09:26",
+  "generated_at": "2026-07-16T17:27:25",
   "forecast_id": 1,
   "target_epi_year": 2024,
   "target_epi_week": 26,
@@ -62,8 +62,6 @@
       "label": "Lower sensitivity scenario",
       "forecast_cases": 87,
       "growth_factor": 1.246,
-      "risk_score": 44,
-      "risk_level": "Moderate",
       "experimental_growth_score": 44,
       "forecast_growth_category": "Moderate forecast growth"
     },
@@ -71,8 +69,6 @@
       "label": "Point forecast",
       "forecast_cases": 120,
       "growth_factor": 1.719,
-      "risk_score": 71,
-      "risk_level": "High",
       "experimental_growth_score": 71,
       "forecast_growth_category": "High forecast growth"
     },
@@ -80,8 +76,6 @@
       "label": "Upper sensitivity scenario",
       "forecast_cases": 153,
       "growth_factor": 2.192,
-      "risk_score": 87,
-      "risk_level": "Critical",
       "experimental_growth_score": 87,
       "forecast_growth_category": "Very high forecast growth"
     }
@@ -139,11 +133,6 @@
       "sdh_iv_fluid_expected": 8.7,
       "sdh_iv_fluid_worst": 6.8,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -176,7 +165,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -224,11 +213,6 @@
       "sdh_iv_fluid_expected": 9.3,
       "sdh_iv_fluid_worst": 7.3,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -261,7 +245,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -309,11 +293,6 @@
       "sdh_iv_fluid_expected": 9.9,
       "sdh_iv_fluid_worst": 7.8,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -346,7 +325,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -394,11 +373,6 @@
       "sdh_iv_fluid_expected": 10.5,
       "sdh_iv_fluid_worst": 8.2,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -431,7 +405,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -479,11 +453,6 @@
       "sdh_iv_fluid_expected": 11.1,
       "sdh_iv_fluid_worst": 8.7,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -516,7 +485,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -564,11 +533,6 @@
       "sdh_iv_fluid_expected": 11.6,
       "sdh_iv_fluid_worst": 9.1,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -601,7 +565,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -649,11 +613,6 @@
       "sdh_iv_fluid_expected": 12.2,
       "sdh_iv_fluid_worst": 9.6,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -686,7 +645,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -734,11 +693,6 @@
       "sdh_iv_fluid_expected": 12.8,
       "sdh_iv_fluid_worst": 10.0,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -771,7 +725,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -819,11 +773,6 @@
       "sdh_iv_fluid_expected": 13.4,
       "sdh_iv_fluid_worst": 10.5,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -856,7 +805,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     },
     {
       "forecast_id": 1,
@@ -904,11 +853,6 @@
       "sdh_iv_fluid_expected": 14.0,
       "sdh_iv_fluid_worst": 10.9,
       "inventory_alerts": [],
-      "recommendations": [
-        "Prioritize vector-control response in this zone.",
-        "Prepare triage desk and surge OPD workflow.",
-        "Prepare contingency plan under worst-case forecast."
-      ],
       "planning_suggestions": [
         {
           "label": "Prioritize vector-control response in this zone.",
@@ -941,7 +885,7 @@
           "disclaimer": "Prototype trigger condition only; not an operational recommendation."
         }
       ],
-      "generation_timestamp": "2026-07-13T09:09:26"
+      "generation_timestamp": "2026-07-16T17:27:25"
     }
   ],
   "summary": {
@@ -953,7 +897,7 @@
     "critical_supply_alerts": 0,
     "highest_priority_zone": "Benchmark Zone 5",
     "highest_pressure_facility": "Synthetic Benchmark Facility 01",
-    "total_recommendations": 30
+    "total_planning_suggestions": 30
   },
   "notes": [
     "Facility and inventory data are synthetic/demo for prototype demonstration.",

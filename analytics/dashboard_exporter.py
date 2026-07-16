@@ -168,11 +168,8 @@ def build_dashboard_summary(
         "headline_metrics": {
             "forecast_cases":                int(forecast.get("forecast_cases", 0)),
             "growth_factor":                 float(forecast.get("growth_factor", 1.0)),
-            # TD-P03A-LEGACY-RISK-FIELDS: compatibility only; canonical fields follow.
-            "risk_level":                    forecast.get("risk_level", ""),
-            "risk_score":                    int(forecast.get("risk_score", 0)),
-            "experimental_growth_score":      int(forecast.get("experimental_growth_score", forecast.get("risk_score", 0))),
-            "forecast_growth_category":       forecast.get("forecast_growth_category", ""),
+            "experimental_growth_score":      int(forecast["experimental_growth_score"]),
+            "forecast_growth_category":       forecast["forecast_growth_category"],
             "target_epi_week":               forecast.get("target_epi_week"),
             "target_epi_year":               forecast.get("target_epi_year"),
             "highest_priority_zone":         s.get("highest_priority_zone", ""),
@@ -236,7 +233,7 @@ def build_dashboard_summary(
             "disclaimer": validation_disclaimer,
         },
         "operational_summary": {
-            "total_recommendations":          int(s.get("total_recommendations", 0)),
+            "total_planning_suggestions":     int(s.get("total_planning_suggestions", 0)),
             "critical_priority_zones":        int(s.get("critical_priority_zones", 0)),
             "facilities_with_expected_bed_gap": int(s.get("facilities_with_expected_bed_gap", 0)),
             "facilities_with_worst_case_bed_gap": int(s.get("facilities_with_worst_case_bed_gap", 0)),
@@ -487,8 +484,8 @@ def build_chart_data(
             "scenario":       v.get("label", k),
             "forecast_cases": int(v.get("forecast_cases", 0)),
             "growth_factor":  round(float(v.get("growth_factor", 1)), 3),
-            "risk_score":     int(v.get("risk_score", 0)),
-            "risk_level":     v.get("risk_level", ""),
+            "experimental_growth_score": int(v["experimental_growth_score"]),
+            "forecast_growth_category": v["forecast_growth_category"],
         }
         for k, v in scenarios.items()
     ]
@@ -506,7 +503,7 @@ def build_chart_data(
                     float(d.get("zone_allocated_cases_expected",
                                 d.get("allocated_cases_expected", 0))), 1
                 ),
-                "risk_category":   d["priority_category"],
+                "planning_priority_tier": d["planning_priority_tier"],
             }
     zone_priority = sorted(
         seen_zones.values(),
@@ -812,7 +809,8 @@ def main() -> None:
     print()
     print(f"  {'-'*62}")
     print(f"  Dashboard Export Complete")
-    print(f"    Forecast    : {hm['forecast_cases']} cases | {hm['risk_level']} (score {hm['risk_score']})")
+    print(f"    Forecast    : {hm['forecast_cases']} cases | {hm['forecast_growth_category']} "
+          f"(experimental score {hm['experimental_growth_score']})")
     print(f"    Planning L/B/H: {sc.get('best_case',{}).get('forecast_cases','?')} / "
           f"{sc.get('expected_case',{}).get('forecast_cases','?')} / "
           f"{sc.get('worst_case',{}).get('forecast_cases','?')} (planning sensitivity)")

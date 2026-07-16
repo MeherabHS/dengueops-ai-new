@@ -227,6 +227,40 @@ def _load_json_safe(path: Path) -> dict | None:
         return None
 
 
+PROHIBITED_NEW_BUNDLE_KEYS = frozenset({"risk_level", "risk_score", "recommendations"})
+
+
+def _assert_canonical_bundle_value(value: Any, label: str) -> None:
+    """Reject legacy aliases recursively in newly generated bundled artifacts."""
+    if isinstance(value, dict):
+        prohibited = PROHIBITED_NEW_BUNDLE_KEYS.intersection(value)
+        if prohibited:
+            raise ValueError(f"{label} contains prohibited legacy fields: {sorted(prohibited)}.")
+        for child in value.values():
+            _assert_canonical_bundle_value(child, label)
+    elif isinstance(value, list):
+        for child in value:
+            _assert_canonical_bundle_value(child, label)
+
+
+def _validate_canonical_generated_bundle(values: dict[str, Any]) -> None:
+    for label, value in values.items():
+        if value is None:
+            raise ValueError(f"New generated bundle is missing {label}.")
+        _assert_canonical_bundle_value(value, label)
+    forecast = values.get("forecast_output.json", {})
+    for key in ("forecast_growth_category", "experimental_growth_score"):
+        if key not in forecast:
+            raise ValueError(f"forecast_output.json is missing canonical field {key}.")
+    for scenario_group in ("preparedness_scenarios", "uncertainty_scenarios"):
+        for scenario in forecast.get(scenario_group, {}).values():
+            if not {"forecast_growth_category", "experimental_growth_score"}.issubset(scenario):
+                raise ValueError(f"forecast_output.json {scenario_group} lacks canonical fields.")
+    directives = values.get("directives.json", {})
+    if any("planning_suggestions" not in item for item in directives.get("directives", [])):
+        raise ValueError("directives.json contains a directive without planning_suggestions.")
+
+
 def _validate_file(path: Path, json_keys: list[str] | None = None) -> str | None:
     """
     Check a single output file. Returns an error string or None if valid.
@@ -795,10 +829,8 @@ def _save_run_summary(
         forecast_summary = {
             "forecast_cases":  forecast.get("forecast_cases"),
             "growth_factor":   forecast.get("growth_factor"),
-            "risk_level":      forecast.get("risk_level"),
-            "risk_score":      forecast.get("risk_score"),
-            "experimental_growth_score": forecast.get("experimental_growth_score"),
-            "forecast_growth_category": forecast.get("forecast_growth_category"),
+            "experimental_growth_score": forecast["experimental_growth_score"],
+            "forecast_growth_category": forecast["forecast_growth_category"],
             "target_epi_week": forecast.get("target_epi_week"),
             "target_epi_year": forecast.get("target_epi_year"),
             "best_case":       sc.get("best_case",     {}).get("forecast_cases"),
@@ -893,6 +925,15 @@ def _save_run_summary(
             "stability_status": model_card["importance_stability_status"],
             "feature_count": len(explainability.get("feature_names", [])) if explainability else 0,
         }
+
+    if status == "success":
+        _validate_canonical_generated_bundle({
+            "forecast_output.json": forecast,
+            "directives.json": directives,
+            "dashboard_summary.json": _load_json_safe(DATA_DIR / "dashboard_summary.json"),
+            "chart_data.json": _load_json_safe(DATA_DIR / "chart_data.json"),
+            "pipeline_run_summary.json": summary,
+        })
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with open(RUN_SUMMARY_PATH, "w", encoding="utf-8") as f:

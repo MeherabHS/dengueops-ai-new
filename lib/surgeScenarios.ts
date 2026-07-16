@@ -30,12 +30,12 @@ export interface SurgeScenarioMeta {
 
 export interface ZoneSurgeData {
   zone_name: string;
-  baseline_priority: number;
+  baselinePlanningPriority: number;
   baseline_cases: number;
-  baseline_risk: string;
-  adjusted_priority: number;
+  baselinePlanningPriorityTier: string;
+  adjustedPlanningPriority: number;
   adjusted_cases: number;
-  adjusted_risk: string;
+  planningPriorityTier: string;
   modifier: number;
 }
 
@@ -170,7 +170,7 @@ const SCENARIO_CONFIG: Record<SurgeKey, ScenarioConfig> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Derive priority category from score (0–100). */
-function deriveRisk(score: number): string {
+function derivePlanningPriorityTier(score: number): string {
   if (score > Number(priorityPolicy.high_max ?? 75)) return "Highest simulated planning tier";
   if (score > Number(priorityPolicy.moderate_max ?? 50)) return "High simulated planning tier";
   if (score > Number(priorityPolicy.routine_max ?? 25)) return "Moderate simulated planning tier";
@@ -183,7 +183,7 @@ export interface BaseZone {
   zone_name: string;
   priority_score: number;
   allocated_cases: number;
-  risk_category: string;
+  planning_priority_tier: string;
 }
 
 export const BASE_ZONES: BaseZone[] = (cd?.zone_priority ?? []).map(
@@ -191,7 +191,7 @@ export const BASE_ZONES: BaseZone[] = (cd?.zone_priority ?? []).map(
     zone_name:      z.zone_name,
     priority_score: Number(z.priority_score),
     allocated_cases: Number(z.allocated_cases),
-    risk_category:  z.risk_category,
+    planning_priority_tier: z.planning_priority_tier,
   })
 );
 
@@ -211,12 +211,12 @@ export function applySurge(surgeKey: SurgeKey): ZoneSurgeData[] {
 
     return {
       zone_name:         z.zone_name,
-      baseline_priority: z.priority_score,
+      baselinePlanningPriority: z.priority_score,
       baseline_cases:    z.allocated_cases,
-      baseline_risk:     z.risk_category,
-      adjusted_priority: adjPriority,
+      baselinePlanningPriorityTier: z.planning_priority_tier,
+      adjustedPlanningPriority: adjPriority,
       adjusted_cases:    adjCases,
-      adjusted_risk:     deriveRisk(adjPriority),
+      planningPriorityTier: derivePlanningPriorityTier(adjPriority),
       modifier:          zoneMod,
     };
   });
@@ -226,9 +226,9 @@ export function applySurge(surgeKey: SurgeKey): ZoneSurgeData[] {
     console.table(
       result.map((r) => ({
         zone_name:              r.zone_name,
-        base_priority_score:    r.baseline_priority,
-        scenario_priority_score: r.adjusted_priority,
-        category:               r.adjusted_risk,
+        base_priority_score:    r.baselinePlanningPriority,
+        scenario_priority_score: r.adjustedPlanningPriority,
+        category:               r.planningPriorityTier,
       }))
     );
   }

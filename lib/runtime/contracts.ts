@@ -1,4 +1,4 @@
-export type WorkflowMode = "quick_forecast" | "assess_dataset";
+export type WorkflowMode = "quick_forecast" | "assess_dataset" | "forecast_outcome_monitoring";
 
 export type ValidationIssueCategory =
   | "file"
@@ -202,7 +202,27 @@ export interface ApprovedForecastJobRecord extends RuntimeJobBase {
   committedRunId: string | null;
 }
 
-export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord;
+export interface ForecastObservationRequest {
+  forecastRunId: string; expectedForecastCommitSha256: string; deploymentId: "dhaka_south";
+  geography: { level: "city"; id: "BGD-DHAKA-SOUTH"; name: "Dhaka South" };
+  targetColumn: "target_cases_next_2w"; forecastHorizonWeeks: 2; forecastTargetPeriod: string;
+  observedRaw: number; observationSourceType: "synthetic_benchmark";
+  observationSourceId: "dhaka_south_synthetic_benchmark"; observationRecordId: string;
+  observationRecordedAt: string; limitationsAcknowledged: true;
+}
+
+export interface ForecastOutcomeJobRecord {
+  schemaVersion:"1.0"; jobKind:"forecast_outcome"; jobId:string; outcomeId:string; forecastRunId:string;
+  expectedForecastCommitSha256:string; observationPayloadSha256:string;
+  observation:Omit<ForecastObservationRequest,"forecastRunId"|"expectedForecastCommitSha256">;
+  operatorIdentifier:string; deploymentId:"dhaka_south"; workflowMode:"forecast_outcome_monitoring";
+  policyId:"RUNTIME.FORECAST_OUTCOME.MONITORING"; policyVersion:"p1.4g-v1"; policySha256:string;
+  status:RuntimeJobStatus; progress:string; createdAt:string; claimedAt:string|null; startedAt:string|null; updatedAt:string;
+  completedAt:string|null; heartbeatAt:string|null; workerId:string|null; processId:number|null; timeoutSeconds:number;
+  retryCount:number; error:{code:string;message:string;retryable:boolean}|null; committedOutcomeId:string|null;
+}
+
+export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord | ForecastOutcomeJobRecord;
 
 export type StartQuickForecastResponse =
   | { ok: true; jobId: string; runId: string; status: "queued"; statusUrl: string }
@@ -216,6 +236,7 @@ export type JobStatusResponse =
   | ({ ok: true; jobKind: "quick_forecast"; jobId: string; runId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null })
   | ({ ok: true; jobKind: "dataset_assessment"; jobId: string; assessmentId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedAssessmentId: string | null })
   | ({ ok: true; jobKind: "approved_forecast"; jobId: string; runId: string; decisionId: string; assessmentId: string; authorizationId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null })
+  | ({ ok:true; jobKind:"forecast_outcome"; jobId:string; outcomeId:string; workflowMode:"forecast_outcome_monitoring"; status:RuntimeJobStatus; progress:string; createdAt:string; startedAt:string|null; updatedAt:string; completedAt:string|null; retryable:boolean; error:RuntimeJobRecord["error"]; committedOutcomeId:string|null })
   | RuntimeErrorResponse;
 
 export type RuntimeCandidateId =
@@ -240,6 +261,42 @@ export interface AssessmentCandidateSummary {
   executionMode: "fitted_per_fold" | "deterministic_baseline_per_fold";
   historicalPredictionsReused: false;
   foldWinsTiesLosses: null | { better: number; tied: number; worse: number };
+}
+
+export interface AssessmentCandidateProjection extends AssessmentCandidateSummary {
+  displayRank: number | null;
+  modelFamily: string;
+  technicalWinner: boolean;
+  currentApprovedModel: boolean;
+  deployableForOneRun: boolean;
+}
+
+export interface AssessmentDecisionWorkflowProjection {
+  decisionId: string;
+  outcome: DecisionChoice;
+  decisionStatus: string;
+  selectedModelId: RuntimeCandidateId | null;
+  forecastAuthorized: boolean;
+  authorizationId: string | null;
+  authorizationStatus: "not_authorized" | "authorization_incomplete" | "available" | "reserved" | "consumed";
+  forecastStatus: "not_authorized" | "authorized" | "reserved" | "committed";
+  committedRunId: string | null;
+  decisionCommitSha256: string;
+  createdAt: string;
+}
+
+export interface AssessmentWorkflowProjection {
+  assessmentId: string;
+  assessmentPolicy: { policyId: string; policyVersion: string; policySha256: string };
+  target: "target_cases_next_2w";
+  horizonWeeks: 2;
+  currentApprovedModelId: "random_forest";
+  currentApprovedModelFamily: string;
+  candidates: AssessmentCandidateProjection[];
+  technicalWinnerModelId: RuntimeCandidateId | null;
+  technicalWinnerDeployable: boolean;
+  recommendationStatus: "evidence_only" | "no_recommendation";
+  decision: AssessmentDecisionWorkflowProjection | null;
 }
 
 export interface DatasetAssessmentResultSuccess {
@@ -273,6 +330,7 @@ export interface DatasetAssessmentResultSuccess {
   evidenceHashes: { rollingValidationSha256: string; candidateComparisonSha256: string; recommendationSha256: string };
   provenance: { validationRecordSha256: string; assessmentPolicySha256: string; candidateRegistrySha256: string; featureOrderSha256: string };
   integrity: { assessmentSummarySha256: string; assessmentCommitSha256: string };
+  workflow: AssessmentWorkflowProjection;
 }
 
 export type DatasetAssessmentResponse = DatasetAssessmentResultSuccess | RuntimeErrorResponse;

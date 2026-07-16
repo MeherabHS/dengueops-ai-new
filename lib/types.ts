@@ -1,6 +1,6 @@
 // ─── Forecast & Uncertainty ────────────────────────────────────────────────
 
-export type RiskLevel = "Low" | "Moderate" | "High" | "Critical";
+export type ForecastGrowthCategory = "Low forecast growth" | "Moderate forecast growth" | "High forecast growth" | "Very high forecast growth";
 export type DeploymentGate = "benchmark_only" | "research_candidate" | "locally_backtested" | "expert_reviewed" | "institution_approved" | "shadow_validated" | "operational_advisory";
 export type DeploymentProfileDataMode = "synthetic_capability_demonstration" | "research_candidate" | "locally_calibrated_deployment" | "institution_approved_deployment";
 export type ObservedDataMode = "synthetic" | "real" | "mixed";
@@ -10,15 +10,6 @@ export interface MaturityStatements {
   demonstration: string;
   prohibited_claim: string;
   notification: string;
-}
-
-export interface DeprecatedCompatibilityFields {
-  debt_id: "TD-P03A-LEGACY-RISK-FIELDS";
-  status: "open";
-  legacy_fields: ["risk_level", "risk_score", "recommendations"];
-  canonical_fields: ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"];
-  runtime_behavior: "preserved_for_backward_compatibility";
-  deprecated: true;
 }
 
 export interface FormulaGovernance {
@@ -86,11 +77,8 @@ export interface DeploymentProfileMetadata {
 export interface UncertaintyScenario {
   forecast_cases: number;
   growth_factor: number;
-  // TD-P03A-LEGACY-RISK-FIELDS: compatibility only; canonical fields follow.
-  risk_score: number;
-  risk_level: RiskLevel;
-  experimental_growth_score?: number;
-  forecast_growth_category?: string;
+  experimental_growth_score: number;
+  forecast_growth_category: ForecastGrowthCategory;
 }
 
 export interface ForecastOutput extends FormulaGovernance {
@@ -112,11 +100,8 @@ export interface ForecastOutput extends FormulaGovernance {
   city: string;
   forecast_cases: number;
   growth_factor: number;
-  // TD-P03A-LEGACY-RISK-FIELDS: compatibility only; not authoritative.
-  risk_score: number;
-  risk_level: RiskLevel;
   experimental_growth_score: number;
-  forecast_growth_category: string;
+  forecast_growth_category: ForecastGrowthCategory;
   model_name: string;
   active_model_id: "random_forest";
   current_forecast_model: "random_forest";
@@ -360,11 +345,9 @@ export interface Directive {
   sdh_iv_fluid_best: number | null;
   sdh_iv_fluid_expected: number | null;
   sdh_iv_fluid_worst: number | null;
-  // Alerts and recommendations
+  // Alerts and simulated planning suggestions
   inventory_alerts: InventoryAlert[];
-  // TD-P03A-LEGACY-RISK-FIELDS: compatibility only; use planning_suggestions.
-  recommendations: string[];
-  planning_suggestions?: Array<{
+  planning_suggestions: Array<{
     label: string;
     type: "Simulated planning suggestion";
     formula_ids: string[];
@@ -382,8 +365,8 @@ export interface Directive {
 export interface DashboardSummaryHeadlineMetrics {
   forecast_cases: number;
   growth_factor: number;
-  risk_level: RiskLevel;
-  risk_score: number;
+  forecast_growth_category: ForecastGrowthCategory;
+  experimental_growth_score: number;
   target_epi_week: number;
   target_epi_year: number;
   highest_priority_zone: string;
@@ -399,8 +382,8 @@ export interface DashboardSummaryUncertaintyScenario {
   label: string;
   forecast_cases: number;
   growth_factor: number;
-  risk_score: number;
-  risk_level: RiskLevel;
+  experimental_growth_score: number;
+  forecast_growth_category: ForecastGrowthCategory;
 }
 
 export interface DashboardSummaryUncertaintyMethod {
@@ -523,7 +506,7 @@ export interface CandidateComparisonSummary {
 }
 
 export interface DashboardSummaryOperationalSummary {
-  total_recommendations: number;
+  total_planning_suggestions: number;
   critical_priority_zones: number;
   facilities_with_expected_bed_gap: number;
   facilities_with_worst_case_bed_gap: number;
@@ -588,8 +571,8 @@ export interface PipelineRunSummary {
   forecast_summary: {
     forecast_cases: number;
     growth_factor: number;
-    risk_level: string;
-    risk_score: number;
+    forecast_growth_category: ForecastGrowthCategory;
+    experimental_growth_score: number;
     target_epi_week: number;
     target_epi_year: number;
     best_case: number;
@@ -605,7 +588,7 @@ export interface PipelineRunSummary {
     critical_supply_alerts: number;
     highest_priority_zone: string;
     highest_pressure_facility: string;
-    total_recommendations: number;
+    total_planning_suggestions: number;
   };
   deployment_profile?: DeploymentProfileMetadata;
 }

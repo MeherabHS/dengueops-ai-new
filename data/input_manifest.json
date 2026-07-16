@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
-  "created_at": "2026-07-13T09:08:42Z",
+  "run_id": "01fa6a19-6e56-40ae-a53a-b750ff16513c",
+  "created_at": "2026-07-16T17:26:36Z",
   "inputs": {
     "cases": {
       "selected_source": "synthetic_benchmark",
@@ -274,8 +274,8 @@
   },
   "governance": {
     "deployment_profile_id": "dhaka_south",
-    "deployment_profile_schema_version": "1.0",
-    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_schema_version": "1.1",
+    "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
     "deployment_profile_status": "active",
     "deployment_profile_data_mode": "synthetic_capability_demonstration",
     "observed_data_mode": "synthetic",

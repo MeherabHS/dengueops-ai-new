@@ -9,6 +9,13 @@ sys.path.insert(0, str(ROOT / "analytics"))
 
 from feature_engineering import build_features
 from runtime_assessment import build_common_fold_plan, select_technical_winner
+from runtime_assessment_evidence import (
+    AssessmentEvidenceError,
+    aggregate_candidate,
+    display_order,
+    prediction_evidence,
+    selection_eligible,
+)
 from runtime_assessment_policy import load_and_validate_assessment_policy
 
 
@@ -53,6 +60,43 @@ class RuntimeCandidateComparisonTests(unittest.TestCase):
         self.assertEqual(stage, "selection_complexity_rank")
         self.assertTrue(steps[0].startswith("mae:"))
         self.assertFalse(any("weighted" in step for step in steps))
+
+    def test_metrics_and_zero_denominator_match_governed_definitions(self):
+        records = [
+            prediction_evidence("ridge_regression", 10.0, 8.0, 0.1, []),
+            prediction_evidence("ridge_regression", 20.0, 25.0, 0.2, []),
+        ]
+        metrics = aggregate_candidate(records, [10.0, 20.0])
+        self.assertEqual(metrics["mae"], 3.5)
+        self.assertAlmostEqual(metrics["rmse"], (29.0 / 2.0) ** 0.5)
+        self.assertAlmostEqual(metrics["wape"], 100.0 * 7.0 / 30.0)
+        zero_records = [prediction_evidence("ridge_regression", 0.0, 0.0, 0.1, [])]
+        self.assertIsNone(aggregate_candidate(zero_records, [0.0])["wape"])
+        self.assertFalse(selection_eligible(policy_eligible=True, successful_folds=68, failed_folds=0, metrics={**metrics, "wape": None}))
+
+    def test_nonfinite_prediction_fails_closed(self):
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value), self.assertRaises(AssessmentEvidenceError):
+                prediction_evidence("random_forest", 10.0, value, 0.1, [])
+
+    def test_full_display_order_uses_governed_ties_and_puts_ineligible_last(self):
+        base = {"mae": 5.0, "rmse": 7.0, "wape": 9.0, "medianAbsoluteError": 4.0, "maximumAbsoluteError": 20.0}
+        values = [
+            {"modelId": "random_forest", "selectionEligible": True, "selectionComplexityRank": 6, "metrics": dict(base)},
+            {"modelId": "ridge_regression", "selectionEligible": True, "selectionComplexityRank": 4, "metrics": dict(base)},
+            {"modelId": "poisson_regression", "selectionEligible": False, "selectionComplexityRank": 5, "metrics": dict(base)},
+        ]
+        order = display_order(values, ["ridge_regression", "poisson_regression", "random_forest"])
+        winner, *_ = select_technical_winner(values)
+        self.assertEqual(order, ["ridge_regression", "random_forest", "poisson_regression"])
+        self.assertEqual(order[0], winner)
+
+    def test_fold_plan_is_out_of_sample_with_one_embargo_row(self):
+        plan, _ = build_common_fold_plan(self.frame, self.policy)
+        for fold in plan:
+            self.assertLess(fold["trainEndExclusive"], fold["validationIndex"])
+            self.assertEqual(fold["embargoIndex"], fold["trainEndExclusive"])
+            self.assertEqual(fold["validationIndex"], fold["embargoIndex"] + 1)
 
 
 if __name__ == "__main__":

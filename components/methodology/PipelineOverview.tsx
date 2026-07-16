@@ -35,7 +35,7 @@ const STEPS = [
     color: "border-sky-200 bg-sky-50",
     iconBg: "bg-sky-100 text-sky-700",
     explanation: "The adopted RandomForestRegressor is refitted on all labelled rows for the 14-day demonstration forecast.",
-    output: "data/forecast_output.json — forecast_cases, growth_factor, risk_level, risk_score",
+    output: "data/forecast_output.json — forecast_cases, growth_factor, forecast_growth_category, experimental_growth_score",
   },
   {
     id: "E",
@@ -71,7 +71,7 @@ const STEPS = [
     color: "border-emerald-200 bg-emerald-50",
     iconBg: "bg-emerald-100 text-emerald-700",
     explanation: "Translates risk and readiness outputs into facility-level preparedness directives: reorder supplies, activate beds, prepare referral protocols, prioritise vector-control response.",
-    output: "data/directives.json — 11 facility directives with inventory alerts and recommendations",
+    output: "data/directives.json — 11 facility directives with inventory alerts and simulated planning suggestions",
   },
 ];
 

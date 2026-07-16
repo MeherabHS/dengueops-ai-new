@@ -125,15 +125,21 @@ export async function readVerifiedAssessment(
   const comparison = JSON.parse(
     artifacts["candidate_model_comparison.json"].toString("utf8"),
   );
+  const rolling = JSON.parse(
+    artifacts["rolling_validation.json"].toString("utf8"),
+  );
   const recommendation = JSON.parse(
     artifacts["recommendation.json"].toString("utf8"),
   );
   if (
     summary.evidenceHashes?.candidateComparisonSha256 !==
       sha256(artifacts["candidate_model_comparison.json"]) ||
+    summary.evidenceHashes?.rollingValidationSha256 !==
+      sha256(artifacts["rolling_validation.json"]) ||
     summary.evidenceHashes?.recommendationSha256 !==
       sha256(artifacts["recommendation.json"]) ||
     comparison.foldPlanSha256 !== summary.foldPlanSha256 ||
+    rolling.foldPlanSha256 !== summary.foldPlanSha256 ||
     recommendation.foldPlanSha256 !== summary.foldPlanSha256
   )
     throw new RuntimePublicError(
@@ -175,6 +181,7 @@ export async function readVerifiedAssessment(
     summary,
     summarySha256: summaryHash,
     comparison,
+    rolling,
     recommendation,
   };
 }
@@ -518,6 +525,7 @@ export async function readVerifiedDecision(
       409,
     );
   let authorization: null | Record<string, any> = null,
+    committedRunId: string | null = null,
     authorizationStatus:
       | "not_authorized"
       | "authorization_incomplete"
@@ -539,6 +547,7 @@ export async function readVerifiedDecision(
         decisionCommitSha256: sha256(commitFile.bytes),
         authorization,
         authorizationStatus,
+        committedRunId,
       };
     }
     const [a, c] = pair;
@@ -553,13 +562,27 @@ export async function readVerifiedDecision(
         409,
       );
     authorization = a.value;
-    authorizationStatus = await lstat(p.consumption)
-      .then(() => "consumed" as const)
-      .catch(() =>
-        lstat(p.reservation)
-          .then(() => "reserved" as const)
-          .catch(() => "available" as const),
-      );
+    const consumption = await jsonBytes(p.consumption).catch(() => null);
+    if (consumption) {
+      if (
+        consumption.value.authorizationId !== decision.authorizationId ||
+        consumption.value.decisionId !== decisionId ||
+        consumption.value.eventType !== "consumed" ||
+        typeof consumption.value.runId !== "string"
+      )
+        throw new RuntimePublicError(
+          "authorization_integrity_error",
+          "storage",
+          "The forecast authorization consumption record failed integrity verification.",
+          409,
+        );
+      authorizationStatus = "consumed";
+      committedRunId = consumption.value.runId;
+    } else {
+      authorizationStatus = await lstat(p.reservation)
+        .then(() => "reserved" as const)
+        .catch(() => "available" as const);
+    }
     if (authorizationStatus === "reserved") {
       const runs = runtimeCollectionPaths(config.runtimeRoot).runs;
       for (const entry of await readdir(runs, { withFileTypes: true }).catch(
@@ -577,9 +600,34 @@ export async function readVerifiedDecision(
           commitRun?.value.status === "committed"
         ) {
           authorizationStatus = "consumed";
+          committedRunId = entry.name;
           break;
         }
       }
+    }
+    if (committedRunId) {
+      const committedRun = await jsonBytes(
+        path.join(
+          runtimeCollectionPaths(config.runtimeRoot).runs,
+          committedRunId,
+          "metadata",
+          "commit.json",
+        ),
+      ).catch(() => null);
+      if (
+        !committedRun ||
+        committedRun.value.status !== "committed" ||
+        committedRun.value.runId !== committedRunId ||
+        committedRun.value.decisionId !== decisionId ||
+        committedRun.value.authorizationId !== decision.authorizationId ||
+        committedRun.value.selectedModelId !== decision.selectedModelId
+      )
+        throw new RuntimePublicError(
+          "approved_forecast_integrity_error",
+          "storage",
+          "The committed selected-model forecast failed decision binding verification.",
+          409,
+        );
     }
   }
   return {
@@ -588,5 +636,60 @@ export async function readVerifiedDecision(
     decisionCommitSha256: sha256(commitFile.bytes),
     authorization,
     authorizationStatus,
+    committedRunId,
+  };
+}
+
+export async function readVerifiedAssessmentDecisionState(
+  config: RuntimeConfig,
+  assessmentId: string,
+) {
+  const index = assessmentDecisionPaths(config.runtimeRoot, assessmentId);
+  const active = await jsonBytes(index.active).catch((error) => {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw new RuntimePublicError(
+      "decision_index_integrity_error",
+      "storage",
+      "The assessment decision index could not be verified.",
+      409,
+    );
+  });
+  if (!active) return null;
+  const value = active.value;
+  if (
+    value.schemaVersion !== "1.0" ||
+    value.assessmentId !== assessmentId ||
+    typeof value.decisionId !== "string" ||
+    typeof value.decisionCommitSha256 !== "string"
+  )
+    throw new RuntimePublicError(
+      "decision_index_integrity_error",
+      "storage",
+      "The assessment decision index failed identity verification.",
+      409,
+    );
+  const verified = await readVerifiedDecision(config, value.decisionId);
+  if (
+    verified.decision.assessmentId !== assessmentId ||
+    verified.decisionCommitSha256 !== value.decisionCommitSha256 ||
+    verified.decision.authorizationId !== value.authorizationId
+  )
+    throw new RuntimePublicError(
+      "decision_index_integrity_error",
+      "storage",
+      "The assessment decision index does not match immutable decision evidence.",
+      409,
+    );
+  return {
+    decisionId: verified.decision.decisionId as string,
+    outcome: verified.decision.decision as DecisionChoice,
+    decisionStatus: verified.decision.decisionStatus as string,
+    selectedModelId: (verified.decision.selectedModelId as string | null) ?? null,
+    forecastAuthorized: verified.decision.forecastAuthorized === true,
+    authorizationId: (verified.decision.authorizationId as string | null) ?? null,
+    authorizationStatus: verified.authorizationStatus,
+    committedRunId: verified.committedRunId,
+    decisionCommitSha256: verified.decisionCommitSha256,
+    createdAt: verified.decision.createdAt as string,
   };
 }

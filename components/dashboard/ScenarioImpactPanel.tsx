@@ -43,7 +43,7 @@ export default function ScenarioImpactPanel({ surgeKey, meta, zones }: Props) {
         <table className="min-w-full text-xs">
           <thead className="bg-slate-50 border-b border-slate-100">
             <tr>
-              {["Zone", "Priority (0–100)", "Proj. Cases", "Risk Level", isNormal ? "" : "Change"].map((h) => (
+              {["Zone", "Planning Priority (0–100)", "Proj. Cases", "Planning Priority Tier", isNormal ? "" : "Change"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400"
@@ -56,7 +56,7 @@ export default function ScenarioImpactPanel({ surgeKey, meta, zones }: Props) {
           <tbody className="divide-y divide-slate-50">
             {zones.map((z) => {
               const isAffected = z.modifier > 1.0;
-              const priorityDelta = z.adjusted_priority - z.baseline_priority;
+              const priorityDelta = z.adjustedPlanningPriority - z.baselinePlanningPriority;
               const casesDelta = +(z.adjusted_cases - z.baseline_cases).toFixed(1);
               return (
                 <tr
@@ -72,11 +72,11 @@ export default function ScenarioImpactPanel({ surgeKey, meta, zones }: Props) {
                     )}
                   </td>
                   <td className="px-4 py-3 font-mono">
-                    <span className={`font-bold ${z.adjusted_priority >= 76 ? "text-red-600" : z.adjusted_priority >= 51 ? "text-orange-600" : "text-slate-700"}`}>
-                      {z.adjusted_priority}
+                    <span className={`font-bold ${z.adjustedPlanningPriority >= 76 ? "text-red-600" : z.adjustedPlanningPriority >= 51 ? "text-orange-600" : "text-slate-700"}`}>
+                      {z.adjustedPlanningPriority}
                     </span>
                     {!isNormal && isAffected && (
-                      <span className="text-slate-400 text-[10px] ml-1">({z.baseline_priority})</span>
+                      <span className="text-slate-400 text-[10px] ml-1">({z.baselinePlanningPriority})</span>
                     )}
                   </td>
                   <td className="px-4 py-3 font-mono text-slate-700">
@@ -86,8 +86,8 @@ export default function ScenarioImpactPanel({ surgeKey, meta, zones }: Props) {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${RISK_BADGE[z.adjusted_risk] ?? RISK_BADGE.Routine}`}>
-                      {z.adjusted_risk}
+                    <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${RISK_BADGE[z.planningPriorityTier] ?? RISK_BADGE.Routine}`}>
+                      {z.planningPriorityTier}
                     </span>
                   </td>
                   {!isNormal && (

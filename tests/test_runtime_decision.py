@@ -6,4 +6,5 @@ class RuntimeDecisionTests(unittest.TestCase):
   source=(ROOT/'app/api/runtime/assessments/[assessmentId]/decisions/route.ts').read_text();self.assertIn('unsupported fields',source);self.assertIn('timingSafeEqual',source);self.assertNotIn('selectedModelId: body',source);self.assertNotIn('selectedModelParameterSha256: body',source)
  def test_baselines_are_not_authorized(self):
   policy=json.loads((ROOT/'config/deployments/dhaka_south/decision_policy.json').read_text());self.assertEqual(policy['allowedDeployableCandidateClasses'],['deployable_learned_model']);self.assertFalse(policy['baselineApprovalAllowed'])
+  source=(ROOT/'lib/runtime/decision-store.ts').read_text();self.assertIn('selected_model_not_deployable',source);self.assertIn('selected = winnerCandidate',source);self.assertNotIn('runnerUp',source);self.assertNotIn('fallbackModel',source)
 if __name__=='__main__':unittest.main()

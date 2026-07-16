@@ -58,9 +58,9 @@ export default function LimitationsSection() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-6">
           {[
             { title: "Outputs are advisory, not diagnostic",     desc: "The system does not diagnose dengue. It generates preparedness signals for human review by qualified health professionals." },
-            { title: "No autonomous decision-making",            desc: "No directives trigger automatic orders, procurement, or operational actions. All recommendations require explicit human approval." },
+            { title: "No autonomous decision-making",            desc: "No directives trigger automatic orders, procurement, or operational actions. All simulated planning suggestions require explicit human review and have no institutional approval." },
             { title: "Technical/MIS staff maintain the pipeline", desc: "Pipeline execution, data validation, and configuration are responsibilities of technical or MIS staff — not operational users." },
-            { title: "Operational users receive translated outputs", desc: "Public health officials and hospital administrators receive plain-language recommendations — not RMSE values or raw JSON." },
+            { title: "Operational users receive translated outputs", desc: "Public health officials and hospital administrators receive plain-language simulated planning suggestions — not RMSE values or raw JSON." },
           ].map((item) => (
             <div key={item.title} className="flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
               <Users className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -78,7 +78,7 @@ export default function LimitationsSection() {
             &ldquo;Operational users are not expected to code, clean CSV files, or run scripts
             during an outbreak. The analytics pipeline is maintained by technical/MIS staff,
             while hospital and public health users receive translated action
-            recommendations.&rdquo;
+            institution-approved recommendations.&rdquo;
           </p>
         </div>
       </section>

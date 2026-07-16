@@ -15,7 +15,7 @@
     "effective_date", "review_date", "status"
   ],
   "properties": {
-    "profile_schema_version": {"const": "1.0"},
+    "profile_schema_version": {"enum": ["1.0", "1.1"]},
     "deployment_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
     "name": {"$ref": "#/$defs/nonEmpty"},
     "geography": {"$ref": "#/$defs/geography"},
@@ -41,13 +41,25 @@
     "prohibited_uses": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
     "limitations": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "minItems": 1},
     "maturity_statements": {"$ref": "#/$defs/maturity"},
-    "deprecated_compatibility_fields": {"$ref": "#/$defs/debt"},
+    "deprecated_compatibility_fields": {
+      "oneOf": [{"$ref": "#/$defs/openDebt"}, {"$ref": "#/$defs/resolvedDebt"}]
+    },
     "candidate_comparison": {"$ref": "#/$defs/candidateComparison"},
     "forecast_uncertainty": {"$ref": "#/$defs/forecastUncertainty"},
     "effective_date": {"type": "string", "format": "date"},
     "review_date": {"type": "string", "format": "date"},
     "status": {"enum": ["draft", "active", "suspended", "retired", "superseded"]}
   },
+  "allOf": [
+    {
+      "if": {"properties": {"profile_schema_version": {"const": "1.0"}}},
+      "then": {"properties": {"deprecated_compatibility_fields": {"$ref": "#/$defs/openDebt"}}}
+    },
+    {
+      "if": {"properties": {"profile_schema_version": {"const": "1.1"}}},
+      "then": {"properties": {"deprecated_compatibility_fields": {"$ref": "#/$defs/resolvedDebt"}}}
+    }
+  ],
   "$defs": {
     "nonEmpty": {"type": "string", "minLength": 1},
     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -87,7 +99,7 @@
       "required": ["maturity", "demonstration", "prohibited_claim", "notification"],
       "properties": {"maturity": {"$ref": "#/$defs/nonEmpty"}, "demonstration": {"$ref": "#/$defs/nonEmpty"}, "prohibited_claim": {"$ref": "#/$defs/nonEmpty"}, "notification": {"$ref": "#/$defs/nonEmpty"}}
     },
-    "debt": {
+    "openDebt": {
       "type": "object", "additionalProperties": false,
       "required": ["debt_id", "status", "legacy_fields", "canonical_fields", "runtime_behavior", "deprecated"],
       "properties": {
@@ -95,6 +107,19 @@
         "legacy_fields": {"const": ["risk_level", "risk_score", "recommendations"]},
         "canonical_fields": {"const": ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"]},
         "runtime_behavior": {"const": "preserved_for_backward_compatibility"}, "deprecated": {"const": true}
+      }
+    },
+    "resolvedDebt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["debt_id", "status", "canonical_fields", "new_artifact_contract", "legacy_fields_emitted", "historical_artifacts_rewritten", "compatibility_alias_emission"],
+      "properties": {
+        "debt_id": {"const": "TD-P03A-LEGACY-RISK-FIELDS"},
+        "status": {"const": "resolved"},
+        "canonical_fields": {"const": ["forecast_growth_category", "experimental_growth_score", "planning_priority_tier", "planning_suggestions"]},
+        "new_artifact_contract": {"const": "canonical_authoritative_fields_only"},
+        "legacy_fields_emitted": {"const": false},
+        "historical_artifacts_rewritten": {"const": false},
+        "compatibility_alias_emission": {"const": "prohibited"}
       }
     },
     "candidateComparison": {

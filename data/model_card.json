@@ -1,5 +1,5 @@
 {
-  "model_card_schema_version": "1.0",
+  "model_card_schema_version": "1.1",
   "model_card_id": "dhaka_south_random_forest_benchmark",
   "model_card_version": "p1.3-v1",
   "model_id": "random_forest",
@@ -87,7 +87,7 @@
       "negative_raw_prediction_count": 0,
       "clipping_count": 0,
       "convergence_warning_count": 0,
-      "runtime_seconds": 13.181831599997167
+      "runtime_seconds": 13.930713200001264
     },
     "legacy_gbr_holdout": {
       "mae": 28.75,
@@ -123,8 +123,8 @@
   "adoption_policy_version": "p1.2b-v1",
   "adopted_model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
   "candidate_model_comparison_artifact_path": "data/candidate_model_comparison.json",
-  "candidate_model_comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
-  "comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+  "candidate_model_comparison_artifact_sha256": "aca48af0fca992968a59f2c12845960520248bdfab851b7cddc6d7192a12352e",
+  "comparison_artifact_sha256": "aca48af0fca992968a59f2c12845960520248bdfab851b7cddc6d7192a12352e",
   "candidate_registry_version": "p1.2a-v1",
   "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
   "candidate_models": [
@@ -149,7 +149,7 @@
   ],
   "primary_validation_method": "expanding_window_rolling_origin",
   "rolling_validation_artifact_path": "data/rolling_validation.json",
-  "rolling_validation_artifact_sha256": "5da1fdc63c1c4ac45eed866ed8ffb3409ab64e3ffd03ecb70515514a64d39a56",
+  "rolling_validation_artifact_sha256": "e2f0583d539ad339df20d9c7583c7e7abf36e5a68c2bb868657494ee89f54f69",
   "rolling_validation_version": "p1.1-v1",
   "rolling_fold_count": 68,
   "rolling_initial_training_window": 104,
@@ -173,7 +173,7 @@
     "negative_raw_prediction_count": 0,
     "clipping_count": 0,
     "convergence_warning_count": 0,
-    "runtime_seconds": 13.181831599997167
+    "runtime_seconds": 13.930713200001264
   },
   "rolling_baseline_comparison": {
     "previous_week_naive": {
@@ -241,14 +241,14 @@
   "lower_miss_count": 2,
   "upper_miss_count": 3,
   "uncertainty_artifact_path": "data/forecast_uncertainty.json",
-  "uncertainty_artifact_sha256": "740cf86792bc45ee7bfb4cc5333e8e2b5c56731832e1ec5265ec034252df9074",
+  "uncertainty_artifact_sha256": "9994cdee7b89a55f307bed45f45e1a593d85c2130874048f34b52614c24181be",
   "residual_source_artifact_path": "data/candidate_model_comparison.json",
-  "residual_source_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71",
+  "residual_source_artifact_sha256": "aca48af0fca992968a59f2c12845960520248bdfab851b7cddc6d7192a12352e",
   "uncertainty_active_model_binding": {
     "model_id": "random_forest",
     "model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
     "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
-    "comparison_artifact_sha256": "375657605bbd3ec3ad7a14b409a98766166c215ac25e3d37bae13536f8f5fa71"
+    "comparison_artifact_sha256": "aca48af0fca992968a59f2c12845960520248bdfab851b7cddc6d7192a12352e"
   },
   "uncertainty_limitations": [
     "The empirical range was evaluated using deterministic synthetic rolling-origin Random Forest residuals. Each evaluated fold used only residuals from earlier folds. Temporal dependence and reuse of the folds for model selection limit interpretation. This is not evidence of real-world Dhaka calibration. Historical empirical coverage is not a guarantee of future coverage.",
@@ -267,10 +267,10 @@
   "calibrated_on_synthetic_data": true,
   "selected_model_explainability_status": "generated_active_selected_model_diagnostic",
   "selected_model_explainability_artifact_path": "data/selected_model_explainability.json",
-  "selected_model_explainability_artifact_sha256": "211ae7112aa3ca291a36fa4383d04239551c48c726f18debfc74e0f3fc0e86db",
+  "selected_model_explainability_artifact_sha256": "367f57dbbc2dc6f25bbf7fe01ccfc4589fc6944a6b2140882a7bb5b5872bbef0",
   "explainability_status": "generated",
   "explainability_artifact_path": "data/selected_model_explainability.json",
-  "explainability_artifact_sha256": "211ae7112aa3ca291a36fa4383d04239551c48c726f18debfc74e0f3fc0e86db",
+  "explainability_artifact_sha256": "367f57dbbc2dc6f25bbf7fe01ccfc4589fc6944a6b2140882a7bb5b5872bbef0",
   "explainability_methods": [
     "native_random_forest_impurity_importance",
     "holdout_permutation_importance"
@@ -310,11 +310,11 @@
   "retained_legacy_gbr_evidence": {
     "status": "historical_compatibility_only_not_active_model_evidence",
     "model_explainability_artifact_path": "data/model_explainability.json",
-    "model_explainability_artifact_sha256": "f727119f317f2b4480bc3596c5e400d4cb5d04697b6ab94eaa4d5751ae3ecc73",
+    "model_explainability_artifact_sha256": "1b5c048076e5a325e6ef5fed87b903de145b1a6172685a4b7f3f7947cf0570f4",
     "rolling_validation_artifact_path": "data/rolling_validation.json",
     "validation_metrics_artifact_path": "data/validation_metrics.json"
   },
-  "forecast_artifact_sha256": "70892c12faa5f3fa1f58556ddd2416636e23b127adab56210f1d0d294983359b",
+  "forecast_artifact_sha256": "519ed1d2b139590b0a788119a4ff52b38c4b4330119e3a5bdf1e975046105796",
   "adoption_limitations": [
     "Random Forest was selected under the declared P1.2A comparison rule using deterministic synthetic rolling-origin folds and was adopted as the active demonstration model. This does not establish real-world Dhaka superiority.",
     "Random Forest cannot extrapolate beyond patterns represented in its training data."
@@ -354,24 +354,21 @@
   },
   "deprecated_compatibility_fields": {
     "debt_id": "TD-P03A-LEGACY-RISK-FIELDS",
-    "status": "open",
-    "legacy_fields": [
-      "risk_level",
-      "risk_score",
-      "recommendations"
-    ],
+    "status": "resolved",
     "canonical_fields": [
       "forecast_growth_category",
       "experimental_growth_score",
       "planning_priority_tier",
       "planning_suggestions"
     ],
-    "runtime_behavior": "preserved_for_backward_compatibility",
-    "deprecated": true
+    "new_artifact_contract": "canonical_authoritative_fields_only",
+    "legacy_fields_emitted": false,
+    "historical_artifacts_rewritten": false,
+    "compatibility_alias_emission": "prohibited"
   },
   "formula_registry_version": "p1.3-v1",
   "formula_registry_sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
-  "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+  "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
   "evidence_registry_schema_version": "1.0",
   "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
   "evidence_ids": [],
@@ -379,9 +376,9 @@
   "approval_status": "not_approved",
   "deployment_gate": "benchmark_only",
   "provenance": {
-    "run_id": "457f334c-7085-4079-a7db-58e6a9ff8c5f",
+    "run_id": "01fa6a19-6e56-40ae-a53a-b750ff16513c",
     "manifest_path": "data/input_manifest.json",
-    "manifest_sha256": "ff2126bccb8a39d5316bc6b4c216cd967e74a90ea81da723756196674f57ba6a",
+    "manifest_sha256": "ad0de553e9752af9c5aa71881d7e5053bc4beddec405864829e5f8435da2c77f",
     "case_source": "synthetic_benchmark",
     "climate_source": "synthetic_benchmark",
     "operational_source": "synthetic_benchmark",
@@ -405,8 +402,8 @@
     "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
     "deployment_profile_data_mode": "synthetic_capability_demonstration",
     "deployment_profile_id": "dhaka_south",
-    "deployment_profile_schema_version": "1.0",
-    "deployment_profile_sha256": "cb53f1a0e015b514cd129c42dc10d2a530b88a2712e1565ab72eae2730c744d8",
+    "deployment_profile_schema_version": "1.1",
+    "deployment_profile_sha256": "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a",
     "deployment_profile_status": "active",
     "evidence_registry_schema_version": "1.0",
     "evidence_registry_sha256": "b5671ba40b656395ddd50256a776123d0e6004bb217a9da3c4fc5bc97108fd2d",
@@ -420,5 +417,5 @@
     "uncertainty_method_version": "p1.3-v1",
     "uncertainty_status": "temporally_evaluated_synthetic_empirical_range"
   },
-  "generated_at": "2026-07-13T09:09:26Z"
+  "generated_at": "2026-07-16T17:27:22Z"
 }

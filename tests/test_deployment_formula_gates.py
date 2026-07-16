@@ -38,6 +38,7 @@ class DeploymentFormulaGateTest(unittest.TestCase):
         data = ROOT / "data"
         values = [json.loads((data / name).read_text(encoding="utf-8")) for name in ("forecast_output.json", "zones.json", "facilities.json", "inventory.json")]
         result = build_directives(*values, deployment_gate="benchmark_only")
+        self.assertNotIn("recommendations", result["directives"][0])
         suggestion = result["directives"][0]["planning_suggestions"][0]
         self.assertEqual(suggestion["approval_status"], "not_approved")
         self.assertEqual(suggestion["deployment_gate"], "benchmark_only")
