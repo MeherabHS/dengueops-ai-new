@@ -6,6 +6,7 @@ import type { RuntimeJobRecord, RuntimeWorkspaceMetadata, StartQuickForecastRequ
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained, jobRecordPath, runtimeCollectionPaths, workspacePaths } from "@/lib/runtime/paths";
 import { createPendingJob, createWorkspaceStartMarker, initializeRuntimeRoot } from "@/lib/runtime/store";
+import {resolveActiveModel} from "@/lib/runtime/active-model";
 
 export const runtime = "nodejs";
 
@@ -47,6 +48,8 @@ export async function POST(request: Request): Promise<Response> {
     const config = loadRuntimeConfig();
     if (body.deploymentId !== config.defaultDeploymentId) throw new RuntimePublicError("deployment_mismatch", "validation", "The requested deployment is unavailable.", 400);
     await initializeRuntimeRoot(config.runtimeRoot);
+    const authority=await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,String(body.deploymentId));
+    if(!authority.quickForecastCompatible||authority.modelId!=="random_forest")throw new RuntimePublicError("selected_model_not_active_quick_forecast_compatible","validation","The active assigned model is not compatible with governed Quick Forecast calibration.",409);
     const workspace = workspacePaths(config.runtimeRoot, String(body.workspaceId));
     const metadata = JSON.parse(await readFile(workspace.workspaceMetadata, "utf8")) as RuntimeWorkspaceMetadata;
     if (metadata.status !== "ready" || metadata.workflowMode !== "quick_forecast") throw new RuntimePublicError("workspace_not_quick_forecast_ready", "validation", "The workspace is not ready for Quick Forecast.", 409);
@@ -89,12 +92,26 @@ export async function POST(request: Request): Promise<Response> {
     const collections = runtimeCollectionPaths(config.runtimeRoot);
     const marker = assertContained(workspace.metadata, path.join(workspace.metadata, "quick_forecast_started.json"));
     await createWorkspaceStartMarker(marker, { schemaVersion: "1.0", workspaceId: body.workspaceId, datasetId: body.datasetId, jobId, runId, createdAt: now });
+    const authorityFields = authority.authoritySource === "committed_assignment" ? {
+      activeModelAuthoritySource:authority.authoritySource, authoritySnapshotSha256:authority.authoritySnapshotSha256,
+      assignmentPointerSha256:authority.assignmentPointerSha256!, assignmentId:authority.assignmentId!, assignmentCommitSha256:authority.assignmentCommitSha256!,
+      resolvedModelId:authority.modelId, resolvedModelFamily:authority.modelFamily, resolvedModelParameterSha256:authority.parameterSha256,
+      resolvedFeatureOrderSha256:authority.featureOrderSha256, resolvedCandidateRegistrySha256:authority.candidateRegistrySha256,
+      quickPolicyId:authority.quickPolicyId, quickPolicyVersion:authority.quickPolicyVersion, quickPolicySha256:authority.quickPolicySha256,
+    } as const : {
+      activeModelAuthoritySource:authority.authoritySource, authoritySnapshotSha256:authority.authoritySnapshotSha256,
+      historicalProfileSha256:authority.profileSha256!, resolvedModelId:authority.modelId, resolvedModelFamily:authority.modelFamily,
+      resolvedModelParameterSha256:authority.parameterSha256, resolvedFeatureOrderSha256:authority.featureOrderSha256,
+      resolvedCandidateRegistrySha256:authority.candidateRegistrySha256, quickPolicyId:authority.quickPolicyId,
+      quickPolicyVersion:authority.quickPolicyVersion, quickPolicySha256:authority.quickPolicySha256,
+    } as const;
     const job: RuntimeJobRecord = {
       schemaVersion: "1.0", jobKind: "quick_forecast", jobId, runId, workspaceId: String(body.workspaceId), datasetId: String(body.datasetId), deploymentId: String(body.deploymentId),
       workflowMode: "quick_forecast", validationRecordSha256: String(body.validationRecordSha256), policyId: policy.policy_id, policyVersion: policy.policy_version,
       policySha256: policyHash, status: "queued", progress: "queued", createdAt: now, claimedAt: null, startedAt: null, updatedAt: now,
       completedAt: null, heartbeatAt: null, workerId: null, processId: null, timeoutSeconds: config.quickForecastTimeoutSeconds,
       retryCount: 0, error: null, committedRunId: null,
+      ...authorityFields,
     };
     try {
       await createPendingJob(jobRecordPath(collections.pendingJobs, jobId), job);

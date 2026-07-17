@@ -227,8 +227,13 @@ The runtime root must be absolute and must not be the governed `data/` directory
 | `DENGUEOPS_INTERNAL_OPERATOR_ID` | None | Server-configured unverified internal operator identifier |
 | `DENGUEOPS_DECISION_VALIDITY_SECONDS` | `2592000` | Maximum accepted assessment age for a decision |
 | `DENGUEOPS_DECISION_REASON_MAX_LENGTH` | `1000` | Maximum decision-reason length |
+| `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_ENABLED` | `false` | Enables trusted-internal lifecycle decisions; it does not bootstrap automatically |
+| `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_SECRET` | None | Distinct server-only lifecycle credential; must be at least 16 characters when enabled |
+| `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_OPERATOR_ID` | None | Server-derived lifecycle operator identifier |
 
 Internal decision POST routes expect the protected `x-dengueops-internal-decision-secret` header. The secret must remain server-side and must never be exposed to browser JavaScript.
+
+Model lifecycle POST ingress uses the separate `x-dengueops-model-lifecycle-secret` credential. The browser exposes read-only lifecycle state only. Historical-profile bootstrap is an explicit manual action, and policy `p2-v1` permits only the exact P1.4F-compatible Random Forest identity to become active.
 
 ## Web routes
 

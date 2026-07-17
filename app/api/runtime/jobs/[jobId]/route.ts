@@ -24,6 +24,8 @@ export async function GET(_request: Request, context: RouteContext<"/api/runtime
       ? { ok: true, jobKind: "forecast_outcome", jobId: job.jobId, outcomeId: job.outcomeId, workflowMode: job.workflowMode, status: job.status, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: job.error?.retryable ?? false, error: job.error, committedOutcomeId: job.committedOutcomeId }
       : job.jobKind === "degradation_evidence"
       ? {ok:true,jobKind:"degradation_evidence",jobId:job.jobId,evidenceId:job.evidenceId,workflowMode:job.workflowMode,status:job.status,progress:job.progress,createdAt:job.createdAt,startedAt:job.startedAt,updatedAt:job.updatedAt,completedAt:job.completedAt,retryable:false,error:job.error,committedEvidenceId:job.committedEvidenceId}
+      : job.jobKind === "model_lifecycle"
+      ? {ok:true,jobKind:"model_lifecycle",jobId:job.jobId,lifecycleDecisionId:job.lifecycleDecisionId,workflowMode:job.workflowMode,action:job.action,status:job.status,progress:job.progress,createdAt:job.createdAt,startedAt:job.startedAt,updatedAt:job.updatedAt,completedAt:job.completedAt,retryable:false,error:job.error,committedLifecycleDecisionId:job.committedLifecycleDecisionId}
       : { ok: true, jobKind: "quick_forecast", jobId: job.jobId, runId: job.runId, status: job.status, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: job.error?.retryable ?? false, error: job.error, committedRunId: job.committedRunId };
     return Response.json(response, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

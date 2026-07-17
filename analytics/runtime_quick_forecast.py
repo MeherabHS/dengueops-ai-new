@@ -34,6 +34,7 @@ from empirical_range import (
 )
 from model_factory import build_candidate_estimator, load_and_validate_candidate_registry
 from runtime_commit import atomic_json, commit_runtime_run, sha256_file
+from runtime_active_model import resolve_active_model
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_policy import evaluate_quick_forecast_policy, load_and_validate_quick_forecast_policy
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
@@ -89,6 +90,10 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("The claimed job is not runnable.")
     if staging.name != job["runId"] or workspace.name != job["workspaceId"]:
         raise ValueError("Job paths do not match job identities.")
+    if "authoritySnapshotSha256" in job:
+        authority=resolve_active_model(ROOT,runtime_root,job["deploymentId"])
+        if authority["authoritySnapshotSha256"]!=job["authoritySnapshotSha256"] or authority["modelId"]!=job.get("resolvedModelId") or authority["modelFamily"]!=job.get("resolvedModelFamily") or authority["parameterSha256"]!=job.get("resolvedModelParameterSha256") or authority["featureOrderSha256"]!=job.get("resolvedFeatureOrderSha256") or authority["candidateRegistrySha256"]!=job.get("resolvedCandidateRegistrySha256") or authority["quickPolicySha256"]!=job.get("quickPolicySha256"):
+            raise ValueError("stale_or_incompatible_active_model_authority")
 
     workspace_metadata_path = workspace / "metadata" / "workspace.json"
     validation_path = workspace / "metadata" / "validation.json"

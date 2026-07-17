@@ -17,7 +17,7 @@ import jsonschema
 import pandas as pd
 
 from feature_engineering import FEATURE_COLUMNS, build_features, build_inference_features
-from runtime_context import ROOT, RuntimeContextError, require_within
+from runtime_context import ROOT, RuntimeContextError, require_absolute_directory, require_within
 from runtime_policy import (
     EXPECTED_CASE_COLUMNS,
     EXPECTED_CLIMATE_COLUMNS,
@@ -264,6 +264,10 @@ def _contains_approximated_values(frame: pd.DataFrame) -> bool | None:
 
 
 def validate(args: argparse.Namespace) -> dict[str, Any]:
+    runtime_root=getattr(args,"runtime_root",None)
+    if runtime_root:
+        from runtime_active_model import resolve_active_model
+        resolve_active_model(ROOT,require_absolute_directory(runtime_root,"runtime root"),args.deployment_id)
     workspace = Path(args.workspace_root).resolve()
     dengue_input = require_within(workspace, args.dengue_input, "dengue input")
     climate_input = require_within(workspace, args.climate_input, "climate input")
@@ -445,6 +449,7 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate uploaded DengueOps CSVs inside an isolated workspace.")
     parser.add_argument("--workspace-root", required=True)
+    parser.add_argument("--runtime-root")
     parser.add_argument("--workspace-id", required=True)
     parser.add_argument("--created-at", required=True)
     parser.add_argument("--dengue-input", required=True)

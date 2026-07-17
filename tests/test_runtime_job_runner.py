@@ -21,6 +21,12 @@ class RuntimeJobRunnerTests(unittest.TestCase):
         self.assertIn('"degradation-staging"',source)
         self.assertIn('"degradation-evidence"',source)
         self.assertIn('"degradation/latest.json"',source)
+    def test_worker_has_isolated_model_lifecycle_dispatch(self):
+        source=(ROOT/"analytics/runtime_worker.py").read_text()
+        self.assertIn('"model_lifecycle"',source)
+        self.assertIn('"lifecycle-staging"',source)
+        self.assertIn('"model-lifecycle"',source)
+        self.assertIn('"model-assignment/latest.json"',source)
     def test_atomic_claim_has_one_winner(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

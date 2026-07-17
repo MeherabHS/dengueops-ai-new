@@ -18,6 +18,7 @@ import {
   type CommittedAssessmentPolicyIdentity,
 } from "@/lib/runtime/decision-policy";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
+import {resolveActiveModel} from "@/lib/runtime/active-model";
 
 export const runtime = "nodejs";
 
@@ -28,6 +29,7 @@ export async function GET(
   try {
     const { assessmentId } = await context.params;
     const config = loadRuntimeConfig(false);
+    const activeModel=await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,config.defaultDeploymentId);
     const evidence = await readVerifiedAssessment(config, assessmentId);
     const summary = evidence.summary as Omit<
       DatasetAssessmentResultSuccess,
@@ -122,7 +124,7 @@ export async function GET(
         displayRank: rank.get(candidate.modelId) ?? null,
         modelFamily: families.get(candidate.modelId) ?? candidate.modelLabel,
         technicalWinner: candidate.modelId === summary.technicalWinnerModelId,
-        currentApprovedModel: candidate.modelId === policy.currentModelId,
+        currentApprovedModel: candidate.modelId === activeModel.modelId,
         deployableForOneRun:
           candidate.deployabilityClass === "deployable_learned_model" &&
           candidate.selectionEligible &&
@@ -163,8 +165,8 @@ export async function GET(
         },
         target: "target_cases_next_2w",
         horizonWeeks: 2,
-        currentApprovedModelId: policy.currentModelId,
-        currentApprovedModelFamily: families.get(policy.currentModelId) ?? "RandomForestRegressor",
+        currentApprovedModelId: activeModel.modelId,
+        currentApprovedModelFamily: activeModel.modelFamily,
         candidates: projectedCandidates,
         technicalWinnerModelId: summary.technicalWinnerModelId,
         technicalWinnerDeployable: winner?.deployableForOneRun ?? false,

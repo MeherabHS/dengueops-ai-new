@@ -15,6 +15,10 @@ from tests.test_runtime_quick_forecast import build_ready_runtime
 
 
 class RuntimeCommitTests(unittest.TestCase):
+    def test_assignment_aware_quick_commit_rechecks_authority(self):
+        source=(ROOT/"analytics/runtime_commit.py").read_text()
+        self.assertIn("authoritySnapshotSha256",source)
+        self.assertIn("active_model_authority_changed_before_commit",source)
     def test_incomplete_bundle_never_creates_latest_pointer(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

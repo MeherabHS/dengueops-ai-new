@@ -10,6 +10,7 @@ import {
   rm,
 } from "node:fs/promises";
 import path from "node:path";
+import {resolveActiveModel} from "./active-model";
 import type { RuntimeConfig } from "./config";
 import {
   loadDecisionPolicy,
@@ -448,24 +449,12 @@ export async function recordDecision(
         409,
       );
     if (choice === "keep_current_model") {
-      const profile = JSON.parse(
-        await readFile(
-          path.join(
-            config.repositoryRoot,
-            "config",
-            "deployments",
-            evidence.summary.deploymentId,
-            "profile.json",
-          ),
-          "utf8",
-        ),
-      );
+      const active=evidence.isPhaseTwo?await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,evidence.summary.deploymentId):null;
+      const profile=active?null:JSON.parse(await readFile(path.join(config.repositoryRoot,"config","deployments",evidence.summary.deploymentId,"profile.json"),"utf8"));
       if (
         !selected ||
         selected.parametersSha256 !== policy.currentModelParameterSha256 ||
-        profile.model?.model_id !== policy.currentModelId ||
-        profile.model?.model_parameters_sha256 !==
-          policy.currentModelParameterSha256
+        (active?active.modelId!==policy.currentModelId||active.parameterSha256!==policy.currentModelParameterSha256:profile.model?.model_id!==policy.currentModelId||profile.model?.model_parameters_sha256!==policy.currentModelParameterSha256)
       )
         throw new RuntimePublicError(
           "current_model_identity_mismatch",

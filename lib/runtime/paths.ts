@@ -77,8 +77,13 @@ export function runtimeCollectionPaths(runtimeRoot: string) {
     forecastOutcomes: assertContained(root, path.join(root, "forecast-outcomes")),
     degradationStaging: assertContained(root, path.join(root, "degradation-staging")),
     degradationEvidence: assertContained(root, path.join(root, "degradation-evidence")),
+    lifecycleStaging: assertContained(root, path.join(root, "lifecycle-staging")),
+    modelLifecycle: assertContained(root, path.join(root, "model-lifecycle")),
   };
 }
+
+export function modelLifecyclePaths(runtimeRoot:string,lifecycleDecisionId:string){const collections=runtimeCollectionPaths(runtimeRoot);const staging=uuidPath(collections.lifecycleStaging,lifecycleDecisionId,"lifecycle_decision");const committed=uuidPath(collections.modelLifecycle,lifecycleDecisionId,"lifecycle_decision");return{staging,committed,decision:assertContained(committed,path.join(committed,"artifacts","lifecycle_decision.json")),assignment:assertContained(committed,path.join(committed,"artifacts","model_assignment.json")),decisionCommit:assertContained(committed,path.join(committed,"metadata","lifecycle_decision_commit.json")),assignmentCommit:assertContained(committed,path.join(committed,"metadata","model_assignment_commit.json"))};}
+export function modelAssignmentPaths(runtimeRoot:string,deploymentId:string){const deployment=deploymentRuntimePaths(runtimeRoot,deploymentId);const root=assertContained(deployment.root,path.join(deployment.root,"model-assignment"));return{root,latest:assertContained(root,path.join(root,"latest.json")),commitLock:assertContained(root,path.join(root,"locks","commit.lock"))};}
 
 export function forecastOutcomePaths(runtimeRoot: string, outcomeId: string) {
   const collections = runtimeCollectionPaths(runtimeRoot);

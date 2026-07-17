@@ -17,6 +17,7 @@ import {
   writeExclusive,
   writeWorkspaceMetadata,
 } from "@/lib/runtime/store";
+import {resolveActiveModel} from "@/lib/runtime/active-model";
 import { inspectCsvUpload } from "@/lib/runtime/uploads";
 
 export const runtime = "nodejs";
@@ -40,6 +41,7 @@ function singleFile(form: FormData, name: string): File {
 async function runPythonValidation(input: {
   pythonExecutable: string;
   repositoryRoot: string;
+  runtimeRoot: string;
   timeoutMs: number;
   paths: WorkspacePaths;
   workspaceId: string;
@@ -51,6 +53,7 @@ async function runPythonValidation(input: {
   const args = [
     script,
     "--workspace-root", input.paths.root,
+    "--runtime-root", input.runtimeRoot,
     "--workspace-id", input.workspaceId,
     "--created-at", input.createdAt,
     "--dengue-input", input.paths.dengueOriginal,
@@ -170,6 +173,7 @@ export async function POST(request: Request): Promise<Response> {
     await runPythonValidation({
       pythonExecutable: config.pythonExecutable,
       repositoryRoot: config.repositoryRoot,
+      runtimeRoot: config.runtimeRoot,
       timeoutMs: config.validationTimeoutMs,
       paths,
       workspaceId,
@@ -213,6 +217,7 @@ export async function POST(request: Request): Promise<Response> {
       counts: validation.counts,
       issues: validation.issues,
       eligibility: validation.eligibility,
+      activeModelAuthority:(({authoritySource,authoritySnapshotSha256,modelId,bootstrapRequired,quickForecastCompatible})=>({authoritySource,authoritySnapshotSha256,modelId,bootstrapRequired,quickForecastCompatible}))(await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,validation.deploymentId)),
     };
     return Response.json(response, { status: validation.status === "ready" ? 200 : 422 });
   } catch (error) {

@@ -1,4 +1,4 @@
-import type { DatasetAssessmentResponse, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
+import type { DatasetAssessmentResponse, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, ModelLifecycleResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
 
 export async function validateRuntimeDatasets(input: {
   dengueFile: File;
@@ -51,3 +51,4 @@ export async function getMonitoringSummary(deploymentId="dhaka_south"):Promise<M
   return await response.json() as MonitoringSummaryResponse;
 }
 export async function getModelDegradationEvidence(deploymentId="dhaka_south"):Promise<ModelDegradationResponse>{const response=await fetch(`/api/runtime/model-degradation-evidence?deploymentId=${encodeURIComponent(deploymentId)}`,{cache:"no-store"});return await response.json() as ModelDegradationResponse;}
+export async function getModelLifecycle():Promise<ModelLifecycleResponse>{const response=await fetch("/api/runtime/model-lifecycle",{cache:"no-store"});return await response.json() as ModelLifecycleResponse;}

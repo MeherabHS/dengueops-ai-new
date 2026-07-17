@@ -23,7 +23,7 @@ export async function initializeRuntimeRoot(runtimeRoot: string): Promise<void> 
   const workspaces = path.join(/* turbopackIgnore: true */ runtimeRoot, "workspaces");
   await mkdir(workspaces, { recursive: true, mode: 0o700 });
   await rejectSymlink(workspaces);
-  for (const relative of ["jobs/pending", "jobs/running", "jobs/completed", "jobs/failed", "staging", "runs", "assessment-staging", "assessments", "outcome-staging", "forecast-outcomes", "degradation-staging", "degradation-evidence", "decisions", "assessment-decisions", "authorizations", "authorization-state", "deployments", "locks", "locks/decisions", "locks/authorizations"]) {
+  for (const relative of ["jobs/pending", "jobs/running", "jobs/completed", "jobs/failed", "staging", "runs", "assessment-staging", "assessments", "outcome-staging", "forecast-outcomes", "degradation-staging", "degradation-evidence", "lifecycle-staging", "model-lifecycle", "decisions", "assessment-decisions", "authorizations", "authorization-state", "deployments", "locks", "locks/decisions", "locks/authorizations"]) {
     await mkdir(path.join(runtimeRoot, relative), { recursive: true, mode: 0o700 });
   }
 }

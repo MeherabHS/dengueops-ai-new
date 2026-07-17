@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "analytics"))
 from runtime_policy import load_and_validate_quick_forecast_policy
 from runtime_quick_forecast import execute
 from runtime_validate import validate
+from runtime_active_model import resolve_active_model
 
 
 def iso_now():
@@ -64,6 +65,17 @@ def build_ready_runtime(base: Path, row_count: int | None = None):
 
 
 class RuntimeQuickForecastTests(unittest.TestCase):
+    def test_new_quick_execution_rechecks_active_authority_without_changing_model_logic(self):
+        source=(ROOT/"analytics/runtime_quick_forecast.py").read_text()
+        self.assertIn("resolve_active_model",source)
+        self.assertIn("authoritySnapshotSha256",source)
+        self.assertIn('model_id"] == "random_forest"',source)
+    def test_assignment_aware_profile_fallback_job_executes_with_complete_authority(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime,workspace,job_path,job=build_ready_runtime(Path(directory));authority=resolve_active_model(ROOT,runtime)
+            job.update({"activeModelAuthoritySource":authority["authoritySource"],"authoritySnapshotSha256":authority["authoritySnapshotSha256"],"historicalProfileSha256":authority["profileSha256"],"resolvedModelId":authority["modelId"],"resolvedModelFamily":authority["modelFamily"],"resolvedModelParameterSha256":authority["parameterSha256"],"resolvedFeatureOrderSha256":authority["featureOrderSha256"],"resolvedCandidateRegistrySha256":authority["candidateRegistrySha256"],"quickPolicyId":authority["quickPolicyId"],"quickPolicyVersion":authority["quickPolicyVersion"],"quickPolicySha256":authority["quickPolicySha256"]});job_path.write_text(json.dumps(job),encoding="utf-8")
+            outcome=execute(SimpleNamespace(runtime_root=str(runtime),job_record=str(job_path),workspace=str(workspace),staging=str(runtime/"staging"/job["runId"])))
+            self.assertTrue(outcome["committed"])
     def test_isolated_point_forecast_commit_has_dataset_calibration_and_no_preparedness(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime, workspace, job_path, job = build_ready_runtime(Path(directory))

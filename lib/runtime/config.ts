@@ -20,6 +20,9 @@ export interface RuntimeConfig {
   internalMonitoringSecret: string;
   internalMonitoringOperatorId: string;
   forecastOutcomeTimeoutSeconds: number;
+  internalModelLifecycleEnabled: boolean;
+  internalModelLifecycleSecret: string;
+  internalModelLifecycleOperatorId: string;
   defaultDeploymentId: string;
 }
 
@@ -72,9 +75,13 @@ export function loadRuntimeConfig(requirePython = true): RuntimeConfig {
   const internalMonitoringEnabled = process.env.DENGUEOPS_INTERNAL_MONITORING_ENABLED?.trim().toLowerCase() === "true";
   const internalMonitoringSecret = process.env.DENGUEOPS_INTERNAL_MONITORING_SECRET?.trim() || "";
   const internalMonitoringOperatorId = process.env.DENGUEOPS_INTERNAL_MONITORING_OPERATOR_ID?.trim() || "";
+  const internalModelLifecycleEnabled = process.env.DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_ENABLED?.trim().toLowerCase() === "true";
+  const internalModelLifecycleSecret = process.env.DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_SECRET?.trim() || "";
+  const internalModelLifecycleOperatorId = process.env.DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_OPERATOR_ID?.trim() || "";
   if (internalMonitoringEnabled && (internalMonitoringSecret.length < 16 || !internalMonitoringOperatorId || internalMonitoringOperatorId.length > 128)) {
     throw new RuntimePublicError("invalid_monitoring_configuration", "configuration", "Enabled outcome monitoring requires a 16-character secret and bounded operator identifier.", 503);
   }
+  if(internalModelLifecycleEnabled&&(internalModelLifecycleSecret.length<16||!internalModelLifecycleOperatorId||internalModelLifecycleOperatorId.length>128))throw new RuntimePublicError("invalid_model_lifecycle_configuration","configuration","Enabled model lifecycle ingress requires a 16-character distinct secret and bounded operator identifier.",503);
   return {
     repositoryRoot,
     runtimeRoot,
@@ -94,6 +101,7 @@ export function loadRuntimeConfig(requirePython = true): RuntimeConfig {
     internalMonitoringSecret,
     internalMonitoringOperatorId,
     forecastOutcomeTimeoutSeconds: positiveInteger(process.env.DENGUEOPS_FORECAST_OUTCOME_TIMEOUT_SECONDS, 120, "DENGUEOPS_FORECAST_OUTCOME_TIMEOUT_SECONDS"),
+    internalModelLifecycleEnabled,internalModelLifecycleSecret,internalModelLifecycleOperatorId,
     defaultDeploymentId: process.env.DENGUEOPS_DEFAULT_DEPLOYMENT_ID?.trim() || "dhaka_south",
   };
 }

@@ -233,6 +233,11 @@ def _validate_calibration_bundle(
 
 
 def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, Any]) -> dict[str, Any]:
+    if "authoritySnapshotSha256" in job:
+        from runtime_active_model import resolve_active_model
+        authority=resolve_active_model(ROOT,runtime_root,job["deploymentId"])
+        if authority["authoritySnapshotSha256"]!=job["authoritySnapshotSha256"] or authority["modelId"]!=job.get("resolvedModelId") or authority["modelFamily"]!=job.get("resolvedModelFamily") or authority["parameterSha256"]!=job.get("resolvedModelParameterSha256") or authority["featureOrderSha256"]!=job.get("resolvedFeatureOrderSha256") or authority["candidateRegistrySha256"]!=job.get("resolvedCandidateRegistrySha256") or authority["quickPolicySha256"]!=job.get("quickPolicySha256"):
+            raise ValueError("active_model_authority_changed_before_commit")
     runtime_root = require_absolute_directory(runtime_root, "runtime root")
     staging_root = require_within(runtime_root, staging_path, "staging run")
     expected_staging_parent = (runtime_root / "staging").resolve()
