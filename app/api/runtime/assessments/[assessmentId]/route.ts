@@ -13,7 +13,10 @@ import {
   readVerifiedAssessment,
   readVerifiedAssessmentDecisionState,
 } from "@/lib/runtime/decision-store";
-import { loadDecisionPolicy } from "@/lib/runtime/decision-policy";
+import {
+  loadDecisionPolicy,
+  type CommittedAssessmentPolicyIdentity,
+} from "@/lib/runtime/decision-policy";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 
 export const runtime = "nodejs";
@@ -44,12 +47,24 @@ export async function GET(
         409,
       );
 
-    const policy = await loadDecisionPolicy(config.repositoryRoot, summary.deploymentId);
+    const assessmentPolicy = evidence.rolling.assessmentPolicy as {policyId:string;policyVersion:string;policySha256:string};
+    const isPhaseTwo = assessmentPolicy.policyVersion === "p2-v1";
+    const policyIdentity = {
+      schemaVersion: isPhaseTwo ? "2.0" : "1.0",
+      policyId: assessmentPolicy.policyId,
+      policyVersion: assessmentPolicy.policyVersion,
+      policySha256: assessmentPolicy.policySha256,
+    } as CommittedAssessmentPolicyIdentity;
+    const policy = await loadDecisionPolicy(
+      config.repositoryRoot,
+      summary.deploymentId,
+      policyIdentity,
+    );
     if (
       policy.allowedAssessmentPolicySha256 !== summary.provenance.assessmentPolicySha256 ||
       evidence.rolling.assessmentPolicy?.policyId !== policy.allowedAssessmentPolicyId ||
       evidence.rolling.assessmentPolicy?.policyVersion !== policy.allowedAssessmentPolicyVersion ||
-      evidence.rolling.assessmentPolicy?.policySha256 !== policy.allowedAssessmentPolicySha256
+      assessmentPolicy.policySha256 !== policy.allowedAssessmentPolicySha256
     )
       throw new RuntimePublicError(
         "assessment_policy_mismatch",
@@ -110,13 +125,31 @@ export async function GET(
         currentApprovedModel: candidate.modelId === policy.currentModelId,
         deployableForOneRun:
           candidate.deployabilityClass === "deployable_learned_model" &&
-          candidate.selectionEligible,
+          candidate.selectionEligible &&
+          candidate.completionStatus === "complete" &&
+          candidate.successfulFolds === summary.foldPolicy.plannedFoldCount &&
+          candidate.failedFolds === 0,
       }))
       .sort((left, right) => order.indexOf(left.modelId) - order.indexOf(right.modelId));
     const winner = projectedCandidates.find((candidate) => candidate.technicalWinner) ?? null;
+    const normalizedSummary = {
+      ...summary,
+      availableFoldCount: summary.availableFoldCount ?? 68,
+      decisionCompatibilityStatus: summary.decisionCompatibilityStatus ?? "phase1_decision_policy_available",
+      foldPolicy: {
+        ...summary.foldPolicy,
+        plannedFoldCount: summary.foldPolicy.plannedFoldCount,
+        minimumFoldCount: summary.foldPolicy.minimumFoldCount ?? 68,
+        maximumFoldCount: summary.foldPolicy.maximumFoldCount ?? 68,
+        foldCapApplied: summary.foldPolicy.foldCapApplied ?? false,
+        selectedValidationStartIndex: summary.foldPolicy.selectedValidationStartIndex ?? 105,
+        selectedValidationEndIndex: summary.foldPolicy.selectedValidationEndIndex ?? 172,
+        selectedEvaluationPeriod: summary.foldPolicy.selectedEvaluationPeriod ?? {start:evidence.rolling.folds[0].forecastOrigin,end:evidence.rolling.folds.at(-1).forecastOrigin},
+      },
+    };
     const response: DatasetAssessmentResponse = {
       ok: true,
-      ...summary,
+      ...normalizedSummary,
       integrity: {
         assessmentSummarySha256: evidence.summarySha256,
         assessmentCommitSha256: evidence.commitSha256,
@@ -124,9 +157,9 @@ export async function GET(
       workflow: {
         assessmentId,
         assessmentPolicy: {
-          policyId: policy.allowedAssessmentPolicyId,
-          policyVersion: policy.allowedAssessmentPolicyVersion,
-          policySha256: policy.allowedAssessmentPolicySha256,
+          policyId: assessmentPolicy.policyId,
+          policyVersion: assessmentPolicy.policyVersion,
+          policySha256: assessmentPolicy.policySha256,
         },
         target: "target_cases_next_2w",
         horizonWeeks: 2,
@@ -136,6 +169,7 @@ export async function GET(
         technicalWinnerModelId: summary.technicalWinnerModelId,
         technicalWinnerDeployable: winner?.deployableForOneRun ?? false,
         recommendationStatus: summary.recommendationStatus,
+        decisionCompatibilityStatus: isPhaseTwo ? "phase2_decision_policy_available" : "phase1_decision_policy_available",
         decision: decisionProjection,
       },
     };

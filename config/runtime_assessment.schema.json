@@ -1,6 +1,469 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://dengueops.ai/schemas/runtime_assessment.schema.json","type":"object","additionalProperties":false,
-  "required":["schemaVersion","assessmentId","jobId","workspaceId","datasetId","deploymentId","sourceType","acceptedPeriod","assessmentPolicy","foldPlanSha256","candidateRegistrySha256","candidateSetStatus","comparisonStatus","recommendationStatus","approvalStatus","adoptionStatus","limitations","provenance","artifactHashes","artifactPublicationSequence","generatedAt"],
-  "properties":{"schemaVersion":{"const":"1.0"},"assessmentId":{"$ref":"#/$defs/uuid"},"jobId":{"$ref":"#/$defs/uuid"},"workspaceId":{"$ref":"#/$defs/uuid"},"datasetId":{"$ref":"#/$defs/sha"},"deploymentId":{"const":"dhaka_south"},"sourceType":{"const":"uploaded"},"acceptedPeriod":{"$ref":"#/$defs/range"},"assessmentPolicy":{"type":"object","additionalProperties":false,"required":["policyId","policyVersion","policySha256"],"properties":{"policyId":{"const":"RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"},"policyVersion":{"const":"p1.4d-1-v1"},"policySha256":{"$ref":"#/$defs/sha"}}},"foldPlanSha256":{"$ref":"#/$defs/sha"},"candidateRegistrySha256":{"$ref":"#/$defs/sha"},"candidateSetStatus":{"enum":["complete_candidate_set","partial_candidate_set","insufficient_candidate_breadth"]},"comparisonStatus":{"const":"complete"},"recommendationStatus":{"enum":["evidence_only","no_recommendation"]},"approvalStatus":{"const":"approval_pending"},"adoptionStatus":{"const":"not_adopted"},"limitations":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}},"provenance":{"type":"object","additionalProperties":false,"required":["validationRecordSha256","canonicalDengueSha256","canonicalClimateSha256"],"properties":{"validationRecordSha256":{"$ref":"#/$defs/sha"},"canonicalDengueSha256":{"$ref":"#/$defs/sha"},"canonicalClimateSha256":{"$ref":"#/$defs/sha"}}},"artifactHashes":{"type":"object","additionalProperties":false,"required":["inputManifestSha256","modelFeaturesSha256","rollingValidationSha256","candidateComparisonSha256","recommendationSha256","assessmentSummarySha256"],"properties":{"inputManifestSha256":{"$ref":"#/$defs/sha"},"modelFeaturesSha256":{"$ref":"#/$defs/sha"},"rollingValidationSha256":{"$ref":"#/$defs/sha"},"candidateComparisonSha256":{"$ref":"#/$defs/sha"},"recommendationSha256":{"$ref":"#/$defs/sha"},"assessmentSummarySha256":{"anyOf":[{"$ref":"#/$defs/sha"},{"type":"null"}]} }},"artifactPublicationSequence":{"const":["input_manifest.json","model_features.csv","rolling_validation.json","candidate_model_comparison.json","recommendation.json","assessment_summary.json"]},"generatedAt":{"type":"string","format":"date-time"}},
-  "$defs":{"uuid":{"type":"string","format":"uuid"},"sha":{"type":"string","pattern":"^[a-f0-9]{64}$"},"period":{"type":"string","pattern":"^[0-9]{4}-W[0-9]{2}$"},"range":{"type":"object","additionalProperties":false,"required":["start","end"],"properties":{"start":{"$ref":"#/$defs/period"},"end":{"$ref":"#/$defs/period"}}}}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assessmentId",
+        "jobId",
+        "workspaceId",
+        "datasetId",
+        "deploymentId",
+        "sourceType",
+        "acceptedPeriod",
+        "assessmentPolicy",
+        "foldPlanSha256",
+        "candidateRegistrySha256",
+        "candidateSetStatus",
+        "comparisonStatus",
+        "recommendationStatus",
+        "approvalStatus",
+        "adoptionStatus",
+        "limitations",
+        "provenance",
+        "artifactHashes",
+        "artifactPublicationSequence",
+        "generatedAt"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "assessmentId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "sourceType": {
+          "const": "uploaded"
+        },
+        "acceptedPeriod": {
+          "$ref": "#/$defs/p1/range"
+        },
+        "assessmentPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policyId",
+            "policyVersion",
+            "policySha256"
+          ],
+          "properties": {
+            "policyId": {
+              "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
+            },
+            "policyVersion": {
+              "const": "p1.4d-1-v1"
+            },
+            "policySha256": {
+              "$ref": "#/$defs/p1/sha"
+            }
+          }
+        },
+        "foldPlanSha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "candidateRegistrySha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "candidateSetStatus": {
+          "enum": [
+            "complete_candidate_set",
+            "partial_candidate_set",
+            "insufficient_candidate_breadth"
+          ]
+        },
+        "comparisonStatus": {
+          "const": "complete"
+        },
+        "recommendationStatus": {
+          "enum": [
+            "evidence_only",
+            "no_recommendation"
+          ]
+        },
+        "approvalStatus": {
+          "const": "approval_pending"
+        },
+        "adoptionStatus": {
+          "const": "not_adopted"
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "validationRecordSha256",
+            "canonicalDengueSha256",
+            "canonicalClimateSha256"
+          ],
+          "properties": {
+            "validationRecordSha256": {
+              "$ref": "#/$defs/p1/sha"
+            },
+            "canonicalDengueSha256": {
+              "$ref": "#/$defs/p1/sha"
+            },
+            "canonicalClimateSha256": {
+              "$ref": "#/$defs/p1/sha"
+            }
+          }
+        },
+        "artifactHashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "inputManifestSha256",
+            "modelFeaturesSha256",
+            "rollingValidationSha256",
+            "candidateComparisonSha256",
+            "recommendationSha256",
+            "assessmentSummarySha256"
+          ],
+          "properties": {
+            "inputManifestSha256": {
+              "$ref": "#/$defs/p1/sha"
+            },
+            "modelFeaturesSha256": {
+              "$ref": "#/$defs/p1/sha"
+            },
+            "rollingValidationSha256": {
+              "$ref": "#/$defs/p1/sha"
+            },
+            "candidateComparisonSha256": {
+              "$ref": "#/$defs/p1/sha"
+            },
+            "recommendationSha256": {
+              "$ref": "#/$defs/p1/sha"
+            },
+            "assessmentSummarySha256": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/p1/sha"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "artifactPublicationSequence": {
+          "const": [
+            "input_manifest.json",
+            "model_features.csv",
+            "rolling_validation.json",
+            "candidate_model_comparison.json",
+            "recommendation.json",
+            "assessment_summary.json"
+          ]
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assessmentId",
+        "jobId",
+        "workspaceId",
+        "datasetId",
+        "deploymentId",
+        "sourceType",
+        "acceptedPeriod",
+        "assessmentPolicy",
+        "foldPlanSha256",
+        "candidateRegistrySha256",
+        "candidateSetStatus",
+        "comparisonStatus",
+        "recommendationStatus",
+        "approvalStatus",
+        "adoptionStatus",
+        "limitations",
+        "provenance",
+        "artifactHashes",
+        "artifactPublicationSequence",
+        "generatedAt",
+        "labelledRows",
+        "availableFoldCount",
+        "plannedFoldCount",
+        "foldCapApplied",
+        "selectedValidationStartIndex",
+        "selectedValidationEndIndex",
+        "selectedEvaluationPeriod",
+        "decisionCompatibilityStatus"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "2.0"
+        },
+        "assessmentId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "sourceType": {
+          "const": "uploaded"
+        },
+        "acceptedPeriod": {
+          "$ref": "#/$defs/p2/range"
+        },
+        "assessmentPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policyId",
+            "policyVersion",
+            "policySha256"
+          ],
+          "properties": {
+            "policyId": {
+              "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
+            },
+            "policyVersion": {
+              "const": "p2-v1"
+            },
+            "policySha256": {
+              "$ref": "#/$defs/p2/sha"
+            }
+          }
+        },
+        "foldPlanSha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "candidateRegistrySha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "candidateSetStatus": {
+          "enum": [
+            "complete_candidate_set",
+            "partial_candidate_set",
+            "insufficient_candidate_breadth"
+          ]
+        },
+        "comparisonStatus": {
+          "const": "complete"
+        },
+        "recommendationStatus": {
+          "enum": [
+            "evidence_only",
+            "no_recommendation"
+          ]
+        },
+        "approvalStatus": {
+          "const": "approval_pending"
+        },
+        "adoptionStatus": {
+          "const": "not_adopted"
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "validationRecordSha256",
+            "canonicalDengueSha256",
+            "canonicalClimateSha256"
+          ],
+          "properties": {
+            "validationRecordSha256": {
+              "$ref": "#/$defs/p2/sha"
+            },
+            "canonicalDengueSha256": {
+              "$ref": "#/$defs/p2/sha"
+            },
+            "canonicalClimateSha256": {
+              "$ref": "#/$defs/p2/sha"
+            }
+          }
+        },
+        "artifactHashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "inputManifestSha256",
+            "modelFeaturesSha256",
+            "rollingValidationSha256",
+            "candidateComparisonSha256",
+            "recommendationSha256",
+            "assessmentSummarySha256"
+          ],
+          "properties": {
+            "inputManifestSha256": {
+              "$ref": "#/$defs/p2/sha"
+            },
+            "modelFeaturesSha256": {
+              "$ref": "#/$defs/p2/sha"
+            },
+            "rollingValidationSha256": {
+              "$ref": "#/$defs/p2/sha"
+            },
+            "candidateComparisonSha256": {
+              "$ref": "#/$defs/p2/sha"
+            },
+            "recommendationSha256": {
+              "$ref": "#/$defs/p2/sha"
+            },
+            "assessmentSummarySha256": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/p2/sha"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "artifactPublicationSequence": {
+          "const": [
+            "input_manifest.json",
+            "model_features.csv",
+            "rolling_validation.json",
+            "candidate_model_comparison.json",
+            "recommendation.json",
+            "assessment_summary.json"
+          ]
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "labelledRows": {
+          "type": "integer",
+          "minimum": 157
+        },
+        "availableFoldCount": {
+          "type": "integer",
+          "minimum": 52
+        },
+        "plannedFoldCount": {
+          "type": "integer",
+          "minimum": 52,
+          "maximum": 68
+        },
+        "foldCapApplied": {
+          "type": "boolean"
+        },
+        "selectedValidationStartIndex": {
+          "type": "integer",
+          "minimum": 105
+        },
+        "selectedValidationEndIndex": {
+          "type": "integer",
+          "minimum": 156
+        },
+        "selectedEvaluationPeriod": {
+          "$ref": "#/$defs/p2/range"
+        },
+        "decisionCompatibilityStatus": {
+          "const": "phase2_decision_policy_not_yet_available"
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "p1": {
+      "uuid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "sha": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "period": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-W[0-9]{2}$"
+      },
+      "range": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "$ref": "#/$defs/p1/period"
+          },
+          "end": {
+            "$ref": "#/$defs/p1/period"
+          }
+        }
+      }
+    },
+    "p2": {
+      "uuid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "sha": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "period": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-W[0-9]{2}$"
+      },
+      "range": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "$ref": "#/$defs/p2/period"
+          },
+          "end": {
+            "$ref": "#/$defs/p2/period"
+          }
+        }
+      }
+    }
+  }
 }

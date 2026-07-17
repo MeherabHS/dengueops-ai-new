@@ -24,6 +24,11 @@ from runtime_assessment_evidence import (
     validate_folds_against_feature_rows,
     validate_prediction_record,
 )
+from runtime_assessment_policy import (
+    available_fold_count,
+    load_and_validate_assessment_policy,
+    select_planned_validation_indexes,
+)
 from runtime_validate import TARGET
 
 
@@ -113,15 +118,50 @@ def _same_metrics(actual: dict[str, Any] | None, expected: dict[str, Any] | None
 
 def _reconcile(
     rolling: dict[str, Any], comparison: dict[str, Any], recommendation: dict[str, Any],
-    feature_rows: list[dict[str, str]],
+    feature_rows: list[dict[str, str]], policy: dict[str, Any],
 ) -> None:
     folds = rolling["folds"]
     candidate_ids = rolling["candidateIds"]
-    if rolling["plannedFoldCount"] != 68:
-        raise RuntimeAssessmentCommitError("Assessment must contain the governed 68-fold plan.")
+    fold_policy = policy["fold_policy"]
+    labelled_rows = len(feature_rows)
+    minimum_rows = int(fold_policy.get("minimum_labelled_rows", fold_policy.get("recommendation_grade_minimum_labelled_rows", 0)))
+    minimum_folds = int(fold_policy.get("minimum_fold_count", fold_policy.get("recommendation_grade_minimum_folds", 0)))
+    maximum_folds = int(fold_policy.get("maximum_fold_count", fold_policy.get("maximum_fold_behavior", {}).get("currently_governed_maximum_folds", 0)))
+    if policy["policy_version"] == "p1.4d-1-v1" and labelled_rows != 173:
+        raise RuntimeAssessmentCommitError("Phase 1 assessment must contain exactly 173 labelled rows.")
+    if labelled_rows < minimum_rows:
+        raise RuntimeAssessmentCommitError("Assessment labelled-row count is below the governed minimum.")
+    available = available_fold_count(labelled_rows, fold_policy)
     try:
-        actuals, records = validate_fold_identities(folds, candidate_ids)
-        validate_folds_against_feature_rows(folds, feature_rows, FEATURE_COLUMNS, TARGET)
+        selected_indexes = select_planned_validation_indexes(
+            labelled_rows, int(fold_policy["initial_training_rows"]), int(fold_policy["embargo_rows"]),
+            minimum_folds, maximum_folds,
+        )
+    except Exception as exc:
+        raise RuntimeAssessmentCommitError("Assessment fold selection is invalid.") from exc
+    planned = len(selected_indexes)
+    cap_applied = available > maximum_folds
+    if rolling["plannedFoldCount"] != planned or len(folds) != planned:
+        raise RuntimeAssessmentCommitError("Assessment planned fold count does not match policy selection.")
+    if policy["policy_version"] == "p2-v1":
+        expected_dynamic = (labelled_rows, available, planned, cap_applied, selected_indexes[0], selected_indexes[-1])
+        for artifact in (rolling, comparison, recommendation):
+            actual_dynamic = (artifact["labelledRows"], artifact["availableFoldCount"], artifact["plannedFoldCount"], artifact["foldCapApplied"], artifact["selectedValidationStartIndex"], artifact["selectedValidationEndIndex"])
+            if actual_dynamic != expected_dynamic:
+                raise RuntimeAssessmentCommitError("Dynamic fold metadata does not reconcile with policy selection.")
+    try:
+        actuals, records = validate_fold_identities(
+            folds, candidate_ids, selected_validation_indexes=selected_indexes,
+            initial_training_rows=int(fold_policy["initial_training_rows"]),
+            embargo_rows=int(fold_policy["embargo_rows"]),
+            horizon_weeks=int(fold_policy["target_horizon_weeks"]),
+        )
+        validate_folds_against_feature_rows(
+            folds, feature_rows, FEATURE_COLUMNS, TARGET,
+            labelled_row_count=labelled_rows, selected_validation_indexes=selected_indexes,
+            initial_training_rows=int(fold_policy["initial_training_rows"]),
+            embargo_rows=int(fold_policy["embargo_rows"]),
+        )
     except AssessmentEvidenceError as exc:
         raise RuntimeAssessmentCommitError(f"Assessment fold evidence is invalid: {exc}.") from exc
     computed_fold_hash = fold_plan_sha256(folds)
@@ -153,10 +193,11 @@ def _reconcile(
             raise RuntimeAssessmentCommitError(f"Candidate aggregate metrics do not reconcile: {model_id}.")
         eligible = selection_eligible(
             policy_eligible=True, successful_folds=successful, failed_folds=failed, metrics=metrics,
+            required_folds=planned,
         )
         if summary["selectionEligible"] is not eligible:
             raise RuntimeAssessmentCommitError(f"Candidate selection eligibility does not reconcile: {model_id}.")
-        expected_completion = "complete" if successful == 68 and failed == 0 else "incomplete"
+        expected_completion = "complete" if successful == planned and failed == 0 else "incomplete"
         if summary["completionStatus"] != expected_completion:
             raise RuntimeAssessmentCommitError(f"Candidate completion status does not reconcile: {model_id}.")
         recomputed.append({**summary, "metrics": metrics, "selectionEligible": eligible})
@@ -229,12 +270,12 @@ def _reconcile(
         "absoluteMaeGap": (runner_mae - winner_mae) if winner_mae is not None and runner_mae is not None else None,
         "relativeMaeGap": ((runner_mae - winner_mae) / runner_mae) if winner_mae is not None and runner_mae not in {None, 0} else None,
         "successfulFoldRatio": 1.0 if winner else None,
-        "failedFoldCount": winner_candidate["failedFolds"] if winner_candidate else 68,
+        "failedFoldCount": winner_candidate["failedFolds"] if winner_candidate else planned,
         "clippingCount": winner_candidate["metrics"]["clippingCount"] if winner_candidate else 0,
         "warningCount": winner_candidate["metrics"]["warningCount"] if winner_candidate else 0,
         "candidateBreadth": len(complete),
         "tieBreakStageUsed": tie_stage,
-        "datasetFoldCount": 68,
+        "datasetFoldCount": planned,
     }
     if recommendation["evidenceInputs"] != expected_inputs:
         raise RuntimeAssessmentCommitError("Recommendation evidence inputs do not reconcile with candidate metrics.")
@@ -265,6 +306,17 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
     for value in (assessment, rolling, comparison, recommendation, summary):
         if tuple(value.get(key) for key in ("assessmentId", "jobId", "datasetId", "deploymentId")) != identity:
             raise RuntimeAssessmentCommitError("Assessment artifact identity mismatch.")
+    try:
+        policy, policy_hash = load_and_validate_assessment_policy(
+            job["deploymentId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"]
+        )
+    except Exception as exc:
+        raise RuntimeAssessmentCommitError("Assessment policy identity cannot be resolved.") from exc
+    artifact_policy = rolling.get("assessmentPolicy", {})
+    if (artifact_policy.get("policyId"), artifact_policy.get("policyVersion"), artifact_policy.get("policySha256")) != (
+        policy["policy_id"], policy["policy_version"], policy_hash
+    ) or assessment.get("assessmentPolicy") != artifact_policy or summary["provenance"]["assessmentPolicySha256"] != policy_hash:
+        raise RuntimeAssessmentCommitError("Assessment policy binding mismatch.")
     if rolling["foldPlanSha256"] != assessment["foldPlanSha256"] or comparison["foldPlanSha256"] != assessment["foldPlanSha256"]:
         raise RuntimeAssessmentCommitError("Assessment fold-plan identity mismatch.")
     if summary["candidates"] != comparison["candidates"] or summary["technicalWinnerModelId"] != comparison["technicalWinnerModelId"]:
@@ -274,7 +326,12 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
             feature_rows = list(csv.DictReader(handle))
     except (OSError, UnicodeDecodeError, csv.Error) as exc:
         raise RuntimeAssessmentCommitError("Assessment feature matrix is not valid canonical CSV.") from exc
-    _reconcile(rolling, comparison, recommendation, feature_rows)
+    _reconcile(rolling, comparison, recommendation, feature_rows, policy)
+    if policy["policy_version"] == "p2-v1":
+        dynamic = (summary["labelledRows"], summary["availableFoldCount"], summary["foldPolicy"]["plannedFoldCount"], summary["foldPolicy"]["foldCapApplied"], summary["foldPolicy"]["selectedValidationStartIndex"], summary["foldPolicy"]["selectedValidationEndIndex"])
+        expected = (rolling["labelledRows"], rolling["availableFoldCount"], rolling["plannedFoldCount"], rolling["foldCapApplied"], rolling["selectedValidationStartIndex"], rolling["selectedValidationEndIndex"])
+        if dynamic != expected or assessment["decisionCompatibilityStatus"] != "phase2_decision_policy_not_yet_available" or summary["decisionCompatibilityStatus"] != "phase2_decision_policy_not_yet_available":
+            raise RuntimeAssessmentCommitError("Phase 2 summary or decision compatibility does not reconcile.")
     sequence = assessment.get("artifactPublicationSequence", [])
     if not sequence or sequence[-1] != "assessment_summary.json":
         raise RuntimeAssessmentCommitError("Assessment summary was not published last among evidence artifacts.")
@@ -296,7 +353,7 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
         raise RuntimeAssessmentCommitError("Assessment summary evidence hashes do not reconcile.")
 
     commit = {
-        "schemaVersion": "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"],
+        "schemaVersion": "2.0" if policy["policy_version"] == "p2-v1" else "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"],
         "workspaceId": job["workspaceId"], "datasetId": job["datasetId"], "deploymentId": job["deploymentId"],
         "workflowMode": "assess_dataset", "sourceType": "uploaded", "status": "committed",
         "validationRecordSha256": job["validationRecordSha256"],
@@ -305,6 +362,8 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
         "artifactHashes": hashes, "summaryPublishedLast": True, "prohibitedArtifactsAbsent": True,
         "latestPointerUpdated": False, "committedAt": summary["committedAt"],
     }
+    if policy["policy_version"] == "p2-v1":
+        commit.update(assessmentPolicyId=policy["policy_id"], assessmentPolicyVersion=policy["policy_version"])
     schema = _json(ROOT / "config" / "runtime_assessment_commit.schema.json")
     Draft202012Validator(schema, format_checker=FormatChecker()).validate(commit)
     atomic_json(metadata / "commit.json", commit)

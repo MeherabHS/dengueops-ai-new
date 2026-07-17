@@ -90,13 +90,29 @@ export async function POST(request: Request): Promise<Response> {
     const registryCandidates = registry.candidates ?? [];
     const candidatesMatch = governedCandidates.length === 7 && registryCandidates.length === 7 && governedCandidates.every((candidate: Record<string, unknown>, index: number) =>
       candidate.model_id === registryCandidates[index]?.model_id && candidate.parameters_sha256 === registryCandidates[index]?.parameters_sha256);
+    const labelledRows = Number(validation.counts?.labelledRows);
+    const availableFoldCount = Number(assess?.availableFoldCount);
+    const plannedFoldCount = Number(assess?.plannedFoldCount);
+    const selectedStart = Number(assess?.selectedValidationStartIndex);
+    const selectedEnd = Number(assess?.selectedValidationEndIndex);
+    const foldPolicy = policy.fold_policy ?? {};
     if (policy.policy_sha256 !== policyHash || policy.policy_status !== "active" || policy.deployment_id !== body.deploymentId
+      || policy.policy_id !== "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" || policy.policy_version !== "p2-v1"
+      || foldPolicy.policy_id !== "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS" || foldPolicy.policy_version !== "p2-v1"
+      || foldPolicy.initial_training_rows !== 104 || foldPolicy.embargo_rows !== 1 || foldPolicy.validation_rows_per_fold !== 1
+      || foldPolicy.step_size_weeks !== 1 || foldPolicy.target_horizon_weeks !== 2 || foldPolicy.minimum_labelled_rows !== 157
+      || foldPolicy.minimum_fold_count !== 52 || foldPolicy.maximum_fold_count !== 68
+      || foldPolicy.fold_selection_rule !== "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count"
       || sha256(registryBytes) !== policy.candidate_registry?.sha256 || registry.candidate_registry_version !== policy.candidate_registry?.version
       || !candidatesMatch || featureHash !== policy.feature_contract?.feature_order_sha256
       || validation.datasetIdentity?.target !== policy.input_contract?.target || validation.datasetIdentity?.horizonWeeks !== policy.input_contract?.horizon_weeks
       || validation.normalization?.canonicalContractVersion !== policy.input_contract?.canonical_contract_version
-      || validation.counts?.labelledRows !== 173 || assess?.eligible !== true || assess.assessmentStatus !== "full_assessment_eligible"
-      || assess.availableFoldCount !== 68 || assess.plannedFoldCount !== 68 || assess.candidateSetStatus !== "complete_candidate_set"
+      || !Number.isSafeInteger(labelledRows) || labelledRows < 157 || assess?.eligible !== true || assess.assessmentStatus !== "full_assessment_eligible"
+      || !Number.isSafeInteger(availableFoldCount) || availableFoldCount !== Math.max(0, labelledRows - 105) || availableFoldCount < 52
+      || !Number.isSafeInteger(plannedFoldCount) || plannedFoldCount !== Math.min(availableFoldCount, 68) || plannedFoldCount < 52 || plannedFoldCount > 68
+      || assess.minimumFoldCount !== 52 || assess.maximumFoldCount !== 68 || assess.foldCapApplied !== (availableFoldCount > 68)
+      || selectedStart !== labelledRows - plannedFoldCount || selectedEnd !== labelledRows - 1
+      || assess.candidateSetStatus !== "complete_candidate_set"
       || assess.policyId !== policy.policy_id || assess.policyVersion !== policy.policy_version || assess.policySha256 !== policyHash
       || assess.recommendationStatus !== "evidence_only" || assess.recommendationStrength !== "not_available"
       || assess.approvalRequired !== true || assess.approvalEnabled !== false

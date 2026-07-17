@@ -29,7 +29,11 @@ from runtime_assessment_evidence import (
     selection_eligible,
     select_technical_winner,
 )
-from runtime_assessment_policy import evaluate_assessment_policy, load_and_validate_assessment_policy
+from runtime_assessment_policy import (
+    evaluate_assessment_policy,
+    load_and_validate_assessment_policy,
+    select_planned_validation_indexes,
+)
 from runtime_commit import atomic_json, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
@@ -98,13 +102,22 @@ def _update_job(path: Path, job: dict[str, Any], **changes: Any) -> None:
 def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tuple[tuple[dict[str, Any], ...], str]:
     ordered = frame.sort_values(["epi_year", "epi_week"]).reset_index(drop=True)
     fold_policy = policy["fold_policy"]
-    if len(ordered) != 173 or ordered[["epi_year", "epi_week"]].duplicated().any():
-        raise ValueError("The active assessment policy requires exactly 173 unique labelled rows.")
-    if list(ordered.index) != list(range(173)) or any(int(value) == 53 for value in ordered["epi_week"]):
+    minimum_rows = int(fold_policy.get("minimum_labelled_rows", fold_policy.get("recommendation_grade_minimum_labelled_rows", 0)))
+    minimum_folds = int(fold_policy.get("minimum_fold_count", fold_policy.get("recommendation_grade_minimum_folds", 0)))
+    maximum_folds = int(fold_policy.get("maximum_fold_count", fold_policy.get("maximum_fold_behavior", {}).get("currently_governed_maximum_folds", 0)))
+    if len(ordered) < minimum_rows or ordered[["epi_year", "epi_week"]].duplicated().any():
+        raise ValueError("The labelled feature matrix is below the active policy minimum or contains duplicates.")
+    if list(ordered.index) != list(range(len(ordered))) or any(int(value) == 53 for value in ordered["epi_week"]):
         raise ValueError("The labelled feature matrix violates governed chronology.")
-    first = int(fold_policy["initial_training_rows"]) + int(fold_policy["embargo_rows"])
+    mondays = [date.fromisocalendar(int(row.epi_year), int(row.epi_week), 1) for row in ordered.itertuples()]
+    if any(current != previous + timedelta(weeks=1) for previous, current in zip(mondays, mondays[1:])):
+        raise ValueError("The labelled feature matrix contains a temporal gap.")
+    validation_indexes = select_planned_validation_indexes(
+        len(ordered), int(fold_policy["initial_training_rows"]), int(fold_policy["embargo_rows"]),
+        minimum_folds, maximum_folds,
+    )
     descriptors: list[dict[str, Any]] = []
-    for sequence, validation_index in enumerate(range(first, len(ordered), int(fold_policy["step_size_weeks"])), 1):
+    for sequence, validation_index in enumerate(validation_indexes, 1):
         train_end = validation_index - int(fold_policy["embargo_rows"])
         train = ordered.iloc[:train_end]
         validation = ordered.iloc[validation_index]
@@ -124,8 +137,8 @@ def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tu
             "validationMatrixSha256": _matrix_sha(validation.to_frame().T),
             "labelAvailabilityRule": fold_policy["label_availability_rule"],
         })
-    if len(descriptors) != 68:
-        raise ValueError("The governed assessment must produce exactly 68 folds.")
+    if not minimum_folds <= len(descriptors) <= maximum_folds:
+        raise ValueError("The governed assessment fold count is outside the active policy range.")
     return tuple(descriptors), fold_plan_sha256(descriptors)
 
 
@@ -177,7 +190,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if compute_dataset_id(canonical_case.read_bytes(), canonical_climate.read_bytes(), job["deploymentId"], feature_hash) != job["datasetId"]:
         raise ValueError("Dataset identity could not be recomputed.")
 
-    policy, policy_hash = load_and_validate_assessment_policy(job["deploymentId"])
+    policy, policy_hash = load_and_validate_assessment_policy(
+        job["deploymentId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"]
+    )
     registry, registry_hash = load_and_validate_candidate_registry()
     if (policy["policy_id"], policy["policy_version"], policy_hash, registry_hash) != (
         job["assessmentPolicyId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"], job["candidateRegistrySha256"],
@@ -199,8 +214,10 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "candidate_registry": registry, "candidate_registry_sha256": registry_hash,
         "chronological_order_valid": True, "duplicate_periods_absent": True, "contiguous_history": True, "case_climate_aligned": True,
     })
+    planned_fold_count = int(assessment_policy_result["plannedFoldCount"])
+    labelled_row_count = int(validation["counts"]["labelledRows"])
     if not assessment_policy_result["eligible"] or assessment_policy_result["assessmentStatus"] != "full_assessment_eligible" \
-            or assessment_policy_result["plannedFoldCount"] != 68 or validation["counts"]["labelledRows"] != 173:
+            or not 52 <= planned_fold_count <= 68 or labelled_row_count < 157:
         raise ValueError(f"The workspace is no longer eligible for full dataset assessment: {assessment_policy_result['reasonCodes']}")
 
     _update_job(job_path, job, progress="preparing_assessment")
@@ -218,8 +235,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
 
     _update_job(job_path, job, progress="building_features")
     frame, _ = build_features(canonical_case, canonical_climate, output_path=None)
-    if len(frame) != 173 or list(frame.loc[:, FEATURE_COLUMNS].columns) != list(FEATURE_COLUMNS) or not np.isfinite(frame[FEATURE_COLUMNS + [TARGET]].to_numpy(float)).all():
-        raise ValueError("The governed 173-row, 18-feature assessment matrix is unavailable.")
+    if len(frame) != labelled_row_count or list(frame.loc[:, FEATURE_COLUMNS].columns) != list(FEATURE_COLUMNS) or not np.isfinite(frame[FEATURE_COLUMNS + [TARGET]].to_numpy(float)).all():
+        raise ValueError("The governed dynamic 18-feature assessment matrix is unavailable.")
     feature_path = staging / "artifacts/model_features.csv"
     frame.to_csv(feature_path, index=False, lineterminator="\n")
     generated_at = _now()
@@ -234,8 +251,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
 
     _update_job(job_path, job, progress="creating_fold_plan")
     plan, plan_hash = build_common_fold_plan(frame, policy)
-    if plan[0]["foldId"] != "rolling-origin-0001-2023-W07-to-2023-W09" or plan[-1]["foldId"] != "rolling-origin-0068-2024-W22-to-2024-W24":
-        raise ValueError("The common fold plan differs from governed boundary identities.")
+    if len(plan) != planned_fold_count:
+        raise ValueError("The common fold plan differs from the policy-selected fold count.")
     frozen_plan_hash = plan_hash
     _update_job(job_path, job, progress="checking_candidate_eligibility")
     eligibility = assessment_policy_result["candidateEligibility"]
@@ -290,6 +307,18 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("Candidate execution changed the common fold plan.")
 
     _update_job(job_path, job, progress="aggregating_metrics")
+    is_phase_two = policy["policy_version"] == "p2-v1"
+    artifact_schema_version = "2.0" if is_phase_two else "1.0"
+    available_fold_count = int(assessment_policy_result["availableFoldCount"])
+    fold_cap_applied = bool(assessment_policy_result["foldCapApplied"])
+    selected_start_index = int(assessment_policy_result["selectedValidationStartIndex"])
+    selected_end_index = int(assessment_policy_result["selectedValidationEndIndex"])
+    selected_evaluation_period = {"start": plan[0]["forecastOrigin"], "end": plan[-1]["forecastOrigin"]}
+    phase_two_dynamic = {
+        "labelledRows": labelled_row_count, "availableFoldCount": available_fold_count,
+        "foldCapApplied": fold_cap_applied,
+        "selectedValidationStartIndex": selected_start_index, "selectedValidationEndIndex": selected_end_index,
+    } if is_phase_two else {}
     candidate_results: list[dict[str, Any]] = []
     for model_id in CANDIDATE_IDS:
         records = predictions[model_id]
@@ -302,13 +331,13 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "modelId": model_id, "modelLabel": candidate["model_family"],
             "candidateClass": preflight["candidateClass"], "deployabilityClass": preflight["deployabilityClassification"],
             "parametersSha256": candidate["parameters_sha256"], "eligible": preflight["eligible"],
-            "completionStatus": "complete" if successful == 68 and failed == 0 else "ineligible" if not preflight["eligible"] else "incomplete",
+            "completionStatus": "complete" if successful == planned_fold_count and failed == 0 else "ineligible" if not preflight["eligible"] else "incomplete",
             "reasonCodes": preflight["reasonCodes"] if not preflight["eligible"] else sorted({record["failureReasonCode"] for record in records if record["failureReasonCode"]}) or ["candidate_completed_all_folds"],
             "reasons": preflight["reasons"] if not preflight["eligible"] else (["Candidate completed every fold in the immutable common plan."] if failed == 0 else ["Candidate did not complete every fold and is not selection eligible."]),
             "successfulFolds": successful, "failedFolds": failed,
             "selectionEligible": selection_eligible(
                 policy_eligible=bool(preflight["eligible"]), successful_folds=successful,
-                failed_folds=failed, metrics=metrics,
+                failed_folds=failed, metrics=metrics, required_folds=planned_fold_count,
             ),
             "selectionComplexityRank": candidate["selection_complexity_rank"], "metrics": metrics,
             "executionMode": "fitted_per_fold" if model_id in LEARNED_IDS else "deterministic_baseline_per_fold",
@@ -353,26 +382,33 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "predictions": [predictions[model_id][index] for model_id in CANDIDATE_IDS],
         })
     rolling = {
-        "schemaVersion": "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
+        "schemaVersion": artifact_schema_version, "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"],
         "assessmentPolicy": {"policyId": policy["policy_id"], "policyVersion": policy["policy_version"], "policySha256": policy_hash},
         "candidateRegistrySha256": registry_hash, "foldPolicy": {
             "policyId": policy["fold_policy"]["policy_id"], "policyVersion": policy["fold_policy"]["policy_version"],
             "trainingWindow": "expanding", "initialTrainingRows": 104, "embargoRows": 1,
             "validationRowsPerFold": 1, "stepSizeWeeks": 1, "samePlanForAllCandidates": True,
-        }, "foldPlanSha256": plan_hash, "plannedFoldCount": 68, "candidateIds": list(CANDIDATE_IDS),
+            **({"minimumFoldCount": int(assessment_policy_result["minimumFoldCount"]),
+                "maximumFoldCount": int(assessment_policy_result["maximumFoldCount"]),
+                "foldSelectionRule": policy["fold_policy"].get("fold_selection_rule")} if is_phase_two else {}),
+        }, "foldPlanSha256": plan_hash, "plannedFoldCount": planned_fold_count, **phase_two_dynamic,
+        **({"selectedEvaluationPeriod": selected_evaluation_period} if is_phase_two else {}),
+        "candidateIds": list(CANDIDATE_IDS),
         "featureOrderSha256": feature_hash, "target": TARGET, "horizonWeeks": 2, "folds": fold_values,
         "generatedAt": generated_at,
     }
     rolling_path = staging / "artifacts/rolling_validation.json"
     atomic_json(rolling_path, rolling)
     rolling_hash = sha256_file(rolling_path)
-    selection_reason = f"{winner} had the lowest governed metric sequence among candidates completing all 68 folds." if winner else "No technical winner satisfied the governed completeness and breadth requirements."
+    selection_reason = f"{winner} had the lowest governed metric sequence among candidates completing all {planned_fold_count} folds." if winner else "No technical winner satisfied the governed completeness and breadth requirements."
     comparison = {
-        "schemaVersion": "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
+        "schemaVersion": artifact_schema_version, "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"],
         "assessmentPolicySha256": policy_hash, "candidateRegistrySha256": registry_hash, "rollingValidationSha256": rolling_hash,
-        "foldPlanSha256": plan_hash, "plannedFoldCount": 68, "candidateSetStatus": candidate_set_status,
+        "foldPlanSha256": plan_hash, "plannedFoldCount": planned_fold_count, **phase_two_dynamic,
+        **({"selectedEvaluationPeriod": selected_evaluation_period} if is_phase_two else {}),
+        "candidateSetStatus": candidate_set_status,
         "comparisonPolicy": {"policyId": policy["comparison_policy"]["policy_id"], "policyVersion": policy["comparison_policy"]["policy_version"],
             "primaryMetric": "mae", "tieSequence": policy["comparison_policy"]["tie_sequence"], "tieTolerance": 1e-9,
             "weightedScoring": False, "intersectionOnlyFolds": False},
@@ -398,7 +434,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     winner_mae = winner_candidate["metrics"]["mae"] if winner_candidate else None
     runner_mae = runner_up["metrics"]["mae"] if runner_up else None
     recommendation = {
-        "schemaVersion": "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
+        "schemaVersion": artifact_schema_version, "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "assessmentPolicySha256": policy_hash,
         "comparisonSha256": comparison_hash, "foldPlanSha256": plan_hash, "candidateRegistrySha256": registry_hash,
         "recommendationPolicy": {"policyId": policy["recommendation_policy"]["policy_id"], "policyVersion": policy["recommendation_policy"]["policy_version"], "strengthThresholdStatus": "not_governed"},
@@ -409,10 +445,11 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "evidenceInputs": {"winnerMae": winner_mae, "runnerUpMae": runner_mae,
             "absoluteMaeGap": (runner_mae - winner_mae) if winner_mae is not None and runner_mae is not None else None,
             "relativeMaeGap": ((runner_mae - winner_mae) / runner_mae) if winner_mae is not None and runner_mae not in {None, 0} else None,
-            "successfulFoldRatio": 1.0 if winner else None, "failedFoldCount": winner_candidate["failedFolds"] if winner_candidate else 68,
+            "successfulFoldRatio": 1.0 if winner else None, "failedFoldCount": winner_candidate["failedFolds"] if winner_candidate else planned_fold_count,
             "clippingCount": winner_candidate["metrics"]["clippingCount"] if winner_candidate else 0,
             "warningCount": winner_candidate["metrics"]["warningCount"] if winner_candidate else 0,
-            "candidateBreadth": len(complete), "tieBreakStageUsed": tie_stage, "datasetFoldCount": 68},
+            "candidateBreadth": len(complete), "tieBreakStageUsed": tie_stage, "datasetFoldCount": planned_fold_count},
+        **({**phase_two_dynamic, "plannedFoldCount": planned_fold_count} if is_phase_two else {}),
         "limitations": limitations, "approvalRequired": True, "approvalEnabled": False,
         "approvalStatus": "approval_pending", "adoptionStatus": "not_adopted", "automaticAdoptionAllowed": False,
         "generatedAt": _now(),
@@ -422,10 +459,14 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     recommendation_hash = sha256_file(recommendation_path)
 
     assessment = {
-        "schemaVersion": "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
+        "schemaVersion": artifact_schema_version, "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "sourceType": "uploaded",
         "acceptedPeriod": validation["acceptedPeriod"], "assessmentPolicy": {"policyId": policy["policy_id"], "policyVersion": policy["policy_version"], "policySha256": policy_hash},
-        "foldPlanSha256": plan_hash, "candidateRegistrySha256": registry_hash, "candidateSetStatus": candidate_set_status,
+        "foldPlanSha256": plan_hash, "candidateRegistrySha256": registry_hash,
+        **({**phase_two_dynamic, "plannedFoldCount": planned_fold_count} if is_phase_two else {}),
+        **({"selectedEvaluationPeriod": selected_evaluation_period,
+            "decisionCompatibilityStatus": assessment_policy_result["decisionCompatibilityStatus"]} if is_phase_two else {}),
+        "candidateSetStatus": candidate_set_status,
         "comparisonStatus": "complete", "recommendationStatus": recommendation_status, "approvalStatus": "approval_pending",
         "adoptionStatus": "not_adopted", "limitations": limitations,
         "provenance": {"validationRecordSha256": job["validationRecordSha256"],
@@ -445,17 +486,25 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         _schema_validate(value, schema_name)
     committed_at = _now()
     summary = {
-        "schemaVersion": "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
+        "schemaVersion": artifact_schema_version, "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "sourceType": "uploaded", "acceptedPeriod": validation["acceptedPeriod"],
-        "labelledRows": 173, "committedAt": committed_at, "assessmentStatus": "assessment_complete", "approvalStatus": "approval_pending",
+        "labelledRows": labelled_row_count, **({"availableFoldCount": available_fold_count} if is_phase_two else {}),
+        "committedAt": committed_at, "assessmentStatus": "assessment_complete", "approvalStatus": "approval_pending",
         "adoptionStatus": "not_adopted", "foldPolicy": {"policyId": policy["fold_policy"]["policy_id"], "policyVersion": policy["fold_policy"]["policy_version"],
-            "plannedFoldCount": 68, "initialTrainingRows": 104, "embargoRows": 1, "validationRowsPerFold": 1,
+            "plannedFoldCount": planned_fold_count,
+            **({"minimumFoldCount": int(assessment_policy_result["minimumFoldCount"]),
+                "maximumFoldCount": int(assessment_policy_result["maximumFoldCount"]), "foldCapApplied": fold_cap_applied,
+                "selectedValidationStartIndex": selected_start_index, "selectedValidationEndIndex": selected_end_index,
+                "selectedEvaluationPeriod": selected_evaluation_period} if is_phase_two else {}),
+            "initialTrainingRows": 104, "embargoRows": 1, "validationRowsPerFold": 1,
             "stepSizeWeeks": 1, "horizonWeeks": 2, "samePlanForAllCandidates": True},
         "foldPlanSha256": plan_hash, "candidateSetStatus": candidate_set_status, "candidates": candidate_results,
         "technicalWinnerModelId": winner, "selectionReason": selection_reason, "tieStage": tie_stage,
         "baselineRequirementSatisfied": baseline_ok, "learnedModelRequirementSatisfied": learned_ok,
         "recommendationStatus": recommendation_status, "recommendationStrength": "not_available",
-        "approvalRequired": True, "approvalEnabled": False, "limitations": limitations,
+        "approvalRequired": True, "approvalEnabled": False,
+        **({"decisionCompatibilityStatus": assessment_policy_result["decisionCompatibilityStatus"]} if is_phase_two else {}),
+        "limitations": limitations,
         "evidenceHashes": {"rollingValidationSha256": rolling_hash, "candidateComparisonSha256": comparison_hash, "recommendationSha256": recommendation_hash},
         "provenance": {"validationRecordSha256": job["validationRecordSha256"], "assessmentPolicySha256": policy_hash,
             "candidateRegistrySha256": registry_hash, "featureOrderSha256": feature_hash},

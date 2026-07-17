@@ -1,4 +1,4 @@
-"""Pure P1.4D-1 dataset-assessment governance and eligibility evaluation."""
+"""Versioned, side-effect-free dataset-assessment governance evaluation."""
 from __future__ import annotations
 
 import hashlib
@@ -26,8 +26,8 @@ REASON_MESSAGES = {
     "horizon_mismatch": "The forecast horizon differs from the governed two-week horizon.",
     "non_contiguous_history": "Assessment requires chronological, duplicate-free, contiguous aligned history.",
     "candidate_registry_mismatch": "The candidate registry differs from the assessment policy binding.",
-    "insufficient_labelled_rows": "Recommendation-grade assessment requires at least 173 labelled rows.",
-    "insufficient_planned_folds": "Recommendation-grade assessment requires 68 governed temporal folds.",
+    "insufficient_labelled_rows": "The dataset has fewer labelled rows than the active assessment policy requires.",
+    "insufficient_planned_folds": "The dataset has fewer temporal folds than the active assessment policy requires.",
     "fold_cap_governance_pending": "The dataset provides more than 68 folds, but a larger runtime fold cap and selection rule are not yet governed.",
     "no_eligible_baseline": "No governed naive baseline is eligible for the common fold plan.",
     "no_eligible_learned_model": "No deployable learned candidate is eligible for the common fold plan.",
@@ -47,18 +47,27 @@ def canonical_policy_sha256(policy: Mapping[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def policy_path(deployment_id: str) -> Path:
+def policy_path(deployment_id: str, policy_version: str | None = None) -> Path:
     if not deployment_id or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for character in deployment_id):
         raise RuntimeAssessmentPolicyError("Invalid deployment identifier for dataset-assessment policy.")
-    path = (ROOT / "config" / "deployments" / deployment_id / "assessment_policy.json").resolve()
     parent = (ROOT / "config" / "deployments" / deployment_id).resolve()
+    if policy_version in (None, "p2-v1"):
+        filename = "assessment_policy.json"
+    elif policy_version == "p1.4d-1-v1":
+        filename = "assessment_policy_p1.4d-1-v1.json"
+    else:
+        raise RuntimeAssessmentPolicyError("Unsupported dataset-assessment policy version.")
+    path = (parent / filename).resolve()
     if path.parent != parent:
         raise RuntimeAssessmentPolicyError("Dataset-assessment policy path escaped its deployment directory.")
     return path
 
 
-def load_and_validate_assessment_policy(deployment_id: str) -> tuple[dict[str, Any], str]:
-    path = policy_path(deployment_id)
+def load_and_validate_assessment_policy(
+    deployment_id: str, policy_version: str | None = None,
+    expected_sha256: str | None = None,
+) -> tuple[dict[str, Any], str]:
+    path = policy_path(deployment_id, policy_version)
     try:
         policy = json.loads(path.read_text(encoding="utf-8"))
         schema = json.loads(POLICY_SCHEMA_PATH.read_text(encoding="utf-8"))
@@ -76,6 +85,10 @@ def load_and_validate_assessment_policy(deployment_id: str) -> tuple[dict[str, A
     computed = canonical_policy_sha256(policy)
     if policy.get("policy_sha256") != computed:
         errors.append("Dataset-assessment policy hash mismatch.")
+    if policy_version is not None and policy.get("policy_version") != policy_version:
+        errors.append("Dataset-assessment policy version resolution mismatch.")
+    if expected_sha256 is not None and computed != expected_sha256:
+        errors.append("Dataset-assessment policy expected hash mismatch.")
 
     profile_path = ROOT / "config" / "deployments" / deployment_id / "profile.json"
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
@@ -133,6 +146,26 @@ def available_fold_count(labelled_rows: int, fold_policy: Mapping[str, Any]) -> 
     return len(range(first_validation_index, max(0, int(labelled_rows)), step))
 
 
+def select_planned_validation_indexes(
+    labelled_row_count: int,
+    initial_training_rows: int,
+    embargo_rows: int,
+    minimum_fold_count: int,
+    maximum_fold_count: int,
+) -> tuple[int, ...]:
+    """Select the deterministic recent validation window without file access."""
+    values = (labelled_row_count, initial_training_rows, embargo_rows, minimum_fold_count, maximum_fold_count)
+    if any(isinstance(value, bool) or not isinstance(value, int) for value in values):
+        raise RuntimeAssessmentPolicyError("Fold selection parameters must be integers.")
+    if initial_training_rows < 1 or embargo_rows < 0 or minimum_fold_count < 1 or maximum_fold_count < minimum_fold_count:
+        raise RuntimeAssessmentPolicyError("Fold selection parameters are invalid.")
+    first = initial_training_rows + embargo_rows
+    available = tuple(range(first, max(0, labelled_row_count)))
+    if len(available) < minimum_fold_count:
+        raise RuntimeAssessmentPolicyError("Insufficient temporal folds for dataset assessment.")
+    return available[-maximum_fold_count:]
+
+
 def _matches_geography(actual: Any, expected: Mapping[str, Any]) -> bool:
     return isinstance(actual, Mapping) and (
         actual.get("geography_level"), actual.get("geography_id"), actual.get("geography_name")
@@ -187,16 +220,26 @@ def evaluate_assessment_policy(policy: Mapping[str, Any], context: Mapping[str, 
     fold_policy = policy.get("fold_policy", {})
     labelled_rows = max(0, int(context.get("labelled_rows", 0)))
     available = available_fold_count(labelled_rows, fold_policy)
-    minimum_rows = int(fold_policy.get("recommendation_grade_minimum_labelled_rows", 0))
-    minimum_folds = int(fold_policy.get("recommendation_grade_minimum_folds", 0))
+    is_phase_two = policy.get("policy_version") == "p2-v1"
+    minimum_rows = int(fold_policy.get("minimum_labelled_rows",
+        fold_policy.get("recommendation_grade_minimum_labelled_rows", 0)))
+    minimum_folds = int(fold_policy.get("minimum_fold_count",
+        fold_policy.get("recommendation_grade_minimum_folds", 0)))
+    maximum_folds = int(fold_policy.get("maximum_fold_count",
+        fold_policy.get("maximum_fold_behavior", {}).get("currently_governed_maximum_folds", 0)))
     if labelled_rows < minimum_rows:
         fail("insufficient_labelled_rows", True)
     if available < minimum_folds:
         fail("insufficient_planned_folds", True)
     maximum = fold_policy.get("maximum_fold_behavior", {}).get("currently_governed_maximum_folds")
-    if maximum is not None and available > int(maximum):
+    if not is_phase_two and maximum is not None and available > int(maximum):
         fail("fold_cap_governance_pending", True)
-    planned = available if not (maximum is not None and available > int(maximum)) else 0
+    if is_phase_two:
+        planned = min(available, maximum_folds) if available >= minimum_folds else 0
+    else:
+        planned = available if not (maximum is not None and available > int(maximum)) else 0
+    fold_cap_applied = bool(is_phase_two and available > maximum_folds)
+    selected_indexes = tuple(range(labelled_rows - planned, labelled_rows)) if planned else ()
 
     registry_by_id = {value.get("model_id"): value for value in registry.get("candidates", [])}
     prerequisite_overrides = context.get("candidate_prerequisites", {})
@@ -277,9 +320,15 @@ def evaluate_assessment_policy(policy: Mapping[str, Any], context: Mapping[str, 
     return {
         "eligible": eligible,
         "assessmentStatus": status,
+        "assessmentEligibilityStatus": status,
         "labelledRows": labelled_rows,
         "availableFoldCount": available,
         "plannedFoldCount": planned,
+        "minimumFoldCount": minimum_folds,
+        "maximumFoldCount": maximum_folds,
+        "foldCapApplied": fold_cap_applied,
+        "selectedValidationStartIndex": selected_indexes[0] if selected_indexes else None,
+        "selectedValidationEndIndex": selected_indexes[-1] if selected_indexes else None,
         "foldPlan": {
             "trainingWindow": fold_policy.get("training_window"),
             "initialTrainingRows": fold_policy.get("initial_training_rows"),
@@ -288,8 +337,14 @@ def evaluate_assessment_policy(policy: Mapping[str, Any], context: Mapping[str, 
             "stepSizeWeeks": fold_policy.get("step_size_weeks"),
             "horizonWeeks": fold_policy.get("target_horizon_weeks"),
             "samePlanForAllCandidates": fold_policy.get("same_precomputed_plan_for_all_candidates"),
-            "maximumFoldCapStatus": fold_policy.get("maximum_fold_behavior", {}).get("status"),
+            "firstAvailableValidationIndex": int(fold_policy.get("first_available_validation_index",
+                int(fold_policy.get("initial_training_rows", 0)) + int(fold_policy.get("embargo_rows", 0)))),
+            "minimumFoldCount": minimum_folds,
+            "maximumFoldCount": maximum_folds,
+            "foldSelectionRule": fold_policy.get("fold_selection_rule"),
+            "maximumFoldCapStatus": "applied" if fold_cap_applied else "not_applied" if is_phase_two else fold_policy.get("maximum_fold_behavior", {}).get("status"),
         },
+        "decisionCompatibilityStatus": policy.get("decision_compatibility", {}).get("status", "phase1_decision_policy_available"),
         "candidateSetStatus": candidate_set_status,
         "candidateEligibility": candidates,
         "recommendationEligibility": False,
@@ -302,4 +357,7 @@ def evaluate_assessment_policy(policy: Mapping[str, Any], context: Mapping[str, 
         "policyId": policy.get("policy_id"),
         "policyVersion": policy.get("policy_version"),
         "policySha256": policy.get("policy_sha256"),
+        "assessmentPolicyId": policy.get("policy_id"),
+        "assessmentPolicyVersion": policy.get("policy_version"),
+        "assessmentPolicySha256": policy.get("policy_sha256"),
     }

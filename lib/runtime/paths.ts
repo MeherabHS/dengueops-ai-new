@@ -75,6 +75,8 @@ export function runtimeCollectionPaths(runtimeRoot: string) {
     locks: assertContained(root, path.join(root, "locks")),
     outcomeStaging: assertContained(root, path.join(root, "outcome-staging")),
     forecastOutcomes: assertContained(root, path.join(root, "forecast-outcomes")),
+    degradationStaging: assertContained(root, path.join(root, "degradation-staging")),
+    degradationEvidence: assertContained(root, path.join(root, "degradation-evidence")),
   };
 }
 
@@ -90,6 +92,9 @@ export function monitoringPaths(runtimeRoot: string, deploymentId: string) {
   const root = assertContained(deployment.root, path.join(deployment.root, "monitoring"));
   return { root, latest: assertContained(root, path.join(root, "latest.json")), commitLock: assertContained(root, path.join(root, "locks", "commit.lock")) };
 }
+
+export function modelDegradationPaths(runtimeRoot:string,evidenceId:string){const collections=runtimeCollectionPaths(runtimeRoot);const staging=uuidPath(collections.degradationStaging,evidenceId,"evidence");const committed=uuidPath(collections.degradationEvidence,evidenceId,"evidence");return{staging,committed,evidence:assertContained(committed,path.join(committed,"artifacts","degradation_evidence.json")),summary:assertContained(committed,path.join(committed,"artifacts","degradation_summary.json")),commit:assertContained(committed,path.join(committed,"metadata","commit.json"))};}
+export function modelDegradationLatestPaths(runtimeRoot:string,deploymentId:string){const deployment=deploymentRuntimePaths(runtimeRoot,deploymentId);const root=assertContained(deployment.root,path.join(deployment.root,"degradation"));return{root,latest:assertContained(root,path.join(root,"latest.json")),commitLock:assertContained(root,path.join(root,"locks","commit.lock"))};}
 
 function uuidPath(root: string, value: string, label: string): string {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {

@@ -1,6 +1,555 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://dengueops.ai/schemas/runtime_recommendation.schema.json","type":"object","additionalProperties":false,
-  "required":["schemaVersion","assessmentId","jobId","workspaceId","datasetId","deploymentId","assessmentPolicySha256","comparisonSha256","foldPlanSha256","candidateRegistrySha256","recommendationPolicy","technicalWinnerModelId","winnerParameterSha256","recommendationStatus","recommendationStrength","recommendationReason","candidateSetStatus","baselineRequirementSatisfied","learnedModelRequirementSatisfied","evidenceInputs","limitations","approvalRequired","approvalEnabled","approvalStatus","adoptionStatus","automaticAdoptionAllowed","generatedAt"],
-  "properties":{"schemaVersion":{"const":"1.0"},"assessmentId":{"$ref":"#/$defs/uuid"},"jobId":{"$ref":"#/$defs/uuid"},"workspaceId":{"$ref":"#/$defs/uuid"},"datasetId":{"$ref":"#/$defs/sha"},"deploymentId":{"const":"dhaka_south"},"assessmentPolicySha256":{"$ref":"#/$defs/sha"},"comparisonSha256":{"$ref":"#/$defs/sha"},"foldPlanSha256":{"$ref":"#/$defs/sha"},"candidateRegistrySha256":{"$ref":"#/$defs/sha"},"recommendationPolicy":{"type":"object","additionalProperties":false,"required":["policyId","policyVersion","strengthThresholdStatus"],"properties":{"policyId":{"const":"RUNTIME.ASSESSMENT.RECOMMENDATION_STRENGTH"},"policyVersion":{"const":"p1.4d-1-v1"},"strengthThresholdStatus":{"const":"not_governed"}}},"technicalWinnerModelId":{"anyOf":[{"$ref":"#/$defs/model"},{"type":"null"}]},"winnerParameterSha256":{"anyOf":[{"$ref":"#/$defs/sha"},{"type":"null"}]},"recommendationStatus":{"enum":["evidence_only","no_recommendation"]},"recommendationStrength":{"const":"not_available"},"recommendationReason":{"type":"string","minLength":1},"candidateSetStatus":{"enum":["complete_candidate_set","partial_candidate_set","insufficient_candidate_breadth"]},"baselineRequirementSatisfied":{"type":"boolean"},"learnedModelRequirementSatisfied":{"type":"boolean"},"evidenceInputs":{"type":"object","additionalProperties":false,"required":["winnerMae","runnerUpMae","absoluteMaeGap","relativeMaeGap","successfulFoldRatio","failedFoldCount","clippingCount","warningCount","candidateBreadth","tieBreakStageUsed","datasetFoldCount"],"properties":{"winnerMae":{"type":["number","null"],"minimum":0},"runnerUpMae":{"type":["number","null"],"minimum":0},"absoluteMaeGap":{"type":["number","null"]},"relativeMaeGap":{"type":["number","null"]},"successfulFoldRatio":{"type":["number","null"],"minimum":0,"maximum":1},"failedFoldCount":{"type":"integer","minimum":0},"clippingCount":{"type":"integer","minimum":0},"warningCount":{"type":"integer","minimum":0},"candidateBreadth":{"type":"integer","minimum":0,"maximum":7},"tieBreakStageUsed":{"type":["string","null"]},"datasetFoldCount":{"const":68}}},"limitations":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}},"approvalRequired":{"const":true},"approvalEnabled":{"const":false},"approvalStatus":{"const":"approval_pending"},"adoptionStatus":{"const":"not_adopted"},"automaticAdoptionAllowed":{"const":false},"generatedAt":{"type":"string","format":"date-time"}},
-  "$defs":{"uuid":{"type":"string","format":"uuid"},"sha":{"type":"string","pattern":"^[a-f0-9]{64}$"},"model":{"enum":["previous_week_naive","moving_average_4w","seasonal_naive_52w","ridge_regression","poisson_regression","random_forest","gradient_boosting"]}}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assessmentId",
+        "jobId",
+        "workspaceId",
+        "datasetId",
+        "deploymentId",
+        "assessmentPolicySha256",
+        "comparisonSha256",
+        "foldPlanSha256",
+        "candidateRegistrySha256",
+        "recommendationPolicy",
+        "technicalWinnerModelId",
+        "winnerParameterSha256",
+        "recommendationStatus",
+        "recommendationStrength",
+        "recommendationReason",
+        "candidateSetStatus",
+        "baselineRequirementSatisfied",
+        "learnedModelRequirementSatisfied",
+        "evidenceInputs",
+        "limitations",
+        "approvalRequired",
+        "approvalEnabled",
+        "approvalStatus",
+        "adoptionStatus",
+        "automaticAdoptionAllowed",
+        "generatedAt"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "assessmentId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "assessmentPolicySha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "comparisonSha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "foldPlanSha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "candidateRegistrySha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "recommendationPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policyId",
+            "policyVersion",
+            "strengthThresholdStatus"
+          ],
+          "properties": {
+            "policyId": {
+              "const": "RUNTIME.ASSESSMENT.RECOMMENDATION_STRENGTH"
+            },
+            "policyVersion": {
+              "const": "p1.4d-1-v1"
+            },
+            "strengthThresholdStatus": {
+              "const": "not_governed"
+            }
+          }
+        },
+        "technicalWinnerModelId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/p1/model"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winnerParameterSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/p1/sha"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recommendationStatus": {
+          "enum": [
+            "evidence_only",
+            "no_recommendation"
+          ]
+        },
+        "recommendationStrength": {
+          "const": "not_available"
+        },
+        "recommendationReason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidateSetStatus": {
+          "enum": [
+            "complete_candidate_set",
+            "partial_candidate_set",
+            "insufficient_candidate_breadth"
+          ]
+        },
+        "baselineRequirementSatisfied": {
+          "type": "boolean"
+        },
+        "learnedModelRequirementSatisfied": {
+          "type": "boolean"
+        },
+        "evidenceInputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "winnerMae",
+            "runnerUpMae",
+            "absoluteMaeGap",
+            "relativeMaeGap",
+            "successfulFoldRatio",
+            "failedFoldCount",
+            "clippingCount",
+            "warningCount",
+            "candidateBreadth",
+            "tieBreakStageUsed",
+            "datasetFoldCount"
+          ],
+          "properties": {
+            "winnerMae": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "runnerUpMae": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "absoluteMaeGap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "relativeMaeGap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "successfulFoldRatio": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "failedFoldCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "clippingCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "warningCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "candidateBreadth": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7
+            },
+            "tieBreakStageUsed": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "datasetFoldCount": {
+              "const": 68
+            }
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "approvalRequired": {
+          "const": true
+        },
+        "approvalEnabled": {
+          "const": false
+        },
+        "approvalStatus": {
+          "const": "approval_pending"
+        },
+        "adoptionStatus": {
+          "const": "not_adopted"
+        },
+        "automaticAdoptionAllowed": {
+          "const": false
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assessmentId",
+        "jobId",
+        "workspaceId",
+        "datasetId",
+        "deploymentId",
+        "assessmentPolicySha256",
+        "comparisonSha256",
+        "foldPlanSha256",
+        "candidateRegistrySha256",
+        "recommendationPolicy",
+        "technicalWinnerModelId",
+        "winnerParameterSha256",
+        "recommendationStatus",
+        "recommendationStrength",
+        "recommendationReason",
+        "candidateSetStatus",
+        "baselineRequirementSatisfied",
+        "learnedModelRequirementSatisfied",
+        "evidenceInputs",
+        "limitations",
+        "approvalRequired",
+        "approvalEnabled",
+        "approvalStatus",
+        "adoptionStatus",
+        "automaticAdoptionAllowed",
+        "generatedAt",
+        "labelledRows",
+        "availableFoldCount",
+        "plannedFoldCount",
+        "foldCapApplied",
+        "selectedValidationStartIndex",
+        "selectedValidationEndIndex"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "2.0"
+        },
+        "assessmentId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "assessmentPolicySha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "comparisonSha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "foldPlanSha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "candidateRegistrySha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "recommendationPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policyId",
+            "policyVersion",
+            "strengthThresholdStatus"
+          ],
+          "properties": {
+            "policyId": {
+              "const": "RUNTIME.ASSESSMENT.RECOMMENDATION_STRENGTH"
+            },
+            "policyVersion": {
+              "const": "p1.4d-1-v1"
+            },
+            "strengthThresholdStatus": {
+              "const": "not_governed"
+            }
+          }
+        },
+        "technicalWinnerModelId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/p2/model"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winnerParameterSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/p2/sha"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recommendationStatus": {
+          "enum": [
+            "evidence_only",
+            "no_recommendation"
+          ]
+        },
+        "recommendationStrength": {
+          "const": "not_available"
+        },
+        "recommendationReason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidateSetStatus": {
+          "enum": [
+            "complete_candidate_set",
+            "partial_candidate_set",
+            "insufficient_candidate_breadth"
+          ]
+        },
+        "baselineRequirementSatisfied": {
+          "type": "boolean"
+        },
+        "learnedModelRequirementSatisfied": {
+          "type": "boolean"
+        },
+        "evidenceInputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "winnerMae",
+            "runnerUpMae",
+            "absoluteMaeGap",
+            "relativeMaeGap",
+            "successfulFoldRatio",
+            "failedFoldCount",
+            "clippingCount",
+            "warningCount",
+            "candidateBreadth",
+            "tieBreakStageUsed",
+            "datasetFoldCount"
+          ],
+          "properties": {
+            "winnerMae": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "runnerUpMae": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "absoluteMaeGap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "relativeMaeGap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "successfulFoldRatio": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "failedFoldCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "clippingCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "warningCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "candidateBreadth": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7
+            },
+            "tieBreakStageUsed": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "datasetFoldCount": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 68
+            }
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "approvalRequired": {
+          "const": true
+        },
+        "approvalEnabled": {
+          "const": false
+        },
+        "approvalStatus": {
+          "const": "approval_pending"
+        },
+        "adoptionStatus": {
+          "const": "not_adopted"
+        },
+        "automaticAdoptionAllowed": {
+          "const": false
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "labelledRows": {
+          "type": "integer",
+          "minimum": 157
+        },
+        "availableFoldCount": {
+          "type": "integer",
+          "minimum": 52
+        },
+        "plannedFoldCount": {
+          "type": "integer",
+          "minimum": 52,
+          "maximum": 68
+        },
+        "foldCapApplied": {
+          "type": "boolean"
+        },
+        "selectedValidationStartIndex": {
+          "type": "integer",
+          "minimum": 105
+        },
+        "selectedValidationEndIndex": {
+          "type": "integer",
+          "minimum": 156
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "p1": {
+      "uuid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "sha": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "model": {
+        "enum": [
+          "previous_week_naive",
+          "moving_average_4w",
+          "seasonal_naive_52w",
+          "ridge_regression",
+          "poisson_regression",
+          "random_forest",
+          "gradient_boosting"
+        ]
+      }
+    },
+    "p2": {
+      "uuid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "sha": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "model": {
+        "enum": [
+          "previous_week_naive",
+          "moving_average_4w",
+          "seasonal_naive_52w",
+          "ridge_regression",
+          "poisson_regression",
+          "random_forest",
+          "gradient_boosting"
+        ]
+      }
+    }
+  }
 }

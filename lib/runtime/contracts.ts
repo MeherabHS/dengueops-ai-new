@@ -43,6 +43,11 @@ export interface RuntimeAssessmentEligibility {
   labelledRows: number;
   availableFoldCount: number;
   plannedFoldCount: number;
+  minimumFoldCount: number;
+  maximumFoldCount: number;
+  foldCapApplied: boolean;
+  selectedValidationStartIndex: number | null;
+  selectedValidationEndIndex: number | null;
   foldPlan: {
     trainingWindow: "expanding";
     initialTrainingRows: 104;
@@ -51,7 +56,11 @@ export interface RuntimeAssessmentEligibility {
     stepSizeWeeks: 1;
     horizonWeeks: 2;
     samePlanForAllCandidates: true;
-    maximumFoldCapStatus: "governance_pending";
+    firstAvailableValidationIndex: number;
+    minimumFoldCount: number;
+    maximumFoldCount: number;
+    foldSelectionRule: string | null;
+    maximumFoldCapStatus: "governance_pending" | "applied" | "not_applied";
   };
   candidateSetStatus:
     | "complete_candidate_set"
@@ -75,8 +84,13 @@ export interface RuntimeAssessmentEligibility {
   reasonCodes: string[];
   reasons: string[];
   policyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE";
-  policyVersion: "p1.4d-1-v1";
+  policyVersion: "p1.4d-1-v1" | "p2-v1";
   policySha256: string;
+  assessmentPolicyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE";
+  assessmentPolicyVersion: "p1.4d-1-v1" | "p2-v1";
+  assessmentPolicySha256: string;
+  assessmentEligibilityStatus: AssessmentStatus;
+  decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_not_yet_available";
 }
 
 export interface RuntimeEligibility {
@@ -182,7 +196,7 @@ export interface DatasetAssessmentJobRecord extends RuntimeJobBase {
   assessmentId: string;
   workflowMode: "assess_dataset";
   assessmentPolicyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE";
-  assessmentPolicyVersion: "p1.4d-1-v1";
+  assessmentPolicyVersion: "p1.4d-1-v1" | "p2-v1";
   assessmentPolicySha256: string;
   candidateRegistrySha256: string;
   committedAssessmentId: string | null;
@@ -211,18 +225,38 @@ export interface ForecastObservationRequest {
   observationRecordedAt: string; limitationsAcknowledged: true;
 }
 
-export interface ForecastOutcomeJobRecord {
-  schemaVersion:"1.0"; jobKind:"forecast_outcome"; jobId:string; outcomeId:string; forecastRunId:string;
+interface ForecastOutcomeJobCommon {
+  jobKind:"forecast_outcome"; jobId:string; outcomeId:string; forecastRunId:string;
   expectedForecastCommitSha256:string; observationPayloadSha256:string;
   observation:Omit<ForecastObservationRequest,"forecastRunId"|"expectedForecastCommitSha256">;
   operatorIdentifier:string; deploymentId:"dhaka_south"; workflowMode:"forecast_outcome_monitoring";
-  policyId:"RUNTIME.FORECAST_OUTCOME.MONITORING"; policyVersion:"p1.4g-v1"; policySha256:string;
+  policyId:"RUNTIME.FORECAST_OUTCOME.MONITORING"; policySha256:string;
   status:RuntimeJobStatus; progress:string; createdAt:string; claimedAt:string|null; startedAt:string|null; updatedAt:string;
   completedAt:string|null; heartbeatAt:string|null; workerId:string|null; processId:number|null; timeoutSeconds:number;
   retryCount:number; error:{code:string;message:string;retryable:boolean}|null; committedOutcomeId:string|null;
 }
+export type ForecastOutcomeJobRecord=(ForecastOutcomeJobCommon&{schemaVersion:"1.0";policyVersion:"p1.4g-v1"})|(ForecastOutcomeJobCommon&{schemaVersion:"2.0";policyVersion:"p2-v1"});
 
-export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord | ForecastOutcomeJobRecord;
+export type ForecastOutcomeSourceFamily="quick_forecast_p1"|"approved_forecast_p1"|"approved_forecast_p2";
+export interface MonitoringBreakdown {identity:string;evaluatedForecastCount:number;cumulativeMAE:number;cumulativeRMSE:number;cumulativeBias:number}
+export interface MonitoringSummary {
+  schemaVersion:"1.0"|"2.0";deploymentId:"dhaka_south";policyId:"RUNTIME.FORECAST_OUTCOME.MONITORING";policyVersion:"p1.4g-v1"|"p2-v1";policySha256:string;
+  evaluatedForecastCount:number;totalEligibleForecastCount:number;pendingOutcomeCount:number;cumulativeMAE:number;cumulativeRMSE:number;cumulativeBias:number;cumulativeMPE:number|null;cumulativeMAPE:number|null;
+  percentageMetricEvaluatedCount:number;zeroObservedCount:number;empiricalRangeEvaluatedCount:number;empiricalRangeCoveredCount:number;empiricalCoverage:number|null;latestEvaluatedTargetPeriod:string;
+  modelBreakdowns:MonitoringBreakdown[];forecastPolicyBreakdowns:MonitoringBreakdown[];uncertaintyStatusBreakdowns:MonitoringBreakdown[];sourceFamilyBreakdowns?:MonitoringBreakdown[];monitoringPolicyBreakdowns?:MonitoringBreakdown[];
+  latestSourceEvidence?:{sourceFamily:ForecastOutcomeSourceFamily;modelId:string;trainingRowCount:number|null;plannedFoldCount:number|null;targetPeriod:string};outcomeSetSha256:string;limitations:string[];
+}
+export type MonitoringSummaryResponse={ok:true;pointer:Record<string,unknown>;summary:MonitoringSummary;latestOutcome:Record<string,unknown>}|RuntimeErrorResponse;
+
+export interface DegradationEvidenceJobRecord{schemaVersion:"1.0";jobKind:"degradation_evidence";jobId:string;evidenceId:string;deploymentId:"dhaka_south";geography:{level:"city";id:"BGD-DHAKA-SOUTH";name:"Dhaka South"};workflowMode:"degradation_evidence";policyId:"RUNTIME.MODEL_DEGRADATION.EVIDENCE";policyVersion:"p2-v1";policySha256:string;expectedMonitoringLatestSha256:string;expectedMonitoringSummarySha256:string;expectedIncludedOutcomeSetSha256:string;evidenceOnlyAcknowledged:true;status:RuntimeJobStatus;progress:string;createdAt:string;claimedAt:string|null;startedAt:string|null;updatedAt:string;completedAt:string|null;heartbeatAt:string|null;workerId:string|null;processId:number|null;timeoutSeconds:number;retryCount:0;error:{code:string;message:string;retryable:boolean}|null;committedEvidenceId:string|null}
+export type DegradationEvidenceState="computable_descriptive_evidence"|"insufficient_recent_outcomes"|"insufficient_reference_outcomes"|"window_size_not_governed"|"sample_sufficiency_not_governed"|"percentage_metric_unavailable"|"range_metric_unavailable"|"not_applicable_no_assessment_reference"|"limited_cross_population_comparability"|"forecast_value_basis_mismatch"|"identity_not_comparable"|"unknown_identity_rejected"|"evidence_integrity_failure";
+export interface ModelDegradationAssessmentReference{referenceType:"committed_assessment";assessmentId:string;modelId:string;modelFamily:string;parameterSha256:string;plannedFoldCount:number;successfulFolds:number;failedFolds:0;observedOutcomeCount:number;assessmentMAE:number;observedMAE:number;maeDelta:number;maeRatio:number|null;assessmentRMSE:number;observedRMSE:number;rmseDelta:number;rmseRatio:number|null;comparabilityStatus:"limited_cross_population_comparability";forecastValueBasisStatus:"equivalent_no_clipping_observed"|"forecast_value_basis_mismatch";sampleSufficiencyStatus:"not_governed";materialWorseningStatus:"not_governed";lifecycleActionStatus:"prohibited_not_generated";selectedEvaluationPeriod:{start:string;end:string}}
+export interface ModelDegradationCohort{cohortId:string;outcomeSetSha256:string;identity:{sourceFamily:ForecastOutcomeSourceFamily;modelId:string;modelFamily:string;parameterSha256:string;forecastPolicy:{policyId:string;policyVersion:string;policySha256:string};monitoringPolicy:{policyId:string;policyVersion:string;policySha256:string};uncertaintyStatus:string};outcomeCount:number;actualPopulation:{mae:number;rmse:number;signedBias:number;absoluteBias:number;mpe:number|null;mape:number|null;percentageEligibleCount:number;rangeEligibleCount:number;empiricalCoverage:number|null};trainingContext:{trainingRowCounts:number[];trainingPeriods:string[];variationRecorded:boolean};assessmentReferenceStatus:"computable_descriptive_evidence"|"not_applicable_no_assessment_reference";assessmentReferences:ModelDegradationAssessmentReference[];monitoringWindow:{status:"window_size_not_governed";windowOutcomeCount:null;metricsCalculated:false;sampleSufficiencyStatus:"not_governed"};warnings:string[]}
+export interface ModelDegradationEvidence{schemaVersion:"1.0";evidenceId:string;deploymentId:"dhaka_south";degradationPolicy:{policyId:"RUNTIME.MODEL_DEGRADATION.EVIDENCE";policyVersion:"p2-v1";policySha256:string};monitoringPolicy:{policyId:"RUNTIME.FORECAST_OUTCOME.MONITORING";policyVersion:"p2-v1";policySha256:string};monitoringInput:{latestSha256:string;summarySha256:string;includedOutcomeSetSha256:string;verifiedOutcomeCount:number};evidenceStatus:"evidence_only";materialWorseningStatus:"not_governed";lifecycleActionStatus:"prohibited_not_generated";cohorts:ModelDegradationCohort[];includedCohortSetSha256:string;generatedAt:string;limitations:string[]}
+export interface ModelDegradationSummary{schemaVersion:"1.0";evidenceId:string;policyId:"RUNTIME.MODEL_DEGRADATION.EVIDENCE";policyVersion:"p2-v1";policySha256:string;verifiedOutcomeCount:number;cohortCount:number;assessmentReferenceDimensionCount:number;computableDescriptiveDimensionCount:number;insufficientEvidenceDimensionCount:number;windowSizeNotGovernedDimensionCount:number;percentageUnavailableDimensionCount:number;rangeUnavailableDimensionCount:number;sourceFamilyCounts:Record<string,number>;modelCounts:Record<string,number>;policyCounts:Record<string,number>;latestTargetPeriod:string;includedCohortSetSha256:string;includedOutcomeSetSha256:string;evidenceStatus:"evidence_only";materialWorseningStatus:"not_governed";lifecycleActionStatus:"prohibited_not_generated"}
+export type ModelDegradationResponse={ok:true;pointer:Record<string,unknown>;commit:Record<string,unknown>;evidence:ModelDegradationEvidence;summary:ModelDegradationSummary}|RuntimeErrorResponse;
+
+export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord | ForecastOutcomeJobRecord | DegradationEvidenceJobRecord;
 
 export type StartQuickForecastResponse =
   | { ok: true; jobId: string; runId: string; status: "queued"; statusUrl: string }
@@ -237,6 +271,7 @@ export type JobStatusResponse =
   | ({ ok: true; jobKind: "dataset_assessment"; jobId: string; assessmentId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedAssessmentId: string | null })
   | ({ ok: true; jobKind: "approved_forecast"; jobId: string; runId: string; decisionId: string; assessmentId: string; authorizationId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null })
   | ({ ok:true; jobKind:"forecast_outcome"; jobId:string; outcomeId:string; workflowMode:"forecast_outcome_monitoring"; status:RuntimeJobStatus; progress:string; createdAt:string; startedAt:string|null; updatedAt:string; completedAt:string|null; retryable:boolean; error:RuntimeJobRecord["error"]; committedOutcomeId:string|null })
+  | ({ok:true;jobKind:"degradation_evidence";jobId:string;evidenceId:string;workflowMode:"degradation_evidence";status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedEvidenceId:string|null})
   | RuntimeErrorResponse;
 
 export type RuntimeCandidateId =
@@ -296,24 +331,29 @@ export interface AssessmentWorkflowProjection {
   technicalWinnerModelId: RuntimeCandidateId | null;
   technicalWinnerDeployable: boolean;
   recommendationStatus: "evidence_only" | "no_recommendation";
+  decisionCompatibilityStatus:
+    | "phase1_decision_policy_available"
+    | "phase2_decision_policy_available"
+    | "phase2_decision_policy_not_yet_available";
   decision: AssessmentDecisionWorkflowProjection | null;
 }
 
 export interface DatasetAssessmentResultSuccess {
   ok: true;
-  schemaVersion: "1.0";
+  schemaVersion: "1.0" | "2.0";
   assessmentId: string;
   jobId: string;
   datasetId: string;
   deploymentId: string;
   sourceType: "uploaded";
   acceptedPeriod: { start: string; end: string };
-  labelledRows: 173;
+  labelledRows: number;
+  availableFoldCount: number;
   committedAt: string;
   assessmentStatus: "assessment_complete";
   approvalStatus: "approval_pending";
   adoptionStatus: "not_adopted";
-  foldPolicy: { policyId: string; policyVersion: string; plannedFoldCount: 68; initialTrainingRows: 104; embargoRows: 1; validationRowsPerFold: 1; stepSizeWeeks: 1; horizonWeeks: 2; samePlanForAllCandidates: true };
+  foldPolicy: { policyId: string; policyVersion: string; plannedFoldCount: number; minimumFoldCount: number; maximumFoldCount: number; foldCapApplied: boolean; selectedValidationStartIndex: number; selectedValidationEndIndex: number; selectedEvaluationPeriod: {start:string;end:string}; initialTrainingRows: 104; embargoRows: 1; validationRowsPerFold: 1; stepSizeWeeks: 1; horizonWeeks: 2; samePlanForAllCandidates: true };
   foldPlanSha256: string;
   candidateSetStatus: "complete_candidate_set" | "partial_candidate_set" | "insufficient_candidate_breadth";
   candidates: AssessmentCandidateSummary[];
@@ -326,6 +366,7 @@ export interface DatasetAssessmentResultSuccess {
   recommendationStrength: "not_available";
   approvalRequired: true;
   approvalEnabled: false;
+  decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_not_yet_available";
   limitations: string[];
   evidenceHashes: { rollingValidationSha256: string; candidateComparisonSha256: string; recommendationSha256: string };
   provenance: { validationRecordSha256: string; assessmentPolicySha256: string; candidateRegistrySha256: string; featureOrderSha256: string };

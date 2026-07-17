@@ -169,7 +169,7 @@ Quick Forecast is available only when an upload matches the active `dhaka_south`
 
 ### Dataset Assessment
 
-An eligible assessment upload must currently produce exactly 173 labelled rows and the governed 68-fold plan. The worker evaluates the same seven candidates on identical precommitted folds and commits rolling validation, comparison, recommendation, and summary evidence. It does not forecast, adopt a model, generate uncertainty, or update the dashboard's latest pointer.
+An eligible Phase 2 assessment upload must produce at least 157 labelled rows and 52–68 governed folds; histories with more available folds use the most recent contiguous 68-fold evaluation plan while retaining older validated rows in expanding training. The worker evaluates the same seven candidates on identical precommitted folds and commits rolling validation, comparison, recommendation, and summary evidence. A separate trusted-internal decision under decision policy `p2-v1` may authorize one selected learned model for one forecast run; assessment evidence alone never authorizes forecasting or changes the deployment model.
 
 Recommendation-strength thresholds are not governed, so a technical winner remains `evidence_only` with strength `not_available`.
 

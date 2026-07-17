@@ -11,6 +11,8 @@ test("outcome submission is protected, strict, and worker-only", async () => {
   assert.match(source,/timingSafeEqual/);
   assert.match(source,/unsupported or missing fields/);
   assert.match(source,/createPendingJob/);
+  assert.match(source,/schemaVersion:"2\.0"/);
+  assert.match(source,/policy\.schema_version!=="2\.0"/);
   assert.match(source,/status:202/);
   assert.doesNotMatch(source,/evaluate_outcome|signedError|absoluteError/);
   assert.match(source,/Response\.json\(\{ok:true,outcomeId,jobId,status:"queued",statusUrl/);
@@ -23,6 +25,7 @@ test("verified outcome and monitoring reads are no-cache and redact audit identi
   assert.match(outcome,/readVerifiedForecastOutcome/);assert.match(outcome,/no-store/);
   assert.match(summary,/readVerifiedMonitoringSummary/);assert.match(summary,/no-store/);
   assert.match(store,/outcomeCommitSha256/);assert.match(store,/monitoringSummarySha256/);
+  assert.match(store,/outcomeSetSha256/);assert.match(store,/approved_forecast_p2/);
   assert.doesNotMatch(store,/operatorIdentifier\s*:/);
 });
 

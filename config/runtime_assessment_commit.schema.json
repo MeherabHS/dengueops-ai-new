@@ -1,6 +1,219 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://dengueops.ai/schemas/runtime_assessment_commit.schema.json","type":"object","additionalProperties":false,
-  "required":["schemaVersion","assessmentId","jobId","workspaceId","datasetId","deploymentId","workflowMode","sourceType","status","validationRecordSha256","assessmentPolicySha256","candidateRegistrySha256","foldPlanSha256","artifactHashes","summaryPublishedLast","prohibitedArtifactsAbsent","latestPointerUpdated","committedAt"],
-  "properties":{"schemaVersion":{"const":"1.0"},"assessmentId":{"$ref":"#/$defs/uuid"},"jobId":{"$ref":"#/$defs/uuid"},"workspaceId":{"$ref":"#/$defs/uuid"},"datasetId":{"$ref":"#/$defs/sha"},"deploymentId":{"const":"dhaka_south"},"workflowMode":{"const":"assess_dataset"},"sourceType":{"const":"uploaded"},"status":{"const":"committed"},"validationRecordSha256":{"$ref":"#/$defs/sha"},"assessmentPolicySha256":{"$ref":"#/$defs/sha"},"candidateRegistrySha256":{"$ref":"#/$defs/sha"},"foldPlanSha256":{"$ref":"#/$defs/sha"},"artifactHashes":{"type":"object","additionalProperties":{"$ref":"#/$defs/sha"},"required":["input_manifest.json","model_features.csv","rolling_validation.json","candidate_model_comparison.json","recommendation.json","assessment_summary.json"]},"summaryPublishedLast":{"const":true},"prohibitedArtifactsAbsent":{"const":true},"latestPointerUpdated":{"const":false},"committedAt":{"type":"string","format":"date-time"}},
-  "$defs":{"uuid":{"type":"string","format":"uuid"},"sha":{"type":"string","pattern":"^[a-f0-9]{64}$"}}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assessmentId",
+        "jobId",
+        "workspaceId",
+        "datasetId",
+        "deploymentId",
+        "workflowMode",
+        "sourceType",
+        "status",
+        "validationRecordSha256",
+        "assessmentPolicySha256",
+        "candidateRegistrySha256",
+        "foldPlanSha256",
+        "artifactHashes",
+        "summaryPublishedLast",
+        "prohibitedArtifactsAbsent",
+        "latestPointerUpdated",
+        "committedAt"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "assessmentId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/p1/uuid"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "workflowMode": {
+          "const": "assess_dataset"
+        },
+        "sourceType": {
+          "const": "uploaded"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "validationRecordSha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "assessmentPolicySha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "candidateRegistrySha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "foldPlanSha256": {
+          "$ref": "#/$defs/p1/sha"
+        },
+        "artifactHashes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/p1/sha"
+          },
+          "required": [
+            "input_manifest.json",
+            "model_features.csv",
+            "rolling_validation.json",
+            "candidate_model_comparison.json",
+            "recommendation.json",
+            "assessment_summary.json"
+          ]
+        },
+        "summaryPublishedLast": {
+          "const": true
+        },
+        "prohibitedArtifactsAbsent": {
+          "const": true
+        },
+        "latestPointerUpdated": {
+          "const": false
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assessmentId",
+        "jobId",
+        "workspaceId",
+        "datasetId",
+        "deploymentId",
+        "workflowMode",
+        "sourceType",
+        "status",
+        "validationRecordSha256",
+        "assessmentPolicySha256",
+        "candidateRegistrySha256",
+        "foldPlanSha256",
+        "artifactHashes",
+        "summaryPublishedLast",
+        "prohibitedArtifactsAbsent",
+        "latestPointerUpdated",
+        "committedAt",
+        "assessmentPolicyId",
+        "assessmentPolicyVersion"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "2.0"
+        },
+        "assessmentId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/p2/uuid"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "workflowMode": {
+          "const": "assess_dataset"
+        },
+        "sourceType": {
+          "const": "uploaded"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "validationRecordSha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "assessmentPolicySha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "candidateRegistrySha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "foldPlanSha256": {
+          "$ref": "#/$defs/p2/sha"
+        },
+        "artifactHashes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/p2/sha"
+          },
+          "required": [
+            "input_manifest.json",
+            "model_features.csv",
+            "rolling_validation.json",
+            "candidate_model_comparison.json",
+            "recommendation.json",
+            "assessment_summary.json"
+          ]
+        },
+        "summaryPublishedLast": {
+          "const": true
+        },
+        "prohibitedArtifactsAbsent": {
+          "const": true
+        },
+        "latestPointerUpdated": {
+          "const": false
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "assessmentPolicyId": {
+          "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
+        },
+        "assessmentPolicyVersion": {
+          "const": "p2-v1"
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "p1": {
+      "uuid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "sha": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "p2": {
+      "uuid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "sha": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    }
+  }
 }

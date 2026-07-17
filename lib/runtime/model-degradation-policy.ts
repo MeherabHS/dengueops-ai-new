@@ -1,0 +1,15 @@
+import "server-only";
+import {createHash} from "node:crypto";
+import {readFile} from "node:fs/promises";
+import path from "node:path";
+import {RuntimePublicError} from "./errors";
+
+export const MODEL_DEGRADATION_POLICY_SHA="bb13b8ec1991c0587656bf4f202334dddb115135d3ac055fee21b5f5e44f3321" as const;
+export const ACCEPTED_MONITORING_POLICY_SHA="c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab" as const;
+export interface ModelDegradationPolicy{schema_version:"1.0";policy_id:"RUNTIME.MODEL_DEGRADATION.EVIDENCE";policy_version:"p2-v1";policy_status:"active";policy_sha256:typeof MODEL_DEGRADATION_POLICY_SHA;deployment_id:"dhaka_south";accepted_monitoring_policy:{policy_id:"RUNTIME.FORECAST_OUTCOME.MONITORING";policy_version:"p2-v1";policy_sha256:typeof ACCEPTED_MONITORING_POLICY_SHA};degradationThresholdStatus:"not_governed";degradationThresholds:null;materialWorseningClassificationAllowed:false;statisticalSufficiencyStatus:"not_governed";lifecycleRecommendationAllowed:false;monitoring_window:{windowSampleGovernanceStatus:"not_governed";windowOutcomeCount:null;production_status:"window_size_not_governed"};[key:string]:unknown}
+function canonical(value:unknown):string{if(Array.isArray(value))return`[${value.map(canonical).join(",")}]`;if(value&&typeof value==="object")return`{${Object.entries(value as Record<string,unknown>).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;return JSON.stringify(value)}
+function invalid():never{throw new RuntimePublicError("model_degradation_policy_invalid","configuration","The governed model-degradation evidence policy is unavailable or invalid.",503)}
+export async function loadModelDegradationPolicy(repositoryRoot:string):Promise<ModelDegradationPolicy>{try{const policy=JSON.parse(await readFile(path.join(repositoryRoot,"config","deployments","dhaka_south","model_degradation_evidence_policy.json"),"utf8")) as ModelDegradationPolicy;const content={...policy} as Record<string,unknown>;delete content.policy_sha256;const digest=createHash("sha256").update(canonical(content)).digest("hex");const monitoring=policy.accepted_monitoring_policy;
+  if(policy.schema_version!=="1.0"||policy.policy_id!=="RUNTIME.MODEL_DEGRADATION.EVIDENCE"||policy.policy_version!=="p2-v1"||policy.policy_status!=="active"||policy.policy_sha256!==MODEL_DEGRADATION_POLICY_SHA||digest!==MODEL_DEGRADATION_POLICY_SHA||policy.deployment_id!=="dhaka_south")return invalid();
+  if(monitoring?.policy_id!=="RUNTIME.FORECAST_OUTCOME.MONITORING"||monitoring?.policy_version!=="p2-v1"||monitoring?.policy_sha256!==ACCEPTED_MONITORING_POLICY_SHA||policy.degradationThresholdStatus!=="not_governed"||policy.degradationThresholds!==null||policy.materialWorseningClassificationAllowed!==false||policy.lifecycleRecommendationAllowed!==false||policy.monitoring_window?.windowOutcomeCount!==null||policy.monitoring_window?.windowSampleGovernanceStatus!=="not_governed")return invalid();return policy;
+}catch(error){if(error instanceof RuntimePublicError)throw error;return invalid()}}

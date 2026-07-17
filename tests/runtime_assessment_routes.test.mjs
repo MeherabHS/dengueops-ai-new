@@ -10,6 +10,11 @@ test("assessment start accepts identities only and queues without executing Pyth
   assert.match(source, /workspaceId.*datasetId.*deploymentId.*validationRecordSha256/s);
   assert.match(source, /unexpected_assessment_field/);
   assert.match(source, /full_assessment_eligible/);
+  assert.match(source, /p2-v1/);
+  assert.match(source, /minimumFoldCount/);
+  assert.match(source, /maximumFoldCount/);
+  assert.match(source, /plannedFoldCount !== Math\.min\(availableFoldCount, 68\)/);
+  assert.doesNotMatch(source, /labelledRows\s*!==\s*173|availableFoldCount\s*!==\s*68/);
   assert.doesNotMatch(source, /spawn\(|exec\(|candidateIds\s*:|technicalWinner\s*:/);
 });
 
@@ -31,6 +36,10 @@ test("assessment result adds governed order and redacted workflow state", async 
   assert.match(source, /authorizationStatus/);
   assert.match(source, /committedRunId/);
   assert.match(source, /assessmentPolicy/);
+  assert.match(source, /phase2_decision_policy_available/);
+  assert.match(source, /loadDecisionPolicy/);
+  assert.match(source, /plannedFoldCount/);
+  assert.match(source, /selectedEvaluationPeriod/);
   assert.doesNotMatch(source, /operatorIdentifier|internalDecisionSecret|reason:/);
 });
 

@@ -31,7 +31,7 @@ def _finite(value: Any, name: str) -> float:
         raise ValueError(f"{name} must be finite.")
     return number
 
-def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mapping[str, Any]) -> dict[str, Any]:
+def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mapping[str, Any], include_eligibility: bool = False) -> dict[str, Any]:
     forecast = _finite(forecast_raw, "forecastRaw")
     if isinstance(observed_raw, bool) or not isinstance(observed_raw, int) or observed_raw < 0:
         raise ValueError("observedRaw must be a nonnegative integer.")
@@ -44,6 +44,8 @@ def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mappin
         "absoluteError": absolute, "squaredError": squared, "percentageError": percentage,
         "absolutePercentageError": abs(percentage) if percentage is not None else None,
         "percentageMetricStatus": "available" if percentage is not None else "not_evaluable_zero_observed"}
+    if include_eligibility:
+        result["percentageErrorEligible"] = percentage is not None
     status = uncertainty.get("uncertaintyStatus")
     if status == "available":
         lower, upper = _finite(uncertainty.get("lowerRaw"), "lowerRaw"), _finite(uncertainty.get("upperRaw"), "upperRaw")
@@ -52,7 +54,7 @@ def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mappin
         coverage = "lower_miss" if observed_raw < lower else "upper_miss" if observed_raw > upper else "covered"
         result.update(empiricalRangeStatus="available", lowerRaw=lower, upperRaw=upper,
                       coverageOutcome=coverage, intervalWidth=upper-lower)
-    elif status == "pending_dataset_specific_calibration":
+    elif status in {"pending_dataset_specific_calibration", "pending_selected_model_calibration"}:
         if any(uncertainty.get(k) is not None for k in ("lowerRaw", "upperRaw")):
             raise ValueError("Pending empirical range contains bounds.")
         result.update(empiricalRangeStatus=status, lowerRaw=None, upperRaw=None,
@@ -62,7 +64,7 @@ def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mappin
     return result
 
 def deterministic_outcome_sort(records: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
-    return sorted(records, key=lambda r: (str(r["forecastTargetPeriod"]), str(r["forecastRunId"]), str(r["outcomeId"])))
+    return sorted(records, key=lambda r: (str(r["forecastTargetPeriod"]), str(r.get("forecastRunId", r.get("sourceForecastRunId"))), str(r["outcomeId"])))
 
 def deterministic_outcome_set_hash(records: Sequence[Mapping[str, Any]]) -> str:
     values = [{"outcomeId": r["outcomeId"], "outcomeEvidenceSha256": r["outcomeEvidenceSha256"]} for r in deterministic_outcome_sort(records)]

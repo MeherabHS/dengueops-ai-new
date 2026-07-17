@@ -134,7 +134,7 @@ def aggregate_candidate(
 
 def selection_eligible(
     *, policy_eligible: bool, successful_folds: int, failed_folds: int,
-    metrics: Mapping[str, Any] | None, required_folds: int = 68,
+    metrics: Mapping[str, Any] | None, required_folds: int,
 ) -> bool:
     if not policy_eligible or successful_folds != required_folds or failed_folds != 0 or metrics is None:
         return False
@@ -273,8 +273,13 @@ def validate_folds_against_feature_rows(
     rows: Sequence[Mapping[str, Any]],
     feature_columns: Sequence[str],
     target_column: str,
+    *,
+    labelled_row_count: int,
+    selected_validation_indexes: Sequence[int],
+    initial_training_rows: int,
+    embargo_rows: int,
 ) -> None:
-    if len(rows) != 173:
+    if len(rows) != labelled_row_count or len(folds) != len(selected_validation_indexes):
         raise AssessmentEvidenceError("invalid_feature_row_count")
     periods: list[date] = []
     for row in rows:
@@ -294,11 +299,12 @@ def validate_folds_against_feature_rows(
         for previous, current in zip(periods, periods[1:])
     ):
         raise AssessmentEvidenceError("invalid_feature_chronology")
-    for sequence, fold in enumerate(folds, 1):
-        validation_index = 104 + sequence
-        train_end = validation_index - 1
+    for fold, validation_index in zip(folds, selected_validation_indexes):
+        if validation_index < initial_training_rows + embargo_rows or validation_index >= len(rows):
+            raise AssessmentEvidenceError("invalid_validation_index")
+        train_end = validation_index - embargo_rows
         validation = rows[validation_index]
-        embargo = rows[validation_index - 1]
+        embargo = rows[train_end]
         training = rows[:train_end]
         period = lambda row: f"{int(row['epi_year'])}-W{int(row['epi_week']):02d}"
         if fold.get("forecastOrigin") != period(validation):
@@ -320,15 +326,17 @@ def validate_folds_against_feature_rows(
 
 
 def validate_fold_identities(
-    folds: Sequence[Mapping[str, Any]], candidate_ids: Sequence[str]
+    folds: Sequence[Mapping[str, Any]], candidate_ids: Sequence[str], *,
+    selected_validation_indexes: Sequence[int], initial_training_rows: int,
+    embargo_rows: int, horizon_weeks: int,
 ) -> tuple[list[float], dict[str, list[Mapping[str, Any]]]]:
-    if len(folds) != 68 or len(candidate_ids) != 7 or len(set(candidate_ids)) != 7:
+    if len(folds) != len(selected_validation_indexes) or not folds or len(candidate_ids) != 7 or len(set(candidate_ids)) != 7:
         raise AssessmentEvidenceError("invalid_fold_or_candidate_count")
     records: dict[str, list[Mapping[str, Any]]] = {model_id: [] for model_id in candidate_ids}
     actuals: list[float] = []
     fold_ids: set[str] = set()
     previous_origin: date | None = None
-    for sequence, fold in enumerate(folds, 1):
+    for sequence, (fold, validation_index) in enumerate(zip(folds, selected_validation_indexes), 1):
         if fold.get("sequence") != sequence:
             raise AssessmentEvidenceError("invalid_fold_sequence")
         origin = str(fold.get("forecastOrigin"))
@@ -336,7 +344,7 @@ def validate_fold_identities(
         try:
             origin_year, origin_week = int(origin[:4]), int(origin[6:])
             origin_monday = date.fromisocalendar(origin_year, origin_week, 1)
-            target_monday = origin_monday + timedelta(weeks=2)
+            target_monday = origin_monday + timedelta(weeks=horizon_weeks)
             target_year, target_week, _ = target_monday.isocalendar()
         except (TypeError, ValueError) as exc:
             raise AssessmentEvidenceError("invalid_fold_period") from exc
@@ -351,7 +359,8 @@ def validate_fold_identities(
         if fold_id in fold_ids:
             raise AssessmentEvidenceError("duplicate_fold_id")
         fold_ids.add(fold_id)
-        if fold.get("trainingRowCount") != 103 + sequence:
+        expected_training_count = validation_index - embargo_rows
+        if expected_training_count < initial_training_rows or fold.get("trainingRowCount") != expected_training_count:
             raise AssessmentEvidenceError("training_row_count_mismatch")
         actual = float(fold["actualTarget"])
         if not math.isfinite(actual) or actual < 0:

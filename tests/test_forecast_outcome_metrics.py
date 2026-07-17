@@ -23,14 +23,17 @@ class ForecastOutcomeMetricTests(unittest.TestCase):
         self.assertEqual(value["intervalWidth"], 40.5)
 
     def test_overforecast_zero_and_pending_metrics(self):
-        zero = evaluate_outcome(2.5, 0, {"uncertaintyStatus": "pending_dataset_specific_calibration", "lowerRaw": None, "upperRaw": None})
+        zero = evaluate_outcome(2.5, 0, {"uncertaintyStatus": "pending_dataset_specific_calibration", "lowerRaw": None, "upperRaw": None}, True)
         self.assertEqual(zero["signedError"], -2.5)
         self.assertEqual(zero["errorDirection"], "overforecast")
         self.assertIsNone(zero["percentageError"])
+        self.assertFalse(zero["percentageErrorEligible"])
         self.assertEqual(zero["percentageMetricStatus"], "not_evaluable_zero_observed")
         self.assertEqual(zero["coverageOutcome"], "not_evaluable_no_empirical_range")
         self.assertEqual(evaluate_outcome(10, 5, {"uncertaintyStatus":"available","lowerRaw":6,"upperRaw":12})["coverageOutcome"], "lower_miss")
         self.assertEqual(evaluate_outcome(10, 13, {"uncertaintyStatus":"available","lowerRaw":6,"upperRaw":12})["coverageOutcome"], "upper_miss")
+        approved=evaluate_outcome(10,5,{"uncertaintyStatus":"pending_selected_model_calibration","lowerRaw":None,"upperRaw":None},True)
+        self.assertTrue(approved["percentageErrorEligible"]);self.assertEqual(approved["coverageOutcome"],"not_evaluable_no_empirical_range")
 
     def test_aggregation_is_deterministic_and_full_precision(self):
         base = [

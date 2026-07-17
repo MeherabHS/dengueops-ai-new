@@ -78,7 +78,9 @@ test("obsolete runtime-preview copy is removed", () => {
   assert.doesNotMatch(combined, /future governed runtime connector/i);
   assert.doesNotMatch(combined, /not yet connected/i);
   assert.doesNotMatch(statusLabels, /pending_p1_4/);
-  assert.match(assessmentOption, /68-fold temporal assessment/);
+  assert.match(assessmentOption, /52-68 fold temporal assessment/);
+  assert.match(assessmentOption, /most recent 68/);
+  assert.match(assessmentOption, /older rows remain in expanding training/);
   assert.match(assessmentOption, /does not automatically deploy or adopt a model/);
 });
 

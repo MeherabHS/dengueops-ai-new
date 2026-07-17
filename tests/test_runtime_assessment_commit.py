@@ -22,7 +22,11 @@ def iso_now():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def build_ready_assessment_runtime(base: Path):
+def build_ready_assessment_runtime(
+    base: Path,
+    source_rows: int | None = None,
+    assessment_policy_version: str | None = None,
+):
     runtime = (base / "runtime").resolve()
     workspace_id, job_id, assessment_id = (str(uuid.uuid4()) for _ in range(3))
     workspace = runtime / "workspaces" / workspace_id
@@ -32,8 +36,12 @@ def build_ready_assessment_runtime(base: Path):
         (runtime / relative).mkdir(parents=True, exist_ok=True)
     dengue = workspace / "inputs/original/dengue.csv"
     climate = workspace / "inputs/original/climate.csv"
-    shutil.copy2(ROOT / "data/dengue_cases.csv", dengue)
-    shutil.copy2(ROOT / "data/climate_data.csv", climate)
+    if source_rows is None:
+        shutil.copy2(ROOT / "data/dengue_cases.csv", dengue)
+        shutil.copy2(ROOT / "data/climate_data.csv", climate)
+    else:
+        dengue.write_bytes(b"".join((ROOT / "data/dengue_cases.csv").read_bytes().splitlines(keepends=True)[:source_rows + 1]))
+        climate.write_bytes(b"".join((ROOT / "data/climate_data.csv").read_bytes().splitlines(keepends=True)[:source_rows + 1]))
     created = iso_now()
     result = validate(SimpleNamespace(workspace_root=str(workspace), workspace_id=workspace_id, created_at=created,
         dengue_input=str(dengue), climate_input=str(climate), canonical_dengue_output=str(workspace / "inputs/canonical/dengue_cases.csv"),
@@ -44,7 +52,7 @@ def build_ready_assessment_runtime(base: Path):
         "workflowMode":"assess_dataset","status":"ready","createdAt":created,"updatedAt":iso_now(),"originalFiles":{},"datasetId":result["datasetId"]}
     (workspace / "metadata/workspace.json").write_text(json.dumps(metadata), encoding="utf-8")
     validation_hash = hashlib.sha256((workspace / "metadata/validation.json").read_bytes()).hexdigest()
-    policy, policy_hash = load_and_validate_assessment_policy("dhaka_south")
+    policy, policy_hash = load_and_validate_assessment_policy("dhaka_south", assessment_policy_version)
     registry_hash = hashlib.sha256((ROOT / "config/candidate_models.json").read_bytes()).hexdigest()
     job = {"schemaVersion":"1.0","jobKind":"dataset_assessment","jobId":job_id,"assessmentId":assessment_id,"workspaceId":workspace_id,
         "datasetId":result["datasetId"],"deploymentId":"dhaka_south","workflowMode":"assess_dataset","validationRecordSha256":validation_hash,
@@ -58,6 +66,52 @@ def build_ready_assessment_runtime(base: Path):
 
 
 class RuntimeAssessmentCommitTests(unittest.TestCase):
+    def test_archived_phase_one_policy_still_produces_and_validates_historical_shape(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime, _workspace, pending, job = build_ready_assessment_runtime(
+                Path(directory), assessment_policy_version="p1.4d-1-v1"
+            )
+            self.assertTrue(run_once(runtime, "phase-one-compatibility-worker"))
+            completed = runtime / "jobs/completed" / pending.name
+            failed = runtime / "jobs/failed" / pending.name
+            self.assertTrue(completed.exists(), failed.read_text(errors="replace") if failed.exists() else "")
+            committed = runtime / "assessments" / job["assessmentId"]
+            rolling = json.loads((committed / "artifacts/rolling_validation.json").read_text())
+            commit = json.loads((committed / "metadata/commit.json").read_text())
+            self.assertEqual(rolling["schemaVersion"], "1.0")
+            self.assertEqual(rolling["assessmentPolicy"]["policyVersion"], "p1.4d-1-v1")
+            self.assertEqual(rolling["plannedFoldCount"], 68)
+            self.assertNotIn("labelledRows", rolling)
+            self.assertEqual(commit["schemaVersion"], "1.0")
+            self.assertNotIn("assessmentPolicyVersion", commit)
+
+    def test_minimum_history_commits_common_52_fold_plan_for_all_candidates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime, _workspace, pending, job = build_ready_assessment_runtime(Path(directory), source_rows=164)
+            self.assertTrue(run_once(runtime, "minimum-assessment-test-worker"))
+            completed = runtime / "jobs/completed" / pending.name
+            failed = runtime / "jobs/failed" / pending.name
+            self.assertTrue(completed.exists(), failed.read_text(errors="replace") if failed.exists() else "")
+            committed = runtime / "assessments" / job["assessmentId"]
+            rolling = json.loads((committed / "artifacts/rolling_validation.json").read_text())
+            comparison = json.loads((committed / "artifacts/candidate_model_comparison.json").read_text())
+            self.assertEqual(rolling["labelledRows"], 157)
+            self.assertEqual(rolling["availableFoldCount"], 52)
+            self.assertEqual(rolling["plannedFoldCount"], 52)
+            self.assertFalse(rolling["foldCapApplied"])
+            self.assertEqual(len(rolling["folds"]), 52)
+            self.assertEqual([fold["sequence"] for fold in rolling["folds"]], list(range(1, 53)))
+            self.assertTrue(all(len(fold["predictions"]) == 7 for fold in rolling["folds"]))
+            expected_targets = [fold["actualTarget"] for fold in rolling["folds"]]
+            for model_id in rolling["candidateIds"]:
+                records = [next(item for item in fold["predictions"] if item["modelId"] == model_id) for fold in rolling["folds"]]
+                self.assertEqual(len(records), 52)
+                self.assertEqual(
+                    [fold["actualTarget"] for fold in rolling["folds"]],
+                    expected_targets,
+                )
+            self.assertEqual(comparison["plannedFoldCount"], 52)
+
     def test_worker_commits_direct_seven_candidate_assessment_without_latest(self):
         before = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (ROOT / "data").glob("*") if path.is_file()}
         with tempfile.TemporaryDirectory() as directory:
@@ -137,6 +191,29 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             def mutate_fold_order(staging):
                 path, value = rolling_value(staging); value["folds"][0], value["folds"][1] = value["folds"][1], value["folds"][0]; write(path, value)
 
+            def mutate_rolling_field(field, value):
+                def mutate(staging):
+                    path, rolling = rolling_value(staging); rolling[field] = value; write(path, rolling)
+                return mutate
+
+            def mutate_training_count(staging):
+                path, value = rolling_value(staging); value["folds"][0]["trainingRowCount"] += 1; write(path, value)
+
+            def omit_recent_fold(staging):
+                path, value = rolling_value(staging); value["folds"].pop(); value["plannedFoldCount"] = 67; write(path, value)
+
+            def substitute_older_fold(staging):
+                path, value = rolling_value(staging)
+                value["folds"][-1] = json.loads(json.dumps(value["folds"][0]))
+                value["folds"][-1]["sequence"] = 68
+                write(path, value)
+
+            def mutate_policy_version(staging):
+                path, value = rolling_value(staging); value["assessmentPolicy"]["policyVersion"] = "p1.4d-1-v1"; write(path, value)
+
+            def mutate_policy_hash(staging):
+                path, value = rolling_value(staging); value["assessmentPolicy"]["policySha256"] = "0" * 64; write(path, value)
+
             def mutate_eligibility(staging):
                 comparison_path, comparison_value = json_file(staging, "artifacts/candidate_model_comparison.json")
                 summary_path, summary_value = json_file(staging, "artifacts/assessment_summary.json")
@@ -173,6 +250,16 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
                 "wape": mutate_metric("wape"), "median": mutate_metric("medianAbsoluteError"), "maximum": mutate_metric("maximumAbsoluteError"),
                 "successful_count": mutate_count("successfulFolds"), "failed_count": mutate_count("failedFolds"),
                 "fold_hash": mutate_fold_hash, "fold_order": mutate_fold_order, "eligibility": mutate_eligibility,
+                "available_fold_count": mutate_rolling_field("availableFoldCount", 69),
+                "planned_fold_count": mutate_rolling_field("plannedFoldCount", 67),
+                "fold_cap_status": mutate_rolling_field("foldCapApplied", True),
+                "selected_start_index": mutate_rolling_field("selectedValidationStartIndex", 106),
+                "selected_end_index": mutate_rolling_field("selectedValidationEndIndex", 171),
+                "training_row_count": mutate_training_count,
+                "omitted_recent_fold": omit_recent_fold,
+                "substituted_older_fold": substitute_older_fold,
+                "policy_version": mutate_policy_version,
+                "policy_hash": mutate_policy_hash,
                 "winner": mutate_winner, "summary_mismatch": mutate_summary_only,
                 "nan": mutate_nonstandard(float("nan")), "infinity": mutate_nonstandard(float("inf")), "negative_infinity": mutate_nonstandard(float("-inf")),
             }

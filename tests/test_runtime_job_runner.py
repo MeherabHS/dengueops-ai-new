@@ -15,6 +15,12 @@ from types import SimpleNamespace
 
 
 class RuntimeJobRunnerTests(unittest.TestCase):
+    def test_worker_has_isolated_degradation_dispatch(self):
+        source=(ROOT/"analytics/runtime_worker.py").read_text()
+        self.assertIn('"degradation_evidence"',source)
+        self.assertIn('"degradation-staging"',source)
+        self.assertIn('"degradation-evidence"',source)
+        self.assertIn('"degradation/latest.json"',source)
     def test_atomic_claim_has_one_winner(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

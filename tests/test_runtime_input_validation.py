@@ -61,6 +61,16 @@ class RuntimeInputValidationTests(unittest.TestCase):
         self.assertTrue(value["eligibility"]["assessDataset"]["eligible"])
         self.assertEqual(value["eligibility"]["assessDataset"]["availableFoldCount"], 68)
         self.assertEqual(value["eligibility"]["assessDataset"]["plannedFoldCount"], 68)
+        self.assertEqual(value["eligibility"]["assessDataset"]["minimumFoldCount"], 52)
+        self.assertEqual(value["eligibility"]["assessDataset"]["maximumFoldCount"], 68)
+        self.assertFalse(value["eligibility"]["assessDataset"]["foldCapApplied"])
+        self.assertEqual(value["eligibility"]["assessDataset"]["selectedValidationStartIndex"], 105)
+        self.assertEqual(value["eligibility"]["assessDataset"]["selectedValidationEndIndex"], 172)
+        self.assertEqual(value["eligibility"]["assessDataset"]["policyVersion"], "p2-v1")
+        self.assertEqual(
+            value["eligibility"]["assessDataset"]["decisionCompatibilityStatus"],
+            "phase2_decision_policy_not_yet_available",
+        )
         self.assertEqual(value["eligibility"]["assessDataset"]["assessmentStatus"], "full_assessment_eligible")
         serialized = json.dumps(value).lower()
         self.assertNotIn("53–187", serialized)

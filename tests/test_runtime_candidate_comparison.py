@@ -72,7 +72,13 @@ class RuntimeCandidateComparisonTests(unittest.TestCase):
         self.assertAlmostEqual(metrics["wape"], 100.0 * 7.0 / 30.0)
         zero_records = [prediction_evidence("ridge_regression", 0.0, 0.0, 0.1, [])]
         self.assertIsNone(aggregate_candidate(zero_records, [0.0])["wape"])
-        self.assertFalse(selection_eligible(policy_eligible=True, successful_folds=68, failed_folds=0, metrics={**metrics, "wape": None}))
+        self.assertFalse(selection_eligible(
+            policy_eligible=True,
+            successful_folds=68,
+            failed_folds=0,
+            metrics={**metrics, "wape": None},
+            required_folds=68,
+        ))
 
     def test_nonfinite_prediction_fails_closed(self):
         for value in (float("nan"), float("inf"), float("-inf")):

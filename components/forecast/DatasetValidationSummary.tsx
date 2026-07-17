@@ -40,6 +40,14 @@ export default function DatasetValidationSummary({ files, mode, serverValidation
 function AuthoritativeResult({ response }: { response: Extract<ServerValidationState, { status: "ready" | "invalid" }>["response"] }) {
   const quick = response.eligibility.quickForecast;
   const assess = response.eligibility.assessDataset;
+  const compatibility = String(assess.decisionCompatibilityStatus);
+  const decisionAvailability = compatibility === "phase1_decision_policy_available"
+    ? "Phase 1 trusted-internal one-run decision available after immutable assessment commit"
+    : compatibility === "phase2_decision_policy_available"
+      ? "Phase 2 p2-v1 trusted-internal one-run decision available after immutable assessment commit"
+      : compatibility === "phase2_decision_policy_not_yet_available"
+        ? "Decision policy availability will be resolved from committed assessment evidence"
+        : "Decision policy identity unavailable; operator actions fail closed";
   return <div className={`rounded-xl border p-5 ${response.status === "ready" ? "border-success/25 bg-success/10" : "border-destructive/25 bg-destructive/10"}`} role="status">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-ink">Authoritative server validation: {response.status === "ready" ? "passed" : "invalid"}</h3><p className="mt-1 text-sm text-ink-muted">{response.counts.overlapWeeks} overlapping weeks · {response.counts.labelledRows} labelled rows</p></div><StatusBadge label={response.status === "ready" ? "Validated" : "Invalid"} variant={response.status === "ready" ? "success" : "destructive"} /></div>
     {response.acceptedPeriod ? <p className="mt-3 text-sm text-ink-muted">Accepted period: {response.acceptedPeriod.start} to {response.acceptedPeriod.end}</p> : null}
@@ -54,12 +62,16 @@ function AuthoritativeResult({ response }: { response: Extract<ServerValidationS
         <dl className="mt-3 grid gap-1 text-xs text-ink-muted">
           <div><dt className="inline font-medium text-ink">Available folds: </dt><dd className="inline">{assess.availableFoldCount}</dd></div>
           <div><dt className="inline font-medium text-ink">Planned folds: </dt><dd className="inline">{assess.plannedFoldCount || "none"}</dd></div>
+          <div><dt className="inline font-medium text-ink">Governed range: </dt><dd className="inline">{assess.minimumFoldCount} minimum / {assess.maximumFoldCount} maximum</dd></div>
+          <div><dt className="inline font-medium text-ink">Recent-fold cap: </dt><dd className="inline">{assess.foldCapApplied ? "applied; older rows remain in expanding training" : "not applied"}</dd></div>
+          <div><dt className="inline font-medium text-ink">Assessment policy: </dt><dd className="inline">{assess.assessmentPolicyVersion}</dd></div>
           <div><dt className="inline font-medium text-ink">Candidate set: </dt><dd className="inline">{assess.candidateSetStatus === "complete_candidate_set" ? "all seven governed candidates expected" : assess.candidateSetStatus === "partial_candidate_set" ? "partial candidate set" : "insufficient candidate breadth"}</dd></div>
           <div><dt className="inline font-medium text-ink">Recommendation governance: </dt><dd className="inline">{assess.recommendationStatus === "evidence_only" ? "technical evidence only; strength not available" : "no recommendation"}</dd></div>
-          <div><dt className="inline font-medium text-ink">Assessment approval: </dt><dd className="inline">{assess.approvalRequired ? "automatic adoption disabled; a trusted internal one-run decision is evaluated separately after assessment" : "not available"}</dd></div>
+          <div><dt className="inline font-medium text-ink">Assessment decision: </dt><dd className="inline">{decisionAvailability}</dd></div>
         </dl>
         <ul className="mt-3 space-y-1 text-xs text-ink-muted">{assess.reasons.map((reason, index) => <li key={`${assess.reasonCodes[index] ?? "reason"}-${index}`}>• {reason}</li>)}</ul>
-        <p className="mt-3 text-xs text-ink-muted">Validation alone produces no folds, candidates, or winner. Assessment, one-run decision recording, and forecast execution each require a later explicit action.</p>
+        {!assess.eligible && assess.availableFoldCount < assess.minimumFoldCount ? <p className="mt-3 text-xs font-medium text-warning">At least {assess.minimumFoldCount} complete temporal folds are required; this dataset provides {assess.availableFoldCount}.</p> : null}
+        <p className="mt-3 text-xs text-ink-muted">Validation and assessment evidence alone do not authorize forecasting. Protected operator actions require trusted server-side ingress, a governed final decision, and an unconsumed one-run authorization.</p>
       </div>
     </div>
     {response.issues.length ? <div className="mt-4"><p className="text-sm font-semibold text-ink">Validation issues</p><ul className="mt-2 space-y-1 text-sm text-ink-muted">{response.issues.map((value, index) => <li key={`${value.code}-${index}`}><span className="font-medium text-ink">{value.severity === "error" ? "Error" : "Warning"}:</span> {value.message}</li>)}</ul></div> : <p className="mt-4 text-sm text-success">No authoritative file, schema, temporal, or alignment errors were found.</p>}

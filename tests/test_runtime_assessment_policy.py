@@ -23,6 +23,9 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.policy, cls.policy_sha = runtime_assessment_policy.load_and_validate_assessment_policy("dhaka_south")
+        cls.phase_one_policy, cls.phase_one_policy_sha = runtime_assessment_policy.load_and_validate_assessment_policy(
+            "dhaka_south", "p1.4d-1-v1"
+        )
         cls.registry_path = ROOT / "config" / "candidate_models.json"
         cls.registry = json.loads(cls.registry_path.read_text(encoding="utf-8"))
         cls.registry_sha = hashlib.sha256(cls.registry_path.read_bytes()).hexdigest()
@@ -62,6 +65,20 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
         self.assertEqual(self.policy["feature_contract"]["feature_order_sha256"], self.registry["feature_order_sha256"])
         self.assertEqual(self.policy["input_contract"]["target"], self.registry["target"])
         self.assertEqual(self.policy["input_contract"]["horizon_weeks"], 2)
+        self.assertEqual(self.policy["policy_version"], "p2-v1")
+        self.assertEqual(self.phase_one_policy["policy_version"], "p1.4d-1-v1")
+        self.assertEqual(
+            self.phase_one_policy_sha,
+            "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af",
+        )
+
+    def test_version_resolution_rejects_unknown_or_mismatched_hash(self):
+        with self.assertRaises(runtime_assessment_policy.RuntimeAssessmentPolicyError):
+            runtime_assessment_policy.load_and_validate_assessment_policy("dhaka_south", "unknown")
+        with self.assertRaises(runtime_assessment_policy.RuntimeAssessmentPolicyError):
+            runtime_assessment_policy.load_and_validate_assessment_policy(
+                "dhaka_south", "p2-v1", expected_sha256="0" * 64
+            )
 
     def test_recommendation_grade_dataset_is_policy_eligible_without_recommendation_strength(self):
         result = runtime_assessment_policy.evaluate_assessment_policy(self.policy, self.context())
@@ -69,6 +86,12 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
         self.assertEqual(result["assessmentStatus"], "full_assessment_eligible")
         self.assertEqual(result["availableFoldCount"], 68)
         self.assertEqual(result["plannedFoldCount"], 68)
+        self.assertEqual(result["minimumFoldCount"], 52)
+        self.assertEqual(result["maximumFoldCount"], 68)
+        self.assertFalse(result["foldCapApplied"])
+        self.assertEqual(result["selectedValidationStartIndex"], 105)
+        self.assertEqual(result["selectedValidationEndIndex"], 172)
+        self.assertEqual(result["decisionCompatibilityStatus"], "phase2_decision_policy_not_yet_available")
         self.assertEqual(result["candidateSetStatus"], "complete_candidate_set")
         self.assertTrue(all(value["eligible"] for value in result["candidateEligibility"].values()))
         self.assertFalse(result["recommendationEligibility"])
@@ -76,6 +99,31 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
         self.assertEqual(result["recommendationStrength"], "not_available")
         self.assertTrue(result["approvalRequired"])
         self.assertFalse(result["approvalEnabled"])
+
+    def test_dynamic_minimum_and_recent_cap(self):
+        for labelled_rows, available, planned, start, capped in (
+            (156, 51, 0, None, False),
+            (157, 52, 52, 105, False),
+            (172, 67, 67, 105, False),
+            (174, 69, 68, 106, True),
+            (250, 145, 68, 182, True),
+        ):
+            with self.subTest(labelled_rows=labelled_rows):
+                result = runtime_assessment_policy.evaluate_assessment_policy(self.policy, self.context(labelled_rows))
+                self.assertEqual(result["availableFoldCount"], available)
+                self.assertEqual(result["plannedFoldCount"], planned)
+                self.assertEqual(result["selectedValidationStartIndex"], start)
+                self.assertEqual(result["foldCapApplied"], capped)
+                self.assertEqual(result["eligible"], labelled_rows >= 157)
+
+    def test_phase_one_exact_row_contract_remains_archived(self):
+        short = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.context(172))
+        exact = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.context(173))
+        long = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.context(174))
+        self.assertEqual(short["assessmentStatus"], "insufficient_history")
+        self.assertTrue(exact["eligible"])
+        self.assertEqual(long["assessmentStatus"], "assessment_blocked")
+        self.assertIn("fold_cap_governance_pending", long["reasonCodes"])
 
     def test_deployment_geography_source_and_contract_failures_block(self):
         mutations = [

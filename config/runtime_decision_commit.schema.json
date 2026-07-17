@@ -1,1 +1,20 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,"required":["schemaVersion","decisionId","assessmentId","decisionSha256","assessmentCommitSha256","decisionPolicySha256","status","committedAt","latestPointerUpdated","deploymentProfileModified"],"properties":{"schemaVersion":{"const":"1.0"},"decisionId":{"format":"uuid"},"assessmentId":{"format":"uuid"},"decisionSha256":{"$ref":"#/$defs/sha"},"assessmentCommitSha256":{"$ref":"#/$defs/sha"},"decisionPolicySha256":{"$ref":"#/$defs/sha"},"status":{"const":"committed"},"committedAt":{"format":"date-time"},"latestPointerUpdated":{"const":false},"deploymentProfileModified":{"const":false}},"$defs":{"sha":{"type":"string","pattern":"^[a-f0-9]{64}$"}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    { "$ref": "#/$defs/phase1" },
+    { "$ref": "#/$defs/phase2" }
+  ],
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "phase1": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "decisionId", "assessmentId", "decisionSha256", "assessmentCommitSha256", "decisionPolicySha256", "status", "committedAt", "latestPointerUpdated", "deploymentProfileModified"],
+      "properties": { "schemaVersion": { "const": "1.0" }, "decisionId": { "format": "uuid" }, "assessmentId": { "format": "uuid" }, "decisionSha256": { "$ref": "#/$defs/sha" }, "assessmentCommitSha256": { "$ref": "#/$defs/sha" }, "decisionPolicySha256": { "$ref": "#/$defs/sha" }, "status": { "const": "committed" }, "committedAt": { "format": "date-time" }, "latestPointerUpdated": { "const": false }, "deploymentProfileModified": { "const": false } }
+    },
+    "phase2": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "decisionId", "assessmentId", "decisionSha256", "assessmentCommitSha256", "assessmentSchemaVersion", "assessmentSummarySha256", "assessmentPolicyId", "assessmentPolicyVersion", "assessmentPolicySha256", "decisionPolicyId", "decisionPolicyVersion", "decisionPolicySha256", "foldPlanSha256", "assessmentLabelledRows", "assessmentPlannedFoldCount", "status", "committedAt", "latestPointerUpdated", "deploymentProfileModified"],
+      "properties": { "schemaVersion": { "const": "2.0" }, "decisionId": { "format": "uuid" }, "assessmentId": { "format": "uuid" }, "decisionSha256": { "$ref": "#/$defs/sha" }, "assessmentCommitSha256": { "$ref": "#/$defs/sha" }, "assessmentSchemaVersion": { "const": "2.0" }, "assessmentSummarySha256": { "$ref": "#/$defs/sha" }, "assessmentPolicyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" }, "assessmentPolicyVersion": { "const": "p2-v1" }, "assessmentPolicySha256": { "$ref": "#/$defs/sha" }, "decisionPolicyId": { "const": "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION" }, "decisionPolicyVersion": { "const": "p2-v1" }, "decisionPolicySha256": { "$ref": "#/$defs/sha" }, "foldPlanSha256": { "$ref": "#/$defs/sha" }, "assessmentLabelledRows": { "type": "integer", "minimum": 157 }, "assessmentPlannedFoldCount": { "type": "integer", "minimum": 52, "maximum": 68 }, "status": { "const": "committed" }, "committedAt": { "format": "date-time" }, "latestPointerUpdated": { "const": false }, "deploymentProfileModified": { "const": false } }
+    }
+  }
+}

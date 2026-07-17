@@ -120,6 +120,9 @@ export default function ForecastRunWorkflow() {
       && state.datasetId
       && response.validationRecordSha256,
   );
+  const decisionPolicyAvailable = state.assessment
+    ? ["phase1_decision_policy_available", "phase2_decision_policy_available"].includes(String(state.assessment.workflow.decisionCompatibilityStatus))
+    : false;
   const canNext = state.step === "upload"
     ? both
     : state.step === "validate"
@@ -266,7 +269,7 @@ export default function ForecastRunWorkflow() {
         <ProcessingState status={state.processingStatus} stage={state.job?.ok ? state.job.progress : undefined} workflow={state.mode} />
         {state.mode === "quick_forecast" ? <Button disabled={!selectedWorkspaceReady || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runQuickForecast()}>Start Quick Forecast</Button> : <Button disabled={!selectedWorkspaceReady || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runAssessment()}>Start Dataset Assessment</Button>}
       </div>}
-      {state.step === "results" && (state.mode === "assess_dataset" ? <div className="space-y-5"><ModelSuitabilitySummary assessment={state.assessment} />{state.assessment?<><Button href={`/validation?assessmentId=${encodeURIComponent(state.assessment.assessmentId)}`}>Open uploaded assessment in Validation</Button><ApprovalPanel assessment={state.assessment} decision={state.approval} workflowDecision={state.assessment.workflow.decision} busy={["queued","running","committing"].includes(state.processingStatus)} onDecision={(choice,reason)=>void recordDecision(choice,reason)} onForecast={()=>void runApprovedForecast()}/></>:null}{state.approval?.forecastAuthorized?<ProcessingState status={state.processingStatus} stage={state.job?.ok?state.job.progress:undefined} workflow="assess_dataset"/>:null}</div> : <ForecastResultSummary result={state.result} />)}
+      {state.step === "results" && (state.mode === "assess_dataset" ? <div className="space-y-5"><ModelSuitabilitySummary assessment={state.assessment} />{state.assessment?<><Button href={`/validation?assessmentId=${encodeURIComponent(state.assessment.assessmentId)}`}>Open uploaded assessment in Validation</Button>{decisionPolicyAvailable ? <ApprovalPanel assessment={state.assessment} decision={state.approval} workflowDecision={state.assessment.workflow.decision} busy={["queued","running","committing"].includes(state.processingStatus)} onDecision={(choice,reason)=>void recordDecision(choice,reason)} onForecast={()=>void runApprovedForecast()}/> : <div className="rounded-xl border border-warning/25 bg-warning/10 p-5 text-sm text-ink-muted">No governed decision policy is available for this committed assessment identity. Decision, authorization, and selected-model forecast controls fail closed.</div>}</>:null}{state.approval?.forecastAuthorized?<ProcessingState status={state.processingStatus} stage={state.job?.ok?state.job.progress:undefined} workflow="assess_dataset"/>:null}</div> : <ForecastResultSummary result={state.result} />)}
     </div>
     <div className="flex justify-between gap-3">
       <Button variant="secondary" disabled={index === 0} onClick={() => dispatch({ type: "step", step: order[index - 1] })}>Back</Button>

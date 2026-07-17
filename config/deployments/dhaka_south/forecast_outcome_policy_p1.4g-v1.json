@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "RUNTIME.FORECAST_OUTCOME.MONITORING",
+  "policy_version": "p1.4g-v1",
+  "policy_status": "active",
+  "policy_sha256": "0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249",
+  "policy_hash_method": "sha256_canonical_json_excluding_policy_sha256",
+  "deployment_id": "dhaka_south",
+  "geography": {"level": "city", "id": "BGD-DHAKA-SOUTH", "name": "Dhaka South"},
+  "timezone": "Asia/Dhaka",
+  "forecast_scope": {
+    "workflow_mode": "quick_forecast",
+    "required_policy_id": "RUNTIME.QUICK_FORECAST.COMPATIBILITY",
+    "required_policy_version": "p1.4f-v1",
+    "required_policy_sha256": "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a",
+    "target_column": "target_cases_next_2w",
+    "forecast_horizon_weeks": 2,
+    "model_id": "random_forest",
+    "model_family": "RandomForestRegressor",
+    "model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+    "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+    "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+  },
+  "observation_scope": {
+    "source_type": "synthetic_benchmark",
+    "source_id": "dhaka_south_synthetic_benchmark",
+    "operator_type": "trusted_internal_unverified",
+    "observed_value_type": "nonnegative_integer_weekly_case_count"
+  },
+  "timing_rule": {
+    "period_format": "YYYY-Www",
+    "supported_weeks": "1_through_52",
+    "completion_rule": "following_monday_00_00_deployment_timezone",
+    "server_time_must_be_on_or_after_completion": true,
+    "observation_recorded_at_must_be_on_or_after_completion": true,
+    "late_observations_allowed": true,
+    "year_times_52_arithmetic_prohibited": true
+  },
+  "duplicate_rule": {
+    "maximum_outcomes_per_forecast_run": 1,
+    "same_job_outcome_retry_idempotent": true,
+    "different_outcome_for_evaluated_forecast_rejected": true,
+    "conflicting_observation_record_reuse_rejected": true,
+    "identical_observation_reuse_across_matching_forecasts_allowed": true,
+    "corrections_allowed": false,
+    "supersession_allowed": false,
+    "correction_error_code": "correction_workflow_not_governed"
+  },
+  "metric_policy": {
+    "forecast_value": "forecastRaw",
+    "signed_error": "observedRaw - forecastRaw",
+    "positive_signed_error": "underforecast",
+    "negative_signed_error": "overforecast",
+    "absolute_error": "abs(signedError)",
+    "squared_error": "signedError ** 2",
+    "percentage_error": "signedError / observedRaw * 100 when observedRaw > 0 else null",
+    "absolute_percentage_error": "abs(percentageError) when observedRaw > 0 else null",
+    "range_coverage": "lowerRaw <= observedRaw <= upperRaw",
+    "interval_width": "upperRaw - lowerRaw",
+    "cumulative_mae": "mean(absoluteError)",
+    "cumulative_rmse": "sqrt(mean(squaredError))",
+    "cumulative_bias": "mean(signedError)",
+    "cumulative_mpe": "mean(valid percentageError)",
+    "cumulative_mape": "mean(valid absolutePercentageError)",
+    "empirical_coverage": "coveredCount / empiricalRangeEvaluatedCount",
+    "round_before_aggregation": false,
+    "prediction_interval_claim_allowed": false
+  },
+  "formula_registry": {
+    "version": "p1.3-v1",
+    "sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc",
+    "referenced_formula_ids": ["METRIC.MAE", "METRIC.RMSE", "METRIC.MAPE"]
+  },
+  "prohibited_actions": [
+    "model_retraining", "candidate_comparison", "model_promotion", "model_replacement",
+    "calibration_residual_rewrite", "preparedness_generation", "facility_action",
+    "alert_generation", "directive_generation", "forecast_latest_pointer_update"
+  ],
+  "prohibited_claims": [
+    "prediction_interval_coverage", "operational_surveillance_readiness",
+    "institutional_approval", "official_public_health_monitoring"
+  ],
+  "maturity_statement": "Trusted-internal unverified monitoring of deterministic synthetic benchmark forecasts only; this is not operational surveillance evidence."
+}

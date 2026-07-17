@@ -23,8 +23,25 @@ test("runtime assessment panel renders governed evidence and existing decision w
   assert.match(source, /recordAssessmentDecision/);
   assert.match(source, /startApprovedForecast/);
   assert.match(source, /getLatestDashboard/);
+  assert.match(source, /Labelled rows/);
+  assert.match(source, /Available folds/);
+  assert.match(source, /Planned folds/);
+  assert.match(source, /Selected evaluation period/);
+  assert.match(source, /Metrics rank models only within this assessment/);
+  assert.match(source, /phase2_decision_policy_available/);
+  assert.match(source, /decisionPolicyAvailable/);
+  assert.match(source, /fail closed/);
   assert.match(source, /separate from the bundled benchmark, empirical-range calibration, outcome monitoring, and preparedness evidence/);
   assert.doesNotMatch(source, /MAPE|R²|operatorIdentifier|internalDecisionSecret|x-dengueops-internal-decision-secret/);
+});
+
+test("forecast validation summary shows dynamic policy evidence", async () => {
+  const source = await read("components/forecast/DatasetValidationSummary.tsx");
+  assert.match(source, /Governed range/);
+  assert.match(source, /Recent-fold cap/);
+  assert.match(source, /Assessment policy/);
+  assert.match(source, /minimumFoldCount/);
+  assert.match(source, /maximumFoldCount/);
 });
 
 test("leaderboard uses backend rank, shows all evidence, and does not add ungoverned metrics", async () => {

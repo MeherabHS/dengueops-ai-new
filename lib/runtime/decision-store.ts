@@ -11,7 +11,10 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import type { RuntimeConfig } from "./config";
-import { loadDecisionPolicy } from "./decision-policy";
+import {
+  loadDecisionPolicy,
+  type CommittedAssessmentPolicyIdentity,
+} from "./decision-policy";
 import { RuntimePublicError } from "./errors";
 import {
   assessmentDecisionPaths,
@@ -161,6 +164,99 @@ export async function readVerifiedAssessment(
       "The committed assessment validation binding does not match.",
       409,
     );
+  const validation = JSON.parse(validationBytes.toString("utf8"));
+  const assessmentPolicy = rolling.assessmentPolicy as Record<string, any>;
+  const isPhaseTwo = summary.schemaVersion === "2.0";
+  const policyIdentity: CommittedAssessmentPolicyIdentity = isPhaseTwo
+    ? {
+        schemaVersion: "2.0",
+        policyId: assessmentPolicy?.policyId,
+        policyVersion: assessmentPolicy?.policyVersion,
+        policySha256: assessmentPolicy?.policySha256,
+      }
+    : {
+        schemaVersion: "1.0",
+        policyId: assessmentPolicy?.policyId,
+        policyVersion: assessmentPolicy?.policyVersion,
+        policySha256: assessmentPolicy?.policySha256,
+      };
+  if (
+    commit.schemaVersion !== (isPhaseTwo ? "2.0" : "1.0") ||
+    assessmentPolicy?.policyId !== "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" ||
+    assessmentPolicy?.policySha256 !== commit.assessmentPolicySha256 ||
+    assessmentPolicy?.policySha256 !== summary.provenance.assessmentPolicySha256 ||
+    (isPhaseTwo
+      ? assessmentPolicy.policyVersion !== "p2-v1" ||
+        commit.assessmentPolicyId !== assessmentPolicy.policyId ||
+        commit.assessmentPolicyVersion !== assessmentPolicy.policyVersion
+      : assessmentPolicy.policyVersion !== "p1.4d-1-v1")
+  )
+    throw new RuntimePublicError(
+      "assessment_integrity_error",
+      "storage",
+      "The committed assessment policy identity does not reconcile.",
+      409,
+    );
+
+  let dynamicEvidence: null | {
+    labelledRows: number;
+    plannedFoldCount: number;
+    selectedEvaluationPeriod: { start: string; end: string };
+  } = null;
+  if (isPhaseTwo) {
+    const labelledRows = Number(summary.labelledRows);
+    const plannedFoldCount = Number(summary.foldPolicy?.plannedFoldCount);
+    const selectedEvaluationPeriod = summary.foldPolicy?.selectedEvaluationPeriod;
+    const samePeriod = (value: unknown) =>
+      JSON.stringify(value) === JSON.stringify(selectedEvaluationPeriod);
+    if (
+      !Number.isSafeInteger(labelledRows) ||
+      labelledRows < 157 ||
+      validation.counts?.labelledRows !== labelledRows ||
+      rolling.labelledRows !== labelledRows ||
+      comparison.labelledRows !== labelledRows ||
+      recommendation.labelledRows !== labelledRows ||
+      !Number.isSafeInteger(plannedFoldCount) ||
+      plannedFoldCount < 52 ||
+      plannedFoldCount > 68 ||
+      rolling.plannedFoldCount !== plannedFoldCount ||
+      comparison.plannedFoldCount !== plannedFoldCount ||
+      recommendation.plannedFoldCount !== plannedFoldCount ||
+      rolling.folds?.length !== plannedFoldCount ||
+      !selectedEvaluationPeriod ||
+      typeof selectedEvaluationPeriod.start !== "string" ||
+      typeof selectedEvaluationPeriod.end !== "string" ||
+      !samePeriod(rolling.selectedEvaluationPeriod) ||
+      !samePeriod(comparison.selectedEvaluationPeriod) ||
+      comparison.technicalWinnerModelId !== summary.technicalWinnerModelId ||
+      comparison.candidateRegistrySha256 !== commit.candidateRegistrySha256 ||
+      rolling.candidateRegistrySha256 !== commit.candidateRegistrySha256
+    )
+      throw new RuntimePublicError(
+        "assessment_integrity_error",
+        "storage",
+        "The Phase 2 assessment row, fold, period, winner, or registry evidence does not reconcile.",
+        409,
+      );
+    dynamicEvidence = {
+      labelledRows,
+      plannedFoldCount,
+      selectedEvaluationPeriod,
+    };
+  } else if (
+    summary.labelledRows !== 173 ||
+    summary.foldPolicy?.plannedFoldCount !== 68 ||
+    rolling.plannedFoldCount !== 68 ||
+    comparison.plannedFoldCount !== 68 ||
+    rolling.folds?.length !== 68
+  ) {
+    throw new RuntimePublicError(
+      "assessment_integrity_error",
+      "storage",
+      "The historical Phase 1 assessment shape does not reconcile.",
+      409,
+    );
+  }
   if (
     summary.assessmentStatus !== "assessment_complete" ||
     summary.approvalStatus !== "approval_pending" ||
@@ -183,6 +279,10 @@ export async function readVerifiedAssessment(
     comparison,
     rolling,
     recommendation,
+    validation,
+    policyIdentity,
+    isPhaseTwo,
+    dynamicEvidence,
   };
 }
 
@@ -235,6 +335,7 @@ export async function recordDecision(
     const policy = await loadDecisionPolicy(
       config.repositoryRoot,
       evidence.summary.deploymentId,
+      evidence.policyIdentity,
     );
     if (
       evidence.commit.assessmentPolicySha256 !==
@@ -285,19 +386,52 @@ export async function recordDecision(
     >;
     const winnerCandidate =
       candidates.find((value) => value.modelId === winner) ?? null;
+    const comparisonCandidates = evidence.comparison.candidates as Array<
+      Record<string, any>
+    >;
+    const comparisonWinner =
+      comparisonCandidates.find((value) => value.modelId === winner) ?? null;
+    const requiredFolds = evidence.isPhaseTwo
+      ? evidence.dynamicEvidence!.plannedFoldCount
+      : 68;
+    if (
+      evidence.isPhaseTwo &&
+      (policy.schemaVersion !== "2.0" ||
+        evidence.summary.schemaVersion !== policy.allowedAssessmentSchemaVersion ||
+        evidence.comparison.technicalWinnerModelId !== winner ||
+        Boolean(winnerCandidate) !== Boolean(comparisonWinner) ||
+        (winnerCandidate &&
+          (winnerCandidate.parametersSha256 !== comparisonWinner?.parametersSha256 ||
+            winnerCandidate.successfulFolds !== comparisonWinner?.successfulFolds ||
+            winnerCandidate.failedFolds !== comparisonWinner?.failedFolds ||
+            winnerCandidate.selectionEligible !== comparisonWinner?.selectionEligible)))
+    )
+      throw new RuntimePublicError(
+        "technical_winner_evidence_mismatch",
+        "validation",
+        "The committed Phase 2 technical-winner evidence does not reconcile.",
+        409,
+      );
     const current =
       candidates.find((value) => value.modelId === policy.currentModelId) ??
       null;
     let selected: Record<string, any> | null = null;
     if (choice === "approve_technical_winner") selected = winnerCandidate;
     if (choice === "keep_current_model") selected = current;
+    const selectedComparison = selected
+      ? comparisonCandidates.find((value) => value.modelId === selected!.modelId) ?? null
+      : null;
     if (
       selected &&
-      (!DEPLOYABLE.has(selected.modelId) ||
+      (!selectedComparison ||
+        selected.parametersSha256 !== selectedComparison.parametersSha256 ||
+        selected.successfulFolds !== selectedComparison.successfulFolds ||
+        selected.failedFolds !== selectedComparison.failedFolds ||
+        !DEPLOYABLE.has(selected.modelId) ||
         selected.deployabilityClass !== "deployable_learned_model" ||
         selected.completionStatus !== "complete" ||
         selected.selectionEligible !== true ||
-        selected.successfulFolds !== 68 ||
+        selected.successfulFolds !== requiredFolds ||
         selected.failedFolds !== 0)
     )
       throw new RuntimePublicError(
@@ -355,10 +489,20 @@ export async function recordDecision(
             ? "deferred"
             : "assessment_rejected";
     const decision = {
-      schemaVersion: "1.0",
+      schemaVersion: policy.schemaVersion,
       decisionId,
       assessmentId,
       assessmentCommitSha256: evidence.commitSha256,
+      ...(evidence.isPhaseTwo
+        ? {
+            assessmentSchemaVersion: "2.0",
+            assessmentLabelledRows: evidence.dynamicEvidence!.labelledRows,
+            assessmentPlannedFoldCount:
+              evidence.dynamicEvidence!.plannedFoldCount,
+            selectedEvaluationPeriod:
+              evidence.dynamicEvidence!.selectedEvaluationPeriod,
+          }
+        : {}),
       assessmentSummarySha256: evidence.summarySha256,
       comparisonSha256:
         evidence.summary.evidenceHashes.candidateComparisonSha256,
@@ -401,12 +545,27 @@ export async function recordDecision(
     const decisionBytes = Buffer.from(`${JSON.stringify(decision, null, 2)}\n`);
     await writeJsonAtomic(path.join(temporary, "decision.json"), decision);
     const decisionCommit = {
-      schemaVersion: "1.0",
+      schemaVersion: policy.schemaVersion,
       decisionId,
       assessmentId,
       decisionSha256: sha256(decisionBytes),
       assessmentCommitSha256: evidence.commitSha256,
       decisionPolicySha256: policy.policySha256,
+      ...(evidence.isPhaseTwo
+        ? {
+            assessmentSchemaVersion: "2.0",
+            assessmentSummarySha256: evidence.summarySha256,
+            assessmentPolicyId: policy.allowedAssessmentPolicyId,
+            assessmentPolicyVersion: policy.allowedAssessmentPolicyVersion,
+            assessmentPolicySha256: policy.allowedAssessmentPolicySha256,
+            decisionPolicyId: policy.policyId,
+            decisionPolicyVersion: policy.policyVersion,
+            foldPlanSha256: evidence.summary.foldPlanSha256,
+            assessmentLabelledRows: evidence.dynamicEvidence!.labelledRows,
+            assessmentPlannedFoldCount:
+              evidence.dynamicEvidence!.plannedFoldCount,
+          }
+        : {}),
       status: "committed",
       committedAt: createdAt,
       latestPointerUpdated: false,
@@ -440,12 +599,29 @@ export async function recordDecision(
               1000,
         ).toISOString();
         const authorization = {
-          schemaVersion: "1.0",
+          schemaVersion: policy.schemaVersion,
           authorizationId,
           decisionId,
           decisionCommitSha256,
           assessmentId,
           assessmentCommitSha256: evidence.commitSha256,
+          ...(evidence.isPhaseTwo
+            ? {
+                assessmentPolicyId: policy.allowedAssessmentPolicyId,
+                assessmentPolicyVersion:
+                  policy.allowedAssessmentPolicyVersion,
+                assessmentPolicySha256:
+                  policy.allowedAssessmentPolicySha256,
+                decisionPolicyId: policy.policyId,
+                decisionPolicyVersion: policy.policyVersion,
+                decisionPolicySha256: policy.policySha256,
+                assessmentLabelledRows:
+                  evidence.dynamicEvidence!.labelledRows,
+                assessmentPlannedFoldCount:
+                  evidence.dynamicEvidence!.plannedFoldCount,
+                foldPlanSha256: evidence.summary.foldPlanSha256,
+              }
+            : {}),
           datasetId: evidence.summary.datasetId,
           deploymentId: evidence.summary.deploymentId,
           selectedModelId: selected.modelId,
@@ -511,11 +687,49 @@ export async function readVerifiedDecision(
   });
   const decision = decisionFile.value,
     commit = commitFile.value;
+  const phaseTwo = decision.schemaVersion === "2.0";
+  const assessmentIdentity: CommittedAssessmentPolicyIdentity = phaseTwo
+    ? {
+        schemaVersion: "2.0",
+        policyId: decision.assessmentPolicyId,
+        policyVersion: decision.assessmentPolicyVersion,
+        policySha256: decision.assessmentPolicySha256,
+      }
+    : {
+        schemaVersion: "1.0",
+        policyId: decision.assessmentPolicyId,
+        policyVersion: decision.assessmentPolicyVersion,
+        policySha256: decision.assessmentPolicySha256,
+      };
+  const policy = await loadDecisionPolicy(
+    config.repositoryRoot,
+    decision.deploymentId,
+    assessmentIdentity,
+  );
   if (
+    decision.schemaVersion !== policy.schemaVersion ||
+    decision.decisionPolicyId !== policy.policyId ||
+    decision.decisionPolicyVersion !== policy.policyVersion ||
+    decision.decisionPolicySha256 !== policy.policySha256 ||
+    decision.candidateRegistrySha256 !== policy.candidateRegistrySha256 ||
     commit.status !== "committed" ||
+    commit.schemaVersion !== policy.schemaVersion ||
     commit.decisionId !== decisionId ||
     commit.decisionSha256 !== sha256(decisionFile.bytes) ||
     commit.assessmentCommitSha256 !== decision.assessmentCommitSha256 ||
+    commit.decisionPolicySha256 !== decision.decisionPolicySha256 ||
+    (phaseTwo &&
+      (commit.assessmentSchemaVersion !== decision.assessmentSchemaVersion ||
+        commit.assessmentSummarySha256 !== decision.assessmentSummarySha256 ||
+        commit.assessmentPolicyId !== decision.assessmentPolicyId ||
+        commit.assessmentPolicyVersion !== decision.assessmentPolicyVersion ||
+        commit.assessmentPolicySha256 !== decision.assessmentPolicySha256 ||
+        commit.decisionPolicyId !== decision.decisionPolicyId ||
+        commit.decisionPolicyVersion !== decision.decisionPolicyVersion ||
+        commit.foldPlanSha256 !== decision.foldPlanSha256 ||
+        commit.assessmentLabelledRows !== decision.assessmentLabelledRows ||
+        commit.assessmentPlannedFoldCount !==
+          decision.assessmentPlannedFoldCount)) ||
     commit.latestPointerUpdated !== false
   )
     throw new RuntimePublicError(
@@ -525,6 +739,7 @@ export async function readVerifiedDecision(
       409,
     );
   let authorization: null | Record<string, any> = null,
+    authorizationCommitSha256: string | null = null,
     committedRunId: string | null = null,
     authorizationStatus:
       | "not_authorized"
@@ -535,10 +750,21 @@ export async function readVerifiedDecision(
       "not_authorized";
   if (decision.authorizationId) {
     const p = authorizationPaths(config.runtimeRoot, decision.authorizationId);
-    const pair = await Promise.all([
-      jsonBytes(p.authorization),
-      jsonBytes(p.commit),
-    ]).catch(() => null);
+    let pair: Awaited<ReturnType<typeof jsonBytes>>[] | null = null;
+    try {
+      pair = await Promise.all([
+        jsonBytes(p.authorization),
+        jsonBytes(p.commit),
+      ]);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT")
+        throw new RuntimePublicError(
+          "authorization_integrity_error",
+          "storage",
+          "The forecast authorization files could not be verified.",
+          409,
+        );
+    }
     if (!pair) {
       authorizationStatus = "authorization_incomplete";
       return {
@@ -546,14 +772,50 @@ export async function readVerifiedDecision(
         commit,
         decisionCommitSha256: sha256(commitFile.bytes),
         authorization,
+        authorizationCommitSha256,
         authorizationStatus,
         committedRunId,
       };
     }
     const [a, c] = pair;
+    authorizationCommitSha256 = sha256(c.bytes);
     if (
+      a.value.schemaVersion !== decision.schemaVersion ||
+      a.value.authorizationId !== decision.authorizationId ||
+      a.value.decisionId !== decisionId ||
       c.value.authorizationSha256 !== sha256(a.bytes) ||
-      a.value.decisionCommitSha256 !== sha256(commitFile.bytes)
+      c.value.authorizationId !== decision.authorizationId ||
+      c.value.decisionId !== decisionId ||
+      c.value.decisionCommitSha256 !== sha256(commitFile.bytes) ||
+      c.value.status !== "committed" ||
+      a.value.decisionCommitSha256 !== sha256(commitFile.bytes) ||
+      a.value.assessmentId !== decision.assessmentId ||
+      a.value.assessmentCommitSha256 !== decision.assessmentCommitSha256 ||
+      a.value.datasetId !== decision.datasetId ||
+      a.value.deploymentId !== decision.deploymentId ||
+      a.value.selectedModelId !== decision.selectedModelId ||
+      a.value.selectedModelParameterSha256 !==
+        decision.selectedModelParameterSha256 ||
+      a.value.workflowMode !== "approved_assessment_forecast" ||
+      a.value.scope !== "one_run" ||
+      a.value.initialStatus !== "available" ||
+      a.value.policyId !== decision.decisionPolicyId ||
+      a.value.policyVersion !== decision.decisionPolicyVersion ||
+      a.value.policySha256 !== decision.decisionPolicySha256 ||
+      !Number.isFinite(Date.parse(a.value.createdAt)) ||
+      !Number.isFinite(Date.parse(a.value.expiresAt)) ||
+      Date.parse(a.value.expiresAt) <= Date.parse(a.value.createdAt) ||
+      (phaseTwo &&
+        (a.value.assessmentPolicyId !== decision.assessmentPolicyId ||
+          a.value.assessmentPolicyVersion !== decision.assessmentPolicyVersion ||
+          a.value.assessmentPolicySha256 !== decision.assessmentPolicySha256 ||
+          a.value.decisionPolicyId !== decision.decisionPolicyId ||
+          a.value.decisionPolicyVersion !== decision.decisionPolicyVersion ||
+          a.value.decisionPolicySha256 !== decision.decisionPolicySha256 ||
+          a.value.assessmentLabelledRows !== decision.assessmentLabelledRows ||
+          a.value.assessmentPlannedFoldCount !==
+            decision.assessmentPlannedFoldCount ||
+          a.value.foldPlanSha256 !== decision.foldPlanSha256))
     )
       throw new RuntimePublicError(
         "authorization_integrity_error",
@@ -562,12 +824,21 @@ export async function readVerifiedDecision(
         409,
       );
     authorization = a.value;
-    const consumption = await jsonBytes(p.consumption).catch(() => null);
+    const consumption = await jsonBytes(p.consumption).catch((error) => {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      throw new RuntimePublicError(
+        "authorization_integrity_error",
+        "storage",
+        "The forecast authorization consumption record failed integrity verification.",
+        409,
+      );
+    });
     if (consumption) {
       if (
         consumption.value.authorizationId !== decision.authorizationId ||
         consumption.value.decisionId !== decisionId ||
         consumption.value.eventType !== "consumed" ||
+        typeof consumption.value.jobId !== "string" ||
         typeof consumption.value.runId !== "string"
       )
         throw new RuntimePublicError(
@@ -579,9 +850,32 @@ export async function readVerifiedDecision(
       authorizationStatus = "consumed";
       committedRunId = consumption.value.runId;
     } else {
-      authorizationStatus = await lstat(p.reservation)
-        .then(() => "reserved" as const)
-        .catch(() => "available" as const);
+      const reservation = await jsonBytes(p.reservation).catch((error) => {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+        throw new RuntimePublicError(
+          "authorization_integrity_error",
+          "storage",
+          "The forecast authorization reservation failed integrity verification.",
+          409,
+        );
+      });
+      if (reservation) {
+        if (
+          reservation.value.schemaVersion !== "1.0" ||
+          reservation.value.authorizationId !== decision.authorizationId ||
+          reservation.value.decisionId !== decisionId ||
+          reservation.value.eventType !== "reserved" ||
+          typeof reservation.value.jobId !== "string" ||
+          typeof reservation.value.runId !== "string"
+        )
+          throw new RuntimePublicError(
+            "authorization_integrity_error",
+            "storage",
+            "The forecast authorization reservation failed integrity verification.",
+            409,
+          );
+        authorizationStatus = "reserved";
+      } else authorizationStatus = "available";
     }
     if (authorizationStatus === "reserved") {
       const runs = runtimeCollectionPaths(config.runtimeRoot).runs;
@@ -635,6 +929,7 @@ export async function readVerifiedDecision(
     commit,
     decisionCommitSha256: sha256(commitFile.bytes),
     authorization,
+    authorizationCommitSha256,
     authorizationStatus,
     committedRunId,
   };

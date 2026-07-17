@@ -115,9 +115,15 @@
           "properties": {
             "eligible": { "type": "boolean" },
             "assessmentStatus": { "enum": ["insufficient_history", "candidate_feasibility_only", "full_assessment_eligible", "partial_candidate_set", "assessment_policy_inactive", "assessment_blocked"] },
+            "assessmentEligibilityStatus": { "enum": ["insufficient_history", "candidate_feasibility_only", "full_assessment_eligible", "partial_candidate_set", "assessment_policy_inactive", "assessment_blocked"] },
             "labelledRows": { "type": "integer", "minimum": 0 },
             "availableFoldCount": { "type": "integer", "minimum": 0 },
             "plannedFoldCount": { "type": "integer", "minimum": 0 },
+            "minimumFoldCount": { "type": "integer", "minimum": 1 },
+            "maximumFoldCount": { "type": "integer", "minimum": 1 },
+            "foldCapApplied": { "type": "boolean" },
+            "selectedValidationStartIndex": { "type": ["integer", "null"], "minimum": 0 },
+            "selectedValidationEndIndex": { "type": ["integer", "null"], "minimum": 0 },
             "foldPlan": {
               "type": "object", "additionalProperties": false,
               "required": ["trainingWindow", "initialTrainingRows", "embargoRows", "validationRowsPerFold", "stepSizeWeeks", "horizonWeeks", "samePlanForAllCandidates", "maximumFoldCapStatus"],
@@ -125,7 +131,12 @@
                 "trainingWindow": { "const": "expanding" }, "initialTrainingRows": { "const": 104 },
                 "embargoRows": { "const": 1 }, "validationRowsPerFold": { "const": 1 },
                 "stepSizeWeeks": { "const": 1 }, "horizonWeeks": { "const": 2 },
-                "samePlanForAllCandidates": { "const": true }, "maximumFoldCapStatus": { "const": "governance_pending" }
+                "samePlanForAllCandidates": { "const": true },
+                "firstAvailableValidationIndex": { "type": "integer", "minimum": 0 },
+                "minimumFoldCount": { "type": "integer", "minimum": 1 },
+                "maximumFoldCount": { "type": "integer", "minimum": 1 },
+                "foldSelectionRule": { "type": ["string", "null"] },
+                "maximumFoldCapStatus": { "enum": ["governance_pending", "applied", "not_applied"] }
               }
             },
             "candidateSetStatus": { "enum": ["complete_candidate_set", "partial_candidate_set", "insufficient_candidate_breadth"] },
@@ -150,9 +161,25 @@
             "reasonCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
             "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
             "policyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
-            "policyVersion": { "const": "p1.4d-1-v1" },
-            "policySha256": { "$ref": "#/$defs/sha256" }
-          }
+            "policyVersion": { "enum": ["p1.4d-1-v1", "p2-v1"] },
+            "policySha256": { "$ref": "#/$defs/sha256" },
+            "assessmentPolicyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
+            "assessmentPolicyVersion": { "enum": ["p1.4d-1-v1", "p2-v1"] },
+            "assessmentPolicySha256": { "$ref": "#/$defs/sha256" },
+            "decisionCompatibilityStatus": { "enum": ["phase1_decision_policy_available", "phase2_decision_policy_not_yet_available"] }
+          },
+          "allOf": [
+            {"if": {"properties": {"policyVersion": {"const": "p1.4d-1-v1"}}}, "then": {"properties": {"foldPlan": {"properties": {"maximumFoldCapStatus": {"const": "governance_pending"}}}}}},
+            {"if": {"properties": {"policyVersion": {"const": "p2-v1"}}}, "then": {
+              "required": ["assessmentEligibilityStatus", "minimumFoldCount", "maximumFoldCount", "foldCapApplied", "selectedValidationStartIndex", "selectedValidationEndIndex", "assessmentPolicyId", "assessmentPolicyVersion", "assessmentPolicySha256", "decisionCompatibilityStatus"],
+              "properties": {
+                "minimumFoldCount": {"const": 52}, "maximumFoldCount": {"const": 68},
+                "assessmentPolicyVersion": {"const": "p2-v1"},
+                "decisionCompatibilityStatus": {"const": "phase2_decision_policy_not_yet_available"},
+                "foldPlan": {"required": ["firstAvailableValidationIndex", "minimumFoldCount", "maximumFoldCount", "foldSelectionRule"], "properties": {"firstAvailableValidationIndex": {"const": 105}, "minimumFoldCount": {"const": 52}, "maximumFoldCount": {"const": 68}, "foldSelectionRule": {"const": "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count"}}}
+              }
+            }}
+          ]
         }
       }
     }

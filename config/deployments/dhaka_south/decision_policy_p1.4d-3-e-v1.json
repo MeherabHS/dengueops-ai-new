@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "policyId": "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION",
+  "policyVersion": "p1.4d-3-e-v1",
+  "policyStatus": "active",
+  "policySha256": "8fece340b85951d3bee8b037c4ac79ae82636ee371a934e9371bcb4a633491a4",
+  "deploymentId": "dhaka_south",
+  "allowedAssessmentPolicyId": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
+  "allowedAssessmentPolicyVersion": "p1.4d-1-v1",
+  "allowedAssessmentPolicySha256": "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af",
+  "candidateRegistrySha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+  "decisionScope": "one_run",
+  "recommendationStatusAccepted": "evidence_only",
+  "recommendationStrengthAccepted": "not_available",
+  "allowedDecisions": ["approve_technical_winner", "keep_current_model", "defer", "reject_assessment"],
+  "allowedDeployableCandidateClasses": ["deployable_learned_model"],
+  "currentModelId": "random_forest",
+  "currentModelParameterSha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+  "baselineApprovalAllowed": false,
+  "deploymentWideAdoptionAllowed": false,
+  "institutionalApproval": false,
+  "operatorType": "trusted_internal_unverified",
+  "assessmentValiditySeconds": 2592000,
+  "authorizationPolicy": {"scope":"one_run","oneAuthorizationPerFinalDecision":true,"oneRunPerAuthorization":true,"automaticRetryAllowed":false,"consumeAfterCommittedLatestPointer":true},
+  "limitations": [
+    "The decision is a trusted internal, unverified model-use decision for one forecast run only.",
+    "Recommendation strength is not governed and evidence-only comparison is not an automatic recommendation.",
+    "This policy does not change the deployment-wide active model or constitute institutional approval."
+  ],
+  "prohibitedClaims": [
+    "The technical winner is automatically approved or adopted.",
+    "The operator identity or institutional approval is verified.",
+    "The selected model is universally best or deployment-wide active."
+  ]
+}

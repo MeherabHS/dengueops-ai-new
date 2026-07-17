@@ -1,1 +1,29 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,"required":["schemaVersion","runId","jobId","datasetId","deploymentId","workflowMode","sourceType","status","decisionId","assessmentId","authorizationId","selectedModelId","selectedModelParameterSha256","decisionScope","deploymentModelAdopted","createdAt","generatedAt","artifactPublicationSequence"],"properties":{"schemaVersion":{"const":"1.0"},"runId":{"format":"uuid"},"jobId":{"format":"uuid"},"datasetId":{"$ref":"#/$defs/sha"},"deploymentId":{"const":"dhaka_south"},"workflowMode":{"const":"approved_assessment_forecast"},"sourceType":{"const":"uploaded"},"status":{"const":"commit_ready"},"decisionId":{"format":"uuid"},"assessmentId":{"format":"uuid"},"authorizationId":{"format":"uuid"},"selectedModelId":{"$ref":"#/$defs/model"},"selectedModelParameterSha256":{"$ref":"#/$defs/sha"},"decisionScope":{"const":"one_run"},"deploymentModelAdopted":{"const":false},"createdAt":{"format":"date-time"},"generatedAt":{"format":"date-time"},"artifactPublicationSequence":{"type":"array","minItems":8,"items":{"type":"string"}}},"$defs":{"sha":{"type":"string","pattern":"^[a-f0-9]{64}$"},"model":{"enum":["ridge_regression","poisson_regression","random_forest","gradient_boosting"]}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "runId", "jobId", "datasetId", "deploymentId", "workflowMode", "sourceType", "status", "decisionId", "assessmentId", "authorizationId", "selectedModelId", "selectedModelParameterSha256", "decisionScope", "deploymentModelAdopted", "createdAt", "generatedAt", "artifactPublicationSequence"],
+      "properties": {
+        "schemaVersion": {"const": "1.0"}, "runId": {"format": "uuid"}, "jobId": {"format": "uuid"}, "datasetId": {"$ref": "#/$defs/sha"}, "deploymentId": {"const": "dhaka_south"}, "workflowMode": {"const": "approved_assessment_forecast"}, "sourceType": {"const": "uploaded"}, "status": {"const": "commit_ready"}, "decisionId": {"format": "uuid"}, "assessmentId": {"format": "uuid"}, "authorizationId": {"format": "uuid"}, "selectedModelId": {"$ref": "#/$defs/model"}, "selectedModelParameterSha256": {"$ref": "#/$defs/sha"}, "decisionScope": {"const": "one_run"}, "deploymentModelAdopted": {"const": false}, "createdAt": {"format": "date-time"}, "generatedAt": {"format": "date-time"}, "artifactPublicationSequence": {"type": "array", "minItems": 8, "items": {"type": "string"}}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "runId", "jobId", "datasetId", "deploymentId", "workflowMode", "sourceType", "status", "decisionId", "decisionCommitSha256", "assessmentId", "assessmentCommitSha256", "authorizationId", "authorizationCommitSha256", "assessmentPolicy", "decisionPolicy", "candidateRegistrySha256", "selectedModelId", "selectedModelParameterSha256", "assessmentLabelledRows", "assessmentPlannedFoldCount", "selectedEvaluationPeriod", "foldPlanSha256", "trainingRowCount", "trainingPeriod", "featureMatrixSha256", "featureOrderSha256", "decisionScope", "deploymentModelAdopted", "createdAt", "generatedAt", "artifactPublicationSequence"],
+      "properties": {
+        "schemaVersion": {"const": "2.0"}, "runId": {"format": "uuid"}, "jobId": {"format": "uuid"}, "datasetId": {"$ref": "#/$defs/sha"}, "deploymentId": {"const": "dhaka_south"}, "workflowMode": {"const": "approved_assessment_forecast"}, "sourceType": {"const": "uploaded"}, "status": {"const": "commit_ready"}, "decisionId": {"format": "uuid"}, "decisionCommitSha256": {"$ref": "#/$defs/sha"}, "assessmentId": {"format": "uuid"}, "assessmentCommitSha256": {"$ref": "#/$defs/sha"}, "authorizationId": {"format": "uuid"}, "authorizationCommitSha256": {"$ref": "#/$defs/sha"}, "assessmentPolicy": {"$ref": "#/$defs/assessmentPolicy"}, "decisionPolicy": {"$ref": "#/$defs/decisionPolicy"}, "candidateRegistrySha256": {"$ref": "#/$defs/sha"}, "selectedModelId": {"$ref": "#/$defs/model"}, "selectedModelParameterSha256": {"$ref": "#/$defs/sha"}, "assessmentLabelledRows": {"type": "integer", "minimum": 157}, "assessmentPlannedFoldCount": {"type": "integer", "minimum": 52, "maximum": 68}, "selectedEvaluationPeriod": {"$ref": "#/$defs/periodRange"}, "foldPlanSha256": {"$ref": "#/$defs/sha"}, "trainingRowCount": {"type": "integer", "minimum": 157}, "trainingPeriod": {"$ref": "#/$defs/periodRange"}, "featureMatrixSha256": {"$ref": "#/$defs/sha"}, "featureOrderSha256": {"$ref": "#/$defs/sha"}, "decisionScope": {"const": "one_run"}, "deploymentModelAdopted": {"const": false}, "createdAt": {"format": "date-time"}, "generatedAt": {"format": "date-time"}, "artifactPublicationSequence": {"type": "array", "minItems": 8, "items": {"type": "string"}}
+      }
+    }
+  ],
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "model": {"enum": ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]},
+    "period": {"type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$"},
+    "periodRange": {"type": "object", "additionalProperties": false, "required": ["start", "end"], "properties": {"start": {"$ref": "#/$defs/period"}, "end": {"$ref": "#/$defs/period"}}},
+    "assessmentPolicy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"}, "policyVersion": {"const": "p2-v1"}, "policySha256": {"const": "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff"}}},
+    "decisionPolicy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION"}, "policyVersion": {"const": "p2-v1"}, "policySha256": {"$ref": "#/$defs/sha"}}}
+  }
+}
