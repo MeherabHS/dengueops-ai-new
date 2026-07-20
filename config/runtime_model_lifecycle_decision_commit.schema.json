@@ -1,0 +1,1035 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "profileSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "bootstrap_historical_profile"
+        },
+        "inputAssignmentPointerState": {
+          "const": "absent"
+        },
+        "inputAssignmentPointerSha256": {
+          "const": null
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "profileSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "assessmentCommitSha256",
+        "decisionCommitSha256",
+        "authorizationCommitSha256",
+        "approvedForecastCommitSha256",
+        "outcomeCommitSha256",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "promote_selected_model"
+        },
+        "inputAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "inputAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "assessmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "decisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "authorizationCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "approvedForecastCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "outcomeCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "inputAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "present"
+                },
+                "inputAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "evidenceContextStatus",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "retain_current_model"
+        },
+        "inputAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "inputAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "evidenceContextStatus": {
+          "const": "verified_monitoring_and_degradation"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "inputAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "present"
+                },
+                "inputAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "rollbackSourceAssignmentId",
+        "rollbackSourceAssignmentCommitSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "rollback_previous_assignment"
+        },
+        "inputAssignmentPointerState": {
+          "const": "present"
+        },
+        "inputAssignmentPointerSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "rollbackSourceAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "rollbackSourceAssignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "evidenceContextStatus",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "defer"
+        },
+        "inputAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "inputAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "evidenceContextStatus": {
+          "const": "verified_monitoring_and_degradation"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "inputAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "present"
+                },
+                "inputAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "evidenceContextStatus"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "defer"
+        },
+        "inputAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "inputAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "evidenceContextStatus": {
+          "const": "explicit_no_evidence"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "inputAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "present"
+                },
+                "inputAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "evidenceContextStatus",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "reject"
+        },
+        "inputAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "inputAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "evidenceContextStatus": {
+          "const": "verified_monitoring_and_degradation"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "inputAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "present"
+                },
+                "inputAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "inputAssignmentPointerState",
+        "inputAssignmentPointerSha256",
+        "lifecycleDecisionSha256",
+        "operatorIdentitySource",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "evidenceContextStatus",
+        "assessmentCommitSha256",
+        "decisionCommitSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "reject"
+        },
+        "inputAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "inputAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "operatorIdentitySource": {
+          "const": "server_configuration"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "evidenceContextStatus": {
+          "const": "verified_assessment_and_decision"
+        },
+        "assessmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "decisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "inputAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "inputAssignmentPointerState": {
+                  "const": "present"
+                },
+                "inputAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullsha": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sha"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

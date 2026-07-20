@@ -18,6 +18,9 @@ from runtime_policy import load_and_validate_quick_forecast_policy
 from runtime_quick_forecast import execute
 from runtime_validate import validate
 from runtime_active_model import resolve_active_model
+from runtime_model_lifecycle import execute as execute_lifecycle
+from runtime_active_model import PROFILE_SHA
+from tests.test_runtime_model_lifecycle import lifecycle_job
 
 
 def iso_now():
@@ -75,6 +78,17 @@ class RuntimeQuickForecastTests(unittest.TestCase):
             runtime,workspace,job_path,job=build_ready_runtime(Path(directory));authority=resolve_active_model(ROOT,runtime)
             job.update({"activeModelAuthoritySource":authority["authoritySource"],"authoritySnapshotSha256":authority["authoritySnapshotSha256"],"historicalProfileSha256":authority["profileSha256"],"resolvedModelId":authority["modelId"],"resolvedModelFamily":authority["modelFamily"],"resolvedModelParameterSha256":authority["parameterSha256"],"resolvedFeatureOrderSha256":authority["featureOrderSha256"],"resolvedCandidateRegistrySha256":authority["candidateRegistrySha256"],"quickPolicyId":authority["quickPolicyId"],"quickPolicyVersion":authority["quickPolicyVersion"],"quickPolicySha256":authority["quickPolicySha256"]});job_path.write_text(json.dumps(job),encoding="utf-8")
             outcome=execute(SimpleNamespace(runtime_root=str(runtime),job_record=str(job_path),workspace=str(workspace),staging=str(runtime/"staging"/job["runId"])))
+            self.assertTrue(outcome["committed"])
+    def test_committed_assignment_quick_job_executes_with_complete_authority(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime,workspace,job_path,job=build_ready_runtime(Path(directory))
+            lifecycle,lifecycle_path=lifecycle_job(runtime,expectedProfileSha256=PROFILE_SHA)
+            execute_lifecycle(lifecycle_path,runtime,runtime/"lifecycle-staging"/lifecycle["lifecycleDecisionId"],ROOT)
+            authority=resolve_active_model(ROOT,runtime)
+            self.assertEqual(authority["authoritySource"],"committed_assignment")
+            job.update({"activeModelAuthoritySource":authority["authoritySource"],"authoritySnapshotSha256":authority["authoritySnapshotSha256"],"assignmentId":authority["assignmentId"],"assignmentCommitSha256":authority["assignmentCommitSha256"],"resolvedModelId":authority["modelId"],"resolvedModelFamily":authority["modelFamily"],"resolvedModelParameterSha256":authority["parameterSha256"],"resolvedFeatureOrderSha256":authority["featureOrderSha256"],"resolvedCandidateRegistrySha256":authority["candidateRegistrySha256"],"quickPolicyId":authority["quickPolicyId"],"quickPolicyVersion":authority["quickPolicyVersion"],"quickPolicySha256":authority["quickPolicySha256"]})
+            job_path.write_text(json.dumps(job),encoding="utf-8")
+            outcome=execute(SimpleNamespace(runtime_root=str(runtime),job_record=str(job_path),workspace=str(workspace),staging=str(runtime/"staging"/job["runId"])) )
             self.assertTrue(outcome["committed"])
     def test_isolated_point_forecast_commit_has_dataset_calibration_and_no_preparedness(self):
         with tempfile.TemporaryDirectory() as directory:

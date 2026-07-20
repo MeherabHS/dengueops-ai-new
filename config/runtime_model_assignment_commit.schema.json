@@ -1,0 +1,468 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assignmentId",
+        "assignmentAction",
+        "assignmentSha256",
+        "lifecycleDecisionId",
+        "lifecycleDecisionCommitSha256",
+        "priorPointerSha256",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "assignedModelId",
+        "modelFamily",
+        "parameterSha256",
+        "featureOrderSha256",
+        "candidateRegistrySha256",
+        "quickForecastPolicyId",
+        "quickForecastPolicyVersion",
+        "quickForecastPolicySha256",
+        "publicationEligible",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "profileRawSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "assignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assignmentAction": {
+          "const": "bootstrap"
+        },
+        "assignmentSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "lifecycleDecisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "priorAssignmentId": {
+          "const": null
+        },
+        "priorAssignmentCommitSha256": {
+          "const": null
+        },
+        "assignedModelId": {
+          "const": "random_forest"
+        },
+        "modelFamily": {
+          "const": "RandomForestRegressor"
+        },
+        "parameterSha256": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "featureOrderSha256": {
+          "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+        },
+        "candidateRegistrySha256": {
+          "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+        },
+        "quickForecastPolicyId": {
+          "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
+        },
+        "quickForecastPolicyVersion": {
+          "const": "p1.4f-v1"
+        },
+        "quickForecastPolicySha256": {
+          "const": "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a"
+        },
+        "publicationEligible": {
+          "const": true
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "profileRawSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assignmentId",
+        "assignmentAction",
+        "assignmentSha256",
+        "lifecycleDecisionId",
+        "lifecycleDecisionCommitSha256",
+        "priorPointerSha256",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "assignedModelId",
+        "modelFamily",
+        "parameterSha256",
+        "featureOrderSha256",
+        "candidateRegistrySha256",
+        "quickForecastPolicyId",
+        "quickForecastPolicyVersion",
+        "quickForecastPolicySha256",
+        "publicationEligible",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "sourceAssessmentCommitSha256",
+        "sourceDecisionArtifactSha256",
+        "sourceDecisionCommitSha256",
+        "sourceAuthorizationRecordSha256",
+        "sourceAuthorizationCommitSha256",
+        "sourceAuthorizationConsumptionSha256",
+        "sourceApprovedForecastCommitSha256",
+        "sourceOutcomeCommitSha256",
+        "sourceMonitoringLatestSha256",
+        "sourceMonitoringSummarySha256",
+        "sourceMonitoringIncludedOutcomeSetSha256",
+        "sourceDegradationLatestSha256",
+        "sourceDegradationEvidenceCommitSha256",
+        "sourceDegradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "assignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assignmentAction": {
+          "const": "promote"
+        },
+        "assignmentSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "lifecycleDecisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "assignedModelId": {
+          "const": "random_forest"
+        },
+        "modelFamily": {
+          "const": "RandomForestRegressor"
+        },
+        "parameterSha256": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "featureOrderSha256": {
+          "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+        },
+        "candidateRegistrySha256": {
+          "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+        },
+        "quickForecastPolicyId": {
+          "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
+        },
+        "quickForecastPolicyVersion": {
+          "const": "p1.4f-v1"
+        },
+        "quickForecastPolicySha256": {
+          "const": "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a"
+        },
+        "publicationEligible": {
+          "const": true
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "sourceAssessmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceDecisionArtifactSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceDecisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceAuthorizationRecordSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceAuthorizationCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceAuthorizationConsumptionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceApprovedForecastCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceOutcomeCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceMonitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceMonitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceMonitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceDegradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceDegradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "sourceDegradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "priorAssignmentId": {
+                  "const": null
+                },
+                "priorAssignmentCommitSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "priorAssignmentId": {
+                  "$ref": "#/$defs/uuid"
+                },
+                "priorAssignmentCommitSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assignmentId",
+        "assignmentAction",
+        "assignmentSha256",
+        "lifecycleDecisionId",
+        "lifecycleDecisionCommitSha256",
+        "priorPointerSha256",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "assignedModelId",
+        "modelFamily",
+        "parameterSha256",
+        "featureOrderSha256",
+        "candidateRegistrySha256",
+        "quickForecastPolicyId",
+        "quickForecastPolicyVersion",
+        "quickForecastPolicySha256",
+        "publicationEligible",
+        "committedAt",
+        "status",
+        "profileModified",
+        "forecastLatestModified",
+        "monitoringLatestModified",
+        "degradationLatestModified",
+        "authorizationModified",
+        "automaticActionProduced",
+        "rollbackSourceAssignmentId",
+        "rollbackSourceAssignmentCommitSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "assignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assignmentAction": {
+          "const": "rollback"
+        },
+        "assignmentSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "lifecycleDecisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignedModelId": {
+          "const": "random_forest"
+        },
+        "modelFamily": {
+          "const": "RandomForestRegressor"
+        },
+        "parameterSha256": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "featureOrderSha256": {
+          "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+        },
+        "candidateRegistrySha256": {
+          "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+        },
+        "quickForecastPolicyId": {
+          "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
+        },
+        "quickForecastPolicyVersion": {
+          "const": "p1.4f-v1"
+        },
+        "quickForecastPolicySha256": {
+          "const": "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a"
+        },
+        "publicationEligible": {
+          "const": true
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "const": "committed"
+        },
+        "profileModified": {
+          "const": false
+        },
+        "forecastLatestModified": {
+          "const": false
+        },
+        "monitoringLatestModified": {
+          "const": false
+        },
+        "degradationLatestModified": {
+          "const": false
+        },
+        "authorizationModified": {
+          "const": false
+        },
+        "automaticActionProduced": {
+          "const": false
+        },
+        "rollbackSourceAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "rollbackSourceAssignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullsha": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sha"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "nulluuid": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

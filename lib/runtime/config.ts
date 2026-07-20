@@ -75,13 +75,21 @@ export function loadRuntimeConfig(requirePython = true): RuntimeConfig {
   const internalMonitoringEnabled = process.env.DENGUEOPS_INTERNAL_MONITORING_ENABLED?.trim().toLowerCase() === "true";
   const internalMonitoringSecret = process.env.DENGUEOPS_INTERNAL_MONITORING_SECRET?.trim() || "";
   const internalMonitoringOperatorId = process.env.DENGUEOPS_INTERNAL_MONITORING_OPERATOR_ID?.trim() || "";
+  const internalDecisionEnabled = process.env.DENGUEOPS_INTERNAL_DECISION_ENABLED?.trim().toLowerCase() === "true";
+  const internalDecisionSecret = process.env.DENGUEOPS_INTERNAL_DECISION_SECRET?.trim() || "";
+  const internalOperatorId = process.env.DENGUEOPS_INTERNAL_OPERATOR_ID?.trim() || "";
   const internalModelLifecycleEnabled = process.env.DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_ENABLED?.trim().toLowerCase() === "true";
   const internalModelLifecycleSecret = process.env.DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_SECRET?.trim() || "";
   const internalModelLifecycleOperatorId = process.env.DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_OPERATOR_ID?.trim() || "";
   if (internalMonitoringEnabled && (internalMonitoringSecret.length < 16 || !internalMonitoringOperatorId || internalMonitoringOperatorId.length > 128)) {
     throw new RuntimePublicError("invalid_monitoring_configuration", "configuration", "Enabled outcome monitoring requires a 16-character secret and bounded operator identifier.", 503);
   }
+  if (internalDecisionEnabled && (internalDecisionSecret.length < 16 || !internalOperatorId || internalOperatorId.length > 128)) {
+    throw new RuntimePublicError("invalid_decision_configuration", "configuration", "Enabled internal decisions require valid server-only configuration.", 503);
+  }
   if(internalModelLifecycleEnabled&&(internalModelLifecycleSecret.length<16||!internalModelLifecycleOperatorId||internalModelLifecycleOperatorId.length>128))throw new RuntimePublicError("invalid_model_lifecycle_configuration","configuration","Enabled model lifecycle ingress requires a 16-character distinct secret and bounded operator identifier.",503);
+  const enabledSecrets=[...(internalDecisionEnabled?[internalDecisionSecret]:[]),...(internalMonitoringEnabled?[internalMonitoringSecret]:[]),...(internalModelLifecycleEnabled?[internalModelLifecycleSecret]:[])];
+  if(new Set(enabledSecrets).size!==enabledSecrets.length)throw new RuntimePublicError("invalid_internal_action_configuration","configuration","Enabled internal actions require distinct server-only credentials.",503);
   return {
     repositoryRoot,
     runtimeRoot,
@@ -92,9 +100,9 @@ export function loadRuntimeConfig(requirePython = true): RuntimeConfig {
     assessmentTimeoutSeconds: positiveInteger(process.env.DENGUEOPS_ASSESSMENT_TIMEOUT_SECONDS, 1800, "DENGUEOPS_ASSESSMENT_TIMEOUT_SECONDS"),
     approvedForecastTimeoutSeconds: positiveInteger(process.env.DENGUEOPS_APPROVED_FORECAST_TIMEOUT_SECONDS, 600, "DENGUEOPS_APPROVED_FORECAST_TIMEOUT_SECONDS"),
     workspaceMaxAgeSeconds: positiveInteger(process.env.DENGUEOPS_WORKSPACE_MAX_AGE_SECONDS, 86_400, "DENGUEOPS_WORKSPACE_MAX_AGE_SECONDS"),
-    internalDecisionEnabled: process.env.DENGUEOPS_INTERNAL_DECISION_ENABLED?.trim().toLowerCase() === "true",
-    internalDecisionSecret: process.env.DENGUEOPS_INTERNAL_DECISION_SECRET?.trim() || "",
-    internalOperatorId: process.env.DENGUEOPS_INTERNAL_OPERATOR_ID?.trim() || "",
+    internalDecisionEnabled,
+    internalDecisionSecret,
+    internalOperatorId,
     decisionValiditySeconds: positiveInteger(process.env.DENGUEOPS_DECISION_VALIDITY_SECONDS, 2_592_000, "DENGUEOPS_DECISION_VALIDITY_SECONDS"),
     decisionReasonMaxLength: positiveInteger(process.env.DENGUEOPS_DECISION_REASON_MAX_LENGTH, 1000, "DENGUEOPS_DECISION_REASON_MAX_LENGTH"),
     internalMonitoringEnabled,

@@ -1,0 +1,1699 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "profileSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "bootstrap_historical_profile"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "const": "absent"
+        },
+        "expectedAssignmentPointerSha256": {
+          "const": null
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "profileSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "assessmentCommitSha256",
+        "decisionCommitSha256",
+        "authorizationCommitSha256",
+        "approvedForecastCommitSha256",
+        "outcomeCommitSha256",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256",
+        "assessmentId",
+        "sourceDecisionId",
+        "authorizationId",
+        "approvedForecastRunId",
+        "outcomeId",
+        "degradationEvidenceId",
+        "assessmentReferenceCohortId",
+        "assessmentReferenceDimensionId",
+        "selectedModelId",
+        "selectedModelFamily",
+        "selectedParameterSha256",
+        "candidateRegistrySha256",
+        "featureOrderSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "promote_selected_model"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "expectedAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "assessmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "decisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "authorizationCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "approvedForecastCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "outcomeCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assessmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "sourceDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "authorizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "approvedForecastRunId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "outcomeId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "degradationEvidenceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assessmentReferenceCohortId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assessmentReferenceDimensionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selectedModelId": {
+          "const": "random_forest"
+        },
+        "selectedModelFamily": {
+          "const": "RandomForestRegressor"
+        },
+        "selectedParameterSha256": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "candidateRegistrySha256": {
+          "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+        },
+        "featureOrderSha256": {
+          "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "present"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "evidenceContextStatus",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "retain_current_model"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "expectedAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "const": null
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "evidenceContextStatus": {
+          "const": "verified_monitoring_and_degradation"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "present"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "rollbackSourceAssignmentId",
+        "rollbackSourceAssignmentCommitSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "rollback_previous_assignment"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "const": "present"
+        },
+        "expectedAssignmentPointerSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "rollbackSourceAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "rollbackSourceAssignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "evidenceContextStatus",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "defer"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "expectedAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "const": null
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "evidenceContextStatus": {
+          "const": "verified_monitoring_and_degradation"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "present"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "evidenceContextStatus"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "defer"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "expectedAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "const": null
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "evidenceContextStatus": {
+          "const": "explicit_no_evidence"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "present"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "evidenceContextStatus",
+        "monitoringLatestSha256",
+        "monitoringSummarySha256",
+        "monitoringIncludedOutcomeSetSha256",
+        "degradationLatestSha256",
+        "degradationEvidenceCommitSha256",
+        "degradationEvidenceSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "reject"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "expectedAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "const": null
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "evidenceContextStatus": {
+          "const": "verified_monitoring_and_degradation"
+        },
+        "monitoringLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringSummarySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "monitoringIncludedOutcomeSetSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationLatestSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "degradationEvidenceSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "present"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "lifecycleDecisionId",
+        "jobId",
+        "deploymentId",
+        "geography",
+        "target",
+        "forecastHorizonWeeks",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "action",
+        "operatorType",
+        "operatorIdentifier",
+        "reason",
+        "manualActionAcknowledged",
+        "statisticalSufficiencyNotGovernedAcknowledged",
+        "materialWorseningNotClassifiedAcknowledged",
+        "evidenceDoesNotProveSuperiorityAcknowledged",
+        "quickCompatibleRandomForestOnlyAcknowledged",
+        "expectedAssignmentPointerState",
+        "expectedAssignmentPointerSha256",
+        "activeModelIdBefore",
+        "activeModelFamilyBefore",
+        "activeParameterSha256Before",
+        "activeAuthoritySourceBefore",
+        "activeAuthoritySnapshotSha256Before",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "resultingAssignmentId",
+        "modelIdentityChanged",
+        "materialWorseningStatus",
+        "statisticalSufficiencyStatus",
+        "automaticAction",
+        "createdAt",
+        "decisionStatus",
+        "evidenceContextStatus",
+        "assessmentCommitSha256",
+        "decisionCommitSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "target": {
+          "const": "target_cases_next_2w"
+        },
+        "forecastHorizonWeeks": {
+          "const": 2
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "action": {
+          "const": "reject"
+        },
+        "operatorType": {
+          "const": "trusted_internal"
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "manualActionAcknowledged": {
+          "const": true
+        },
+        "statisticalSufficiencyNotGovernedAcknowledged": {
+          "const": true
+        },
+        "materialWorseningNotClassifiedAcknowledged": {
+          "const": true
+        },
+        "evidenceDoesNotProveSuperiorityAcknowledged": {
+          "const": true
+        },
+        "quickCompatibleRandomForestOnlyAcknowledged": {
+          "const": true
+        },
+        "expectedAssignmentPointerState": {
+          "enum": [
+            "absent",
+            "present"
+          ]
+        },
+        "expectedAssignmentPointerSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "activeModelIdBefore": {
+          "const": "random_forest"
+        },
+        "activeModelFamilyBefore": {
+          "const": "RandomForestRegressor"
+        },
+        "activeParameterSha256Before": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "activeAuthoritySourceBefore": {
+          "enum": [
+            "committed_assignment",
+            "historical_profile_fallback_pending_explicit_bootstrap"
+          ]
+        },
+        "activeAuthoritySnapshotSha256Before": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "resultingAssignmentId": {
+          "const": null
+        },
+        "modelIdentityChanged": {
+          "const": false
+        },
+        "materialWorseningStatus": {
+          "const": "not_governed"
+        },
+        "statisticalSufficiencyStatus": {
+          "const": "not_governed"
+        },
+        "automaticAction": {
+          "const": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decisionStatus": {
+          "const": "committed"
+        },
+        "evidenceContextStatus": {
+          "const": "verified_assessment_and_decision"
+        },
+        "assessmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "decisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "absent"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "expectedAssignmentPointerState": {
+                  "const": "present"
+                },
+                "expectedAssignmentPointerSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullsha": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sha"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "nulluuid": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

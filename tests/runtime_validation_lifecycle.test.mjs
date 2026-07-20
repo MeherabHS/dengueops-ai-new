@@ -1,0 +1,3 @@
+import test from "node:test";import assert from "node:assert/strict";import {readFile} from "node:fs/promises";
+test("validation lifecycle panel is read-only and neutral",async()=>{const s=await readFile(new URL("../components/validation/ModelLifecycleSummary.tsx",import.meta.url),"utf8");assert.match(s,/read-only/);assert.match(s,/Human governed/);assert.match(s,/not governed/);assert.doesNotMatch(s,/method:\s*["']POST|promote button|rollback button|retain button/i)});
+test("validation page includes lifecycle authority",async()=>{const s=await readFile(new URL("../app/validation/page.tsx",import.meta.url),"utf8");assert.match(s,/ModelLifecycleSummary/)});

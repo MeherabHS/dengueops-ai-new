@@ -1,0 +1,382 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "deploymentId",
+        "assignmentId",
+        "assignmentAction",
+        "assignedModelId",
+        "modelFamily",
+        "parameterSha256",
+        "featureOrderSha256",
+        "candidateRegistrySha256",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "lifecycleDecisionId",
+        "lifecycleDecisionCommitSha256",
+        "assignmentCommitSha256",
+        "assignmentPath",
+        "assignmentSha256",
+        "lifecycleDecisionPath",
+        "lifecycleDecisionSha256",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "publishedAt",
+        "activeModelAuthority",
+        "automaticAction"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "assignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assignmentAction": {
+          "const": "bootstrap"
+        },
+        "assignedModelId": {
+          "const": "random_forest"
+        },
+        "modelFamily": {
+          "const": "RandomForestRegressor"
+        },
+        "parameterSha256": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "featureOrderSha256": {
+          "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+        },
+        "candidateRegistrySha256": {
+          "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "lifecycleDecisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentPath": {
+          "type": "string",
+          "pattern": "^model-lifecycle/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/artifacts/model_assignment\\.json$"
+        },
+        "assignmentSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecycleDecisionPath": {
+          "type": "string",
+          "pattern": "^model-lifecycle/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/artifacts/lifecycle_decision\\.json$"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "const": null
+        },
+        "priorAssignmentCommitSha256": {
+          "const": null
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "activeModelAuthority": {
+          "const": "committed_assignment"
+        },
+        "automaticAction": {
+          "const": false
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "deploymentId",
+        "assignmentId",
+        "assignmentAction",
+        "assignedModelId",
+        "modelFamily",
+        "parameterSha256",
+        "featureOrderSha256",
+        "candidateRegistrySha256",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "lifecycleDecisionId",
+        "lifecycleDecisionCommitSha256",
+        "assignmentCommitSha256",
+        "assignmentPath",
+        "assignmentSha256",
+        "lifecycleDecisionPath",
+        "lifecycleDecisionSha256",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "publishedAt",
+        "activeModelAuthority",
+        "automaticAction"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "assignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assignmentAction": {
+          "const": "promote"
+        },
+        "assignedModelId": {
+          "const": "random_forest"
+        },
+        "modelFamily": {
+          "const": "RandomForestRegressor"
+        },
+        "parameterSha256": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "featureOrderSha256": {
+          "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+        },
+        "candidateRegistrySha256": {
+          "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "lifecycleDecisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentPath": {
+          "type": "string",
+          "pattern": "^model-lifecycle/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/artifacts/model_assignment\\.json$"
+        },
+        "assignmentSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecycleDecisionPath": {
+          "type": "string",
+          "pattern": "^model-lifecycle/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/artifacts/lifecycle_decision\\.json$"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/nulluuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/nullsha"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "activeModelAuthority": {
+          "const": "committed_assignment"
+        },
+        "automaticAction": {
+          "const": false
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "priorAssignmentId": {
+                  "const": null
+                },
+                "priorAssignmentCommitSha256": {
+                  "const": null
+                }
+              }
+            },
+            {
+              "properties": {
+                "priorAssignmentId": {
+                  "$ref": "#/$defs/uuid"
+                },
+                "priorAssignmentCommitSha256": {
+                  "$ref": "#/$defs/sha"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "deploymentId",
+        "assignmentId",
+        "assignmentAction",
+        "assignedModelId",
+        "modelFamily",
+        "parameterSha256",
+        "featureOrderSha256",
+        "candidateRegistrySha256",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "lifecycleDecisionId",
+        "lifecycleDecisionCommitSha256",
+        "assignmentCommitSha256",
+        "assignmentPath",
+        "assignmentSha256",
+        "lifecycleDecisionPath",
+        "lifecycleDecisionSha256",
+        "priorAssignmentId",
+        "priorAssignmentCommitSha256",
+        "publishedAt",
+        "activeModelAuthority",
+        "automaticAction"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "assignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assignmentAction": {
+          "const": "rollback"
+        },
+        "assignedModelId": {
+          "const": "random_forest"
+        },
+        "modelFamily": {
+          "const": "RandomForestRegressor"
+        },
+        "parameterSha256": {
+          "const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"
+        },
+        "featureOrderSha256": {
+          "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+        },
+        "candidateRegistrySha256": {
+          "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+        },
+        "policyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb"
+        },
+        "lifecycleDecisionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "lifecycleDecisionCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentPath": {
+          "type": "string",
+          "pattern": "^model-lifecycle/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/artifacts/model_assignment\\.json$"
+        },
+        "assignmentSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecycleDecisionPath": {
+          "type": "string",
+          "pattern": "^model-lifecycle/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/artifacts/lifecycle_decision\\.json$"
+        },
+        "lifecycleDecisionSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "priorAssignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "priorAssignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "activeModelAuthority": {
+          "const": "committed_assignment"
+        },
+        "automaticAction": {
+          "const": false
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullsha": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sha"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "nulluuid": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

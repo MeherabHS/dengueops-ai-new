@@ -1,0 +1,17 @@
+import "server-only";
+import {createHash} from "node:crypto";
+import {readFile} from "node:fs/promises";
+import path from "node:path";
+import {RuntimePublicError} from "./errors";
+import {validateStrictJsonSchema} from "./strict-json-schema";
+
+export const MODEL_LIFECYCLE_POLICY_SHA="570a931bc2e98ca5cada78c5fe891e699e43e7c9f513b8df2257c06f1261b7bb" as const;
+export const LIFECYCLE_RF_PARAMETER_SHA="ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0" as const;
+export const LIFECYCLE_FEATURE_ORDER_SHA="aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85" as const;
+export const LIFECYCLE_CANDIDATE_REGISTRY_SHA="2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4" as const;
+export const LIFECYCLE_QUICK_POLICY_SHA="5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a" as const;
+export const LIFECYCLE_QUICK_POLICY_RAW_SHA="02e31f11addfb5e59e1b3d276148bface284383dcd404e2a6370e27cd8e7dd45" as const;
+export const LIFECYCLE_PROFILE_SHA="53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a" as const;
+function canonical(v:unknown):string{if(Array.isArray(v))return`[${v.map(canonical).join(",")}]`;if(v&&typeof v==="object")return`{${Object.entries(v as Record<string,unknown>).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>`${JSON.stringify(k)}:${canonical(x)}`).join(",")}}`;return JSON.stringify(v)}
+export async function loadModelLifecyclePolicy(repositoryRoot:string){try{const value=JSON.parse(await readFile(path.join(repositoryRoot,"config/deployments/dhaka_south/model_lifecycle_policy.json"),"utf8")) as Record<string,any>;const schema=JSON.parse(await readFile(path.join(repositoryRoot,"config/runtime_model_lifecycle_policy.schema.json"),"utf8"));validateStrictJsonSchema(schema,value);const content={...value};delete content.policy_sha256;const hash=createHash("sha256").update(canonical(content)).digest("hex");const falseKeys=["automaticPromotionAllowed","automaticRollbackAllowed","automaticRetentionAllowed","thresholdBasedActionAllowed","arbitraryModelSelectionAllowed","arbitraryRollbackTargetAllowed","baselineAssignmentAllowed","profileMutationAllowed","unknownIdentityFallbackAllowed","materialWorseningClassificationRequired","lifecycleRecommendationFromDegradationEvidenceAllowed","nonRandomForestActivationAllowed","assignmentHistoryMutationAllowed"];
+const allowed=new Set(["schema_version","policy_id","policy_version","policy_status","policy_sha256","policy_hash_method","deployment_id","geography","target","forecast_horizon_weeks","accepted_policies","candidate_registry_sha256","feature_order_sha256","historical_profile_raw_sha256","permitted_active_model","allowed_actions",...falseKeys,"operatorDecisionRequired","oneActiveAssignmentPointer","rollbackOnlyToVerifiedPriorAssignment","activeQuickForecastPolicyRequired"]);if(Object.keys(value).some(k=>!allowed.has(k))||value.schema_version!=="1.0"||value.policy_id!=="RUNTIME.MODEL_LIFECYCLE.DECISION"||value.policy_version!=="p2-v1"||value.policy_status!=="active"||value.policy_sha256!==MODEL_LIFECYCLE_POLICY_SHA||hash!==MODEL_LIFECYCLE_POLICY_SHA||falseKeys.some(k=>value[k]!==false)||value.operatorDecisionRequired!==true||value.oneActiveAssignmentPointer!==true||value.rollbackOnlyToVerifiedPriorAssignment!==true||value.activeQuickForecastPolicyRequired!==true)throw new Error();return value;}catch{throw new RuntimePublicError("model_lifecycle_policy_invalid","configuration","The governed model lifecycle policy is unavailable or invalid.",503)}}
