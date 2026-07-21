@@ -21,7 +21,7 @@ class RuntimeQuickForecastPolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.policy, cls.policy_sha = runtime_policy.load_and_validate_quick_forecast_policy("dhaka_south")
-        cls.registry_sha = hashlib.sha256((ROOT / "config" / "candidate_models.json").read_bytes()).hexdigest()
+        cls.registry_sha = hashlib.sha256((ROOT / "config" / "candidate_models_p1.2a-v1.json").read_bytes()).hexdigest()
 
     def context(self):
         return {

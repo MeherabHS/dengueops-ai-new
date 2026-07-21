@@ -1,0 +1,357 @@
+{
+  "schema_version": "2.0",
+  "policy_id": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
+  "policy_version": "p2-v1",
+  "policy_status": "active",
+  "policy_sha256": "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff",
+  "policy_hash_method": "sha256_canonical_json_excluding_policy_sha256",
+  "deployment_id": "dhaka_south",
+  "geography_scope": {
+    "level": "city",
+    "id": "BGD-DHAKA-SOUTH",
+    "name": "Dhaka South",
+    "exact_match_required": true,
+    "cross_deployment_use": false
+  },
+  "source_scope": {
+    "cases": {
+      "allowed_source_types": [
+        "synthetic_benchmark"
+      ],
+      "allowed_aggregation_methods": [
+        "weekly_epi_week_case_count"
+      ],
+      "approximated_values_allowed": false
+    },
+    "climate": {
+      "allowed_source_types": [
+        "synthetic_benchmark"
+      ],
+      "allowed_aggregation_methods": [
+        "simulated_weekly_benchmark"
+      ],
+      "approximated_values_allowed": false
+    }
+  },
+  "input_contract": {
+    "canonical_contract_version": "p1.4b-canonical-upload-v1",
+    "period_contract": "ISO_year_week_with_date_start_equal_to_ISO_Monday_weeks_1_through_52",
+    "target": "target_cases_next_2w",
+    "horizon_weeks": 2
+  },
+  "feature_contract": {
+    "feature_count": 18,
+    "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
+    "unsupported_substitution_allowed": false,
+    "missing_required_features_allowed": false
+  },
+  "candidate_registry": {
+    "path": "config/candidate_models.json",
+    "version": "p1.2a-v1",
+    "sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+  },
+  "fold_policy": {
+    "policy_id": "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS",
+    "policy_version": "p2-v1",
+    "training_window": "expanding",
+    "initial_training_rows": 104,
+    "embargo_rows": 1,
+    "validation_rows_per_fold": 1,
+    "step_size_weeks": 1,
+    "target_horizon_weeks": 2,
+    "first_validation_index_rule": "initial_training_rows_plus_embargo_rows",
+    "first_available_validation_index": 105,
+    "available_fold_count_rule": "max_zero_labelled_rows_minus_first_available_validation_index",
+    "planned_fold_count_rule": "minimum_available_fold_count_and_maximum_fold_count",
+    "fold_selection_rule": "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count",
+    "label_availability_rule": "complete_18_feature_row_with_target_cases_next_2w_available",
+    "missing_accepted_periods_allowed": false,
+    "duplicate_periods_allowed": false,
+    "same_precomputed_plan_for_all_candidates": true,
+    "candidate_outcomes_may_change_plan": false,
+    "minimum_labelled_rows": 157,
+    "minimum_fold_count": 52,
+    "maximum_fold_count": 68,
+    "datasets_below_minimum": "assessment_rejected",
+    "datasets_above_maximum": "most_recent_folds_selected",
+    "older_rows_retained_in_expanding_training": true
+  },
+  "candidate_eligibility_policy": {
+    "precompute_before_execution": true,
+    "ineligibility_may_change_fold_plan": false,
+    "eligible_candidates_must_use_every_planned_fold": true,
+    "failed_candidate_may_shrink_common_folds": false,
+    "candidate_set_statuses": [
+      "complete_candidate_set",
+      "partial_candidate_set",
+      "insufficient_candidate_breadth"
+    ],
+    "minimum_eligible_candidates": 2,
+    "naive_baseline_required": true,
+    "deployable_learned_model_required": true,
+    "candidates": [
+      {
+        "model_id": "previous_week_naive",
+        "model_family": "PreviousWeekNaive",
+        "candidate_class": "naive_baseline",
+        "deployability_classification": "baseline_not_runtime_deployable",
+        "parameters_sha256": "03923beb6b41dc8f1d821d36cb545f4aaf6d23d55d60a4ea8ab0a53d6128c139",
+        "minimum_training_rows": 0,
+        "seasonal_history_weeks": 0,
+        "feature_requirements": [
+          "cases_lag_1w"
+        ],
+        "deterministic_configuration": {
+          "prediction_source": "cases_lag_1w"
+        },
+        "negative_output_policy": "nonnegative_source_expected_fail_if_invalid",
+        "failure_policy": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
+        "selection_complexity_rank": 1
+      },
+      {
+        "model_id": "moving_average_4w",
+        "model_family": "MovingAverage4W",
+        "candidate_class": "naive_baseline",
+        "deployability_classification": "baseline_not_runtime_deployable",
+        "parameters_sha256": "c1eff3c6bc5cf02b7176abcbf33348f0d3962791d002686d53e6654cae04a18c",
+        "minimum_training_rows": 4,
+        "seasonal_history_weeks": 0,
+        "feature_requirements": [
+          "cases_rolling_4w"
+        ],
+        "deterministic_configuration": {
+          "prediction_source": "cases_rolling_4w",
+          "window_weeks": 4
+        },
+        "negative_output_policy": "nonnegative_source_expected_fail_if_invalid",
+        "failure_policy": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
+        "selection_complexity_rank": 2
+      },
+      {
+        "model_id": "seasonal_naive_52w",
+        "model_family": "SeasonalNaive52W",
+        "candidate_class": "naive_baseline",
+        "deployability_classification": "baseline_not_runtime_deployable",
+        "parameters_sha256": "2395c31b374ed6b361163411122c1c0c62d2db1e16496010f3919cdd5928e80b",
+        "minimum_training_rows": 52,
+        "seasonal_history_weeks": 52,
+        "feature_requirements": [
+          "observed_cases_at_target_minus_52_weeks"
+        ],
+        "deterministic_configuration": {
+          "seasonal_lag_weeks": 52,
+          "prediction_source": "observed_cases_at_target_minus_52_weeks"
+        },
+        "negative_output_policy": "nonnegative_source_expected_fail_if_invalid",
+        "failure_policy": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
+        "selection_complexity_rank": 3
+      },
+      {
+        "model_id": "ridge_regression",
+        "model_family": "Ridge",
+        "candidate_class": "learned_model",
+        "deployability_classification": "deployable_learned_model",
+        "parameters_sha256": "f59e0d298750b54d9ab8312c6a68a4eaf4910bea81042dd3a1c4711dcb307e5b",
+        "minimum_training_rows": 19,
+        "seasonal_history_weeks": 0,
+        "feature_requirements": [
+          "governed_18_feature_order"
+        ],
+        "deterministic_configuration": {
+          "alpha": 1,
+          "fit_intercept": true,
+          "solver": "auto"
+        },
+        "negative_output_policy": "preserve_raw_and_clip_published_at_zero",
+        "failure_policy": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
+        "selection_complexity_rank": 4
+      },
+      {
+        "model_id": "poisson_regression",
+        "model_family": "PoissonRegressor",
+        "candidate_class": "learned_model",
+        "deployability_classification": "deployable_learned_model",
+        "parameters_sha256": "f1d10b8e22303b8d4f550861b54971e5ef2beba310a11b6458544be97871098b",
+        "minimum_training_rows": 19,
+        "seasonal_history_weeks": 0,
+        "feature_requirements": [
+          "governed_18_feature_order"
+        ],
+        "deterministic_configuration": {
+          "alpha": 1,
+          "fit_intercept": true,
+          "max_iter": 1000,
+          "tol": 0.0001
+        },
+        "negative_output_policy": "negative_or_nonfinite_output_fails_fold",
+        "failure_policy": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
+        "selection_complexity_rank": 5
+      },
+      {
+        "model_id": "random_forest",
+        "model_family": "RandomForestRegressor",
+        "candidate_class": "learned_model",
+        "deployability_classification": "deployable_learned_model",
+        "parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+        "minimum_training_rows": 19,
+        "seasonal_history_weeks": 0,
+        "feature_requirements": [
+          "governed_18_feature_order"
+        ],
+        "deterministic_configuration": {
+          "n_estimators": 200,
+          "max_depth": 4,
+          "min_samples_leaf": 3,
+          "max_features": 1,
+          "bootstrap": true,
+          "random_state": 42,
+          "n_jobs": 1,
+          "criterion": "squared_error"
+        },
+        "negative_output_policy": "nonnegative_training_targets_expected_fail_if_invalid",
+        "failure_policy": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
+        "selection_complexity_rank": 6
+      },
+      {
+        "model_id": "gradient_boosting",
+        "model_family": "GradientBoostingRegressor",
+        "candidate_class": "learned_model",
+        "deployability_classification": "deployable_learned_model",
+        "parameters_sha256": "4741d1f17b3bf98988b886dcb6157a9382b569e3264e1004d2f3eb474bd34963",
+        "minimum_training_rows": 19,
+        "seasonal_history_weeks": 0,
+        "feature_requirements": [
+          "governed_18_feature_order"
+        ],
+        "deterministic_configuration": {
+          "n_estimators": 200,
+          "learning_rate": 0.05,
+          "max_depth": 4,
+          "min_samples_leaf": 3,
+          "subsample": 0.8,
+          "random_state": 42,
+          "loss": "squared_error"
+        },
+        "negative_output_policy": "preserve_raw_and_clip_published_at_zero",
+        "failure_policy": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
+        "selection_complexity_rank": 7
+      }
+    ]
+  },
+  "comparison_policy": {
+    "policy_id": "RUNTIME.ASSESSMENT.CANDIDATE_COMPARISON",
+    "policy_version": "p1.4d-1-v1",
+    "selection_rule": "Select the lowest-MAE candidate among candidates completing every fold in the precommitted common fold plan, applying the declared deterministic tie sequence.",
+    "primary_metric": "mae",
+    "tie_sequence": [
+      "rmse",
+      "wape",
+      "median_absolute_error",
+      "maximum_absolute_error",
+      "selection_complexity_rank",
+      "model_id"
+    ],
+    "tie_tolerance": 1e-9,
+    "weighted_aggregate_score_allowed": false,
+    "client_metric_weights_allowed": false,
+    "current_active_model_preference_allowed": false,
+    "selection_requires_all_planned_folds": true,
+    "intersection_only_successful_folds_allowed": false,
+    "failed_candidate_selection_eligible": false
+  },
+  "recommendation_policy": {
+    "policy_id": "RUNTIME.ASSESSMENT.RECOMMENDATION_STRENGTH",
+    "policy_version": "p1.4d-1-v1",
+    "statuses": [
+      "recommendation_available",
+      "evidence_only",
+      "no_recommendation"
+    ],
+    "strengths": [
+      "strong",
+      "moderate",
+      "weak",
+      "not_available"
+    ],
+    "strength_threshold_status": "not_governed",
+    "strength_thresholds": null,
+    "technical_winner_without_thresholds": "evidence_only",
+    "strength_without_thresholds": "not_available",
+    "approval_enabled_without_thresholds": false,
+    "allowed_evidence_inputs": [
+      "winner_mae",
+      "runner_up_mae",
+      "absolute_mae_gap",
+      "relative_mae_gap",
+      "rmse_rank_agreement",
+      "wape_rank_agreement",
+      "median_error_rank_agreement",
+      "fold_level_better_tied_worse_counts",
+      "baseline_superiority",
+      "successful_fold_ratio",
+      "failed_fold_count",
+      "clipping_count",
+      "warning_count",
+      "candidate_breadth",
+      "subgroup_performance",
+      "tie_break_stage_used",
+      "dataset_fold_count"
+    ],
+    "no_recommendation_conditions": [
+      "insufficient_recommendation_grade_history",
+      "fewer_than_two_eligible_candidates",
+      "no_eligible_naive_baseline",
+      "no_eligible_deployable_learned_model",
+      "no_candidate_completes_all_planned_folds",
+      "unresolved_metric_tie",
+      "policy_inactive",
+      "candidate_registry_mismatch",
+      "fold_policy_mismatch",
+      "required_subgroup_evidence_insufficient"
+    ],
+    "baseline_winner_behavior": {
+      "recommendation_status": "evidence_only",
+      "approval_enabled": false,
+      "limitation": "Baseline deployment is not governed. A baseline technical winner cannot be adopted in this phase."
+    },
+    "automatic_adoption_allowed": false
+  },
+  "approval_requirement": {
+    "required_before_adoption": true,
+    "enabled_in_this_phase": false,
+    "assessment_may_modify_active_model": false
+  },
+  "intended_use": [
+    "Govern dataset-flexible temporal comparison for processed, synthetic-benchmark-compatible Dhaka South uploads with 52 to 68 common out-of-sample folds."
+  ],
+  "limitations": [
+    "The policy does not clean raw data, fabricate observations, interpolate targets, or correct unknown source defects.",
+    "Recommendation-strength thresholds are not governed, so the technical winner remains evidence only.",
+    "Phase 2 p2-v1 assessments are not compatible with the Phase 1 one-run decision or approved-forecast policies.",
+    "The most recent 68 folds are selected when more than 68 are available, while older rows remain in expanding training.",
+    "The source scope remains synthetic-benchmark compatible and does not establish real-world Dhaka validity."
+  ],
+  "prohibited_claims": [
+    "The technical winner is automatically the deployment model.",
+    "A Phase 2 assessment authorizes a one-run forecast.",
+    "Assessment evidence is epidemiologically validated or institutionally approved.",
+    "Assessment changes preparedness, facility, alert, directive, or model-promotion behavior.",
+    "Recommendation strength is available without governed thresholds."
+  ],
+  "decision_compatibility": {
+    "status": "phase2_decision_policy_not_yet_available",
+    "phase1_decision_policy_allowed": false,
+    "one_run_authorization_allowed": false,
+    "approved_forecast_allowed": false
+  },
+  "prohibited_actions": [
+    "automatic_model_adoption",
+    "model_promotion",
+    "model_rollback",
+    "preparedness_generation",
+    "candidate_specific_fold_removal",
+    "random_train_test_split",
+    "target_interpolation",
+    "raw_data_imputation"
+  ]
+}

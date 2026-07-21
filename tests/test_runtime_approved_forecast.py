@@ -26,7 +26,7 @@ from runtime_model_degradation_evidence import execute as execute_degradation
 from tests.test_runtime_model_degradation_evidence import degradation_job
 from types import SimpleNamespace
 
-DEPLOYABLE = ("ridge_regression", "poisson_regression", "random_forest", "gradient_boosting")
+DEPLOYABLE = ("ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting")
 
 
 class ApprovedForecastTests(unittest.TestCase):
@@ -76,7 +76,9 @@ class ApprovedForecastTests(unittest.TestCase):
 
     def test_each_deployable_selected_model_completes_one_authorized_point_forecast(self):
         with tempfile.TemporaryDirectory() as directory:
-            base_runtime, _workspace, _pending, assessment_job = build_ready_assessment_runtime(Path(directory) / "base")
+            base_runtime, _workspace, _pending, assessment_job = build_ready_assessment_runtime(
+                Path(directory) / "base", assessment_policy_version="p2-v2"
+            )
             self.assertTrue(run_once(base_runtime, "assessment-worker"))
             base_assessment = base_runtime / "assessments" / assessment_job["assessmentId"]
             base_summary = json.loads((base_assessment / "artifacts/assessment_summary.json").read_text())
@@ -91,8 +93,9 @@ class ApprovedForecastTests(unittest.TestCase):
                     comparison_path = assessment / "artifacts/candidate_model_comparison.json"
                     summary_path = assessment / "artifacts/assessment_summary.json"
                     comparison = json.loads(comparison_path.read_text())
-                    comparison["technicalWinnerModelId"] = model_id
-                    summary["technicalWinnerModelId"] = model_id
+                    winner_id = summary["technicalWinnerModelId"]
+                    winner = next(candidate for candidate in summary["candidates"] if candidate["modelId"] == winner_id)
+                    is_override = model_id != winner_id
                     atomic_json(comparison_path, comparison)
                     summary["evidenceHashes"]["candidateComparisonSha256"] = sha256_file(comparison_path)
                     atomic_json(summary_path, summary)
@@ -108,32 +111,57 @@ class ApprovedForecastTests(unittest.TestCase):
                     decision_root.mkdir(parents=True)
                     assessment_commit_hash = sha256_file(assessment_commit_path)
                     policy = json.loads((ROOT / "config/deployments/dhaka_south/decision_policy.json").read_text())
-                    decision = {
-                        "schemaVersion": "2.0",
-                        "decisionId": decision_id, "assessmentId": assessment_job["assessmentId"],
-                        "assessmentCommitSha256": assessment_commit_hash, "datasetId": summary["datasetId"],
-                        "assessmentSchemaVersion": "2.0", "assessmentLabelledRows": summary["labelledRows"],
-                        "assessmentPlannedFoldCount": summary["foldPolicy"]["plannedFoldCount"],
-                        "selectedEvaluationPeriod": summary["foldPolicy"]["selectedEvaluationPeriod"],
-                        "assessmentSummarySha256": sha256_file(summary_path),
-                        "comparisonSha256": sha256_file(comparison_path),
-                        "recommendationSha256": summary["evidenceHashes"]["recommendationSha256"],
-                        "foldPlanSha256": summary["foldPlanSha256"],
-                        "deploymentId": "dhaka_south", "validationRecordSha256": summary["provenance"]["validationRecordSha256"],
-                        "assessmentPolicyId": policy["allowedAssessmentPolicyId"],
-                        "assessmentPolicyVersion": policy["allowedAssessmentPolicyVersion"],
-                        "assessmentPolicySha256": policy["allowedAssessmentPolicySha256"],
-                        "decisionPolicyId": policy["policyId"], "decisionPolicyVersion": policy["policyVersion"],
-                        "decisionPolicySha256": policy["policySha256"], "candidateRegistrySha256": policy["candidateRegistrySha256"],
-                        "technicalWinnerModelId": model_id, "decision": "approve_technical_winner",
-                        "technicalWinnerParameterSha256": selected["parametersSha256"],
-                        "selectedModelId": model_id, "selectedModelParameterSha256": selected["parametersSha256"],
-                        "decisionScope": "one_run", "operatorType": "trusted_internal_unverified",
-                        "operatorIdentifier": "test-operator", "institutionalApproval": False, "reason": "Governed test decision.",
-                        "limitationsAcknowledged": True, "decisionStatus": "approved_technical_winner",
-                        "forecastAuthorized": True, "authorizationId": auth_id, "createdAt": created,
-                        "correlationId": str(uuid.uuid4()), "supersedesDecisionId": None, "supersessionStatus": "active",
-                    }
+                    if not is_override:
+                        decision = {
+                            "schemaVersion": "2.0", "decisionId": decision_id, "assessmentId": assessment_job["assessmentId"],
+                            "assessmentCommitSha256": assessment_commit_hash, "datasetId": summary["datasetId"],
+                            "assessmentSchemaVersion": "2.0", "assessmentLabelledRows": summary["labelledRows"],
+                            "assessmentPlannedFoldCount": summary["foldPolicy"]["plannedFoldCount"],
+                            "selectedEvaluationPeriod": summary["foldPolicy"]["selectedEvaluationPeriod"],
+                            "assessmentSummarySha256": sha256_file(summary_path), "comparisonSha256": sha256_file(comparison_path),
+                            "recommendationSha256": summary["evidenceHashes"]["recommendationSha256"], "foldPlanSha256": summary["foldPlanSha256"],
+                            "deploymentId": "dhaka_south", "validationRecordSha256": summary["provenance"]["validationRecordSha256"],
+                            "assessmentPolicyId": policy["allowedAssessmentPolicyId"], "assessmentPolicyVersion": policy["allowedAssessmentPolicyVersion"],
+                            "assessmentPolicySha256": policy["allowedAssessmentPolicySha256"], "decisionPolicyId": policy["policyId"],
+                            "decisionPolicyVersion": policy["policyVersion"], "decisionPolicySha256": policy["policySha256"],
+                            "candidateRegistrySha256": policy["candidateRegistrySha256"], "featureOrderSha256": policy["featureOrderSha256"],
+                            "technicalWinnerModelId": winner_id, "technicalWinnerParameterSha256": winner["parametersSha256"],
+                            "decision": "approve_technical_winner", "selectionType": "technical_winner",
+                            "selectedModelId": model_id, "selectedModelFamily": selected["modelFamily"],
+                            "selectedModelParameterSha256": selected["parametersSha256"], "selectedModelPreprocessingIdentity": selected["preprocessingIdentity"],
+                            "selectedCandidateStatus": "technical_winner", "decisionScope": "one_run",
+                            "operatorType": "trusted_internal_unverified", "operatorIdentifier": "test-operator",
+                            "institutionalApproval": False, "deploymentModelAdopted": False,
+                            "decisionStatus": "approved_technical_winner", "forecastAuthorized": True,
+                            "authorizationId": auth_id, "createdAt": created, "correlationId": str(uuid.uuid4()),
+                            "supersedesDecisionId": None, "supersessionStatus": "active"
+                        }
+                    else:
+                        decision = {
+                            "schemaVersion": "2.0", "decisionId": decision_id, "assessmentId": assessment_job["assessmentId"],
+                            "assessmentCommitSha256": assessment_commit_hash, "datasetId": summary["datasetId"],
+                            "assessmentSchemaVersion": "2.0", "assessmentLabelledRows": summary["labelledRows"],
+                            "assessmentPlannedFoldCount": summary["foldPolicy"]["plannedFoldCount"],
+                            "selectedEvaluationPeriod": summary["foldPolicy"]["selectedEvaluationPeriod"],
+                            "assessmentSummarySha256": sha256_file(summary_path), "comparisonSha256": sha256_file(comparison_path),
+                            "recommendationSha256": summary["evidenceHashes"]["recommendationSha256"], "foldPlanSha256": summary["foldPlanSha256"],
+                            "deploymentId": "dhaka_south", "validationRecordSha256": summary["provenance"]["validationRecordSha256"],
+                            "assessmentPolicyId": policy["allowedAssessmentPolicyId"], "assessmentPolicyVersion": policy["allowedAssessmentPolicyVersion"],
+                            "assessmentPolicySha256": policy["allowedAssessmentPolicySha256"], "decisionPolicyId": policy["policyId"],
+                            "decisionPolicyVersion": policy["policyVersion"], "decisionPolicySha256": policy["policySha256"],
+                            "candidateRegistrySha256": policy["candidateRegistrySha256"], "featureOrderSha256": policy["featureOrderSha256"],
+                            "technicalWinnerModelId": winner_id, "technicalWinnerParameterSha256": winner["parametersSha256"],
+                            "decision": "approve_eligible_non_winner", "selectionType": "eligible_non_winner_override",
+                            "selectedModelId": model_id, "selectedModelFamily": selected["modelFamily"],
+                            "selectedModelParameterSha256": selected["parametersSha256"], "selectedModelPreprocessingIdentity": selected["preprocessingIdentity"],
+                            "selectedCandidateStatus": "eligible_non_winner", "decisionScope": "one_run",
+                            "operatorType": "trusted_internal_unverified", "operatorIdentifier": "test-operator",
+                            "institutionalApproval": False, "reason": "Governed test decision override.",
+                            "technicalWinnerNotSelectedAcknowledged": True, "uncertaintyLimitationsAcknowledged": True,
+                            "deploymentModelAdopted": False, "decisionStatus": "approved_eligible_non_winner",
+                            "forecastAuthorized": True, "authorizationId": auth_id, "createdAt": created,
+                            "correlationId": str(uuid.uuid4()), "supersedesDecisionId": None, "supersessionStatus": "active"
+                        }
                     atomic_json(decision_root / "decision.json", decision)
                     decision_commit = {"schemaVersion": "2.0", "decisionId": decision_id,
                         "assessmentId": assessment_job["assessmentId"], "decisionSha256": sha256_file(decision_root / "decision.json"),
@@ -156,8 +184,13 @@ class ApprovedForecastTests(unittest.TestCase):
                         "assessmentPolicySha256": policy["allowedAssessmentPolicySha256"], "decisionPolicyId": policy["policyId"],
                         "decisionPolicyVersion": policy["policyVersion"], "decisionPolicySha256": policy["policySha256"],
                         "datasetId": summary["datasetId"], "deploymentId": "dhaka_south", "selectedModelId": model_id,
-                        "selectedModelParameterSha256": selected["parametersSha256"], "assessmentLabelledRows": summary["labelledRows"],
-                        "assessmentPlannedFoldCount": summary["foldPolicy"]["plannedFoldCount"],
+                        "selectedModelFamily": selected["modelFamily"], "selectedModelParameterSha256": selected["parametersSha256"],
+                        "selectedModelPreprocessingIdentity": selected["preprocessingIdentity"],
+                        "candidateRegistrySha256": policy["candidateRegistrySha256"], "featureOrderSha256": policy["featureOrderSha256"],
+                        "selectionType": decision["selectionType"], "technicalWinnerModelId": winner_id,
+                        "technicalWinnerNotSelectedAcknowledged": is_override, "uncertaintyLimitationsAcknowledged": True,
+                        "deploymentModelAdopted": False,
+                        "assessmentLabelledRows": summary["labelledRows"], "assessmentPlannedFoldCount": summary["foldPolicy"]["plannedFoldCount"],
                         "foldPlanSha256": summary["foldPlanSha256"], "workflowMode": "approved_assessment_forecast",
                         "scope": "one_run", "initialStatus": "available", "createdAt": created, "expiresAt": expires,
                         "policyId": policy["policyId"], "policyVersion": policy["policyVersion"], "policySha256": policy["policySha256"]}

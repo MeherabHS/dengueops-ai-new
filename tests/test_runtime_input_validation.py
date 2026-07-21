@@ -66,7 +66,7 @@ class RuntimeInputValidationTests(unittest.TestCase):
         self.assertFalse(value["eligibility"]["assessDataset"]["foldCapApplied"])
         self.assertEqual(value["eligibility"]["assessDataset"]["selectedValidationStartIndex"], 105)
         self.assertEqual(value["eligibility"]["assessDataset"]["selectedValidationEndIndex"], 172)
-        self.assertEqual(value["eligibility"]["assessDataset"]["policyVersion"], "p2-v1")
+        self.assertEqual(value["eligibility"]["assessDataset"]["policyVersion"], "p2-v2")
         self.assertEqual(
             value["eligibility"]["assessDataset"]["decisionCompatibilityStatus"],
             "phase2_decision_policy_not_yet_available",

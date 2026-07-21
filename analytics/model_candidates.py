@@ -21,7 +21,7 @@ from validation_backtest import (GBR_PARAMS, TARGET_COL, generate_rolling_fold_d
                                  load_feature_matrix, model_parameters_sha256)
 
 ROOT = Path(__file__).resolve().parent.parent
-REGISTRY_PATH = ROOT / "config" / "candidate_models.json"
+REGISTRY_PATH = ROOT / "config" / "candidate_models_p1.2a-v1.json"
 COMPARISON_SCHEMA_PATH = ROOT / "config" / "candidate_model_comparison.schema.json"
 ROLLING_PATH = ROOT / "data" / "rolling_validation.json"
 OUTPUT_PATH = ROOT / "data" / "candidate_model_comparison.json"

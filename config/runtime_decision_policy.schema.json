@@ -3,7 +3,8 @@
   "$id": "https://dengueops.ai/schemas/runtime_decision_policy.schema.json",
   "oneOf": [
     { "$ref": "#/$defs/phase1" },
-    { "$ref": "#/$defs/phase2" }
+    { "$ref": "#/$defs/phase2v1" },
+    { "$ref": "#/$defs/phase2v2" }
   ],
   "$defs": {
     "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
@@ -43,7 +44,7 @@
         "prohibitedClaims": { "type": "array", "minItems": 3, "items": { "type": "string", "minLength": 1 } }
       }
     },
-    "phase2": {
+    "phase2v1": {
       "type": "object",
       "additionalProperties": false,
       "required": ["schemaVersion", "policyId", "policyVersion", "policyStatus", "policySha256", "deploymentId", "allowedAssessmentSchemaVersion", "allowedAssessmentPolicyId", "allowedAssessmentPolicyVersion", "allowedAssessmentPolicySha256", "candidateRegistrySha256", "decisionScope", "recommendationStatusAccepted", "recommendationStrengthAccepted", "allowedDecisions", "allowedDeployableCandidateClasses", "currentModelId", "currentModelParameterSha256", "baselineApprovalAllowed", "deploymentWideAdoptionAllowed", "institutionalApproval", "operatorType", "assessmentValiditySeconds", "successfulFoldRequirement", "selectedModelTrainingPolicy", "authorizationPolicy", "limitations", "prohibitedClaims"],
@@ -75,6 +76,58 @@
           "type": "object", "additionalProperties": false,
           "required": ["source", "failedFolds", "reconcileAcross"],
           "properties": { "source": { "const": "committed_assessment_planned_fold_count" }, "failedFolds": { "const": 0 }, "reconcileAcross": { "const": ["assessment_summary", "rolling_validation", "candidate_model_comparison", "selected_candidate"] } }
+        },
+        "selectedModelTrainingPolicy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["scope", "minimumLabelledRows", "selectedEvaluationWindowMayLimitTraining"],
+          "properties": { "scope": { "const": "all_validated_labelled_rows" }, "minimumLabelledRows": { "const": 157 }, "selectedEvaluationWindowMayLimitTraining": { "const": false } }
+        },
+        "authorizationPolicy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["scope", "oneAuthorizationPerFinalDecision", "oneRunPerAuthorization", "oneReservationPerAuthorization", "automaticRetryAllowed", "consumeAfterCommittedLatestPointer"],
+          "properties": { "scope": { "const": "one_run" }, "oneAuthorizationPerFinalDecision": { "const": true }, "oneRunPerAuthorization": { "const": true }, "oneReservationPerAuthorization": { "const": true }, "automaticRetryAllowed": { "const": false }, "consumeAfterCommittedLatestPointer": { "const": true } }
+        },
+        "limitations": { "type": "array", "minItems": 4, "items": { "type": "string", "minLength": 1 } },
+        "prohibitedClaims": { "type": "array", "minItems": 4, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "phase2v2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "policyId", "policyVersion", "policyStatus", "policySha256", "deploymentId", "allowedAssessmentSchemaVersion", "allowedAssessmentPolicyId", "allowedAssessmentPolicyVersion", "allowedAssessmentPolicySha256", "candidateRegistrySha256", "featureOrderSha256", "decisionScope", "allowedDecisions", "allowedCandidateStatuses", "allowedCandidateIds", "baselineApprovalAllowed", "diagnosticApprovalAllowed", "arbitraryParametersAllowed", "deploymentWideAdoptionAllowed", "institutionalApproval", "operatorType", "assessmentValiditySeconds", "successfulFoldRequirement", "overrideRequirements", "selectedModelTrainingPolicy", "authorizationPolicy", "limitations", "prohibitedClaims"],
+      "properties": {
+        "schemaVersion": { "const": "2.0" },
+        "policyId": { "const": "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION" },
+        "policyVersion": { "const": "p2-v2" },
+        "policyStatus": { "const": "active" },
+        "policySha256": { "$ref": "#/$defs/sha" },
+        "deploymentId": { "const": "dhaka_south" },
+        "allowedAssessmentSchemaVersion": { "const": "2.0" },
+        "allowedAssessmentPolicyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
+        "allowedAssessmentPolicyVersion": { "const": "p2-v2" },
+        "allowedAssessmentPolicySha256": { "const": "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8" },
+        "candidateRegistrySha256": { "const": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0" },
+        "featureOrderSha256": { "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85" },
+        "decisionScope": { "const": "one_run" },
+        "allowedDecisions": { "const": ["approve_technical_winner", "approve_eligible_non_winner"] },
+        "allowedCandidateStatuses": { "const": ["technical_winner", "eligible_non_winner"] },
+        "allowedCandidateIds": { "const": ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"] },
+        "baselineApprovalAllowed": { "const": false },
+        "diagnosticApprovalAllowed": { "const": false },
+        "arbitraryParametersAllowed": { "const": false },
+        "deploymentWideAdoptionAllowed": { "const": false },
+        "institutionalApproval": { "const": false },
+        "operatorType": { "const": "trusted_internal_unverified" },
+        "assessmentValiditySeconds": { "type": "integer", "minimum": 1 },
+        "successfulFoldRequirement": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source", "successfulFolds", "failedFolds", "reconcileAcross"],
+          "properties": { "source": { "const": "committed_assessment_planned_fold_count" }, "successfulFolds": { "const": "all_planned" }, "failedFolds": { "const": 0 }, "reconcileAcross": { "const": ["assessment_summary", "rolling_validation", "candidate_model_comparison", "selected_candidate"] } }
+        },
+        "overrideRequirements": {
+          "type": "object", "additionalProperties": false,
+          "required": ["reasonRequired", "technicalWinnerNotSelectedAcknowledged", "uncertaintyLimitationsAcknowledged", "originalTechnicalWinnerPreserved"],
+          "properties": { "reasonRequired": { "const": true }, "technicalWinnerNotSelectedAcknowledged": { "const": true }, "uncertaintyLimitationsAcknowledged": { "const": true }, "originalTechnicalWinnerPreserved": { "const": true } }
         },
         "selectedModelTrainingPolicy": {
           "type": "object", "additionalProperties": false,

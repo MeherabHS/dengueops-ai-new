@@ -49,7 +49,8 @@ export async function POST(request: Request): Promise<Response> {
     if (body.deploymentId !== config.defaultDeploymentId) throw new RuntimePublicError("deployment_mismatch", "validation", "The requested deployment is unavailable.", 400);
     await initializeRuntimeRoot(config.runtimeRoot);
     const authority=await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,String(body.deploymentId));
-    if(!authority.quickForecastCompatible||authority.modelId!=="random_forest")throw new RuntimePublicError("selected_model_not_active_quick_forecast_compatible","validation","The active assigned model is not compatible with governed Quick Forecast calibration.",409);
+    if(!authority.quickForecastCompatible)throw new RuntimePublicError("selected_model_not_active_quick_forecast_compatible","validation","The active assigned model is not compatible with governed Quick Forecast calibration.",409);
+
     const workspace = workspacePaths(config.runtimeRoot, String(body.workspaceId));
     const metadata = JSON.parse(await readFile(workspace.workspaceMetadata, "utf8")) as RuntimeWorkspaceMetadata;
     if (metadata.status !== "ready" || metadata.workflowMode !== "quick_forecast") throw new RuntimePublicError("workspace_not_quick_forecast_ready", "validation", "The workspace is not ready for Quick Forecast.", 409);
@@ -68,7 +69,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const policyPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "deployments", String(body.deploymentId), "quick_forecast_policy.json"));
     const profilePath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "deployments", String(body.deploymentId), "profile.json"));
-    const registryPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.json"));
+    const registryPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models_p1.2a-v1.json"));
     const [policyBytes, profileBytes, registryBytes] = await Promise.all([readFile(policyPath), readFile(profilePath), readFile(registryPath)]);
     const policy = JSON.parse(policyBytes.toString("utf8")) as Record<string, any>;
     const profile = JSON.parse(profileBytes.toString("utf8")) as Record<string, any>;

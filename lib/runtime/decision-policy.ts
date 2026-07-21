@@ -8,7 +8,10 @@ const ASSESSMENT_POLICY_ID = "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" as const;
 const DEPLOYMENT_ID = "dhaka_south" as const;
 const PHASE_ONE_ASSESSMENT_SHA = "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af";
 const PHASE_TWO_ASSESSMENT_SHA = "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff";
+const PHASE_TWO_V2_ASSESSMENT_SHA = "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8";
 const CANDIDATE_REGISTRY_SHA = "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4";
+const CANDIDATE_REGISTRY_V2_SHA = "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0";
+const FEATURE_ORDER_SHA = "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85";
 
 interface RuntimeDecisionPolicyCommon {
   policyId: typeof POLICY_ID;
@@ -72,11 +75,43 @@ export interface RuntimeDecisionPolicyPhaseTwo extends RuntimeDecisionPolicyComm
   };
 }
 
-export type RuntimeDecisionPolicy = RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPolicyPhaseTwo;
+export interface RuntimeDecisionPolicyPhaseTwoV2 {
+  schemaVersion: "2.0";
+  policyId: typeof POLICY_ID;
+  policyVersion: "p2-v2";
+  policyStatus: "active";
+  policySha256: string;
+  deploymentId: typeof DEPLOYMENT_ID;
+  allowedAssessmentSchemaVersion: "2.0";
+  allowedAssessmentPolicyId: typeof ASSESSMENT_POLICY_ID;
+  allowedAssessmentPolicyVersion: "p2-v2";
+  allowedAssessmentPolicySha256: typeof PHASE_TWO_V2_ASSESSMENT_SHA;
+  candidateRegistrySha256: typeof CANDIDATE_REGISTRY_V2_SHA;
+  featureOrderSha256: typeof FEATURE_ORDER_SHA;
+  decisionScope: "one_run";
+  allowedDecisions: ["approve_technical_winner", "approve_eligible_non_winner"];
+  allowedCandidateStatuses: ["technical_winner", "eligible_non_winner"];
+  allowedCandidateIds: string[];
+  baselineApprovalAllowed: false;
+  diagnosticApprovalAllowed: false;
+  arbitraryParametersAllowed: false;
+  deploymentWideAdoptionAllowed: false;
+  institutionalApproval: false;
+  operatorType: "trusted_internal_unverified";
+  assessmentValiditySeconds: number;
+  successfulFoldRequirement: { source: "committed_assessment_planned_fold_count"; successfulFolds: "all_planned"; failedFolds: 0; reconcileAcross: string[] };
+  overrideRequirements: { reasonRequired: true; technicalWinnerNotSelectedAcknowledged: true; uncertaintyLimitationsAcknowledged: true; originalTechnicalWinnerPreserved: true };
+  selectedModelTrainingPolicy: { scope: "all_validated_labelled_rows"; minimumLabelledRows: 157; selectedEvaluationWindowMayLimitTraining: false };
+  authorizationPolicy: { scope: "one_run"; oneAuthorizationPerFinalDecision: true; oneRunPerAuthorization: true; oneReservationPerAuthorization: true; automaticRetryAllowed: false; consumeAfterCommittedLatestPointer: true };
+  limitations: string[];
+  prohibitedClaims: string[];
+}
+
+export type RuntimeDecisionPolicy = RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPolicyPhaseTwo | RuntimeDecisionPolicyPhaseTwoV2;
 
 export type CommittedAssessmentPolicyIdentity =
   | { schemaVersion: "1.0"; policyId: typeof ASSESSMENT_POLICY_ID; policyVersion: "p1.4d-1-v1"; policySha256: string }
-  | { schemaVersion: "2.0"; policyId: typeof ASSESSMENT_POLICY_ID; policyVersion: "p2-v1"; policySha256: string };
+  | { schemaVersion: "2.0"; policyId: typeof ASSESSMENT_POLICY_ID; policyVersion: "p2-v1" | "p2-v2"; policySha256: string };
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -96,7 +131,7 @@ const invalid = () => new RuntimePublicError(
   503,
 );
 
-function assertCommon(policy: RuntimeDecisionPolicy): void {
+function assertCommon(policy: RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPolicyPhaseTwo): void {
   if (
     policy.policyStatus !== "active" ||
     policy.policyId !== POLICY_ID ||
@@ -120,6 +155,24 @@ function assertCommon(policy: RuntimeDecisionPolicy): void {
     policy.authorizationPolicy.oneRunPerAuthorization !== true ||
     policy.authorizationPolicy.automaticRetryAllowed !== false ||
     policy.authorizationPolicy.consumeAfterCommittedLatestPointer !== true
+  ) throw invalid();
+}
+
+function assertPhaseTwoV2(policy: RuntimeDecisionPolicyPhaseTwoV2): void {
+  const learned = ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"];
+  if (
+    policy.policyStatus !== "active" || policy.policyId !== POLICY_ID || policy.policyVersion !== "p2-v2" ||
+    policy.deploymentId !== DEPLOYMENT_ID || policy.allowedAssessmentPolicyId !== ASSESSMENT_POLICY_ID ||
+    policy.allowedAssessmentPolicyVersion !== "p2-v2" || policy.allowedAssessmentPolicySha256 !== PHASE_TWO_V2_ASSESSMENT_SHA ||
+    policy.candidateRegistrySha256 !== CANDIDATE_REGISTRY_V2_SHA || policy.featureOrderSha256 !== FEATURE_ORDER_SHA ||
+    JSON.stringify(policy.allowedDecisions) !== JSON.stringify(["approve_technical_winner", "approve_eligible_non_winner"]) ||
+    JSON.stringify(policy.allowedCandidateStatuses) !== JSON.stringify(["technical_winner", "eligible_non_winner"]) ||
+    JSON.stringify(policy.allowedCandidateIds) !== JSON.stringify(learned) || policy.baselineApprovalAllowed !== false ||
+    policy.diagnosticApprovalAllowed !== false || policy.arbitraryParametersAllowed !== false ||
+    policy.deploymentWideAdoptionAllowed !== false || policy.decisionScope !== "one_run" ||
+    policy.authorizationPolicy.scope !== "one_run" || policy.authorizationPolicy.oneAuthorizationPerFinalDecision !== true ||
+    policy.authorizationPolicy.oneRunPerAuthorization !== true || policy.authorizationPolicy.oneReservationPerAuthorization !== true ||
+    policy.authorizationPolicy.automaticRetryAllowed !== false || policy.authorizationPolicy.consumeAfterCommittedLatestPointer !== true
   ) throw invalid();
 }
 
@@ -147,6 +200,10 @@ export async function loadDecisionPolicy(
     assessment.schemaVersion === "2.0" &&
     assessment.policyVersion === "p2-v1" &&
     assessment.policySha256 === PHASE_TWO_ASSESSMENT_SHA
+  ) filename = "decision_policy_p2-v1.json";
+  else if (
+    assessment.schemaVersion === "2.0" && assessment.policyVersion === "p2-v2" &&
+    assessment.policySha256 === PHASE_TWO_V2_ASSESSMENT_SHA
   ) filename = "decision_policy.json";
   else throw new RuntimePublicError("decision_policy_mismatch", "validation", "The committed assessment is outside the governed decision policies.", 409);
 
@@ -161,7 +218,14 @@ export async function loadDecisionPolicy(
   delete withoutHash.policySha256;
   const digest = createHash("sha256").update(canonical(withoutHash), "utf8").digest("hex");
   if (policy.policySha256 !== digest) throw invalid();
-  assertCommon(policy);
+  if (policy.policyVersion === "p2-v2") assertPhaseTwoV2(policy as RuntimeDecisionPolicyPhaseTwoV2);
+  else assertCommon(policy as RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPolicyPhaseTwo);
+
+  if (policy.policyVersion === "p2-v2") {
+    const phaseTwoV2 = policy as RuntimeDecisionPolicyPhaseTwoV2;
+    if (assessment.policyVersion !== "p2-v2" || assessment.policySha256 !== PHASE_TWO_V2_ASSESSMENT_SHA) throw invalid();
+    return phaseTwoV2;
+  }
 
   if (assessment.schemaVersion === "1.0") {
     if (

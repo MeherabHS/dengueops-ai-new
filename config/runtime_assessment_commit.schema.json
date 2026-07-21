@@ -188,9 +188,7 @@
         "assessmentPolicyId": {
           "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
         },
-        "assessmentPolicyVersion": {
-          "const": "p2-v1"
-        }
+        "assessmentPolicyVersion": {"enum": ["p2-v1", "p2-v2"]}
       }
     }
   ],

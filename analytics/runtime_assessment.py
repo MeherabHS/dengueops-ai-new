@@ -18,7 +18,8 @@ from jsonschema import Draft202012Validator, FormatChecker
 from sklearn.exceptions import ConvergenceWarning
 
 from feature_engineering import FEATURE_COLUMNS, build_features
-from model_factory import build_candidate_estimator, load_and_validate_candidate_registry
+from model_factory import (build_candidate_estimator, canonical_sha256, load_and_validate_candidate_registry,
+                           load_historical_candidate_registry)
 from runtime_assessment_commit import commit_runtime_assessment
 from runtime_assessment_evidence import (
     aggregate_candidate,
@@ -40,10 +41,14 @@ from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_da
 
 
 CANDIDATE_IDS = (
-    "previous_week_naive", "moving_average_4w", "seasonal_naive_52w",
-    "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting",
+    "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression",
+    "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression",
+    "extra_trees", "hist_gradient_boosting",
 )
-LEARNED_IDS = {"ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"}
+LEARNED_IDS = {
+    "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting",
+    "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting",
+}
 BASELINE_IDS = set(CANDIDATE_IDS) - LEARNED_IDS
 SCHEMAS = {
     "rolling_validation.json": "runtime_rolling_validation.schema.json",
@@ -193,11 +198,21 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     policy, policy_hash = load_and_validate_assessment_policy(
         job["deploymentId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"]
     )
-    registry, registry_hash = load_and_validate_candidate_registry()
+    registry, registry_hash = (
+        load_and_validate_candidate_registry()
+        if policy["policy_version"] == "p2-v2"
+        else load_historical_candidate_registry()
+    )
     if (policy["policy_id"], policy["policy_version"], policy_hash, registry_hash) != (
         job["assessmentPolicyId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"], job["candidateRegistrySha256"],
     ):
         raise ValueError("Assessment governance identity changed after queueing.")
+    candidate_ids = tuple(candidate["model_id"] for candidate in registry["candidates"])
+    learned_ids = {
+        candidate["model_id"] for candidate in registry["candidates"]
+        if candidate.get("candidate_class") == "learned_model" or candidate["model_id"] in LEARNED_IDS
+    }
+    baseline_ids = set(candidate_ids) - learned_ids
     cases = pd.read_csv(canonical_case)
     climate = pd.read_csv(canonical_climate)
     source_metadata = {
@@ -257,11 +272,11 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     _update_job(job_path, job, progress="checking_candidate_eligibility")
     eligibility = assessment_policy_result["candidateEligibility"]
     case_lookup = {f"{int(row.epi_year)}-W{int(row.epi_week):02d}": float(row.cases) for row in cases.itertuples()}
-    predictions: dict[str, list[dict[str, Any]]] = {model_id: [] for model_id in CANDIDATE_IDS}
+    predictions: dict[str, list[dict[str, Any]]] = {model_id: [] for model_id in candidate_ids}
     actuals = [float(descriptor["actualTarget"]) for descriptor in plan]
     registry_by_id = {candidate["model_id"]: candidate for candidate in registry["candidates"]}
 
-    for model_id in CANDIDATE_IDS:
+    for model_id in candidate_ids:
         _update_job(job_path, job, progress=f"evaluating_{model_id}")
         if fold_plan_sha256(plan) != frozen_plan_hash:
             raise ValueError("The common fold plan changed before candidate execution.")
@@ -307,7 +322,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("Candidate execution changed the common fold plan.")
 
     _update_job(job_path, job, progress="aggregating_metrics")
-    is_phase_two = policy["policy_version"] == "p2-v1"
+    is_phase_two = policy["policy_version"] in {"p2-v1", "p2-v2"}
     artifact_schema_version = "2.0" if is_phase_two else "1.0"
     available_fold_count = int(assessment_policy_result["availableFoldCount"])
     fold_cap_applied = bool(assessment_policy_result["foldCapApplied"])
@@ -320,17 +335,27 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "selectedValidationStartIndex": selected_start_index, "selectedValidationEndIndex": selected_end_index,
     } if is_phase_two else {}
     candidate_results: list[dict[str, Any]] = []
-    for model_id in CANDIDATE_IDS:
+    for model_id in candidate_ids:
         records = predictions[model_id]
         successful = sum(record["foldStatus"] in {"success", "warning"} for record in records)
         failed = len(records) - successful
         metrics = _aggregate(records, actuals)
+        if policy["policy_version"] != "p2-v2" and metrics is not None:
+            metrics = {key: value for key, value in metrics.items() if key not in {"mse", "r2"}}
         preflight = eligibility[model_id]
         candidate = registry_by_id[model_id]
         candidate_results.append({
             "modelId": model_id, "modelLabel": candidate["model_family"],
             "candidateClass": preflight["candidateClass"], "deployabilityClass": preflight["deployabilityClassification"],
             "parametersSha256": candidate["parameters_sha256"], "eligible": preflight["eligible"],
+            **({
+                "modelFamily": candidate["model_family"],
+                "preprocessingIdentity": candidate["preprocessing_identity"],
+                "foldPlanSha256": plan_hash,
+                "plannedFolds": planned_fold_count,
+                "comparisonRole": "baseline_only" if model_id in baseline_ids else "learned_candidate",
+                "limitations": list(candidate["limitations"]),
+            } if policy["policy_version"] == "p2-v2" else {}),
             "completionStatus": "complete" if successful == planned_fold_count and failed == 0 else "ineligible" if not preflight["eligible"] else "incomplete",
             "reasonCodes": preflight["reasonCodes"] if not preflight["eligible"] else sorted({record["failureReasonCode"] for record in records if record["failureReasonCode"]}) or ["candidate_completed_all_folds"],
             "reasons": preflight["reasons"] if not preflight["eligible"] else (["Candidate completed every fold in the immutable common plan."] if failed == 0 else ["Candidate did not complete every fold and is not selection eligible."]),
@@ -340,15 +365,15 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
                 failed_folds=failed, metrics=metrics, required_folds=planned_fold_count,
             ),
             "selectionComplexityRank": candidate["selection_complexity_rank"], "metrics": metrics,
-            "executionMode": "fitted_per_fold" if model_id in LEARNED_IDS else "deterministic_baseline_per_fold",
+            "executionMode": "fitted_per_fold" if model_id in learned_ids else "deterministic_baseline_per_fold",
             "historicalPredictionsReused": False,
         })
     complete = [candidate for candidate in candidate_results if candidate["selectionEligible"]]
-    baseline_ok = any(candidate["modelId"] in BASELINE_IDS for candidate in complete)
-    learned_ok = any(candidate["modelId"] in LEARNED_IDS for candidate in complete)
+    baseline_ok = any(candidate["modelId"] in baseline_ids for candidate in complete)
+    learned_ok = any(candidate["modelId"] in learned_ids for candidate in complete)
     if len(complete) < 2 or not baseline_ok or not learned_ok:
         candidate_set_status = "insufficient_candidate_breadth"
-    elif len(complete) == 7:
+    elif len(complete) == len(candidate_ids):
         candidate_set_status = "complete_candidate_set"
     else:
         candidate_set_status = "partial_candidate_set"
@@ -356,7 +381,20 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     _update_job(job_path, job, progress="selecting_technical_winner")
     winner, tie_stage, tie_steps, selection_ids = select_technical_winner(candidate_results) if baseline_ok and learned_ok else (None, None, [], [])
     winner_candidate = next((candidate for candidate in candidate_results if candidate["modelId"] == winner), None)
-    runner_up = sorted((candidate for candidate in complete if candidate["modelId"] != winner), key=lambda item: item["metrics"]["mae"])[0] if winner and len(complete) > 1 else None
+    if policy["policy_version"] == "p2-v2":
+        for candidate in candidate_results:
+            if candidate["modelId"] in baseline_ids:
+                candidate["status"] = "baseline_only"
+            elif not candidate["eligible"]:
+                candidate["status"] = "disqualified"
+            elif not candidate["selectionEligible"]:
+                candidate["status"] = "failed"
+            elif candidate["modelId"] == winner:
+                candidate["status"] = "technical_winner"
+            else:
+                candidate["status"] = "eligible_non_winner"
+    runner_pool = complete if policy["policy_version"] != "p2-v2" else [candidate for candidate in complete if candidate["modelId"] in learned_ids]
+    runner_up = sorted((candidate for candidate in runner_pool if candidate["modelId"] != winner), key=lambda item: item["metrics"]["mae"])[0] if winner and len(runner_pool) > 1 else None
     if winner:
         winner_records = {descriptor["foldId"]: predictions[winner][index] for index, descriptor in enumerate(plan)}
         for candidate in candidate_results:
@@ -379,7 +417,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     for index, descriptor in enumerate(plan):
         fold_values.append({
             **{key: value for key, value in descriptor.items() if key not in {"trainStartIndex", "trainEndExclusive", "embargoIndex", "validationIndex"}},
-            "predictions": [predictions[model_id][index] for model_id in CANDIDATE_IDS],
+            "predictions": [predictions[model_id][index] for model_id in candidate_ids],
         })
     rolling = {
         "schemaVersion": artifact_schema_version, "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
@@ -394,14 +432,20 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
                 "foldSelectionRule": policy["fold_policy"].get("fold_selection_rule")} if is_phase_two else {}),
         }, "foldPlanSha256": plan_hash, "plannedFoldCount": planned_fold_count, **phase_two_dynamic,
         **({"selectedEvaluationPeriod": selected_evaluation_period} if is_phase_two else {}),
-        "candidateIds": list(CANDIDATE_IDS),
+        "candidateIds": list(candidate_ids),
         "featureOrderSha256": feature_hash, "target": TARGET, "horizonWeeks": 2, "folds": fold_values,
         "generatedAt": generated_at,
     }
     rolling_path = staging / "artifacts/rolling_validation.json"
     atomic_json(rolling_path, rolling)
     rolling_hash = sha256_file(rolling_path)
-    selection_reason = f"{winner} had the lowest governed metric sequence among candidates completing all {planned_fold_count} folds." if winner else "No technical winner satisfied the governed completeness and breadth requirements."
+    selection_reason = (
+        f"{winner} was the best-performing eligible learned model within this governed assessment, using the governed metric sequence across all {planned_fold_count} folds."
+        if winner and policy["policy_version"] == "p2-v2"
+        else f"{winner} had the lowest governed metric sequence among candidates completing all {planned_fold_count} folds."
+        if winner
+        else "No technical winner satisfied the governed completeness and breadth requirements."
+    )
     comparison = {
         "schemaVersion": artifact_schema_version, "assessmentId": job["assessmentId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"],
@@ -429,7 +473,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "Recommendation-strength thresholds are not governed; model adoption and approval controls remain disabled.",
         "No forecast, uncertainty calibration, preparedness output, or deployment-model change is produced by this assessment.",
     ]
-    if winner in BASELINE_IDS:
+    if winner in baseline_ids:
         limitations.append("Baseline deployment is not governed. A baseline technical winner cannot be adopted in this phase.")
     winner_mae = winner_candidate["metrics"]["mae"] if winner_candidate else None
     runner_mae = runner_up["metrics"]["mae"] if runner_up else None

@@ -32,7 +32,7 @@ from empirical_range import (
     finite_sample_quantile,
     generate_runtime_rf_residuals,
 )
-from model_factory import build_candidate_estimator, load_and_validate_candidate_registry
+from model_factory import build_candidate_estimator, load_historical_candidate_registry
 from runtime_commit import atomic_json, commit_runtime_run, sha256_file
 from runtime_active_model import resolve_active_model
 from runtime_context import ROOT, require_absolute_directory, require_within
@@ -113,9 +113,20 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("Dataset identity could not be recomputed.")
 
     policy, policy_hash = load_and_validate_quick_forecast_policy(job["deploymentId"])
-    if (policy_hash, policy["policy_id"], policy["policy_version"]) != (job["policySha256"], job["policyId"], job["policyVersion"]):
-        raise ValueError("Quick Forecast policy identity changed after queueing.")
+    is_p2 = policy.get("schemaVersion") == "2.0" or policy.get("requiresActiveAssignment") is True
     profile = _json(ROOT / "config" / "deployments" / job["deploymentId"] / "profile.json")
+
+    assigned_model_id = "random_forest"
+    active_authority = None
+    if is_p2:
+        try:
+            active_authority = resolve_active_model(ROOT, runtime_root, job["deploymentId"])
+        except Exception as exc:
+            raise ValueError(f"active_model_not_assigned: {exc}") from exc
+        if active_authority.get("authoritySource") != "committed_assignment":
+            raise ValueError("active_model_not_assigned")
+        assigned_model_id = active_authority.get("modelId")
+
     _update_job(job_path, job, progress="building_features")
     cases = pd.read_csv(canonical_case)
     climate = pd.read_csv(canonical_climate)
@@ -124,27 +135,29 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if list(training.loc[:, FEATURE_COLUMNS].columns) != list(FEATURE_COLUMNS) or len(FEATURE_COLUMNS) != 18 or inference.empty:
         raise ValueError("The governed 18-feature contract is unavailable.")
     latest = inference.iloc[-1]
-    quick = evaluate_quick_forecast_policy(policy, {
-        "validation_passed": validation.get("status") == "ready",
-        "deployment_id": job["deploymentId"], "deployment_gate": profile.get("deployment_gate"),
-        "case_geography": validation["datasetIdentity"].get("geography"),
-        "climate_geography": validation["datasetIdentity"].get("geography"),
-        "canonical_contract_version": validation["normalization"]["canonicalContractVersion"],
-        "feature_order_sha256": feature_hash, "constructible_feature_count": len(FEATURE_COLUMNS),
-        "target": TARGET, "horizon_weeks": HORIZON_WEEKS,
-        "approved_model_id": profile["model"]["model_id"], "approved_model_family": profile["model"]["model_family"],
-        "approved_model_parameters_sha256": profile["model"]["model_parameters_sha256"],
-        "candidate_registry_sha256": policy["candidate_registry_sha256"],
-        "source_metadata": {
-            "cases": {"source_type": _single(cases, "source_type"), "aggregation_method": "weekly_epi_week_case_count", "contains_approximated_values": _approximated(cases)},
-            "climate": {"source_type": _single(climate, "source_type"), "aggregation_method": _single(climate, "aggregation_method"), "contains_approximated_values": _approximated(climate)},
-        },
-        "overlap_weeks": validation["counts"]["overlapWeeks"], "labelled_rows": len(training),
-        "chronological_order_valid": True, "duplicate_periods_absent": True, "contiguous_history": True,
-        "case_climate_aligned": True, "valid_inference_row": bool(pd.to_numeric(latest.loc[FEATURE_COLUMNS], errors="coerce").notna().all()),
-    })
-    if not quick["eligible"] or quick["approvedModelId"] != "random_forest":
-        raise ValueError("The workspace no longer passes Quick Forecast policy evaluation.")
+
+    if not is_p2:
+        quick = evaluate_quick_forecast_policy(policy, {
+            "validation_passed": validation.get("status") == "ready",
+            "deployment_id": job["deploymentId"], "deployment_gate": profile.get("deployment_gate"),
+            "case_geography": validation["datasetIdentity"].get("geography"),
+            "climate_geography": validation["datasetIdentity"].get("geography"),
+            "canonical_contract_version": validation["normalization"]["canonicalContractVersion"],
+            "feature_order_sha256": feature_hash, "constructible_feature_count": len(FEATURE_COLUMNS),
+            "target": TARGET, "horizon_weeks": HORIZON_WEEKS,
+            "approved_model_id": profile["model"]["model_id"], "approved_model_family": profile["model"]["model_family"],
+            "approved_model_parameters_sha256": profile["model"]["model_parameters_sha256"],
+            "candidate_registry_sha256": policy.get("candidate_registry_sha256") or policy.get("candidateRegistrySha256"),
+            "source_metadata": {
+                "cases": {"source_type": _single(cases, "source_type"), "aggregation_method": "weekly_epi_week_case_count", "contains_approximated_values": _approximated(cases)},
+                "climate": {"source_type": _single(climate, "source_type"), "aggregation_method": _single(climate, "aggregation_method"), "contains_approximated_values": _approximated(climate)},
+            },
+            "overlap_weeks": validation["counts"]["overlapWeeks"], "labelled_rows": len(training),
+            "chronological_order_valid": True, "duplicate_periods_absent": True, "contiguous_history": True,
+            "case_climate_aligned": True, "valid_inference_row": bool(pd.to_numeric(latest.loc[FEATURE_COLUMNS], errors="coerce").notna().all()),
+        })
+        if not quick["eligible"] or quick["approvedModelId"] != "random_forest":
+            raise ValueError("The workspace no longer passes Quick Forecast policy evaluation.")
 
     if staging.exists() and {item.name for item in staging.iterdir()} - {"logs"}:
         raise ValueError("The staging run already contains untrusted content.")
@@ -157,42 +170,21 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     shutil.copy2(validation_path, staging / "metadata" / "validation.json")
 
     generated_at = _now()
-    registry, registry_hash = load_and_validate_candidate_registry()
-    if registry_hash != policy["candidate_registry_sha256"]:
-        raise ValueError("Candidate registry identity differs from the approved policy.")
-    candidate = next(item for item in registry["candidates"] if item["model_id"] == "random_forest")
-    if candidate["parameters_sha256"] != policy["approved_model"]["parameters_sha256"]:
-        raise ValueError("Approved Random Forest parameter identity mismatch.")
+    registry, registry_hash = load_historical_candidate_registry()
     X = training.loc[:, FEATURE_COLUMNS].apply(pd.to_numeric, errors="raise")
     y = pd.to_numeric(training[TARGET], errors="raise")
     if not np.isfinite(X.to_numpy()).all() or not np.isfinite(y.to_numpy()).all() or (y < 0).any():
         raise ValueError("Training data contains invalid values.")
     inference_row = latest.loc[FEATURE_COLUMNS].to_frame().T.astype(float)
-    _update_job(job_path, job, progress="generating_temporal_calibration_folds")
-    calibration_result = generate_runtime_rf_residuals(
-        training, registry, registry_sha256=registry_hash,
-        expected_registry_sha256=policy["candidate_registry_sha256"],
-        expected_parameters_sha256=policy["approved_model"]["parameters_sha256"],
-        feature_order=FEATURE_COLUMNS, target_column=TARGET,
-    )
-    calibration_available = calibration_result["status"] == "available"
-    prequential_records: list[dict[str, Any]] = []
-    calibration_metrics: dict[str, Any] | None = None
-    final_quantile_rank: int | None = None
-    final_quantile_value: float | None = None
-    if calibration_available:
-        _update_job(job_path, job, progress="evaluating_random_forest_calibration")
-        prequential_records, calibration_metrics = build_prequential_evaluation(calibration_result["residuals"])
-        final_quantile_rank, final_quantile_value = finite_sample_quantile(
-            [row["absolute_residual"] for row in calibration_result["residuals"]]
-        )
-    estimator = build_candidate_estimator("random_forest", registry)
+
+    estimator = build_candidate_estimator(assigned_model_id, registry)
     _update_job(job_path, job, progress="training_approved_model")
     estimator.fit(X, y)
     _update_job(job_path, job, progress="generating_point_forecast")
     raw = float(estimator.predict(inference_row)[0])
     if not math.isfinite(raw) or raw < 0:
-        raise ValueError("Random Forest returned an invalid point forecast.")
+        raise ValueError(f"{assigned_model_id} returned an invalid point forecast.")
+
     published = max(0.0, raw)
     reported = int(round(published))
     latest_cases = int(latest["cases"])

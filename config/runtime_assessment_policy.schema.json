@@ -4,48 +4,565 @@
   "title": "DengueOps runtime dataset-assessment governance policy",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "policy_id", "policy_version", "policy_status", "policy_sha256", "policy_hash_method", "deployment_id", "geography_scope", "source_scope", "input_contract", "feature_contract", "candidate_registry", "fold_policy", "candidate_eligibility_policy", "comparison_policy", "recommendation_policy", "approval_requirement", "intended_use", "limitations", "prohibited_claims"],
+  "required": [
+    "schema_version",
+    "policy_id",
+    "policy_version",
+    "policy_status",
+    "policy_sha256",
+    "policy_hash_method",
+    "deployment_id",
+    "geography_scope",
+    "source_scope",
+    "input_contract",
+    "feature_contract",
+    "candidate_registry",
+    "fold_policy",
+    "candidate_eligibility_policy",
+    "comparison_policy",
+    "recommendation_policy",
+    "approval_requirement",
+    "intended_use",
+    "limitations",
+    "prohibited_claims"
+  ],
   "properties": {
-    "schema_version": {"enum": ["1.0", "2.0"]},
-    "policy_id": {"const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"},
-    "policy_version": {"enum": ["p1.4d-1-v1", "p2-v1"]},
-    "policy_status": {"enum": ["active", "inactive", "suspended"]},
-    "policy_sha256": {"$ref": "#/$defs/sha256"},
-    "policy_hash_method": {"const": "sha256_canonical_json_excluding_policy_sha256"},
-    "deployment_id": {"const": "dhaka_south"},
-    "geography_scope": {"$ref": "#/$defs/geography"},
-    "source_scope": {"type": "object", "additionalProperties": false, "required": ["cases", "climate"], "properties": {"cases": {"$ref": "#/$defs/sourceRule"}, "climate": {"$ref": "#/$defs/sourceRule"}}},
-    "input_contract": {"type": "object", "additionalProperties": false, "required": ["canonical_contract_version", "period_contract", "target", "horizon_weeks"], "properties": {"canonical_contract_version": {"const": "p1.4b-canonical-upload-v1"}, "period_contract": {"const": "ISO_year_week_with_date_start_equal_to_ISO_Monday_weeks_1_through_52"}, "target": {"const": "target_cases_next_2w"}, "horizon_weeks": {"const": 2}}},
-    "feature_contract": {"type": "object", "additionalProperties": false, "required": ["feature_count", "feature_order_sha256", "unsupported_substitution_allowed", "missing_required_features_allowed"], "properties": {"feature_count": {"const": 18}, "feature_order_sha256": {"$ref": "#/$defs/sha256"}, "unsupported_substitution_allowed": {"const": false}, "missing_required_features_allowed": {"const": false}}},
-    "candidate_registry": {"type": "object", "additionalProperties": false, "required": ["path", "version", "sha256"], "properties": {"path": {"const": "config/candidate_models.json"}, "version": {"const": "p1.2a-v1"}, "sha256": {"$ref": "#/$defs/sha256"}}},
-    "fold_policy": {"$ref": "#/$defs/foldPolicy"},
-    "candidate_eligibility_policy": {"$ref": "#/$defs/candidatePolicy"},
-    "comparison_policy": {"$ref": "#/$defs/comparisonPolicy"},
-    "recommendation_policy": {"$ref": "#/$defs/recommendationPolicy"},
-    "approval_requirement": {"type": "object", "additionalProperties": false, "required": ["required_before_adoption", "enabled_in_this_phase", "assessment_may_modify_active_model"], "properties": {"required_before_adoption": {"const": true}, "enabled_in_this_phase": {"const": false}, "assessment_may_modify_active_model": {"const": false}}},
-    "intended_use": {"$ref": "#/$defs/nonEmptyArray"},
-    "limitations": {"type": "array", "minItems": 5, "items": {"$ref": "#/$defs/nonEmpty"}},
-    "prohibited_claims": {"type": "array", "minItems": 5, "items": {"$ref": "#/$defs/nonEmpty"}},
-    "decision_compatibility": {"type": "object", "additionalProperties": false, "required": ["status", "phase1_decision_policy_allowed", "one_run_authorization_allowed", "approved_forecast_allowed"], "properties": {"status": {"const": "phase2_decision_policy_not_yet_available"}, "phase1_decision_policy_allowed": {"const": false}, "one_run_authorization_allowed": {"const": false}, "approved_forecast_allowed": {"const": false}}},
-    "prohibited_actions": {"type": "array", "const": ["automatic_model_adoption", "model_promotion", "model_rollback", "preparedness_generation", "candidate_specific_fold_removal", "random_train_test_split", "target_interpolation", "raw_data_imputation"]}
+    "schema_version": { "enum": ["1.0", "2.0"] },
+    "policy_id": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
+    "policy_version": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"] },
+    "policy_status": { "enum": ["active", "inactive", "suspended"] },
+    "policy_sha256": { "$ref": "#/$defs/sha256" },
+    "policy_hash_method": {
+      "const": "sha256_canonical_json_excluding_policy_sha256"
+    },
+    "deployment_id": { "const": "dhaka_south" },
+    "geography_scope": { "$ref": "#/$defs/geography" },
+    "source_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cases", "climate"],
+      "properties": {
+        "cases": { "$ref": "#/$defs/sourceRule" },
+        "climate": { "$ref": "#/$defs/sourceRule" }
+      }
+    },
+    "input_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_contract_version",
+        "period_contract",
+        "target",
+        "horizon_weeks"
+      ],
+      "properties": {
+        "canonical_contract_version": { "const": "p1.4b-canonical-upload-v1" },
+        "period_contract": {
+          "const": "ISO_year_week_with_date_start_equal_to_ISO_Monday_weeks_1_through_52"
+        },
+        "target": { "const": "target_cases_next_2w" },
+        "horizon_weeks": { "const": 2 }
+      }
+    },
+    "feature_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "feature_count",
+        "feature_order_sha256",
+        "unsupported_substitution_allowed",
+        "missing_required_features_allowed"
+      ],
+      "properties": {
+        "feature_count": { "const": 18 },
+        "feature_order_sha256": { "$ref": "#/$defs/sha256" },
+        "unsupported_substitution_allowed": { "const": false },
+        "missing_required_features_allowed": { "const": false }
+      }
+    },
+    "candidate_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "version", "sha256"],
+      "properties": {
+        "path": { "const": "config/candidate_models.json" },
+        "version": { "enum": ["p1.2a-v1", "p2-v1"] },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "fold_policy": { "$ref": "#/$defs/foldPolicy" },
+    "candidate_eligibility_policy": { "$ref": "#/$defs/candidatePolicy" },
+    "comparison_policy": { "$ref": "#/$defs/comparisonPolicy" },
+    "recommendation_policy": { "$ref": "#/$defs/recommendationPolicy" },
+    "approval_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_before_adoption",
+        "enabled_in_this_phase",
+        "assessment_may_modify_active_model"
+      ],
+      "properties": {
+        "required_before_adoption": { "const": true },
+        "enabled_in_this_phase": { "const": false },
+        "assessment_may_modify_active_model": { "const": false }
+      }
+    },
+    "intended_use": { "$ref": "#/$defs/nonEmptyArray" },
+    "limitations": {
+      "type": "array",
+      "minItems": 5,
+      "items": { "$ref": "#/$defs/nonEmpty" }
+    },
+    "prohibited_claims": {
+      "type": "array",
+      "minItems": 5,
+      "items": { "$ref": "#/$defs/nonEmpty" }
+    },
+    "decision_compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "phase1_decision_policy_allowed",
+        "one_run_authorization_allowed",
+        "approved_forecast_allowed"
+      ],
+      "properties": {
+        "status": { "const": "phase2_decision_policy_not_yet_available" },
+        "phase1_decision_policy_allowed": { "const": false },
+        "one_run_authorization_allowed": { "const": false },
+        "approved_forecast_allowed": { "const": false }
+      }
+    },
+    "prohibited_actions": {
+      "type": "array",
+      "const": [
+        "automatic_model_adoption",
+        "model_promotion",
+        "model_rollback",
+        "preparedness_generation",
+        "candidate_specific_fold_removal",
+        "random_train_test_split",
+        "target_interpolation",
+        "raw_data_imputation"
+      ]
+    }
   },
   "allOf": [
-    {"if": {"properties": {"policy_version": {"const": "p1.4d-1-v1"}}}, "then": {"properties": {"schema_version": {"const": "1.0"}}, "not": {"anyOf": [{"required": ["decision_compatibility"]}, {"required": ["prohibited_actions"]}]}}},
-    {"if": {"properties": {"policy_version": {"const": "p2-v1"}}}, "then": {"properties": {"schema_version": {"const": "2.0"}}, "required": ["decision_compatibility", "prohibited_actions"]}}
+    {
+      "if": { "properties": { "policy_version": { "const": "p1.4d-1-v1" } } },
+      "then": {
+        "properties": { "schema_version": { "const": "1.0" } },
+        "not": {
+          "anyOf": [
+            { "required": ["decision_compatibility"] },
+            { "required": ["prohibited_actions"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": { "properties": { "policy_version": { "const": "p2-v1" } } },
+      "then": {
+        "properties": { "schema_version": { "const": "2.0" } },
+        "required": ["decision_compatibility", "prohibited_actions"]
+      }
+    },
+    {
+      "if": { "properties": { "policy_version": { "const": "p2-v2" } } },
+      "then": {
+        "properties": { "schema_version": { "const": "2.0" } },
+        "required": ["decision_compatibility", "prohibited_actions"]
+      }
+    }
   ],
   "$defs": {
-    "nonEmpty": {"type": "string", "minLength": 1},
-    "nonEmptyArray": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonEmpty"}},
-    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "geography": {"type": "object", "additionalProperties": false, "required": ["level", "id", "name", "exact_match_required", "cross_deployment_use"], "properties": {"level": {"const": "city"}, "id": {"const": "BGD-DHAKA-SOUTH"}, "name": {"const": "Dhaka South"}, "exact_match_required": {"const": true}, "cross_deployment_use": {"const": false}}},
-    "sourceRule": {"type": "object", "additionalProperties": false, "required": ["allowed_source_types", "allowed_aggregation_methods", "approximated_values_allowed"], "properties": {"allowed_source_types": {"type": "array", "const": ["synthetic_benchmark"]}, "allowed_aggregation_methods": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/nonEmpty"}}, "approximated_values_allowed": {"const": false}}},
-    "foldPolicy": {"oneOf": [
-      {"type": "object", "additionalProperties": false, "required": ["policy_id", "policy_version", "training_window", "initial_training_rows", "embargo_rows", "validation_rows_per_fold", "step_size_weeks", "target_horizon_weeks", "first_validation_index_rule", "available_fold_count_rule", "label_availability_rule", "missing_accepted_periods_allowed", "duplicate_periods_allowed", "same_precomputed_plan_for_all_candidates", "candidate_outcomes_may_change_plan", "recommendation_grade_minimum_labelled_rows", "recommendation_grade_minimum_folds", "feasibility_only_execution_enabled", "maximum_fold_behavior"], "properties": {"policy_id": {"const": "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS"}, "policy_version": {"const": "p1.4d-1-v1"}, "training_window": {"const": "expanding"}, "initial_training_rows": {"const": 104}, "embargo_rows": {"const": 1}, "validation_rows_per_fold": {"const": 1}, "step_size_weeks": {"const": 1}, "target_horizon_weeks": {"const": 2}, "first_validation_index_rule": {"const": "initial_training_rows_plus_embargo_rows"}, "available_fold_count_rule": {"const": "len_range_first_validation_index_to_labelled_rows_step_size"}, "label_availability_rule": {"$ref": "#/$defs/nonEmpty"}, "missing_accepted_periods_allowed": {"const": false}, "duplicate_periods_allowed": {"const": false}, "same_precomputed_plan_for_all_candidates": {"const": true}, "candidate_outcomes_may_change_plan": {"const": false}, "recommendation_grade_minimum_labelled_rows": {"const": 173}, "recommendation_grade_minimum_folds": {"const": 68}, "feasibility_only_execution_enabled": {"const": false}, "maximum_fold_behavior": {"type": "object", "additionalProperties": false, "required": ["status", "maximum_fold_cap", "currently_governed_maximum_folds", "datasets_above_current_governed_range", "fold_selection_rule", "rationale"], "properties": {"status": {"const": "governance_pending"}, "maximum_fold_cap": {"type": "null"}, "currently_governed_maximum_folds": {"const": 68}, "datasets_above_current_governed_range": {"const": "assessment_blocked"}, "fold_selection_rule": {"type": "null"}, "rationale": {"$ref": "#/$defs/nonEmpty"}}}}},
-      {"type": "object", "additionalProperties": false, "required": ["policy_id", "policy_version", "training_window", "initial_training_rows", "embargo_rows", "validation_rows_per_fold", "step_size_weeks", "target_horizon_weeks", "first_validation_index_rule", "first_available_validation_index", "available_fold_count_rule", "planned_fold_count_rule", "fold_selection_rule", "label_availability_rule", "missing_accepted_periods_allowed", "duplicate_periods_allowed", "same_precomputed_plan_for_all_candidates", "candidate_outcomes_may_change_plan", "minimum_labelled_rows", "minimum_fold_count", "maximum_fold_count", "datasets_below_minimum", "datasets_above_maximum", "older_rows_retained_in_expanding_training"], "properties": {"policy_id": {"const": "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS"}, "policy_version": {"const": "p2-v1"}, "training_window": {"const": "expanding"}, "initial_training_rows": {"const": 104}, "embargo_rows": {"const": 1}, "validation_rows_per_fold": {"const": 1}, "step_size_weeks": {"const": 1}, "target_horizon_weeks": {"const": 2}, "first_validation_index_rule": {"const": "initial_training_rows_plus_embargo_rows"}, "first_available_validation_index": {"const": 105}, "available_fold_count_rule": {"const": "max_zero_labelled_rows_minus_first_available_validation_index"}, "planned_fold_count_rule": {"const": "minimum_available_fold_count_and_maximum_fold_count"}, "fold_selection_rule": {"const": "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count"}, "label_availability_rule": {"$ref": "#/$defs/nonEmpty"}, "missing_accepted_periods_allowed": {"const": false}, "duplicate_periods_allowed": {"const": false}, "same_precomputed_plan_for_all_candidates": {"const": true}, "candidate_outcomes_may_change_plan": {"const": false}, "minimum_labelled_rows": {"const": 157}, "minimum_fold_count": {"const": 52}, "maximum_fold_count": {"const": 68}, "datasets_below_minimum": {"const": "assessment_rejected"}, "datasets_above_maximum": {"const": "most_recent_folds_selected"}, "older_rows_retained_in_expanding_training": {"const": true}}}
-    ]},
-    "candidate": {"type": "object", "additionalProperties": false, "required": ["model_id", "model_family", "candidate_class", "deployability_classification", "parameters_sha256", "minimum_training_rows", "seasonal_history_weeks", "feature_requirements", "deterministic_configuration", "negative_output_policy", "failure_policy", "selection_complexity_rank"], "properties": {"model_id": {"enum": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]}, "model_family": {"$ref": "#/$defs/nonEmpty"}, "candidate_class": {"enum": ["naive_baseline", "learned_model"]}, "deployability_classification": {"enum": ["baseline_not_runtime_deployable", "deployable_learned_model"]}, "parameters_sha256": {"$ref": "#/$defs/sha256"}, "minimum_training_rows": {"type": "integer", "minimum": 0}, "seasonal_history_weeks": {"type": "integer", "minimum": 0}, "feature_requirements": {"$ref": "#/$defs/nonEmptyArray"}, "deterministic_configuration": {"type": "object"}, "negative_output_policy": {"$ref": "#/$defs/nonEmpty"}, "failure_policy": {"const": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan"}, "selection_complexity_rank": {"type": "integer", "minimum": 1, "maximum": 7}}},
-    "candidatePolicy": {"type": "object", "additionalProperties": false, "required": ["precompute_before_execution", "ineligibility_may_change_fold_plan", "eligible_candidates_must_use_every_planned_fold", "failed_candidate_may_shrink_common_folds", "candidate_set_statuses", "minimum_eligible_candidates", "naive_baseline_required", "deployable_learned_model_required", "candidates"], "properties": {"precompute_before_execution": {"const": true}, "ineligibility_may_change_fold_plan": {"const": false}, "eligible_candidates_must_use_every_planned_fold": {"const": true}, "failed_candidate_may_shrink_common_folds": {"const": false}, "candidate_set_statuses": {"type": "array", "const": ["complete_candidate_set", "partial_candidate_set", "insufficient_candidate_breadth"]}, "minimum_eligible_candidates": {"const": 2}, "naive_baseline_required": {"const": true}, "deployable_learned_model_required": {"const": true}, "candidates": {"type": "array", "minItems": 7, "maxItems": 7, "items": {"$ref": "#/$defs/candidate"}}}},
-    "comparisonPolicy": {"type": "object", "additionalProperties": false, "required": ["policy_id", "policy_version", "selection_rule", "primary_metric", "tie_sequence", "tie_tolerance", "weighted_aggregate_score_allowed", "client_metric_weights_allowed", "current_active_model_preference_allowed", "selection_requires_all_planned_folds", "intersection_only_successful_folds_allowed", "failed_candidate_selection_eligible"], "properties": {"policy_id": {"const": "RUNTIME.ASSESSMENT.CANDIDATE_COMPARISON"}, "policy_version": {"const": "p1.4d-1-v1"}, "selection_rule": {"$ref": "#/$defs/nonEmpty"}, "primary_metric": {"const": "mae"}, "tie_sequence": {"type": "array", "const": ["rmse", "wape", "median_absolute_error", "maximum_absolute_error", "selection_complexity_rank", "model_id"]}, "tie_tolerance": {"const": 1e-9}, "weighted_aggregate_score_allowed": {"const": false}, "client_metric_weights_allowed": {"const": false}, "current_active_model_preference_allowed": {"const": false}, "selection_requires_all_planned_folds": {"const": true}, "intersection_only_successful_folds_allowed": {"const": false}, "failed_candidate_selection_eligible": {"const": false}}},
-    "recommendationPolicy": {"type": "object", "additionalProperties": false, "required": ["policy_id", "policy_version", "statuses", "strengths", "strength_threshold_status", "strength_thresholds", "technical_winner_without_thresholds", "strength_without_thresholds", "approval_enabled_without_thresholds", "allowed_evidence_inputs", "no_recommendation_conditions", "baseline_winner_behavior", "automatic_adoption_allowed"], "properties": {"policy_id": {"const": "RUNTIME.ASSESSMENT.RECOMMENDATION_STRENGTH"}, "policy_version": {"const": "p1.4d-1-v1"}, "statuses": {"type": "array", "const": ["recommendation_available", "evidence_only", "no_recommendation"]}, "strengths": {"type": "array", "const": ["strong", "moderate", "weak", "not_available"]}, "strength_threshold_status": {"const": "not_governed"}, "strength_thresholds": {"type": "null"}, "technical_winner_without_thresholds": {"const": "evidence_only"}, "strength_without_thresholds": {"const": "not_available"}, "approval_enabled_without_thresholds": {"const": false}, "allowed_evidence_inputs": {"$ref": "#/$defs/nonEmptyArray"}, "no_recommendation_conditions": {"$ref": "#/$defs/nonEmptyArray"}, "baseline_winner_behavior": {"type": "object", "additionalProperties": false, "required": ["recommendation_status", "approval_enabled", "limitation"], "properties": {"recommendation_status": {"const": "evidence_only"}, "approval_enabled": {"const": false}, "limitation": {"$ref": "#/$defs/nonEmpty"}}}, "automatic_adoption_allowed": {"const": false}}}
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "nonEmptyArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/nonEmpty" }
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "geography": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "id",
+        "name",
+        "exact_match_required",
+        "cross_deployment_use"
+      ],
+      "properties": {
+        "level": { "const": "city" },
+        "id": { "const": "BGD-DHAKA-SOUTH" },
+        "name": { "const": "Dhaka South" },
+        "exact_match_required": { "const": true },
+        "cross_deployment_use": { "const": false }
+      }
+    },
+    "sourceRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_source_types",
+        "allowed_aggregation_methods",
+        "approximated_values_allowed"
+      ],
+      "properties": {
+        "allowed_source_types": {
+          "type": "array",
+          "const": ["synthetic_benchmark"]
+        },
+        "allowed_aggregation_methods": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        },
+        "approximated_values_allowed": { "const": false }
+      }
+    },
+    "foldPolicy": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "policy_version",
+            "training_window",
+            "initial_training_rows",
+            "embargo_rows",
+            "validation_rows_per_fold",
+            "step_size_weeks",
+            "target_horizon_weeks",
+            "first_validation_index_rule",
+            "available_fold_count_rule",
+            "label_availability_rule",
+            "missing_accepted_periods_allowed",
+            "duplicate_periods_allowed",
+            "same_precomputed_plan_for_all_candidates",
+            "candidate_outcomes_may_change_plan",
+            "recommendation_grade_minimum_labelled_rows",
+            "recommendation_grade_minimum_folds",
+            "feasibility_only_execution_enabled",
+            "maximum_fold_behavior"
+          ],
+          "properties": {
+            "policy_id": {
+              "const": "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS"
+            },
+            "policy_version": { "const": "p1.4d-1-v1" },
+            "training_window": { "const": "expanding" },
+            "initial_training_rows": { "const": 104 },
+            "embargo_rows": { "const": 1 },
+            "validation_rows_per_fold": { "const": 1 },
+            "step_size_weeks": { "const": 1 },
+            "target_horizon_weeks": { "const": 2 },
+            "first_validation_index_rule": {
+              "const": "initial_training_rows_plus_embargo_rows"
+            },
+            "available_fold_count_rule": {
+              "const": "len_range_first_validation_index_to_labelled_rows_step_size"
+            },
+            "label_availability_rule": { "$ref": "#/$defs/nonEmpty" },
+            "missing_accepted_periods_allowed": { "const": false },
+            "duplicate_periods_allowed": { "const": false },
+            "same_precomputed_plan_for_all_candidates": { "const": true },
+            "candidate_outcomes_may_change_plan": { "const": false },
+            "recommendation_grade_minimum_labelled_rows": { "const": 173 },
+            "recommendation_grade_minimum_folds": { "const": 68 },
+            "feasibility_only_execution_enabled": { "const": false },
+            "maximum_fold_behavior": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "maximum_fold_cap",
+                "currently_governed_maximum_folds",
+                "datasets_above_current_governed_range",
+                "fold_selection_rule",
+                "rationale"
+              ],
+              "properties": {
+                "status": { "const": "governance_pending" },
+                "maximum_fold_cap": { "type": "null" },
+                "currently_governed_maximum_folds": { "const": 68 },
+                "datasets_above_current_governed_range": {
+                  "const": "assessment_blocked"
+                },
+                "fold_selection_rule": { "type": "null" },
+                "rationale": { "$ref": "#/$defs/nonEmpty" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "policy_version",
+            "training_window",
+            "initial_training_rows",
+            "embargo_rows",
+            "validation_rows_per_fold",
+            "step_size_weeks",
+            "target_horizon_weeks",
+            "first_validation_index_rule",
+            "first_available_validation_index",
+            "available_fold_count_rule",
+            "planned_fold_count_rule",
+            "fold_selection_rule",
+            "label_availability_rule",
+            "missing_accepted_periods_allowed",
+            "duplicate_periods_allowed",
+            "same_precomputed_plan_for_all_candidates",
+            "candidate_outcomes_may_change_plan",
+            "minimum_labelled_rows",
+            "minimum_fold_count",
+            "maximum_fold_count",
+            "datasets_below_minimum",
+            "datasets_above_maximum",
+            "older_rows_retained_in_expanding_training"
+          ],
+          "properties": {
+            "policy_id": {
+              "const": "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS"
+            },
+            "policy_version": { "enum": ["p2-v1", "p2-v2"] },
+            "training_window": { "const": "expanding" },
+            "initial_training_rows": { "const": 104 },
+            "embargo_rows": { "const": 1 },
+            "validation_rows_per_fold": { "const": 1 },
+            "step_size_weeks": { "const": 1 },
+            "target_horizon_weeks": { "const": 2 },
+            "first_validation_index_rule": {
+              "const": "initial_training_rows_plus_embargo_rows"
+            },
+            "first_available_validation_index": { "const": 105 },
+            "available_fold_count_rule": {
+              "const": "max_zero_labelled_rows_minus_first_available_validation_index"
+            },
+            "planned_fold_count_rule": {
+              "const": "minimum_available_fold_count_and_maximum_fold_count"
+            },
+            "fold_selection_rule": {
+              "const": "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count"
+            },
+            "label_availability_rule": { "$ref": "#/$defs/nonEmpty" },
+            "missing_accepted_periods_allowed": { "const": false },
+            "duplicate_periods_allowed": { "const": false },
+            "same_precomputed_plan_for_all_candidates": { "const": true },
+            "candidate_outcomes_may_change_plan": { "const": false },
+            "minimum_labelled_rows": { "const": 157 },
+            "minimum_fold_count": { "const": 52 },
+            "maximum_fold_count": { "const": 68 },
+            "datasets_below_minimum": { "const": "assessment_rejected" },
+            "datasets_above_maximum": { "const": "most_recent_folds_selected" },
+            "older_rows_retained_in_expanding_training": { "const": true }
+          }
+        }
+      ]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_id",
+        "model_family",
+        "candidate_class",
+        "deployability_classification",
+        "parameters_sha256",
+        "minimum_training_rows",
+        "seasonal_history_weeks",
+        "feature_requirements",
+        "deterministic_configuration",
+        "negative_output_policy",
+        "failure_policy",
+        "selection_complexity_rank"
+      ],
+      "properties": {
+        "model_id": {
+          "enum": [
+            "previous_week_naive",
+            "moving_average_4w",
+            "seasonal_naive_52w",
+            "ridge_regression",
+            "poisson_regression",
+            "random_forest",
+            "gradient_boosting",
+            "elastic_net",
+            "negative_binomial_regression",
+            "extra_trees",
+            "hist_gradient_boosting"
+          ]
+        },
+        "model_family": { "$ref": "#/$defs/nonEmpty" },
+        "candidate_class": {
+          "enum": ["naive_baseline", "comparison_baseline", "learned_model"]
+        },
+        "deployability_classification": {
+          "enum": [
+            "baseline_not_runtime_deployable",
+            "deployable_learned_model"
+          ]
+        },
+        "parameters_sha256": { "$ref": "#/$defs/sha256" },
+        "minimum_training_rows": { "type": "integer", "minimum": 0 },
+        "seasonal_history_weeks": { "type": "integer", "minimum": 0 },
+        "feature_requirements": { "$ref": "#/$defs/nonEmptyArray" },
+        "deterministic_configuration": { "type": "object" },
+        "negative_output_policy": { "$ref": "#/$defs/nonEmpty" },
+        "failure_policy": {
+          "const": "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan"
+        },
+        "selection_complexity_rank": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "candidatePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "precompute_before_execution",
+        "ineligibility_may_change_fold_plan",
+        "eligible_candidates_must_use_every_planned_fold",
+        "failed_candidate_may_shrink_common_folds",
+        "candidate_set_statuses",
+        "minimum_eligible_candidates",
+        "naive_baseline_required",
+        "deployable_learned_model_required",
+        "candidates"
+      ],
+      "properties": {
+        "precompute_before_execution": { "const": true },
+        "ineligibility_may_change_fold_plan": { "const": false },
+        "eligible_candidates_must_use_every_planned_fold": { "const": true },
+        "failed_candidate_may_shrink_common_folds": { "const": false },
+        "candidate_set_statuses": {
+          "type": "array",
+          "const": [
+            "complete_candidate_set",
+            "partial_candidate_set",
+            "insufficient_candidate_breadth"
+          ]
+        },
+        "minimum_eligible_candidates": { "const": 2 },
+        "naive_baseline_required": { "const": true },
+        "deployable_learned_model_required": { "const": true },
+        "candidates": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/candidate" }
+        }
+      }
+    },
+    "comparisonPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "policy_version",
+        "selection_rule",
+        "primary_metric",
+        "tie_sequence",
+        "tie_tolerance",
+        "weighted_aggregate_score_allowed",
+        "client_metric_weights_allowed",
+        "current_active_model_preference_allowed",
+        "selection_requires_all_planned_folds",
+        "intersection_only_successful_folds_allowed",
+        "failed_candidate_selection_eligible"
+      ],
+      "properties": {
+        "policy_id": { "const": "RUNTIME.ASSESSMENT.CANDIDATE_COMPARISON" },
+        "policy_version": { "enum": ["p1.4d-1-v1", "p2-v2"] },
+        "selection_rule": { "$ref": "#/$defs/nonEmpty" },
+        "primary_metric": { "const": "mae" },
+        "tie_sequence": {
+          "type": "array",
+          "const": [
+            "rmse",
+            "wape",
+            "median_absolute_error",
+            "maximum_absolute_error",
+            "selection_complexity_rank",
+            "model_id"
+          ]
+        },
+        "tie_tolerance": { "const": 1e-9 },
+        "weighted_aggregate_score_allowed": { "const": false },
+        "client_metric_weights_allowed": { "const": false },
+        "current_active_model_preference_allowed": { "const": false },
+        "selection_requires_all_planned_folds": { "const": true },
+        "intersection_only_successful_folds_allowed": { "const": false },
+        "failed_candidate_selection_eligible": { "const": false }
+      }
+    },
+    "recommendationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "policy_version",
+        "statuses",
+        "strengths",
+        "strength_threshold_status",
+        "strength_thresholds",
+        "technical_winner_without_thresholds",
+        "strength_without_thresholds",
+        "approval_enabled_without_thresholds",
+        "allowed_evidence_inputs",
+        "no_recommendation_conditions",
+        "baseline_winner_behavior",
+        "automatic_adoption_allowed"
+      ],
+      "properties": {
+        "policy_id": { "const": "RUNTIME.ASSESSMENT.RECOMMENDATION_STRENGTH" },
+        "policy_version": { "const": "p1.4d-1-v1" },
+        "statuses": {
+          "type": "array",
+          "const": [
+            "recommendation_available",
+            "evidence_only",
+            "no_recommendation"
+          ]
+        },
+        "strengths": {
+          "type": "array",
+          "const": ["strong", "moderate", "weak", "not_available"]
+        },
+        "strength_threshold_status": { "const": "not_governed" },
+        "strength_thresholds": { "type": "null" },
+        "technical_winner_without_thresholds": { "const": "evidence_only" },
+        "strength_without_thresholds": { "const": "not_available" },
+        "approval_enabled_without_thresholds": { "const": false },
+        "allowed_evidence_inputs": { "$ref": "#/$defs/nonEmptyArray" },
+        "no_recommendation_conditions": { "$ref": "#/$defs/nonEmptyArray" },
+        "baseline_winner_behavior": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "recommendation_status",
+            "approval_enabled",
+            "limitation"
+          ],
+          "properties": {
+            "recommendation_status": { "const": "evidence_only" },
+            "approval_enabled": { "const": false },
+            "limitation": { "$ref": "#/$defs/nonEmpty" }
+          }
+        },
+        "automatic_adoption_allowed": { "const": false }
+      }
+    }
   }
 }

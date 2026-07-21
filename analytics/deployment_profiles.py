@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DEPLOYMENTS_DIR = ROOT / "config" / "deployments"
 PROFILE_SCHEMA_PATH = ROOT / "config" / "deployment_profile.schema.json"
 MODEL_CARD_SCHEMA_PATH = ROOT / "config" / "model_card.schema.json"
-CANDIDATE_REGISTRY_PATH = ROOT / "config" / "candidate_models.json"
+CANDIDATE_REGISTRY_PATH = ROOT / "config" / "candidate_models_p1.2a-v1.json"
 DEPLOYMENT_ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 
 

@@ -10,7 +10,7 @@ import stat
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from jsonschema import Draft202012Validator, FormatChecker
 import pandas as pd
@@ -52,8 +52,14 @@ class RuntimeCommitError(RuntimeError):
     """Raised when a runtime run cannot be safely committed."""
 
 
+def json_sha(value: Mapping[str, Any]) -> str:
+    payload = (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
 
 
 def atomic_json(path: Path, value: Any) -> None:

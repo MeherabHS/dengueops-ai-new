@@ -439,7 +439,7 @@
             "candidateBreadth": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 7
+              "maximum": 10
             },
             "tieBreakStageUsed": {
               "type": [
@@ -547,7 +547,11 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting"
+          "gradient_boosting",
+          "elastic_net",
+          "negative_binomial_regression",
+          "extra_trees",
+          "hist_gradient_boosting"
         ]
       }
     }

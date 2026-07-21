@@ -34,9 +34,14 @@ const DEPLOYABLE = new Set([
   "poisson_regression",
   "random_forest",
   "gradient_boosting",
+  "elastic_net",
+  "negative_binomial_regression",
+  "extra_trees",
+  "hist_gradient_boosting",
 ]);
 export type DecisionChoice =
   | "approve_technical_winner"
+  | "approve_eligible_non_winner"
   | "keep_current_model"
   | "defer"
   | "reject_assessment";
@@ -187,7 +192,7 @@ export async function readVerifiedAssessment(
     assessmentPolicy?.policySha256 !== commit.assessmentPolicySha256 ||
     assessmentPolicy?.policySha256 !== summary.provenance.assessmentPolicySha256 ||
     (isPhaseTwo
-      ? assessmentPolicy.policyVersion !== "p2-v1" ||
+      ? !["p2-v1", "p2-v2"].includes(assessmentPolicy.policyVersion) ||
         commit.assessmentPolicyId !== assessmentPolicy.policyId ||
         commit.assessmentPolicyVersion !== assessmentPolicy.policyVersion
       : assessmentPolicy.policyVersion !== "p1.4d-1-v1")
@@ -294,6 +299,9 @@ export async function recordDecision(
   reason: string,
   expectedSummary: string,
   correlationId: string,
+  requestedModelId: string | null = null,
+  technicalWinnerNotSelectedAcknowledged = false,
+  uncertaintyLimitationsAcknowledged = false,
 ) {
   const index = assessmentDecisionPaths(config.runtimeRoot, assessmentId);
   const lock = await acquire(index.lock);
@@ -317,7 +325,8 @@ export async function recordDecision(
         );
       if (
         existing.decision.decision === choice &&
-        existing.decision.reason === reason
+        existing.decision.reason === reason &&
+        existing.decision.selectedModelId === (requestedModelId ?? existing.decision.technicalWinnerModelId)
       )
         return existing;
       if (existing.decision.decision !== "defer")
@@ -354,7 +363,7 @@ export async function recordDecision(
       );
     const registrySha256 = sha256(
       await readFile(
-        path.join(config.repositoryRoot, "config", "candidate_models.json"),
+        path.join(config.repositoryRoot, "config", policy.policyVersion === "p2-v2" ? "candidate_models.json" : "candidate_models_p1.2a-v1.json"),
       ),
     );
     if (registrySha256 !== policy.candidateRegistrySha256)
@@ -413,34 +422,53 @@ export async function recordDecision(
         "The committed Phase 2 technical-winner evidence does not reconcile.",
         409,
       );
-    const current =
-      candidates.find((value) => value.modelId === policy.currentModelId) ??
-      null;
+    const isDecisionV2 = policy.policyVersion === "p2-v2";
+    const current = !isDecisionV2 && "currentModelId" in policy
+      ? candidates.find((value) => value.modelId === policy.currentModelId) ?? null
+      : null;
     let selected: Record<string, any> | null = null;
     if (choice === "approve_technical_winner") selected = winnerCandidate;
+    if (choice === "approve_eligible_non_winner") selected = candidates.find((value) => value.modelId === requestedModelId) ?? null;
     if (choice === "keep_current_model") selected = current;
     const selectedComparison = selected
       ? comparisonCandidates.find((value) => value.modelId === selected!.modelId) ?? null
       : null;
-    if (
-      selected &&
-      (!selectedComparison ||
+    if (selected && (!selectedComparison ||
         selected.parametersSha256 !== selectedComparison.parametersSha256 ||
         selected.successfulFolds !== selectedComparison.successfulFolds ||
         selected.failedFolds !== selectedComparison.failedFolds ||
         !DEPLOYABLE.has(selected.modelId) ||
-        selected.deployabilityClass !== "deployable_learned_model" ||
         selected.completionStatus !== "complete" ||
         selected.selectionEligible !== true ||
         selected.successfulFolds !== requiredFolds ||
-        selected.failedFolds !== 0)
-    )
+        selected.failedFolds !== 0 ||
+        (isDecisionV2
+          ? selected.candidateClass !== "learned_model" ||
+            !["technical_winner", "eligible_non_winner"].includes(selected.status) ||
+            selected.modelFamily !== selectedComparison.modelFamily ||
+            selected.preprocessingIdentity !== selectedComparison.preprocessingIdentity ||
+            selected.foldPlanSha256 !== evidence.summary.foldPlanSha256
+          : selected.deployabilityClass !== "deployable_learned_model")))
       throw new RuntimePublicError(
         "selected_model_not_deployable",
         "validation",
         "The selected assessment model is not governed for runtime forecasting.",
         409,
       );
+    if (choice === "approve_eligible_non_winner" && (
+      !isDecisionV2 || !selected || selected.modelId === winner || selected.status !== "eligible_non_winner" ||
+      requestedModelId !== selected.modelId || technicalWinnerNotSelectedAcknowledged !== true ||
+      uncertaintyLimitationsAcknowledged !== true
+    )) throw new RuntimePublicError(
+      "eligible_override_invalid", "validation",
+      "The selected override is not an eligible committed learned candidate.", 409,
+    );
+    if (isDecisionV2 && choice === "approve_technical_winner" && (
+      requestedModelId !== null || !selected || selected.status !== "technical_winner" || uncertaintyLimitationsAcknowledged !== true
+    )) throw new RuntimePublicError(
+      "technical_winner_approval_invalid", "validation",
+      "The technical-winner approval does not satisfy the governed acknowledgement contract.", 409,
+    );
     if (choice === "approve_technical_winner" && !selected)
       throw new RuntimePublicError(
         "technical_winner_unavailable",
@@ -448,7 +476,7 @@ export async function recordDecision(
         "The assessment has no deployable technical winner.",
         409,
       );
-    if (choice === "keep_current_model") {
+    if (choice === "keep_current_model" && !isDecisionV2 && "currentModelId" in policy) {
       const active=evidence.isPhaseTwo?await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,evidence.summary.deploymentId):null;
       const profile=active?null:JSON.parse(await readFile(path.join(config.repositoryRoot,"config","deployments",evidence.summary.deploymentId,"profile.json"),"utf8"));
       if (
@@ -472,6 +500,8 @@ export async function recordDecision(
     const status =
       choice === "approve_technical_winner"
         ? "approved_technical_winner"
+        : choice === "approve_eligible_non_winner"
+          ? "approved_eligible_non_winner"
         : choice === "keep_current_model"
           ? "current_model_retained"
           : choice === "defer"
@@ -514,6 +544,16 @@ export async function recordDecision(
       decision: choice,
       selectedModelId: selected?.modelId ?? null,
       selectedModelParameterSha256: selected?.parametersSha256 ?? null,
+      ...(isDecisionV2 ? {
+        selectionType: choice === "approve_technical_winner" ? "technical_winner" : "eligible_non_winner_override",
+        selectedModelFamily: selected?.modelFamily ?? null,
+        selectedModelPreprocessingIdentity: selected?.preprocessingIdentity ?? null,
+        selectedCandidateStatus: selected?.status ?? null,
+        featureOrderSha256: policy.featureOrderSha256,
+        technicalWinnerNotSelectedAcknowledged: choice === "approve_eligible_non_winner" ? true : false,
+        uncertaintyLimitationsAcknowledged: true,
+        deploymentModelAdopted: false,
+      } : {}),
       decisionScope: "one_run",
       operatorType: "trusted_internal_unverified",
       operatorIdentifier: config.internalOperatorId,
@@ -615,6 +655,17 @@ export async function recordDecision(
           deploymentId: evidence.summary.deploymentId,
           selectedModelId: selected.modelId,
           selectedModelParameterSha256: selected.parametersSha256,
+          ...(isDecisionV2 ? {
+            selectedModelFamily: selected.modelFamily,
+            selectedModelPreprocessingIdentity: selected.preprocessingIdentity,
+            candidateRegistrySha256: policy.candidateRegistrySha256,
+            featureOrderSha256: policy.featureOrderSha256,
+            selectionType: choice === "approve_technical_winner" ? "technical_winner" : "eligible_non_winner_override",
+            technicalWinnerModelId: winner,
+            technicalWinnerNotSelectedAcknowledged: choice === "approve_eligible_non_winner",
+            uncertaintyLimitationsAcknowledged: true,
+            deploymentModelAdopted: false,
+          } : {}),
           workflowMode: "approved_assessment_forecast",
           scope: "one_run",
           initialStatus: "available",
@@ -719,6 +770,12 @@ export async function readVerifiedDecision(
         commit.assessmentLabelledRows !== decision.assessmentLabelledRows ||
         commit.assessmentPlannedFoldCount !==
           decision.assessmentPlannedFoldCount)) ||
+    (decision.decisionPolicyVersion === "p2-v2" &&
+      (decision.featureOrderSha256 !== (policy as any).featureOrderSha256 ||
+        decision.deploymentModelAdopted !== false ||
+        decision.uncertaintyLimitationsAcknowledged !== true ||
+        !DEPLOYABLE.has(decision.selectedModelId) ||
+        !["technical_winner", "eligible_non_winner"].includes(decision.selectedCandidateStatus))) ||
     commit.latestPointerUpdated !== false
   )
     throw new RuntimePublicError(
@@ -804,7 +861,17 @@ export async function readVerifiedDecision(
           a.value.assessmentLabelledRows !== decision.assessmentLabelledRows ||
           a.value.assessmentPlannedFoldCount !==
             decision.assessmentPlannedFoldCount ||
-          a.value.foldPlanSha256 !== decision.foldPlanSha256))
+          a.value.foldPlanSha256 !== decision.foldPlanSha256)) ||
+      (decision.decisionPolicyVersion === "p2-v2" &&
+        (a.value.selectedModelFamily !== decision.selectedModelFamily ||
+          a.value.selectedModelPreprocessingIdentity !== decision.selectedModelPreprocessingIdentity ||
+          a.value.candidateRegistrySha256 !== decision.candidateRegistrySha256 ||
+          a.value.featureOrderSha256 !== decision.featureOrderSha256 ||
+          a.value.selectionType !== decision.selectionType ||
+          a.value.technicalWinnerModelId !== decision.technicalWinnerModelId ||
+          a.value.technicalWinnerNotSelectedAcknowledged !== decision.technicalWinnerNotSelectedAcknowledged ||
+          a.value.uncertaintyLimitationsAcknowledged !== true ||
+          a.value.deploymentModelAdopted !== false))
     )
       throw new RuntimePublicError(
         "authorization_integrity_error",

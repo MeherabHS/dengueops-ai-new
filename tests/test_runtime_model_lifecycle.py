@@ -7,11 +7,15 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"analytics"))
-from runtime_active_model import PROFILE_SHA,ActiveModelError,resolve_active_model
-from runtime_model_lifecycle import ACKS,execute
+from runtime_active_model import PROFILE_SHA, ActiveModelError, resolve_active_model, resolve_historical_active_model_p2_v1
+from runtime_model_lifecycle import ACKS, execute
 from runtime_model_lifecycle_commit import commit_lifecycle
 from runtime_model_lifecycle_policy import POLICY_SHA256
 from runtime_commit import atomic_json
+
+
+def resolve_historical(runtime: Path) -> dict:
+    return resolve_historical_active_model_p2_v1(repository_root=ROOT, runtime_root=runtime)
 
 
 def lifecycle_job(root:Path,action="bootstrap_historical_profile",decision_id=None,**fields):
@@ -28,7 +32,7 @@ class LifecycleTests(unittest.TestCase):
             runtime=Path(directory);job,path=lifecycle_job(runtime,expectedProfileSha256=PROFILE_SHA)
             result=execute(path,runtime,runtime/"lifecycle-staging"/job["lifecycleDecisionId"],ROOT)
             self.assertTrue((runtime/"deployments/dhaka_south/model-assignment/latest.json").is_file())
-            authority=resolve_active_model(ROOT,runtime)
+            authority=resolve_historical(runtime)
             self.assertEqual(authority["authoritySource"],"committed_assignment")
             self.assertEqual(result["assignmentId"],authority["assignmentId"])
 
@@ -44,18 +48,19 @@ class LifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             runtime=Path(directory);job,path=lifecycle_job(runtime,expectedProfileSha256=PROFILE_SHA);staging=runtime/"lifecycle-staging"/job["lifecycleDecisionId"]
             from runtime_model_lifecycle import prepare_bundle,verify_action_sources
-            active=resolve_active_model(ROOT,runtime);verified=verify_action_sources(ROOT,runtime,job,active);bundle=prepare_bundle(ROOT,runtime,job,active,verified)
+            active=resolve_historical(runtime);verified=verify_action_sources(ROOT,runtime,job,active);bundle=prepare_bundle(ROOT,runtime,job,active,verified)
             (staging/"artifacts").mkdir(parents=True);(staging/"metadata").mkdir()
             for relative,value in (("artifacts/lifecycle_decision.json",bundle["decision"]),("metadata/lifecycle_decision_commit.json",bundle["decisionCommit"]),("artifacts/model_assignment.json",bundle["assignment"]),("metadata/model_assignment_commit.json",bundle["assignmentCommit"])):atomic_json(staging/relative,value)
             with self.assertRaisesRegex(OSError,"injected_assignment_pointer_publication_failure"):
                 commit_lifecycle(ROOT,runtime,path,staging,fail_pointer_publication_for_test=True)
             self.assertTrue((runtime/"model-lifecycle"/job["lifecycleDecisionId"]).is_dir());self.assertFalse((runtime/"deployments/dhaka_south/model-assignment/latest.json").exists())
-            with self.assertRaises(ActiveModelError):resolve_active_model(ROOT,runtime)
+            with self.assertRaises(ActiveModelError):resolve_historical(runtime)
             original=job["reason"];job["reason"]="Conflicting orphan recovery reason.";atomic_json(path,job)
-            with self.assertRaisesRegex(ValueError,"independent_lifecycle_reconciliation_failed"):execute(path,runtime,runtime/"conflict-staging",ROOT)
+            with self.assertRaisesRegex(ValueError,"stale_lifecycle_decision_bundle"):execute(path,runtime,runtime/"conflict-staging",ROOT)
             job["reason"]=original;atomic_json(path,job)
             recovered=execute(path,runtime,runtime/"unused-staging",ROOT)
-            self.assertTrue(recovered["recovered"]);self.assertEqual(resolve_active_model(ROOT,runtime)["authoritySource"],"committed_assignment")
+            self.assertTrue(recovered["recovered"]);self.assertEqual(resolve_historical(runtime)["authoritySource"],"committed_assignment")
+
 
     def test_deployment_lock_prevents_assignment_publication(self):
         with tempfile.TemporaryDirectory() as directory:

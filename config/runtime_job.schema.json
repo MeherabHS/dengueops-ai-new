@@ -2580,7 +2580,11 @@
             "ridge_regression",
             "poisson_regression",
             "random_forest",
-            "gradient_boosting"
+            "gradient_boosting",
+            "elastic_net",
+            "negative_binomial_regression",
+            "extra_trees",
+            "hist_gradient_boosting"
           ]
         },
         "selectedModelParameterSha256": {
@@ -3151,9 +3155,7 @@
         "assessmentPolicyId": {
           "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
         },
-        "assessmentPolicyVersion": {
-          "const": "p2-v1"
-        },
+        "assessmentPolicyVersion": {"enum": ["p2-v1", "p2-v2"]},
         "assessmentPolicySha256": {
           "$ref": "#/$defs/sha"
         },

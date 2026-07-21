@@ -18,11 +18,12 @@ SELECTION_STAGES = (
     ("maximum_absolute_error", "maximumAbsoluteError"),
 )
 NONNEGATIVE_RAW_MODEL_IDS = {
-    "previous_week_naive",
     "moving_average_4w",
     "seasonal_naive_52w",
     "poisson_regression",
     "random_forest",
+    "negative_binomial_regression",
+    "extra_trees",
 }
 
 
@@ -120,9 +121,14 @@ def aggregate_candidate(
         if record["foldStatus"] in {"success", "warning"}
     ]
     denominator = float(sum(successful_actuals))
+    mean_actual = float(np.mean(successful_actuals))
+    total_variation = float(sum((actual - mean_actual) ** 2 for actual in successful_actuals))
+    mse = float(squared.mean())
     return {
         "mae": float(absolute.mean()),
-        "rmse": float(np.sqrt(squared.mean())),
+        "rmse": float(np.sqrt(mse)),
+        "mse": mse,
+        "r2": float(1 - squared.sum() / total_variation) if total_variation > 0 else None,
         "wape": float(100 * absolute.sum() / denominator) if denominator else None,
         "medianAbsoluteError": float(np.median(absolute)),
         "maximumAbsoluteError": float(absolute.max()),
@@ -190,10 +196,15 @@ def _choose_candidate(
 def select_technical_winner(
     candidate_results: Sequence[Mapping[str, Any]], tolerance: float = 1e-9
 ) -> tuple[str | None, str | None, list[str], list[str]]:
-    remaining = [candidate for candidate in candidate_results if candidate["selectionEligible"]]
+    remaining = [
+        candidate for candidate in candidate_results
+        if candidate["selectionEligible"] and candidate.get("candidateClass") == "learned_model"
+    ]
     eligible_ids = [str(candidate["modelId"]) for candidate in remaining]
-    if len(remaining) < 2:
+    if not remaining:
         return None, None, [], []
+    if len(remaining) == 1:
+        return str(remaining[0]["modelId"]), "mae", [f"mae: retained {remaining[0]['modelId']}"], eligible_ids
     steps: list[str] = []
     tie_stage: str | None = None
     for stage, key in SELECTION_STAGES:
@@ -330,7 +341,7 @@ def validate_fold_identities(
     selected_validation_indexes: Sequence[int], initial_training_rows: int,
     embargo_rows: int, horizon_weeks: int,
 ) -> tuple[list[float], dict[str, list[Mapping[str, Any]]]]:
-    if len(folds) != len(selected_validation_indexes) or not folds or len(candidate_ids) != 7 or len(set(candidate_ids)) != 7:
+    if len(folds) != len(selected_validation_indexes) or not folds or len(candidate_ids) not in {7, 10} or len(set(candidate_ids)) != len(candidate_ids):
         raise AssessmentEvidenceError("invalid_fold_or_candidate_count")
     records: dict[str, list[Mapping[str, Any]]] = {model_id: [] for model_id in candidate_ids}
     actuals: list[float] = []
@@ -367,7 +378,7 @@ def validate_fold_identities(
             raise AssessmentEvidenceError("invalid_actual_target")
         actuals.append(actual)
         predictions = fold.get("predictions")
-        if not isinstance(predictions, list) or len(predictions) != 7:
+        if not isinstance(predictions, list) or len(predictions) != len(candidate_ids):
             raise AssessmentEvidenceError("incomplete_candidate_evidence")
         if {prediction.get("modelId") for prediction in predictions} != set(candidate_ids):
             raise AssessmentEvidenceError("candidate_set_mismatch")

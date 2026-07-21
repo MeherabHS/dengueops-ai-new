@@ -1,31 +1,38 @@
 {
   "schemaVersion": "2.0",
   "policyId": "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION",
-  "policyVersion": "p2-v1",
+  "policyVersion": "p2-v2",
   "policyStatus": "active",
-  "policySha256": "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdcb4a",
+  "policySha256": "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d",
   "deploymentId": "dhaka_south",
   "allowedAssessmentSchemaVersion": "2.0",
   "allowedAssessmentPolicyId": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
-  "allowedAssessmentPolicyVersion": "p2-v1",
-  "allowedAssessmentPolicySha256": "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff",
-  "candidateRegistrySha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+  "allowedAssessmentPolicyVersion": "p2-v2",
+  "allowedAssessmentPolicySha256": "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8",
+  "candidateRegistrySha256": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
+  "featureOrderSha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
   "decisionScope": "one_run",
-  "recommendationStatusAccepted": "evidence_only",
-  "recommendationStrengthAccepted": "not_available",
-  "allowedDecisions": ["approve_technical_winner", "keep_current_model", "defer", "reject_assessment"],
-  "allowedDeployableCandidateClasses": ["deployable_learned_model"],
-  "currentModelId": "random_forest",
-  "currentModelParameterSha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+  "allowedDecisions": ["approve_technical_winner", "approve_eligible_non_winner"],
+  "allowedCandidateStatuses": ["technical_winner", "eligible_non_winner"],
+  "allowedCandidateIds": ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"],
   "baselineApprovalAllowed": false,
+  "diagnosticApprovalAllowed": false,
+  "arbitraryParametersAllowed": false,
   "deploymentWideAdoptionAllowed": false,
   "institutionalApproval": false,
   "operatorType": "trusted_internal_unverified",
   "assessmentValiditySeconds": 2592000,
   "successfulFoldRequirement": {
     "source": "committed_assessment_planned_fold_count",
+    "successfulFolds": "all_planned",
     "failedFolds": 0,
     "reconcileAcross": ["assessment_summary", "rolling_validation", "candidate_model_comparison", "selected_candidate"]
+  },
+  "overrideRequirements": {
+    "reasonRequired": true,
+    "technicalWinnerNotSelectedAcknowledged": true,
+    "uncertaintyLimitationsAcknowledged": true,
+    "originalTechnicalWinnerPreserved": true
   },
   "selectedModelTrainingPolicy": {
     "scope": "all_validated_labelled_rows",
@@ -41,15 +48,15 @@
     "consumeAfterCommittedLatestPointer": true
   },
   "limitations": [
-    "The decision is a trusted internal, unverified model-use decision for one forecast run only.",
-    "Recommendation strength is not governed and evidence-only comparison is not an automatic recommendation.",
-    "The selected learned model is trained on all validated labelled rows, independently of the capped assessment fold window.",
-    "This policy does not change the deployment-wide active model, modify the deployment profile, or constitute institutional approval."
+    "The decision authorizes one dataset-specific forecast only.",
+    "An eligible non-winner override preserves the original technical winner and its evidence.",
+    "Uncertainty availability is model-specific and may be point-only.",
+    "The decision never changes a persistent deployment assignment."
   ],
   "prohibitedClaims": [
-    "The technical winner is automatically approved or adopted.",
-    "A baseline technical winner may be replaced by a learned runner-up.",
-    "The operator identity or institutional approval is verified.",
-    "The selected model is universally best or deployment-wide active."
+    "The selected model is globally best.",
+    "A baseline, failed, disqualified, diagnostic, or absent candidate is selectable.",
+    "Browser-supplied model parameters or operator identity are authoritative.",
+    "A one-run decision adopts a deployment model."
   ]
 }

@@ -15,9 +15,14 @@ import runtime_model_lifecycle_commit as lifecycle_commit
 from runtime_model_lifecycle_commit import commit_lifecycle
 from runtime_model_lifecycle_source import assignment_pointer_state
 from runtime_commit import atomic_json,sha256_file
-from runtime_active_model import PROFILE_SHA,resolve_active_model
+from runtime_active_model import PROFILE_SHA, resolve_active_model, resolve_historical_active_model_p2_v1
 
 ROOT=Path(__file__).resolve().parents[1]
+
+
+def resolve_historical(runtime: Path) -> dict:
+    return resolve_historical_active_model_p2_v1(repository_root=ROOT, runtime_root=runtime)
+
 
 
 def promotion_job(runtime:Path,chain:dict):
@@ -92,12 +97,13 @@ class LifecycleCommitTests(unittest.TestCase):
     def test_first_promotion_from_profile_fallback_recovers_only_exact_orphan(self):
         with tempfile.TemporaryDirectory() as directory:
             chain=build_promotion_chain(Path(directory)/"fixture",ROOT,"random_forest");runtime=chain["runtime"];job,path=promotion_job(runtime,chain);staging=runtime/"lifecycle-staging"/job["lifecycleDecisionId"]
-            active=resolve_active_model(ROOT,runtime);verified=verify_action_sources(ROOT,runtime,job,active);bundle=prepare_bundle(ROOT,runtime,job,active,verified)
+            active=resolve_historical(runtime);verified=verify_action_sources(ROOT,runtime,job,active);bundle=prepare_bundle(ROOT,runtime,job,active,verified)
             (staging/"artifacts").mkdir(parents=True);(staging/"metadata").mkdir()
             for relative,value in (("artifacts/lifecycle_decision.json",bundle["decision"]),("metadata/lifecycle_decision_commit.json",bundle["decisionCommit"]),("artifacts/model_assignment.json",bundle["assignment"]),("metadata/model_assignment_commit.json",bundle["assignmentCommit"])):atomic_json(staging/relative,value)
             with self.assertRaisesRegex(OSError,"injected_assignment_pointer_publication_failure"):commit_lifecycle(ROOT,runtime,path,staging,fail_pointer_publication_for_test=True)
             orphan=runtime/"model-lifecycle"/job["lifecycleDecisionId"];self.assertTrue(orphan.is_dir());self.assertFalse((runtime/"deployments/dhaka_south/model-assignment/latest.json").exists())
-            with self.assertRaises(Exception):resolve_active_model(ROOT,runtime)
+            with self.assertRaises(Exception):resolve_historical(runtime)
+
             original=copy.deepcopy(job)
             conflicts=[("reason","conflicting retry"),("manualActionAcknowledged",False),("expectedAssessmentCommitSha256","0"*64),("expectedDecisionCommitSha256","0"*64),("expectedAuthorizationCommitSha256","0"*64),("expectedApprovedForecastCommitSha256","0"*64),("expectedOutcomeCommitSha256","0"*64),("expectedMonitoringLatestSha256","0"*64),("expectedDegradationEvidenceSha256","0"*64)]
             for key,value in conflicts:
@@ -114,19 +120,20 @@ class LifecycleCommitTests(unittest.TestCase):
             bootstrap,bootstrap_path=lifecycle_job(runtime,expectedProfileSha256=PROFILE_SHA);execute(bootstrap_path,runtime,runtime/"lifecycle-staging"/bootstrap["lifecycleDecisionId"],ROOT)
             pointer=runtime/"deployments/dhaka_south/model-assignment/latest.json";prior_pointer=pointer.read_bytes()
             job,path=promotion_job(runtime,chain);job.update({"expectedAssignmentPointerState":"present","expectedAssignmentPointerSha256":sha256_file(pointer)});atomic_json(path,job);staging=runtime/"lifecycle-staging"/job["lifecycleDecisionId"]
-            active=resolve_active_model(ROOT,runtime);verified=verify_action_sources(ROOT,runtime,job,active);bundle=prepare_bundle(ROOT,runtime,job,active,verified)
+            active=resolve_historical(runtime);verified=verify_action_sources(ROOT,runtime,job,active);bundle=prepare_bundle(ROOT,runtime,job,active,verified)
             (staging/"artifacts").mkdir(parents=True);(staging/"metadata").mkdir()
             for relative,value in (("artifacts/lifecycle_decision.json",bundle["decision"]),("metadata/lifecycle_decision_commit.json",bundle["decisionCommit"]),("artifacts/model_assignment.json",bundle["assignment"]),("metadata/model_assignment_commit.json",bundle["assignmentCommit"])):atomic_json(staging/relative,value)
             with self.assertRaisesRegex(OSError,"injected_assignment_pointer_publication_failure"):commit_lifecycle(ROOT,runtime,path,staging,fail_pointer_publication_for_test=True)
             self.assertEqual(pointer.read_bytes(),prior_pointer)
-            with self.assertRaises(Exception):resolve_active_model(ROOT,runtime)
+            with self.assertRaises(Exception):resolve_historical(runtime)
             result=execute(path,runtime,runtime/"retry-staging",ROOT)
             self.assertTrue(result["recovered"]);self.assertNotEqual(pointer.read_bytes(),prior_pointer);self.assertEqual(len(list((runtime/"model-lifecycle").glob("*/artifacts/model_assignment.json"))),2)
 
     def test_first_promotion_recovery_rejects_arbitrary_and_incomplete_orphans(self):
         with tempfile.TemporaryDirectory() as directory:
             chain=build_promotion_chain(Path(directory)/"fixture",ROOT,"random_forest");runtime=chain["runtime"];job,path=promotion_job(runtime,chain);staging=runtime/"lifecycle-staging"/job["lifecycleDecisionId"]
-            active=resolve_active_model(ROOT,runtime);bundle=prepare_bundle(ROOT,runtime,job,active,verify_action_sources(ROOT,runtime,job,active));(staging/"artifacts").mkdir(parents=True);(staging/"metadata").mkdir()
+            active=resolve_historical(runtime);bundle=prepare_bundle(ROOT,runtime,job,active,verify_action_sources(ROOT,runtime,job,active));(staging/"artifacts").mkdir(parents=True);(staging/"metadata").mkdir()
+
             for relative,value in (("artifacts/lifecycle_decision.json",bundle["decision"]),("metadata/lifecycle_decision_commit.json",bundle["decisionCommit"]),("artifacts/model_assignment.json",bundle["assignment"]),("metadata/model_assignment_commit.json",bundle["assignmentCommit"])):atomic_json(staging/relative,value)
             with self.assertRaises(OSError):commit_lifecycle(ROOT,runtime,path,staging,fail_pointer_publication_for_test=True)
             orphan=runtime/"model-lifecycle"/job["lifecycleDecisionId"];arbitrary=runtime/"model-lifecycle"/"00000000-0000-4000-8000-000000000091";shutil.copytree(orphan,arbitrary);(arbitrary/"metadata/model_assignment_commit.json").unlink()
@@ -205,12 +212,13 @@ class LifecycleCommitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             chain=build_promotion_chain(Path(directory)/"fixture",ROOT,"random_forest");runtime=chain["runtime"]
             bootstrap,bootstrap_path=lifecycle_job(runtime,expectedProfileSha256=PROFILE_SHA);execute(bootstrap_path,runtime,runtime/"lifecycle-staging"/bootstrap["lifecycleDecisionId"],ROOT)
-            first_pointer=runtime/"deployments/dhaka_south/model-assignment/latest.json";first_hash=sha256_file(first_pointer);first_assignment=resolve_active_model(ROOT,runtime)["assignmentId"]
+            first_pointer=runtime/"deployments/dhaka_south/model-assignment/latest.json";first_hash=sha256_file(first_pointer);first_assignment=resolve_historical(runtime)["assignmentId"]
             promotion,promotion_path=promotion_job(runtime,chain);promotion["expectedAssignmentPointerState"]="present";promotion["expectedAssignmentPointerSha256"]=first_hash;promotion_path.write_text(json.dumps(promotion),encoding="utf-8");execute(promotion_path,runtime,runtime/"lifecycle-staging"/promotion["lifecycleDecisionId"],ROOT)
-            promoted=resolve_active_model(ROOT,runtime);promoted_hash=sha256_file(first_pointer)
+            promoted=resolve_historical(runtime);promoted_hash=sha256_file(first_pointer)
             rollback,rollback_path=lifecycle_job(runtime,"rollback_previous_assignment",expectedAssignmentPointerState="present",expectedAssignmentPointerSha256=promoted_hash);execute(rollback_path,runtime,runtime/"lifecycle-staging"/rollback["lifecycleDecisionId"],ROOT)
-            restored=resolve_active_model(ROOT,runtime);self.assertNotEqual(restored["assignmentId"],first_assignment);self.assertEqual(restored["priorAssignmentId"],promoted["assignmentId"])
+            restored=resolve_historical(runtime);self.assertNotEqual(restored["assignmentId"],first_assignment);self.assertEqual(restored["priorAssignmentId"],promoted["assignmentId"])
             assignment=json.loads((runtime/"model-lifecycle"/rollback["lifecycleDecisionId"]/"artifacts/model_assignment.json").read_text());self.assertEqual(assignment["rollbackSourceAssignmentId"],first_assignment);self.assertFalse(assignment["modelIdentityChanged"])
+
 
     def test_two_promotions_with_same_expected_pointer_publish_exactly_one(self):
         with tempfile.TemporaryDirectory() as directory:

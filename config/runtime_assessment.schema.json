@@ -255,7 +255,10 @@
               "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
             },
             "policyVersion": {
-              "const": "p2-v1"
+              "enum": [
+                "p2-v1",
+                "p2-v2"
+              ]
             },
             "policySha256": {
               "$ref": "#/$defs/p2/sha"

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.0",
+  "policyId": "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION",
+  "policyVersion": "p2-v1",
+  "policyStatus": "active",
+  "policySha256": "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdcb4a",
+  "deploymentId": "dhaka_south",
+  "allowedAssessmentSchemaVersion": "2.0",
+  "allowedAssessmentPolicyId": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
+  "allowedAssessmentPolicyVersion": "p2-v1",
+  "allowedAssessmentPolicySha256": "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff",
+  "candidateRegistrySha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+  "decisionScope": "one_run",
+  "recommendationStatusAccepted": "evidence_only",
+  "recommendationStrengthAccepted": "not_available",
+  "allowedDecisions": ["approve_technical_winner", "keep_current_model", "defer", "reject_assessment"],
+  "allowedDeployableCandidateClasses": ["deployable_learned_model"],
+  "currentModelId": "random_forest",
+  "currentModelParameterSha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
+  "baselineApprovalAllowed": false,
+  "deploymentWideAdoptionAllowed": false,
+  "institutionalApproval": false,
+  "operatorType": "trusted_internal_unverified",
+  "assessmentValiditySeconds": 2592000,
+  "successfulFoldRequirement": {
+    "source": "committed_assessment_planned_fold_count",
+    "failedFolds": 0,
+    "reconcileAcross": ["assessment_summary", "rolling_validation", "candidate_model_comparison", "selected_candidate"]
+  },
+  "selectedModelTrainingPolicy": {
+    "scope": "all_validated_labelled_rows",
+    "minimumLabelledRows": 157,
+    "selectedEvaluationWindowMayLimitTraining": false
+  },
+  "authorizationPolicy": {
+    "scope": "one_run",
+    "oneAuthorizationPerFinalDecision": true,
+    "oneRunPerAuthorization": true,
+    "oneReservationPerAuthorization": true,
+    "automaticRetryAllowed": false,
+    "consumeAfterCommittedLatestPointer": true
+  },
+  "limitations": [
+    "The decision is a trusted internal, unverified model-use decision for one forecast run only.",
+    "Recommendation strength is not governed and evidence-only comparison is not an automatic recommendation.",
+    "The selected learned model is trained on all validated labelled rows, independently of the capped assessment fold window.",
+    "This policy does not change the deployment-wide active model, modify the deployment profile, or constitute institutional approval."
+  ],
+  "prohibitedClaims": [
+    "The technical winner is automatically approved or adopted.",
+    "A baseline technical winner may be replaced by a learned runner-up.",
+    "The operator identity or institutional approval is verified.",
+    "The selected model is universally best or deployment-wide active."
+  ]
+}

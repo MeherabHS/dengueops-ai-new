@@ -1,142 +1,23 @@
 {
-  "schema_version": "1.0",
-  "policy_id": "RUNTIME.QUICK_FORECAST.COMPATIBILITY",
-  "policy_version": "p1.4f-v1",
-  "policy_status": "active",
-  "policy_sha256": "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a",
-  "policy_hash_method": "sha256_canonical_json_excluding_policy_sha256",
-  "deployment_id": "dhaka_south",
-  "geography_scope": {
-    "level": "city",
-    "id": "BGD-DHAKA-SOUTH",
-    "name": "Dhaka South",
-    "exact_match_required": true,
-    "cross_deployment_use": false
-  },
-  "effective_state": "effective_for_declared_synthetic_benchmark_upload_scope_only",
-  "intended_use": [
-    "Permit a Quick Forecast with the currently approved deployment model when an uploaded dataset exactly matches the governed Dhaka South synthetic benchmark input contract.",
-    "Permit a dataset-specific empirical forecast range only when exactly 68 complete leakage-controlled Random Forest rolling-origin residuals are available."
+  "schemaVersion": "2.0",
+  "policyId": "RUNTIME.QUICK_FORECAST.COMPATIBILITY",
+  "policyVersion": "p2-v1",
+  "policyStatus": "active",
+  "policySha256": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e",
+  "deploymentId": "dhaka_south",
+  "candidateRegistrySha256": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
+  "featureOrderSha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
+  "allowedCandidateIds": [
+    "ridge_regression",
+    "poisson_regression",
+    "random_forest",
+    "gradient_boosting",
+    "elastic_net",
+    "negative_binomial_regression",
+    "extra_trees",
+    "hist_gradient_boosting"
   ],
-  "runtime_upload_permission": true,
-  "deployment_gate_compatibility": ["benchmark_only"],
-  "approved_model": {
-    "model_id": "random_forest",
-    "model_family": "RandomForestRegressor",
-    "parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
-    "client_model_selection_allowed": false,
-    "parameter_override_allowed": false
-  },
-  "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
-  "feature_contract": {
-    "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
-    "feature_count": 18,
-    "unsupported_substitution_allowed": false,
-    "missing_climate_variables_allowed": false
-  },
-  "input_contract": {
-    "canonical_contract_version": "p1.4b-canonical-upload-v1",
-    "target": "target_cases_next_2w",
-    "forecast_horizon_weeks": 2,
-    "period_contract": "ISO_year_week_with_date_start_equal_to_ISO_Monday_weeks_1_through_52",
-    "required_case_columns": ["epi_year", "epi_week", "date_start", "geography_level", "geography_id", "geography_name", "city", "cases", "deaths", "deaths_data_status", "source_type", "is_approximated", "approximation_method"],
-    "required_climate_columns": ["epi_year", "epi_week", "date_start", "geography_level", "geography_id", "geography_name", "latitude", "longitude", "rainfall_mm", "avg_temp_c", "humidity_pct", "coverage_days", "source_type", "aggregation_method", "is_approximated"]
-  },
-  "source_scope": {
-    "cases": {
-      "allowed_source_types": ["synthetic_benchmark"],
-      "allowed_aggregation_methods": ["weekly_epi_week_case_count"],
-      "approximated_values_allowed": false
-    },
-    "climate": {
-      "allowed_source_types": ["synthetic_benchmark"],
-      "allowed_aggregation_methods": ["simulated_weekly_benchmark"],
-      "approximated_values_allowed": false
-    }
-  },
-  "minimum_history": {
-    "rule_id": "QUICK_FORECAST.MINIMUM_TWO_SEASON_TRAINING_HISTORY",
-    "rule_version": "1.0",
-    "minimum_overlap_weeks": 111,
-    "minimum_labelled_rows": 104,
-    "feature_burn_in_weeks": 5,
-    "target_horizon_weeks": 2,
-    "rationale": "Requires the existing governed 104-row initial training window after five feature burn-in weeks and the two-week target horizon, providing two 52-week seasonal cycles without requiring the 173 rows and 68 folds used for dataset assessment."
-  },
-  "temporal_quality": {
-    "chronological_order_required": true,
-    "duplicate_periods_allowed": false,
-    "missing_periods_allowed": false,
-    "contiguous_history_required": true,
-    "case_climate_alignment_required": true,
-    "valid_inference_row_required": true
-  },
-  "operational_input_policy": {
-    "required_for_point_forecast": false,
-    "runtime_operational_outputs_allowed": false
-  },
-  "uncertainty_policy": {
-    "eligible_status": "pending_dataset_specific_calibration",
-    "ineligible_status": "unavailable_for_uploaded_dataset",
-    "successful_status": "available",
-    "bounds": null,
-    "inherit_nominal_coverage": false,
-    "inherit_historical_coverage": false,
-    "synthetic_p1_3_range_reusable": false,
-    "rmse_fallback_allowed": false,
-    "interval_claim_allowed": false,
-    "dataset_specific_calibration_enabled": true,
-    "calibration_method": "prequential_expanding_window_prior_residuals_only",
-    "uncertainty_method": "prequential_expanding_absolute_residual_quantile",
-    "uncertainty_method_version": "p1.3-v1",
-    "initial_training_rows": 104,
-    "embargo_rows": 1,
-    "validation_rows_per_fold": 1,
-    "fold_step_rows": 1,
-    "required_complete_residual_folds": 68,
-    "calibration_warmup_fold_count": 20,
-    "nominal_coverage": 0.9,
-    "calibration_score": "absolute_residual",
-    "signed_residual_definition": "actual_minus_raw_prediction",
-    "quantile_rank_rule": "min(n, ceil((n + 1) * 0.90))",
-    "interpolation": "none",
-    "raw_interval_rule": "point_forecast_raw_plus_or_minus_quantile",
-    "lower_bound_policy": "clip_raw_lower_at_zero",
-    "reported_bounds_policy": "floor_lower_and_ceil_upper",
-    "calibrated_on_synthetic_data": true,
-    "residual_source_artifact_path": "artifacts/forecast_calibration.json",
-    "prohibited_methods": [
-      "in_sample_residuals",
-      "random_train_test_split",
-      "rmse_based_empirical_bounds",
-      "bundled_benchmark_bound_reuse",
-      "preparedness_scenario_reuse",
-      "arbitrary_fold_dropping",
-      "quantile_interpolation",
-      "prediction_interval_claim",
-      "successful_calibration_without_exactly_68_residuals"
-    ]
-  },
-  "preparedness_policy": {
-    "status": "unavailable_missing_planning_policy",
-    "generation_enabled": false,
-    "bundled_scenarios_reusable": false,
-    "planning_scenario_policy_approved": false,
-    "directives_allowed": false,
-    "facilities_allowed": false,
-    "alerts_allowed": false
-  },
-  "limitations": [
-    "Compatibility does not establish that Random Forest is the best model for the uploaded dataset.",
-    "The active scope is limited to uploads declaring and satisfying the deterministic synthetic benchmark source contract.",
-    "Uploaded-data empirical calibration is available only with exactly 68 complete prior-only Random Forest residual folds; all other residual counts remain pending.",
-    "Preparedness, directives, facility projections, and alerts remain disabled until a planning-scenario policy is approved."
-  ],
-  "prohibited_claims": [
-    "Random Forest is universally suitable for uploaded dengue datasets.",
-    "The model is validated for real-world deployment.",
-    "Uploaded-data uncertainty is calibrated when exact governed calibration requirements are not satisfied.",
-    "A confidence interval or prediction interval is available.",
-    "Hospital preparedness outputs are available or operationally approved."
-  ]
+  "baselineQuickForecastAllowed": false,
+  "profileFallbackAllowed": false,
+  "requiresActiveAssignment": true
 }

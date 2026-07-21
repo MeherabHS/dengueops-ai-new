@@ -39,7 +39,13 @@ class RuntimeCandidateComparisonTests(unittest.TestCase):
     def test_incomplete_candidate_cannot_win_or_change_selector_inputs(self):
         def candidate(model_id, mae, rank, complete=True):
             metrics = {"mae": mae, "rmse": mae + 1, "wape": mae + 2, "medianAbsoluteError": mae, "maximumAbsoluteError": mae + 3}
-            return {"modelId": model_id, "selectionEligible": complete, "selectionComplexityRank": rank, "metrics": metrics}
+            return {
+                "modelId": model_id,
+                "candidateClass": "comparison_baseline" if model_id == "previous_week_naive" else "learned_model",
+                "selectionEligible": complete,
+                "selectionComplexityRank": rank,
+                "metrics": metrics,
+            }
         values = [candidate("previous_week_naive", 20, 1), candidate("random_forest", 10, 6), candidate("gradient_boosting", 1, 7, False)]
         before = hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
         winner, stage, _steps, eligible = select_technical_winner(values)
@@ -52,8 +58,8 @@ class RuntimeCandidateComparisonTests(unittest.TestCase):
     def test_mae_first_and_declared_tie_sequence_are_deterministic(self):
         base = {"mae": 5.0, "rmse": 7.0, "wape": 9.0, "medianAbsoluteError": 4.0, "maximumAbsoluteError": 20.0}
         values = [
-            {"modelId": "random_forest", "selectionEligible": True, "selectionComplexityRank": 6, "metrics": dict(base)},
-            {"modelId": "ridge_regression", "selectionEligible": True, "selectionComplexityRank": 4, "metrics": dict(base)},
+            {"modelId": "random_forest", "candidateClass": "learned_model", "selectionEligible": True, "selectionComplexityRank": 6, "metrics": dict(base)},
+            {"modelId": "ridge_regression", "candidateClass": "learned_model", "selectionEligible": True, "selectionComplexityRank": 4, "metrics": dict(base)},
         ]
         winner, stage, steps, _eligible = select_technical_winner(values)
         self.assertEqual(winner, "ridge_regression")
@@ -88,9 +94,9 @@ class RuntimeCandidateComparisonTests(unittest.TestCase):
     def test_full_display_order_uses_governed_ties_and_puts_ineligible_last(self):
         base = {"mae": 5.0, "rmse": 7.0, "wape": 9.0, "medianAbsoluteError": 4.0, "maximumAbsoluteError": 20.0}
         values = [
-            {"modelId": "random_forest", "selectionEligible": True, "selectionComplexityRank": 6, "metrics": dict(base)},
-            {"modelId": "ridge_regression", "selectionEligible": True, "selectionComplexityRank": 4, "metrics": dict(base)},
-            {"modelId": "poisson_regression", "selectionEligible": False, "selectionComplexityRank": 5, "metrics": dict(base)},
+            {"modelId": "random_forest", "candidateClass": "learned_model", "selectionEligible": True, "selectionComplexityRank": 6, "metrics": dict(base)},
+            {"modelId": "ridge_regression", "candidateClass": "learned_model", "selectionEligible": True, "selectionComplexityRank": 4, "metrics": dict(base)},
+            {"modelId": "poisson_regression", "candidateClass": "learned_model", "selectionEligible": False, "selectionComplexityRank": 5, "metrics": dict(base)},
         ]
         order = display_order(values, ["ridge_regression", "poisson_regression", "random_forest"])
         winner, *_ = select_technical_winner(values)

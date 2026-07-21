@@ -53,7 +53,8 @@ def build_ready_assessment_runtime(
     (workspace / "metadata/workspace.json").write_text(json.dumps(metadata), encoding="utf-8")
     validation_hash = hashlib.sha256((workspace / "metadata/validation.json").read_bytes()).hexdigest()
     policy, policy_hash = load_and_validate_assessment_policy("dhaka_south", assessment_policy_version)
-    registry_hash = hashlib.sha256((ROOT / "config/candidate_models.json").read_bytes()).hexdigest()
+    registry_name = "candidate_models.json" if policy["policy_version"] == "p2-v2" else "candidate_models_p1.2a-v1.json"
+    registry_hash = hashlib.sha256((ROOT / "config" / registry_name).read_bytes()).hexdigest()
     job = {"schemaVersion":"1.0","jobKind":"dataset_assessment","jobId":job_id,"assessmentId":assessment_id,"workspaceId":workspace_id,
         "datasetId":result["datasetId"],"deploymentId":"dhaka_south","workflowMode":"assess_dataset","validationRecordSha256":validation_hash,
         "assessmentPolicyId":policy["policy_id"],"assessmentPolicyVersion":policy["policy_version"],"assessmentPolicySha256":policy_hash,
@@ -101,7 +102,7 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             self.assertFalse(rolling["foldCapApplied"])
             self.assertEqual(len(rolling["folds"]), 52)
             self.assertEqual([fold["sequence"] for fold in rolling["folds"]], list(range(1, 53)))
-            self.assertTrue(all(len(fold["predictions"]) == 7 for fold in rolling["folds"]))
+            self.assertTrue(all(len(fold["predictions"]) == 10 for fold in rolling["folds"]))
             expected_targets = [fold["actualTarget"] for fold in rolling["folds"]]
             for model_id in rolling["candidateIds"]:
                 records = [next(item for item in fold["predictions"] if item["modelId"] == model_id) for fold in rolling["folds"]]
@@ -111,8 +112,18 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
                     expected_targets,
                 )
             self.assertEqual(comparison["plannedFoldCount"], 52)
+            self.assertEqual({candidate["foldPlanSha256"] for candidate in comparison["candidates"]}, {rolling["foldPlanSha256"]})
+            self.assertEqual(
+                {candidate["status"] for candidate in comparison["candidates"] if candidate["candidateClass"] == "comparison_baseline"},
+                {"baseline_only"},
+            )
+            winner = next(candidate for candidate in comparison["candidates"] if candidate["status"] == "technical_winner")
+            self.assertEqual(winner["modelId"], comparison["technicalWinnerModelId"])
+            self.assertEqual(winner["candidateClass"], "learned_model")
+            self.assertIn("best-performing eligible learned model within this governed assessment", comparison["selectionReason"])
+            self.assertTrue(all(candidate["plannedFolds"] == 52 for candidate in comparison["candidates"]))
 
-    def test_worker_commits_direct_seven_candidate_assessment_without_latest(self):
+    def test_worker_commits_direct_ten_candidate_assessment_without_latest(self):
         before = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (ROOT / "data").glob("*") if path.is_file()}
         with tempfile.TemporaryDirectory() as directory:
             runtime, _workspace, pending, job = build_ready_assessment_runtime(Path(directory))
@@ -130,7 +141,7 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             comparison = json.loads((committed / "artifacts/candidate_model_comparison.json").read_text())
             recommendation = json.loads((committed / "artifacts/recommendation.json").read_text())
             self.assertEqual(len(rolling["folds"]), 68)
-            self.assertTrue(all(len(fold["predictions"]) == 7 for fold in rolling["folds"]))
+            self.assertTrue(all(len(fold["predictions"]) == 10 for fold in rolling["folds"]))
             expected_targets = [fold["actualTarget"] for fold in rolling["folds"]]
             for model_id in rolling["candidateIds"]:
                 model_records = [next(item for item in fold["predictions"] if item["modelId"] == model_id) for fold in rolling["folds"]]

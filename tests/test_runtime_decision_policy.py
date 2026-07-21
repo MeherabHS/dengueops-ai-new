@@ -16,12 +16,19 @@ class DecisionPolicyTests(unittest.TestCase):
         expected = policy.pop("policySha256")
         digest = hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
         self.assertEqual(digest, expected)
-        self.assertEqual((policy["schemaVersion"], policy["policyVersion"]), ("2.0", "p2-v1"))
-        self.assertEqual(policy["successfulFoldRequirement"]["source"], "committed_assessment_planned_fold_count")
-        self.assertEqual(policy["selectedModelTrainingPolicy"]["scope"], "all_validated_labelled_rows")
+        self.assertEqual((policy["schemaVersion"], policy["policyVersion"]), ("2.0", "p2-v2"))
+        self.assertEqual(policy["allowedAssessmentPolicyVersion"], "p2-v2")
+        self.assertEqual(policy["allowedDecisions"], ["approve_technical_winner", "approve_eligible_non_winner"])
+        self.assertEqual(policy["allowedCandidateStatuses"], ["technical_winner", "eligible_non_winner"])
         self.assertEqual(policy["decisionScope"], "one_run")
-        self.assertFalse(policy["baselineApprovalAllowed"])
         self.assertFalse(policy["deploymentWideAdoptionAllowed"])
+
+    def test_archived_p2_v1_decision_policy_remains_valid(self):
+        path = ROOT / "config/deployments/dhaka_south/decision_policy_p2-v1.json"
+        raw = path.read_bytes()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), "6ebde8d161c67ad1a4b31d79363d06093266ff48813c3771dfa3dc7da11723f1")
+        policy = json.loads(raw)
+        self.assertEqual((policy["schemaVersion"], policy["policyVersion"]), ("2.0", "p2-v1"))
 
     def test_archived_phase_one_policy_bytes_and_canonical_identity_are_unchanged(self):
         path = ROOT / "config/deployments/dhaka_south/decision_policy_p1.4d-3-e-v1.json"

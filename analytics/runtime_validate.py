@@ -324,6 +324,7 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
     registry_path = ROOT / "config" / "candidate_models.json"
     registry_bytes = registry_path.read_bytes()
     registry = json.loads(registry_bytes.decode("utf-8"))
+    quick_registry_bytes = (ROOT / "config" / "candidate_models_p1.2a-v1.json").read_bytes()
     source_metadata = {
         "cases": {
             "source_type": _single_metadata_value(case_frame, "source_type"),
@@ -356,7 +357,7 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
         "approved_model_id": profile.get("model", {}).get("model_id"),
         "approved_model_family": profile.get("model", {}).get("model_family"),
         "approved_model_parameters_sha256": profile.get("model", {}).get("model_parameters_sha256"),
-        "candidate_registry_sha256": hashlib.sha256(registry_bytes).hexdigest(),
+        "candidate_registry_sha256": hashlib.sha256(quick_registry_bytes).hexdigest(),
         "source_metadata": source_metadata,
         "overlap_weeks": len(overlap),
         "labelled_rows": labelled_rows,

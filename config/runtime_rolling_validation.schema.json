@@ -95,14 +95,9 @@
           "const": 68
         },
         "candidateIds": {
-          "const": [
-            "previous_week_naive",
-            "moving_average_4w",
-            "seasonal_naive_52w",
-            "ridge_regression",
-            "poisson_regression",
-            "random_forest",
-            "gradient_boosting"
+          "oneOf": [
+            {"const": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]},
+            {"const": ["moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"]}
           ]
         },
         "featureOrderSha256": {
@@ -242,14 +237,9 @@
           "maximum": 68
         },
         "candidateIds": {
-          "const": [
-            "previous_week_naive",
-            "moving_average_4w",
-            "seasonal_naive_52w",
-            "ridge_regression",
-            "poisson_regression",
-            "random_forest",
-            "gradient_boosting"
+          "oneOf": [
+            {"const": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]},
+            {"const": ["moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"]}
           ]
         },
         "featureOrderSha256": {
@@ -320,7 +310,11 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting"
+          "gradient_boosting",
+          "elastic_net",
+          "negative_binomial_regression",
+          "extra_trees",
+          "hist_gradient_boosting"
         ]
       },
       "assessmentPolicy": {
@@ -548,7 +542,11 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting"
+          "gradient_boosting",
+          "elastic_net",
+          "negative_binomial_regression",
+          "extra_trees",
+          "hist_gradient_boosting"
         ]
       },
       "assessmentPolicy": {
@@ -563,9 +561,7 @@
           "policyId": {
             "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
           },
-          "policyVersion": {
-            "const": "p2-v1"
-          },
+          "policyVersion": {"enum": ["p2-v1", "p2-v2"]},
           "policySha256": {
             "$ref": "#/$defs/p2/sha"
           }
@@ -738,7 +734,7 @@
           "predictions": {
             "type": "array",
             "minItems": 7,
-            "maxItems": 7,
+            "maxItems": 10,
             "items": {
               "$ref": "#/$defs/p2/prediction"
             }

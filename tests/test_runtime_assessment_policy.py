@@ -29,6 +29,9 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
         cls.registry_path = ROOT / "config" / "candidate_models.json"
         cls.registry = json.loads(cls.registry_path.read_text(encoding="utf-8"))
         cls.registry_sha = hashlib.sha256(cls.registry_path.read_bytes()).hexdigest()
+        cls.historical_registry_path = ROOT / "config" / "candidate_models_p1.2a-v1.json"
+        cls.historical_registry = json.loads(cls.historical_registry_path.read_text(encoding="utf-8"))
+        cls.historical_registry_sha = hashlib.sha256(cls.historical_registry_path.read_bytes()).hexdigest()
 
     def context(self, labelled_rows=173):
         return {
@@ -55,6 +58,12 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
             "case_climate_aligned": True,
         }
 
+    def phase_one_context(self, labelled_rows=173):
+        context = self.context(labelled_rows)
+        context["candidate_registry"] = copy.deepcopy(self.historical_registry)
+        context["candidate_registry_sha256"] = self.historical_registry_sha
+        return context
+
     def test_policy_schema_hash_and_repository_bindings(self):
         schema = json.loads((ROOT / "config" / "runtime_assessment_policy.schema.json").read_text(encoding="utf-8"))
         jsonschema.Draft202012Validator(schema).validate(self.policy)
@@ -65,7 +74,7 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
         self.assertEqual(self.policy["feature_contract"]["feature_order_sha256"], self.registry["feature_order_sha256"])
         self.assertEqual(self.policy["input_contract"]["target"], self.registry["target"])
         self.assertEqual(self.policy["input_contract"]["horizon_weeks"], 2)
-        self.assertEqual(self.policy["policy_version"], "p2-v1")
+        self.assertEqual(self.policy["policy_version"], "p2-v2")
         self.assertEqual(self.phase_one_policy["policy_version"], "p1.4d-1-v1")
         self.assertEqual(
             self.phase_one_policy_sha,
@@ -117,9 +126,9 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
                 self.assertEqual(result["eligible"], labelled_rows >= 157)
 
     def test_phase_one_exact_row_contract_remains_archived(self):
-        short = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.context(172))
-        exact = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.context(173))
-        long = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.context(174))
+        short = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.phase_one_context(172))
+        exact = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.phase_one_context(173))
+        long = runtime_assessment_policy.evaluate_assessment_policy(self.phase_one_policy, self.phase_one_context(174))
         self.assertEqual(short["assessmentStatus"], "insufficient_history")
         self.assertTrue(exact["eligible"])
         self.assertEqual(long["assessmentStatus"], "assessment_blocked")
@@ -160,8 +169,8 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
         self.assertFalse(result["candidateEligibility"]["random_forest"]["eligible"])
 
     def test_baseline_and_learned_model_breadth_are_required(self):
-        baseline_ids = ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w"]
-        learned_ids = ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]
+        baseline_ids = ["moving_average_4w", "seasonal_naive_52w"]
+        learned_ids = ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"]
         for ids, code in ((baseline_ids, "no_eligible_baseline"), (learned_ids, "no_eligible_learned_model")):
             with self.subTest(code=code):
                 context = self.context()

@@ -11,48 +11,73 @@ from typing import Any, Mapping
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from runtime_active_model import FEATURE_SHA, PARAMETER_SHA, PROFILE_SHA, QUICK_SHA, REGISTRY_SHA, resolve_active_model
-from runtime_commit import atomic_json
+from runtime_active_model import FEATURE_SHA, PARAMETER_SHA, PROFILE_SHA, QUICK_SHA, REGISTRY_SHA, resolve_active_model, resolve_active_model_p2_v2, resolve_historical_active_model_p2_v1
+from runtime_commit import atomic_json, json_sha
 from runtime_model_lifecycle_policy import POLICY_ID, POLICY_SHA256, load_model_lifecycle_policy
 from runtime_model_lifecycle_source import resolve_previous_assignment, verify_expected_pointer, verify_monitoring_and_degradation_context, verify_promotion_sources
+
+
+def _extract_and_validate_policy_version(job: Mapping[str, Any]) -> str:
+    policy_id = job.get("policy_id") or job.get("policyId")
+    policy_version = job.get("policy_version") or job.get("policyVersion")
+    if policy_id != "RUNTIME.MODEL_LIFECYCLE.DECISION":
+        raise ValueError(f"unsupported_lifecycle_policy_id: {policy_id}")
+    if policy_version not in ("p2-v1", "p2-v2"):
+        raise ValueError(f"unsupported_lifecycle_policy_version: {policy_version}")
+    return policy_version
+
 
 ACK_FIELDS = ("manualActionAcknowledged","statisticalSufficiencyNotGovernedAcknowledged","materialWorseningNotClassifiedAcknowledged","evidenceDoesNotProveSuperiorityAcknowledged","quickCompatibleRandomForestOnlyAcknowledged")
 ACKS = {field: True for field in ACK_FIELDS}
 ASSIGNMENT_ACTIONS = {"bootstrap_historical_profile":"bootstrap","promote_selected_model":"promote","rollback_previous_assignment":"rollback"}
 
 
-def json_sha(value: Mapping[str, Any]) -> str:
-    payload = (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
-
-
 def validate_schema(repository_root: Path, name: str, value: Mapping[str, Any]) -> None:
-    schema = json.loads((repository_root / "config" / name).read_text(encoding="utf-8"))
-    errors = sorted(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(value), key=lambda item:list(item.path))
+    definition = json.loads((repository_root / "config" / name).read_text(encoding="utf-8"))
+    errors = sorted(Draft202012Validator(definition, format_checker=FormatChecker()).iter_errors(value), key=lambda item: list(item.path))
     if errors:
-        raise ValueError(f"lifecycle_schema_invalid:{name}:{errors[0].message}")
+        raise ValueError(f"Schema validation failed for {name}: {errors[0].message}")
 
 
 def verify_action_sources(repository_root: Path, runtime_root: Path, job: Mapping[str, Any], active: Mapping[str, Any]) -> dict[str, Any]:
     action = job["action"]
+    if action not in ("bootstrap_historical_profile", "promote_selected_model", "rollback_previous_assignment", "defer", "retain_active_model", "reject"):
+        raise ValueError("unsupported_lifecycle_action")
+
+    if any(job.get(field) is not True for field in ACK_FIELDS):
+        raise ValueError("governance_acknowledgements_required")
+
     if action == "bootstrap_historical_profile":
-        if active["authoritySource"] != "historical_profile_fallback_pending_explicit_bootstrap" or job["expectedProfileSha256"] != PROFILE_SHA:
-            raise ValueError("bootstrap_preconditions_failed")
-        return {"expectedProfileSha256":PROFILE_SHA}
+        if active["authoritySource"] != "historical_profile_fallback_pending_explicit_bootstrap":
+            raise ValueError("bootstrap_historical_profile_prohibited_when_assignment_active")
+        if job.get("expectedProfileSha256") != PROFILE_SHA:
+            raise ValueError("historical_profile_sha256_mismatch")
+        return {"promotion": None, "monitoring": None, "degradation": None, "prior": None}
+
     if action == "promote_selected_model":
-        return verify_promotion_sources(repository_root, runtime_root, job)
+        verified = verify_promotion_sources(repository_root, runtime_root, job)
+        if active["authoritySource"] == "committed_assignment" and active.get("assignmentAction") != "bootstrap_historical_profile" and verified["selectedModelId"] == active.get("modelId") and verified["selectedModelParameterSha256"] == active.get("parameterSha256"):
+            raise ValueError("cannot_promote_currently_active_model")
+        return {"promotion": verified, "monitoring": None, "degradation": None, "prior": active if active["authoritySource"] == "committed_assignment" else None}
+
+
+
     if action == "rollback_previous_assignment":
         if active["authoritySource"] != "committed_assignment":
-            raise ValueError("rollback_requires_committed_assignment")
-        return resolve_previous_assignment(runtime_root, active)
-    if action == "reject" and job.get("evidenceContextStatus") == "verified_assessment_and_decision":
-        from runtime_model_lifecycle_source import verify_reject_assessment_decision
-        return verify_reject_assessment_decision(repository_root,runtime_root,job)
-    if action in {"retain_current_model","reject"} or (action == "defer" and job.get("evidenceContextStatus") == "verified_monitoring_and_degradation"):
-        return verify_monitoring_and_degradation_context(repository_root, runtime_root, job, active)
-    if action == "defer" and job.get("evidenceContextStatus") == "explicit_no_evidence":
-        return {"evidenceContextStatus":"explicit_no_evidence"}
-    raise ValueError("unsupported_lifecycle_action")
+            raise ValueError("rollback_requires_committed_active_assignment")
+        prior = resolve_previous_assignment(repository_root, runtime_root, active)
+        if active.get("priorAssignmentId") is None or prior is None:
+            raise ValueError("rollback_target_assignment_missing")
+        verified_context = verify_monitoring_and_degradation_context(repository_root, runtime_root, job, active)
+        return {"promotion": None, "monitoring": verified_context.get("monitoring"), "degradation": verified_context.get("degradation"), "prior": prior}
+
+    verified_context = verify_monitoring_and_degradation_context(repository_root, runtime_root, job, active)
+    return {"promotion": None, "monitoring": verified_context.get("monitoring"), "degradation": verified_context.get("degradation"), "prior": active if active["authoritySource"] == "committed_assignment" else None}
+
+
+
+verify_lifecycle_action = verify_action_sources
+
 
 
 def deterministic_assignment_id(job: Mapping[str, Any]) -> str | None:
@@ -124,17 +149,31 @@ def prepare_bundle(repository_root: Path, runtime_root: Path, job: Mapping[str, 
 
 
 def execute(job_path: Path, runtime_root: Path, staging: Path, repository_root: Path) -> dict[str, Any]:
-    job = json.loads(job_path.read_text(encoding="utf-8")); validate_schema(repository_root,"runtime_job.schema.json",job); load_model_lifecycle_policy(repository_root); verify_expected_pointer(job,runtime_root)
+    job = json.loads(job_path.read_text(encoding="utf-8"))
+    validate_schema(repository_root, "runtime_job.schema.json", job)
+    policy_version = _extract_and_validate_policy_version(job)
+    load_model_lifecycle_policy(policy_version=policy_version, repository_root=repository_root)
+    verify_expected_pointer(job, runtime_root)
     from runtime_model_lifecycle_commit import recover_committed_bundle
-    recovered = recover_committed_bundle(repository_root,runtime_root,job)
-    if recovered is not None: return recovered
-    active = resolve_active_model(repository_root,runtime_root); verified = verify_action_sources(repository_root,runtime_root,job,active); bundle = prepare_bundle(repository_root,runtime_root,job,active,verified)
-    (staging/"artifacts").mkdir(parents=True,exist_ok=False); (staging/"metadata").mkdir(parents=True,exist_ok=False)
-    atomic_json(staging/"artifacts/lifecycle_decision.json",bundle["decision"]); atomic_json(staging/"metadata/lifecycle_decision_commit.json",bundle["decisionCommit"])
+    recovered = recover_committed_bundle(repository_root, runtime_root, job)
+    if recovered is not None:
+        return recovered
+    if policy_version == "p2-v1":
+        active = resolve_historical_active_model_p2_v1(repository_root=repository_root, runtime_root=runtime_root)
+    else:
+        active = resolve_active_model_p2_v2(repository_root=repository_root, runtime_root=runtime_root)
+    verified = verify_action_sources(repository_root, runtime_root, job, active)
+    bundle = prepare_bundle(repository_root, runtime_root, job, active, verified)
+    (staging / "artifacts").mkdir(parents=True, exist_ok=False)
+    (staging / "metadata").mkdir(parents=True, exist_ok=False)
+    atomic_json(staging / "artifacts/lifecycle_decision.json", bundle["decision"])
+    atomic_json(staging / "metadata/lifecycle_decision_commit.json", bundle["decisionCommit"])
     if bundle["assignment"] is not None:
-        atomic_json(staging/"artifacts/model_assignment.json",bundle["assignment"]); atomic_json(staging/"metadata/model_assignment_commit.json",bundle["assignmentCommit"])
+        atomic_json(staging / "artifacts/model_assignment.json", bundle["assignment"])
+        atomic_json(staging / "metadata/model_assignment_commit.json", bundle["assignmentCommit"])
     from runtime_model_lifecycle_commit import commit_lifecycle
-    return commit_lifecycle(repository_root,runtime_root,job_path,staging)
+    return commit_lifecycle(repository_root, runtime_root, job_path, staging)
+
 
 
 def main() -> int:

@@ -336,7 +336,10 @@
               "const": "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS"
             },
             "policyVersion": {
-              "const": "p2-v1"
+              "enum": [
+                "p2-v1",
+                "p2-v2"
+              ]
             },
             "plannedFoldCount": {
               "type": "integer",
@@ -396,7 +399,7 @@
         "candidates": {
           "type": "array",
           "minItems": 7,
-          "maxItems": 7,
+          "maxItems": 10,
           "items": {
             "$ref": "#/$defs/p2/candidate"
           }
@@ -683,7 +686,11 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting"
+          "gradient_boosting",
+          "elastic_net",
+          "negative_binomial_regression",
+          "extra_trees",
+          "hist_gradient_boosting"
         ]
       },
       "candidate": {
@@ -717,6 +724,7 @@
           "candidateClass": {
             "enum": [
               "naive_baseline",
+              "comparison_baseline",
               "learned_model"
             ]
           },
@@ -782,6 +790,43 @@
             "type": [
               "object",
               "null"
+            ]
+          },
+          "modelFamily": {
+            "type": "string",
+            "minLength": 1
+          },
+          "preprocessingIdentity": {
+            "$ref": "#/$defs/p2/sha"
+          },
+          "foldPlanSha256": {"$ref": "#/$defs/p2/sha"},
+          "plannedFolds": {
+            "type": "integer",
+            "minimum": 52,
+            "maximum": 68
+          },
+          "comparisonRole": {
+            "enum": [
+              "baseline_only",
+              "learned_candidate"
+            ]
+          },
+          "limitations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "status": {
+            "enum": [
+              "technical_winner",
+              "eligible_non_winner",
+              "failed",
+              "disqualified",
+              "baseline_only",
+              "experimental_not_selectable"
             ]
           }
         }

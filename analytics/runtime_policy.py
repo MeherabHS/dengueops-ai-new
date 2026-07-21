@@ -11,7 +11,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parent.parent
 POLICY_SCHEMA_PATH = ROOT / "config" / "runtime_quick_forecast_policy.schema.json"
-CANDIDATE_REGISTRY_PATH = ROOT / "config" / "candidate_models.json"
+CANDIDATE_REGISTRY_PATH = ROOT / "config" / "candidate_models_p1.2a-v1.json"
 EXPECTED_CASE_COLUMNS = [
     "epi_year", "epi_week", "date_start", "geography_level", "geography_id",
     "geography_name", "city", "cases", "deaths", "deaths_data_status",
@@ -62,11 +62,14 @@ def canonical_policy_sha256(policy: Mapping[str, Any]) -> str:
 def policy_path(deployment_id: str) -> Path:
     if not deployment_id or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for character in deployment_id):
         raise RuntimePolicyError("Invalid deployment identifier for Quick Forecast policy.")
-    path = (ROOT / "config" / "deployments" / deployment_id / "quick_forecast_policy.json").resolve()
+    path = (ROOT / "config" / "deployments" / deployment_id / "quick_forecast_policy_p1.4f-v1.json").resolve()
+    if not path.exists():
+        path = (ROOT / "config" / "deployments" / deployment_id / "quick_forecast_policy.json").resolve()
     expected_parent = (ROOT / "config" / "deployments" / deployment_id).resolve()
     if path.parent != expected_parent:
         raise RuntimePolicyError("Quick Forecast policy path escaped its deployment directory.")
     return path
+
 
 
 def load_and_validate_quick_forecast_policy(deployment_id: str) -> tuple[dict[str, Any], str]:

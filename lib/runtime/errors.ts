@@ -2,17 +2,27 @@ import { randomUUID } from "node:crypto";
 import type { RuntimeErrorResponse } from "./contracts";
 
 export class RuntimePublicError extends Error {
+  readonly code: string;
+  readonly category: RuntimeErrorResponse["error"]["category"];
+  readonly statusCode: number;
+  readonly retryable: boolean;
+
   constructor(
-    readonly code: string,
-    readonly category: RuntimeErrorResponse["error"]["category"],
+    code: string,
+    category: RuntimeErrorResponse["error"]["category"],
     message: string,
-    readonly statusCode: number,
-    readonly retryable = false,
+    statusCode: number,
+    retryable = false,
   ) {
     super(message);
     this.name = "RuntimePublicError";
+    this.code = code;
+    this.category = category;
+    this.statusCode = statusCode;
+    this.retryable = retryable;
   }
 }
+
 
 export function errorResponse(error: unknown, correlationId = randomUUID()): {
   body: RuntimeErrorResponse;

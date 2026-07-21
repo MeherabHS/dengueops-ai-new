@@ -13,7 +13,7 @@ from validation_backtest import load_feature_matrix
 class SelectedModelAdoptionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.registry, cls.registry_hash = load_and_validate_candidate_registry()
+        cls.registry, cls.registry_hash = load_and_validate_candidate_registry(ROOT / "config/candidate_models_p1.2a-v1.json")
         cls.comparison_bytes = (ROOT / "data/candidate_model_comparison.json").read_bytes()
         cls.comparison = json.loads(cls.comparison_bytes)
         cls.rolling_bytes = (ROOT / "data/rolling_validation.json").read_bytes()

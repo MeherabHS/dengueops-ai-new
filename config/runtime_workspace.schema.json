@@ -5,15 +5,29 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "workspaceId", "datasetId", "deploymentId", "workflowMode",
-    "status", "createdAt", "updatedAt", "files", "normalization", "datasetIdentity",
-    "counts", "issues", "eligibility"
+    "schemaVersion",
+    "workspaceId",
+    "datasetId",
+    "deploymentId",
+    "workflowMode",
+    "status",
+    "createdAt",
+    "updatedAt",
+    "files",
+    "normalization",
+    "datasetIdentity",
+    "counts",
+    "issues",
+    "eligibility"
   ],
   "properties": {
     "schemaVersion": { "const": "1.0" },
     "workspaceId": { "type": "string", "format": "uuid" },
     "datasetId": { "$ref": "#/$defs/sha256" },
-    "deploymentId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "deploymentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
     "workflowMode": { "enum": ["quick_forecast", "assess_dataset"] },
     "status": { "enum": ["ready", "invalid"] },
     "createdAt": { "type": "string", "format": "date-time" },
@@ -39,19 +53,40 @@
     "normalization": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["policyId", "policyVersion", "canonicalContractVersion", "supportedAliases", "behavior"],
+      "required": [
+        "policyId",
+        "policyVersion",
+        "canonicalContractVersion",
+        "supportedAliases",
+        "behavior"
+      ],
       "properties": {
         "policyId": { "const": "UPLOAD.CSV.CANONICAL_EXACT_HEADERS" },
         "policyVersion": { "const": "1.0" },
         "canonicalContractVersion": { "const": "p1.4b-canonical-upload-v1" },
-        "supportedAliases": { "type": "object", "additionalProperties": { "type": "string" } },
-        "behavior": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true }
+        "supportedAliases": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "behavior": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
       }
     },
     "datasetIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["featureOrderSha256", "target", "horizonWeeks", "validationContractVersion", "geography", "operationalInputBundleSha256"],
+      "required": [
+        "featureOrderSha256",
+        "target",
+        "horizonWeeks",
+        "validationContractVersion",
+        "geography",
+        "operationalInputBundleSha256"
+      ],
       "properties": {
         "featureOrderSha256": { "$ref": "#/$defs/sha256" },
         "target": { "const": "target_cases_next_2w" },
@@ -72,7 +107,9 @@
             }
           ]
         },
-        "operationalInputBundleSha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] }
+        "operationalInputBundleSha256": {
+          "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        }
       }
     },
     "counts": {
@@ -95,14 +132,43 @@
         "quickForecast": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["eligible", "reasons", "reasonCodes", "approvedModelId", "uncertaintyStatus", "preparednessStatus", "policyId", "policyVersion", "policySha256"],
+          "required": [
+            "eligible",
+            "reasons",
+            "reasonCodes",
+            "approvedModelId",
+            "uncertaintyStatus",
+            "preparednessStatus",
+            "policyId",
+            "policyVersion",
+            "policySha256"
+          ],
           "properties": {
             "eligible": { "type": "boolean" },
-            "reasons": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-            "reasonCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+            "reasons": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            },
+            "reasonCodes": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "uniqueItems": true
+            },
             "approvedModelId": { "const": "random_forest" },
-            "uncertaintyStatus": { "enum": ["pending_dataset_specific_calibration", "unavailable_for_uploaded_dataset"] },
-            "preparednessStatus": { "enum": ["unavailable_missing_planning_policy", "unavailable_for_uploaded_dataset"] },
+            "uncertaintyStatus": {
+              "enum": [
+                "pending_dataset_specific_calibration",
+                "unavailable_for_uploaded_dataset"
+              ]
+            },
+            "preparednessStatus": {
+              "enum": [
+                "unavailable_missing_planning_policy",
+                "unavailable_for_uploaded_dataset"
+              ]
+            },
             "policyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
             "policyVersion": { "const": "p1.4f-v1" },
             "policySha256": { "$ref": "#/$defs/sha256" }
@@ -111,74 +177,223 @@
         "assessDataset": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["eligible", "assessmentStatus", "labelledRows", "availableFoldCount", "plannedFoldCount", "foldPlan", "candidateSetStatus", "candidateEligibility", "recommendationEligibility", "recommendationStatus", "recommendationStrength", "approvalRequired", "approvalEnabled", "reasonCodes", "reasons", "policyId", "policyVersion", "policySha256"],
+          "required": [
+            "eligible",
+            "assessmentStatus",
+            "labelledRows",
+            "availableFoldCount",
+            "plannedFoldCount",
+            "foldPlan",
+            "candidateSetStatus",
+            "candidateEligibility",
+            "recommendationEligibility",
+            "recommendationStatus",
+            "recommendationStrength",
+            "approvalRequired",
+            "approvalEnabled",
+            "reasonCodes",
+            "reasons",
+            "policyId",
+            "policyVersion",
+            "policySha256"
+          ],
           "properties": {
             "eligible": { "type": "boolean" },
-            "assessmentStatus": { "enum": ["insufficient_history", "candidate_feasibility_only", "full_assessment_eligible", "partial_candidate_set", "assessment_policy_inactive", "assessment_blocked"] },
-            "assessmentEligibilityStatus": { "enum": ["insufficient_history", "candidate_feasibility_only", "full_assessment_eligible", "partial_candidate_set", "assessment_policy_inactive", "assessment_blocked"] },
+            "assessmentStatus": {
+              "enum": [
+                "insufficient_history",
+                "candidate_feasibility_only",
+                "full_assessment_eligible",
+                "partial_candidate_set",
+                "assessment_policy_inactive",
+                "assessment_blocked"
+              ]
+            },
+            "assessmentEligibilityStatus": {
+              "enum": [
+                "insufficient_history",
+                "candidate_feasibility_only",
+                "full_assessment_eligible",
+                "partial_candidate_set",
+                "assessment_policy_inactive",
+                "assessment_blocked"
+              ]
+            },
             "labelledRows": { "type": "integer", "minimum": 0 },
             "availableFoldCount": { "type": "integer", "minimum": 0 },
             "plannedFoldCount": { "type": "integer", "minimum": 0 },
             "minimumFoldCount": { "type": "integer", "minimum": 1 },
             "maximumFoldCount": { "type": "integer", "minimum": 1 },
             "foldCapApplied": { "type": "boolean" },
-            "selectedValidationStartIndex": { "type": ["integer", "null"], "minimum": 0 },
-            "selectedValidationEndIndex": { "type": ["integer", "null"], "minimum": 0 },
+            "selectedValidationStartIndex": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "selectedValidationEndIndex": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
             "foldPlan": {
-              "type": "object", "additionalProperties": false,
-              "required": ["trainingWindow", "initialTrainingRows", "embargoRows", "validationRowsPerFold", "stepSizeWeeks", "horizonWeeks", "samePlanForAllCandidates", "maximumFoldCapStatus"],
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "trainingWindow",
+                "initialTrainingRows",
+                "embargoRows",
+                "validationRowsPerFold",
+                "stepSizeWeeks",
+                "horizonWeeks",
+                "samePlanForAllCandidates",
+                "maximumFoldCapStatus"
+              ],
               "properties": {
-                "trainingWindow": { "const": "expanding" }, "initialTrainingRows": { "const": 104 },
-                "embargoRows": { "const": 1 }, "validationRowsPerFold": { "const": 1 },
-                "stepSizeWeeks": { "const": 1 }, "horizonWeeks": { "const": 2 },
+                "trainingWindow": { "const": "expanding" },
+                "initialTrainingRows": { "const": 104 },
+                "embargoRows": { "const": 1 },
+                "validationRowsPerFold": { "const": 1 },
+                "stepSizeWeeks": { "const": 1 },
+                "horizonWeeks": { "const": 2 },
                 "samePlanForAllCandidates": { "const": true },
-                "firstAvailableValidationIndex": { "type": "integer", "minimum": 0 },
+                "firstAvailableValidationIndex": {
+                  "type": "integer",
+                  "minimum": 0
+                },
                 "minimumFoldCount": { "type": "integer", "minimum": 1 },
                 "maximumFoldCount": { "type": "integer", "minimum": 1 },
                 "foldSelectionRule": { "type": ["string", "null"] },
-                "maximumFoldCapStatus": { "enum": ["governance_pending", "applied", "not_applied"] }
+                "maximumFoldCapStatus": {
+                  "enum": ["governance_pending", "applied", "not_applied"]
+                }
               }
             },
-            "candidateSetStatus": { "enum": ["complete_candidate_set", "partial_candidate_set", "insufficient_candidate_breadth"] },
+            "candidateSetStatus": {
+              "enum": [
+                "complete_candidate_set",
+                "partial_candidate_set",
+                "insufficient_candidate_breadth"
+              ]
+            },
             "candidateEligibility": {
-              "type": "object", "additionalProperties": false,
-              "required": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"],
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "moving_average_4w",
+                "seasonal_naive_52w",
+                "ridge_regression",
+                "poisson_regression",
+                "random_forest",
+                "gradient_boosting",
+                "elastic_net",
+                "negative_binomial_regression",
+                "extra_trees",
+                "hist_gradient_boosting"
+              ],
               "properties": {
-                "previous_week_naive": { "$ref": "#/$defs/candidateEligibility" },
                 "moving_average_4w": { "$ref": "#/$defs/candidateEligibility" },
-                "seasonal_naive_52w": { "$ref": "#/$defs/candidateEligibility" },
+                "seasonal_naive_52w": {
+                  "$ref": "#/$defs/candidateEligibility"
+                },
                 "ridge_regression": { "$ref": "#/$defs/candidateEligibility" },
-                "poisson_regression": { "$ref": "#/$defs/candidateEligibility" },
+                "poisson_regression": {
+                  "$ref": "#/$defs/candidateEligibility"
+                },
                 "random_forest": { "$ref": "#/$defs/candidateEligibility" },
-                "gradient_boosting": { "$ref": "#/$defs/candidateEligibility" }
+                "gradient_boosting": { "$ref": "#/$defs/candidateEligibility" },
+                "elastic_net": { "$ref": "#/$defs/candidateEligibility" },
+                "negative_binomial_regression": { "$ref": "#/$defs/candidateEligibility" },
+                "extra_trees": { "$ref": "#/$defs/candidateEligibility" },
+                "hist_gradient_boosting": { "$ref": "#/$defs/candidateEligibility" }
               }
             },
             "recommendationEligibility": { "const": false },
-            "recommendationStatus": { "enum": ["evidence_only", "no_recommendation"] },
+            "recommendationStatus": {
+              "enum": ["evidence_only", "no_recommendation"]
+            },
             "recommendationStrength": { "const": "not_available" },
             "approvalRequired": { "const": true },
             "approvalEnabled": { "const": false },
-            "reasonCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
-            "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+            "reasonCodes": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "reasons": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1
+            },
             "policyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
-            "policyVersion": { "enum": ["p1.4d-1-v1", "p2-v1"] },
+            "policyVersion": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"] },
             "policySha256": { "$ref": "#/$defs/sha256" },
-            "assessmentPolicyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
-            "assessmentPolicyVersion": { "enum": ["p1.4d-1-v1", "p2-v1"] },
+            "assessmentPolicyId": {
+              "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
+            },
+            "assessmentPolicyVersion": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"] },
             "assessmentPolicySha256": { "$ref": "#/$defs/sha256" },
-            "decisionCompatibilityStatus": { "enum": ["phase1_decision_policy_available", "phase2_decision_policy_not_yet_available"] }
+            "decisionCompatibilityStatus": {
+              "enum": [
+                "phase1_decision_policy_available",
+                "phase2_decision_policy_not_yet_available"
+              ]
+            }
           },
           "allOf": [
-            {"if": {"properties": {"policyVersion": {"const": "p1.4d-1-v1"}}}, "then": {"properties": {"foldPlan": {"properties": {"maximumFoldCapStatus": {"const": "governance_pending"}}}}}},
-            {"if": {"properties": {"policyVersion": {"const": "p2-v1"}}}, "then": {
-              "required": ["assessmentEligibilityStatus", "minimumFoldCount", "maximumFoldCount", "foldCapApplied", "selectedValidationStartIndex", "selectedValidationEndIndex", "assessmentPolicyId", "assessmentPolicyVersion", "assessmentPolicySha256", "decisionCompatibilityStatus"],
-              "properties": {
-                "minimumFoldCount": {"const": 52}, "maximumFoldCount": {"const": 68},
-                "assessmentPolicyVersion": {"const": "p2-v1"},
-                "decisionCompatibilityStatus": {"const": "phase2_decision_policy_not_yet_available"},
-                "foldPlan": {"required": ["firstAvailableValidationIndex", "minimumFoldCount", "maximumFoldCount", "foldSelectionRule"], "properties": {"firstAvailableValidationIndex": {"const": 105}, "minimumFoldCount": {"const": 52}, "maximumFoldCount": {"const": 68}, "foldSelectionRule": {"const": "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count"}}}
+            {
+              "if": {
+                "properties": { "policyVersion": { "const": "p1.4d-1-v1" } }
+              },
+              "then": {
+                "properties": {
+                  "foldPlan": {
+                    "properties": {
+                      "maximumFoldCapStatus": { "const": "governance_pending" }
+                    }
+                  }
+                }
               }
-            }}
+            },
+            {
+              "if": { "properties": { "policyVersion": { "const": "p2-v1" } } },
+              "then": {
+                "required": [
+                  "assessmentEligibilityStatus",
+                  "minimumFoldCount",
+                  "maximumFoldCount",
+                  "foldCapApplied",
+                  "selectedValidationStartIndex",
+                  "selectedValidationEndIndex",
+                  "assessmentPolicyId",
+                  "assessmentPolicyVersion",
+                  "assessmentPolicySha256",
+                  "decisionCompatibilityStatus"
+                ],
+                "properties": {
+                  "minimumFoldCount": { "const": 52 },
+                  "maximumFoldCount": { "const": 68 },
+                  "assessmentPolicyVersion": { "const": "p2-v1" },
+                  "decisionCompatibilityStatus": {
+                    "const": "phase2_decision_policy_not_yet_available"
+                  },
+                  "foldPlan": {
+                    "required": [
+                      "firstAvailableValidationIndex",
+                      "minimumFoldCount",
+                      "maximumFoldCount",
+                      "foldSelectionRule"
+                    ],
+                    "properties": {
+                      "firstAvailableValidationIndex": { "const": 105 },
+                      "minimumFoldCount": { "const": 52 },
+                      "maximumFoldCount": { "const": 68 },
+                      "foldSelectionRule": {
+                        "const": "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           ]
         }
       }
@@ -201,7 +416,9 @@
       "required": ["code", "category", "severity", "message"],
       "properties": {
         "code": { "type": "string", "minLength": 1 },
-        "category": { "enum": ["file", "schema", "temporal", "alignment", "eligibility"] },
+        "category": {
+          "enum": ["file", "schema", "temporal", "alignment", "eligibility"]
+        },
         "severity": { "enum": ["error", "warning"] },
         "field": { "type": "string", "minLength": 1 },
         "message": { "type": "string", "minLength": 1 }
@@ -210,13 +427,35 @@
     "candidateEligibility": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["eligible", "reasonCodes", "reasons", "candidateClass", "deployabilityClassification", "parametersSha256", "minimumTrainingRows"],
+      "required": [
+        "eligible",
+        "reasonCodes",
+        "reasons",
+        "candidateClass",
+        "deployabilityClassification",
+        "parametersSha256",
+        "minimumTrainingRows"
+      ],
       "properties": {
         "eligible": { "type": "boolean" },
-        "reasonCodes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
-        "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
-        "candidateClass": { "enum": ["naive_baseline", "learned_model"] },
-        "deployabilityClassification": { "enum": ["baseline_not_runtime_deployable", "deployable_learned_model"] },
+        "reasonCodes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "candidateClass": { "enum": ["naive_baseline", "comparison_baseline", "learned_model"] },
+        "deployabilityClassification": {
+          "enum": [
+            "baseline_not_runtime_deployable",
+            "deployable_learned_model"
+          ]
+        },
         "parametersSha256": { "$ref": "#/$defs/sha256" },
         "minimumTrainingRows": { "type": "integer", "minimum": 0 }
       }

@@ -74,7 +74,7 @@ TARGET_COL = "target_cases_next_2w"   # 14-day ahead forecast target
 RANDOM_STATE = 42
 
 # GBR hyperparameters
-_CANDIDATE_REGISTRY, _ = load_and_validate_candidate_registry()
+_CANDIDATE_REGISTRY, _ = load_and_validate_candidate_registry(ROOT / "config" / "candidate_models_p1.2a-v1.json")
 GBR_PARAMS: dict = dict(next(candidate for candidate in _CANDIDATE_REGISTRY["candidates"]
                              if candidate["model_id"] == "gradient_boosting")["parameters"])
 

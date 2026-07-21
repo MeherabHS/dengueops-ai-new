@@ -429,8 +429,8 @@ export interface DatasetAssessmentResultSuccess {
 
 export type DatasetAssessmentResponse = DatasetAssessmentResultSuccess | RuntimeErrorResponse;
 
-export type DecisionChoice = "approve_technical_winner" | "keep_current_model" | "defer" | "reject_assessment";
-export interface RecordDecisionRequest { decision: DecisionChoice; reason: string; expectedAssessmentSummarySha256: string }
+export type DecisionChoice = "approve_technical_winner" | "approve_eligible_non_winner" | "keep_current_model" | "defer" | "reject_assessment";
+export interface RecordDecisionRequest {decision:DecisionChoice;reason:string;expectedAssessmentSummarySha256:string;selectedModelId?:string;technicalWinnerNotSelectedAcknowledged?:true;uncertaintyLimitationsAcknowledged?:true}
 export interface DecisionResultSuccess { ok:true; decisionId:string; assessmentId:string; decision:DecisionChoice; selectedModelId:RuntimeCandidateId|null; selectedModelLabel:string|null; decisionScope:"one_run"; operatorType:"trusted_internal_unverified"; institutionalApproval:false; reason:string; decisionStatus:string; forecastAuthorized:boolean; authorizationId:string|null; authorizationStatus:"not_authorized"|"authorization_incomplete"|"available"|"reserved"|"consumed"; createdAt:string; limitations:string[]; decisionCommitSha256:string }
 export type DecisionResponse = DecisionResultSuccess | RuntimeErrorResponse;
 export interface StartApprovedForecastRequest { expectedDecisionCommitSha256: string }

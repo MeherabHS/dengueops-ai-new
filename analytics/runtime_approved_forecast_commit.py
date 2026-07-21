@@ -16,12 +16,15 @@ from jsonschema import Draft202012Validator, FormatChecker
 from runtime_assessment_policy import load_and_validate_assessment_policy
 from runtime_commit import atomic_json, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
+from runtime_uncertainty import validate_uncertainty_contract, UncertaintyContractError
 
 
 P1_ASSESSMENT_SHA = "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af"
 P2_ASSESSMENT_SHA = "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff"
+P2_V2_ASSESSMENT_SHA = "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8"
 P1_DECISION_SHA = "8fece340b85951d3bee8b037c4ac79ae82636ee371a934e9371bcb4a633491a4"
 P2_DECISION_SHA = "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdcb4a"
+P2_V2_DECISION_SHA = "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d"
 ASSESSMENT_POLICY_ID = "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
 DECISION_POLICY_ID = "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION"
 
@@ -108,9 +111,13 @@ def _verify_policy(decision: dict[str, Any]) -> tuple[dict[str, Any], bool]:
           DECISION_POLICY_ID, "p1.4d-3-e-v1", P1_DECISION_SHA)
     p2 = ("2.0", ASSESSMENT_POLICY_ID, "p2-v1", P2_ASSESSMENT_SHA,
           DECISION_POLICY_ID, "p2-v1", P2_DECISION_SHA)
+    p2v2 = ("2.0", ASSESSMENT_POLICY_ID, "p2-v2", P2_V2_ASSESSMENT_SHA,
+            DECISION_POLICY_ID, "p2-v2", P2_V2_DECISION_SHA)
     if identity == p1:
         filename, phase_two = "decision_policy_p1.4d-3-e-v1.json", False
     elif identity == p2:
+        filename, phase_two = "decision_policy_p2-v1.json", True
+    elif identity == p2v2:
         filename, phase_two = "decision_policy.json", True
     else:
         raise ApprovedForecastCommitError("The approved forecast has an unsupported or hybrid policy identity.")
@@ -133,7 +140,7 @@ def _same(left: Any, right: Any, message: str) -> None:
 
 
 def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[str, Any],
-                      forecast: dict[str, Any], card: dict[str, Any]) -> dict[str, Any]:
+                      forecast: dict[str, Any], uncertainty: dict[str, Any], card: dict[str, Any]) -> dict[str, Any]:
     decision_root = require_within(root, root / "decisions" / job["decisionId"], "decision")
     decision_path, decision_commit_path = decision_root / "decision.json", decision_root / "commit.json"
     decision, decision_commit = _json(decision_path), _json(decision_commit_path)
@@ -175,13 +182,16 @@ def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[
     labelled_rows = summary.get("labelledRows")
     planned_folds = summary.get("foldPolicy", {}).get("plannedFoldCount")
     evaluation_period = summary.get("foldPolicy", {}).get("selectedEvaluationPeriod")
-    assessment_policy = {"policyId": ASSESSMENT_POLICY_ID, "policyVersion": "p2-v1", "policySha256": P2_ASSESSMENT_SHA}
-    decision_policy = {"policyId": DECISION_POLICY_ID, "policyVersion": "p2-v1", "policySha256": policy["policySha256"]}
+    decision_v2 = decision.get("decisionPolicyVersion") == "p2-v2"
+    assessment_version = "p2-v2" if decision_v2 else "p2-v1"
+    assessment_sha = P2_V2_ASSESSMENT_SHA if decision_v2 else P2_ASSESSMENT_SHA
+    assessment_policy = {"policyId": ASSESSMENT_POLICY_ID, "policyVersion": assessment_version, "policySha256": assessment_sha}
+    decision_policy = {"policyId": DECISION_POLICY_ID, "policyVersion": decision.get("decisionPolicyVersion"), "policySha256": policy["policySha256"]}
 
     checks = (
         (assessment_commit.get("assessmentPolicyId"), ASSESSMENT_POLICY_ID, "Assessment policy ID changed."),
-        (assessment_commit.get("assessmentPolicyVersion"), "p2-v1", "Assessment policy version changed."),
-        (assessment_commit.get("assessmentPolicySha256"), P2_ASSESSMENT_SHA, "Assessment policy hash changed."),
+        (assessment_commit.get("assessmentPolicyVersion"), assessment_version, "Assessment policy version changed."),
+        (assessment_commit.get("assessmentPolicySha256"), assessment_sha, "Assessment policy hash changed."),
         (assessment_commit.get("candidateRegistrySha256"), policy["candidateRegistrySha256"], "Candidate registry hash changed."),
         (rolling.get("assessmentPolicy"), assessment_policy, "Rolling assessment policy changed."),
         (comparison.get("candidateRegistrySha256"), policy["candidateRegistrySha256"], "Comparison registry hash changed."),
@@ -207,6 +217,17 @@ def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[
     )
     for actual, expected, message in checks:
         _same(actual, expected, message)
+    if decision_v2:
+        for actual, expected, message in (
+            (selected.get("candidateClass"), "learned_model", "Selected candidate class changed."),
+            (selected.get("status"), decision.get("selectedCandidateStatus"), "Selected candidate status changed."),
+            (selected.get("modelFamily"), decision.get("selectedModelFamily"), "Selected model family changed."),
+            (selected.get("preprocessingIdentity"), decision.get("selectedModelPreprocessingIdentity"), "Selected preprocessing identity changed."),
+            (selected.get("foldPlanSha256"), summary.get("foldPlanSha256"), "Selected fold plan changed."),
+            (decision.get("featureOrderSha256"), summary.get("provenance", {}).get("featureOrderSha256"), "Decision feature order changed."),
+            (decision.get("deploymentModelAdopted"), False, "One-run decision adopted a deployment model."),
+        ):
+            _same(actual, expected, message)
     if not isinstance(labelled_rows, int) or labelled_rows < 157 or not isinstance(planned_folds, int) or not 52 <= planned_folds <= 68:
         raise ApprovedForecastCommitError("Dynamic assessment history is invalid.")
 
@@ -226,6 +247,11 @@ def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[
                            "assessmentLabelledRows": labelled_rows, "assessmentPlannedFoldCount": planned_folds,
                            "successfulFolds": planned_folds, "failedFolds": 0,
                            "selectedEvaluationPeriod": evaluation_period, "foldPlanSha256": summary["foldPlanSha256"]}
+    if decision_v2:
+        expected_governance.update({"selectedModelFamily": decision["selectedModelFamily"],
+                                    "selectedModelPreprocessingIdentity": decision["selectedModelPreprocessingIdentity"],
+                                    "featureOrderSha256": decision["featureOrderSha256"],
+                                    "selectionType": decision["selectionType"]})
     _same(governance, expected_governance, "Forecast governance evidence does not reconcile.")
 
     training = forecast["trainingDataIdentity"]
@@ -257,6 +283,29 @@ def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[
     _same(card.get("authorization", {}).get("status"), "reserved", "Model-card authorization status changed.")
     _same(forecast.get("horizonWeeks"), 2, "Forecast horizon changed.")
     _same(forecast.get("target"), "target_cases_next_2w", "Forecast target changed.")
+    if decision_v2:
+        try:
+            validate_uncertainty_contract({"selectedModelId": job["selectedModelId"], "modelFamily": decision["selectedModelFamily"],
+                "parameterSha256": job["selectedModelParameterSha256"], "candidateRegistrySha256": decision["candidateRegistrySha256"],
+                "featureOrderSha256": decision["featureOrderSha256"], "foldPlanSha256": decision["foldPlanSha256"],
+                "datasetId": decision["datasetId"], "policyId": DECISION_POLICY_ID, "policyVersion": decision["decisionPolicyVersion"],
+                "sourceFamily": "approved_forecast_p2", "forecastPresentationMode": uncertainty["forecastPresentationMode"],
+                "calibrationStatus": uncertainty["calibrationStatus"], "lower": uncertainty["lowerRaw"], "upper": uncertainty["upperRaw"],
+                "uncertaintyReasonCode": uncertainty["uncertaintyReasonCode"], "calibrationProvenance": uncertainty["calibrationProvenance"]}, ROOT)
+        except UncertaintyContractError as exc:
+            raise ApprovedForecastCommitError("The model-specific uncertainty contract is invalid.") from exc
+        for value in (forecast, uncertainty, run, card):
+            _same(value.get("forecastPresentationMode"), "point_only", "Forecast presentation mode changed.")
+            _same(value.get("calibrationStatus"), "pending", "Calibration status changed.")
+            _same(value.get("uncertaintyReasonCode"), "model_specific_calibration_pending", "Uncertainty reason changed.")
+        _same(uncertainty.get("lowerRaw"), None, "Point-only lower bound must be null.")
+        _same(uncertainty.get("upperRaw"), None, "Point-only upper bound must be null.")
+        _same(uncertainty.get("calibrationProvenance"), None, "Point-only calibration provenance must be null.")
+        _same(uncertainty.get("modelFamily"), decision.get("selectedModelFamily"), "Uncertainty model family changed.")
+        _same(uncertainty.get("preprocessingIdentity"), decision.get("selectedModelPreprocessingIdentity"), "Uncertainty preprocessing changed.")
+        _same(uncertainty.get("candidateRegistrySha256"), decision.get("candidateRegistrySha256"), "Uncertainty registry changed.")
+        _same(uncertainty.get("featureOrderSha256"), decision.get("featureOrderSha256"), "Uncertainty feature order changed.")
+        _same(uncertainty.get("foldPlanSha256"), decision.get("foldPlanSha256"), "Uncertainty fold plan changed.")
     return {"assessmentPolicy": assessment_policy, "decisionPolicy": decision_policy,
             "candidateRegistrySha256": policy["candidateRegistrySha256"], "technicalWinnerModelId": decision["technicalWinnerModelId"],
             "technicalWinnerParameterSha256": decision["technicalWinnerParameterSha256"], "labelledRows": labelled_rows,
@@ -378,7 +427,7 @@ def commit_approved_forecast(runtime_root: Path, staging_path: Path, job: dict[s
     phase_two = run.get("schemaVersion") == "2.0"
     if forecast.get("schemaVersion") != run.get("schemaVersion") or card.get("schemaVersion") != run.get("schemaVersion"):
         raise ApprovedForecastCommitError("Approved forecast artifact schema versions are mixed.")
-    reconciliation = _verify_phase_two(root, staging, job, run, forecast, card) if phase_two else None
+    reconciliation = _verify_phase_two(root, staging, job, run, forecast, uncertainty, card) if phase_two else None
     if not phase_two and run.get("schemaVersion") != "1.0":
         raise ApprovedForecastCommitError("Unknown approved forecast schema version.")
     if not phase_two:
@@ -417,6 +466,13 @@ def commit_approved_forecast(runtime_root: Path, staging_path: Path, job: dict[s
                        "forecastReported": forecast["forecastReported"],
                        "forecastOutputSha256": hashes["forecast_output.json"], "modelCardSha256": hashes["model_card.json"],
                        "runRecordSha256": sha256_file(staging / "metadata/run.json"), "completeReconciliation": True})
+        if reconciliation["decisionPolicy"]["policyVersion"] == "p2-v2":
+            commit.update({"selectedModelFamily": forecast["selectedModelFamily"],
+                           "selectedModelPreprocessingIdentity": forecast["selectedModelPreprocessingIdentity"],
+                           "selectionType": forecast["selectionType"],
+                           "forecastPresentationMode": forecast["forecastPresentationMode"],
+                           "calibrationStatus": forecast["calibrationStatus"],
+                           "uncertaintyReasonCode": forecast["uncertaintyReasonCode"]})
     schema = _json(ROOT / "config/runtime_approved_forecast_commit.schema.json")
     errors = list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(commit))
     if errors:

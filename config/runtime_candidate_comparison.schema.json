@@ -100,7 +100,7 @@
               ]
             },
             "tieTolerance": {
-              "const": 1e-9
+              "const": 1e-09
             },
             "weightedScoring": {
               "const": false
@@ -268,7 +268,10 @@
               "const": "RUNTIME.ASSESSMENT.CANDIDATE_COMPARISON"
             },
             "policyVersion": {
-              "const": "p1.4d-1-v1"
+              "enum": [
+                "p1.4d-1-v1",
+                "p2-v2"
+              ]
             },
             "primaryMetric": {
               "const": "mae"
@@ -284,7 +287,7 @@
               ]
             },
             "tieTolerance": {
-              "const": 1e-9
+              "const": 1e-09
             },
             "weightedScoring": {
               "const": false
@@ -297,7 +300,7 @@
         "candidates": {
           "type": "array",
           "minItems": 7,
-          "maxItems": 7,
+          "maxItems": 10,
           "items": {
             "$ref": "#/$defs/p2/candidate"
           }
@@ -616,10 +619,19 @@
       "range": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["start", "end"],
+        "required": [
+          "start",
+          "end"
+        ],
         "properties": {
-          "start": {"type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$"},
-          "end": {"type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$"}
+          "start": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-W[0-9]{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-W[0-9]{2}$"
+          }
         }
       },
       "model": {
@@ -630,7 +642,11 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting"
+          "gradient_boosting",
+          "elastic_net",
+          "negative_binomial_regression",
+          "extra_trees",
+          "hist_gradient_boosting"
         ]
       },
       "setStatus": {
@@ -688,6 +704,16 @@
           "runtimeSeconds": {
             "type": "number",
             "minimum": 0
+          },
+          "mse": {
+            "type": "number",
+            "minimum": 0
+          },
+          "r2": {
+            "type": [
+              "number",
+              "null"
+            ]
           }
         }
       },
@@ -724,6 +750,7 @@
           "candidateClass": {
             "enum": [
               "naive_baseline",
+              "comparison_baseline",
               "learned_model"
             ]
           },
@@ -778,7 +805,7 @@
           "selectionComplexityRank": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 7
+            "maximum": 10
           },
           "metrics": {
             "anyOf": [
@@ -827,6 +854,43 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "modelFamily": {
+            "type": "string",
+            "minLength": 1
+          },
+          "preprocessingIdentity": {
+            "$ref": "#/$defs/p2/sha"
+          },
+          "foldPlanSha256": {"$ref": "#/$defs/p2/sha"},
+          "plannedFolds": {
+            "type": "integer",
+            "minimum": 52,
+            "maximum": 68
+          },
+          "comparisonRole": {
+            "enum": [
+              "baseline_only",
+              "learned_candidate"
+            ]
+          },
+          "limitations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "status": {
+            "enum": [
+              "technical_winner",
+              "eligible_non_winner",
+              "failed",
+              "disqualified",
+              "baseline_only",
+              "experimental_not_selectable"
             ]
           }
         }

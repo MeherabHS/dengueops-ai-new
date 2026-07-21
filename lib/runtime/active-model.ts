@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { RuntimePublicError } from "./errors";
+
 import {
   LIFECYCLE_CANDIDATE_REGISTRY_SHA,
   LIFECYCLE_FEATURE_ORDER_SHA,
@@ -15,6 +16,8 @@ import {
   loadModelLifecyclePolicy,
 } from "./model-lifecycle-policy";
 import { validateStrictJsonSchema } from "./strict-json-schema";
+
+
 import type { ActiveModelAuthority } from "./contracts";
 
 export type { ActiveModelAuthority } from "./contracts";
@@ -203,19 +206,108 @@ async function readHistory(repositoryRoot: string, runtimeRoot: string): Promise
   return { assignments, decisions };
 }
 
-export async function resolveActiveModel(
-  repositoryRoot: string,
-  runtimeRoot: string,
-  deploymentId = "dhaka_south",
-): Promise<ActiveModelAuthority> {
+export async function resolveActiveModelP2V2(params: {
+  repositoryRoot: string;
+  runtimeRoot: string;
+  deploymentId?: string;
+}): Promise<Record<string, any>> {
+  const deploymentId = params.deploymentId || "dhaka_south";
+  const policy = await loadModelLifecyclePolicy({
+    repositoryRoot: params.repositoryRoot,
+    deploymentId,
+    version: "p2-v2"
+  });
+
+  const pointerPath = path.join(params.runtimeRoot, "deployments", deploymentId, "model-assignment", "latest.json");
+  let pointerBytes: Buffer;
+  let pointer: Record<string, any>;
+
+  try {
+    pointerBytes = await readFile(pointerPath);
+    pointer = JSON.parse(pointerBytes.toString("utf8"));
+  } catch (err: any) {
+    if (err.code === "ENOENT") {
+      throw new RuntimePublicError("active_model_not_assigned", "storage", "No active model assigned on p2-v2 deployment.", 404);
+    }
+    throw err;
+  }
+
+
+  if (pointer.schemaVersion !== "2.0") {
+    throw new RuntimePublicError("active_model_invalid", "validation", "Invalid pointer schema version for p2-v2 lifecycle.", 400);
+  }
+
+  if (pointer.assignmentPath && String(pointer.assignmentPath).includes("model-lifecycle")) {
+    throw new RuntimePublicError("active_model_invalid", "validation", "p2-v2 pointer cannot reference model-lifecycle directory.", 400);
+  }
+
+  const assignmentId = String(pointer.assignmentId || "");
+  if (!assignmentId || assignmentId.includes("/") || assignmentId.includes("\\") || assignmentId.includes("..")) {
+    throw new RuntimePublicError("active_model_invalid", "validation", "Invalid assignmentId in pointer.", 400);
+  }
+
+  const assignmentDir = path.join(params.runtimeRoot, "model-assignments", assignmentId);
+  await rejectSymlinkPath(params.runtimeRoot, assignmentDir);
+
+  const recordPath = path.join(assignmentDir, "artifacts", "assignment_record.json");
+  const commitPath = path.join(assignmentDir, "metadata", "commit.json");
+
+  const [recordBytes, commitBytes] = await Promise.all([
+    readFile(recordPath),
+    readFile(commitPath)
+  ]);
+
+  const record = JSON.parse(recordBytes.toString("utf8"));
+  const commit = JSON.parse(commitBytes.toString("utf8"));
+
+  if (sha(recordBytes) !== commit.assignmentRecordSha256) {
+    throw new RuntimePublicError("active_model_invalid", "validation", "Assignment record hash mismatch against commit.", 400);
+  }
+
+  if (pointer.commitSha256 !== sha(commitBytes)) {
+    throw new RuntimePublicError("active_model_invalid", "validation", "Pointer commit hash mismatch.", 400);
+  }
+
+  return {
+    authoritySource: "committed_assignment",
+    assignmentId,
+    modelId: record.modelId,
+    modelFamily: record.modelFamily,
+    parameterSha256: record.parameterSha256,
+    preprocessingIdentity: record.preprocessingIdentity,
+    candidateRegistrySha256: record.candidateRegistrySha256,
+    featureOrderSha256: record.featureOrderSha256,
+    foldPlanSha256: record.foldPlanSha256,
+    sourceAssessmentId: record.sourceAssessmentId,
+    sourceDecisionId: record.sourceDecisionId,
+    sourceAuthorizationId: record.sourceAuthorizationId,
+    sourceApprovedForecastRunId: record.sourceApprovedForecastRunId,
+    policyId: policy.policy_id || policy.policyId,
+    policyVersion: policy.policy_version || policy.policyVersion,
+    policySha256: sha(commitBytes),
+    assignedAt: record.assignedAt,
+    deploymentModelAdopted: true
+  };
+}
+
+export async function resolveHistoricalActiveModelP2V1(params: {
+  repositoryRoot: string;
+  runtimeRoot: string;
+  deploymentId?: string;
+}): Promise<ActiveModelAuthority> {
+  const deploymentId = params.deploymentId || "dhaka_south";
   if (deploymentId !== "dhaka_south") return integrity();
-  await loadModelLifecyclePolicy(repositoryRoot);
+  await loadModelLifecyclePolicy({
+    repositoryRoot: params.repositoryRoot,
+    deploymentId,
+    version: "p2-v1"
+  });
   try {
     const [profile, quick, registry, history] = await Promise.all([
-      readFile(path.join(repositoryRoot, "config", "deployments", "dhaka_south", "profile.json")),
-      safeJson(path.join(repositoryRoot, "config", "deployments", "dhaka_south", "quick_forecast_policy.json")),
-      readFile(path.join(repositoryRoot, "config", "candidate_models.json")),
-      readHistory(repositoryRoot, runtimeRoot),
+      readFile(path.join(params.repositoryRoot, "config", "deployments", "dhaka_south", "profile.json")),
+      safeJson(path.join(params.repositoryRoot, "config", "deployments", "dhaka_south", "quick_forecast_policy_p1.4f-v1.json")),
+      readFile(path.join(params.repositoryRoot, "config", "candidate_models_p1.2a-v1.json")),
+      readHistory(params.repositoryRoot, params.runtimeRoot),
     ]);
     const quickContent = { ...quick.value };
     delete quickContent.policy_sha256;
@@ -228,9 +320,9 @@ export async function resolveActiveModel(
       quick.value.feature_contract?.feature_order_sha256 !== LIFECYCLE_FEATURE_ORDER_SHA
     ) return integrity();
 
-    const latest = path.join(runtimeRoot, "deployments", deploymentId, "model-assignment", "latest.json");
+    const latest = path.join(params.runtimeRoot, "deployments", deploymentId, "model-assignment", "latest.json");
     let pointer: JsonFile;
-    try { pointer = await safeJson(latest, runtimeRoot); }
+    try { pointer = await safeJson(latest, params.runtimeRoot); }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
       if (history.assignments.size) return integrity();
@@ -261,8 +353,9 @@ export async function resolveActiveModel(
         quickForecastCompatible: true,
       };
     }
-    await validateArtifact(repositoryRoot, "runtime_model_assignment_latest.schema.json", pointer.value);
+    await validateArtifact(params.repositoryRoot, "runtime_model_assignment_latest.schema.json", pointer.value);
     const current = pointer.value;
+    if (current.schemaVersion === "2.0") return integrity();
     const expectedAssignmentPath = `model-lifecycle/${current.lifecycleDecisionId}/artifacts/model_assignment.json`;
     const expectedDecisionPath = `model-lifecycle/${current.lifecycleDecisionId}/artifacts/lifecycle_decision.json`;
     if (
@@ -271,8 +364,8 @@ export async function resolveActiveModel(
       current.lifecycleDecisionPath !== expectedDecisionPath
     ) return integrity();
     await Promise.all([
-      rejectSymlinkPath(runtimeRoot, path.join(runtimeRoot, current.assignmentPath)),
-      rejectSymlinkPath(runtimeRoot, path.join(runtimeRoot, current.lifecycleDecisionPath)),
+      rejectSymlinkPath(params.runtimeRoot, path.join(params.runtimeRoot, current.assignmentPath)),
+      rejectSymlinkPath(params.runtimeRoot, path.join(params.runtimeRoot, current.lifecycleDecisionPath)),
     ]);
     const bundle = history.decisions.get(String(current.lifecycleDecisionId));
     if (!bundle || bundle !== history.assignments.get(String(current.assignmentId)) || !bundle.assignment || !bundle.assignmentCommit) return integrity();
@@ -338,4 +431,16 @@ export async function resolveActiveModel(
     if (error instanceof RuntimePublicError) throw error;
     return integrity();
   }
+}
+
+export async function resolveActiveModel(
+  repositoryRoot: string,
+  runtimeRoot: string,
+  deploymentId = "dhaka_south",
+): Promise<Record<string, any>> {
+  return resolveActiveModelP2V2({
+    repositoryRoot,
+    runtimeRoot,
+    deploymentId
+  });
 }

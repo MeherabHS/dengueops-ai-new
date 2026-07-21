@@ -38,7 +38,7 @@ class RuntimeDynamicFoldPolicyTests(unittest.TestCase):
         from tests.test_runtime_assessment_policy import RuntimeAssessmentPolicyTests
         helper = RuntimeAssessmentPolicyTests()
         helper.policy = self.phase_one_policy
-        helper.registry_path = ROOT / "config" / "candidate_models.json"
+        helper.registry_path = ROOT / "config" / "candidate_models_p1.2a-v1.json"
         helper.registry = json.loads(helper.registry_path.read_text(encoding="utf-8"))
         import hashlib
         helper.registry_sha = hashlib.sha256(helper.registry_path.read_bytes()).hexdigest()
@@ -69,7 +69,7 @@ class RuntimeDynamicFoldPolicyTests(unittest.TestCase):
         self.assertEqual(phase_one["properties"]["folds"]["maxItems"], 68)
         self.assertEqual(phase_two["properties"]["folds"]["minItems"], 52)
         self.assertEqual(phase_two["properties"]["folds"]["maxItems"], 68)
-        self.assertEqual(len(phase_two["properties"]["candidateIds"]["const"]), 7)
+        self.assertEqual(len(phase_two["properties"]["candidateIds"]["oneOf"][1]["const"]), 10)
         self.assertFalse(phase_one["additionalProperties"])
         self.assertFalse(phase_two["additionalProperties"])
 
