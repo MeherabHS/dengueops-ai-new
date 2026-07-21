@@ -245,6 +245,7 @@ def resolve_active_model_p2_v2(
     return {
         "authoritySource": "committed_assignment",
         "assignmentId": str(assignment_id),
+        "assignmentCommitSha256": actual_commit_sha,
         "modelId": record["modelId"],
         "modelFamily": record["modelFamily"],
         "parameterSha256": record["parameterSha256"],
@@ -262,6 +263,7 @@ def resolve_active_model_p2_v2(
         "assignedAt": record["assignedAt"],
         "deploymentModelAdopted": True
     }
+
 
 
 def resolve_historical_active_model_p2_v1(

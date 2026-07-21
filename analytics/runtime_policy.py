@@ -55,8 +55,10 @@ def canonical_policy_sha256(policy: Mapping[str, Any]) -> str:
     """Hash canonical policy content while excluding its non-self-referential digest field."""
     content = dict(policy)
     content.pop("policy_sha256", None)
+    content.pop("policySha256", None)
     payload = json.dumps(content, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
 
 
 def policy_path(deployment_id: str) -> Path:
@@ -71,9 +73,10 @@ def policy_path(deployment_id: str) -> Path:
     return path
 
 
-
 def load_and_validate_quick_forecast_policy(deployment_id: str) -> tuple[dict[str, Any], str]:
     path = policy_path(deployment_id)
+
+
     raw = path.read_bytes()
     try:
         policy = json.loads(raw.decode("utf-8"))

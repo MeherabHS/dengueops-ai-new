@@ -8,8 +8,37 @@ test("quick start accepts identities only and never executes Python in request",
   const source = await read("app/api/runtime/runs/quick/route.ts");
   assert.match(source, /workspaceId.*datasetId.*deploymentId.*validationRecordSha256/s);
   assert.match(source, /unexpected_quick_forecast_field/);
+  assert.match(source, /const allowed = new Set\(\["workspaceId", "datasetId", "deploymentId", "validationRecordSha256"\]\)/);
   assert.doesNotMatch(source, /spawn\(|exec\(|modelId\s*:/);
 });
+
+test("quick route allowlist rejects every prohibited client authority field", async () => {
+  const source = await read("app/api/runtime/runs/quick/route.ts");
+  const match = source.match(/const allowed = new Set\(\[(.*?)\]\)/);
+  assert.ok(match, "Allowed set not found in route.ts");
+  const allowedFields = new Set(JSON.parse(`[${match[1]}]`));
+
+  const prohibitedFields = [
+    "modelId",
+    "resolvedModelId",
+    "modelFamily",
+    "parameterSha256",
+    "assignmentId",
+    "assignmentCommitSha256",
+    "candidateRegistrySha256",
+    "featureOrderSha256",
+    "lifecyclePolicyId",
+    "lifecyclePolicyVersion",
+    "lifecyclePolicySha256",
+  ];
+
+  for (const field of prohibitedFields) {
+    assert.equal(allowedFields.has(field), false, `Prohibited field ${field} must not be in allowed set`);
+  }
+});
+
+
+
 
 test("frontend refresh is gated on completed committed run identity", async () => {
   const source = await read("components/forecast/ForecastRunWorkflow.tsx");

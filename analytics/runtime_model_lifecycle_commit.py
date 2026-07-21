@@ -24,6 +24,7 @@ def raw_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+
 def _json(path: Path) -> dict[str, Any]:
     if path.is_symlink() or not path.is_file(): raise ValueError("lifecycle_commit_artifact_missing_or_unsafe")
     value=json.loads(path.read_text(encoding="utf-8"))
@@ -87,7 +88,7 @@ def _protected_state(repository_root: Path, runtime_root: Path) -> dict[str, str
         "monitoringLatest": runtime_root / "deployments/dhaka_south/monitoring/latest.json",
         "degradationLatest": runtime_root / "deployments/dhaka_south/degradation/latest.json"
     }
-    result = {key: (sha(path) if path.is_file() else "ABSENT") for key, path in paths.items()}
+    result = {key: (raw_sha256(path) if path.is_file() else "ABSENT") for key, path in paths.items()}
     result["featureOrderIdentity"] = _feature_order_identity(repository_root)
     result["authorizationState"] = _tree_hash(runtime_root / "authorization-state")
     return result
@@ -148,12 +149,12 @@ def _pointer(job: Mapping[str, Any], bundle_root: Path, assignment: Mapping[str,
         "policyVersion": "p2-v1",
         "policySha256": POLICY_SHA256,
         "lifecycleDecisionId": job["lifecycleDecisionId"],
-        "lifecycleDecisionCommitSha256": sha(decision_commit_path),
-        "assignmentCommitSha256": sha(assignment_commit_path),
+        "lifecycleDecisionCommitSha256": raw_sha256(decision_commit_path),
+        "assignmentCommitSha256": raw_sha256(assignment_commit_path),
         "assignmentPath": f"{relative}/artifacts/model_assignment.json",
-        "assignmentSha256": sha(assignment_path),
+        "assignmentSha256": raw_sha256(assignment_path),
         "lifecycleDecisionPath": f"{relative}/artifacts/lifecycle_decision.json",
-        "lifecycleDecisionSha256": sha(decision_path),
+        "lifecycleDecisionSha256": raw_sha256(decision_path),
         "priorAssignmentId": assignment["priorAssignmentId"],
         "priorAssignmentCommitSha256": assignment["priorAssignmentCommitSha256"],
         "publishedAt": decision_commit["committedAt"],

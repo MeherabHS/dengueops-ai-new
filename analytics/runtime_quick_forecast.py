@@ -32,9 +32,9 @@ from empirical_range import (
     finite_sample_quantile,
     generate_runtime_rf_residuals,
 )
-from model_factory import build_candidate_estimator, load_historical_candidate_registry
+from model_factory import build_candidate_estimator, load_and_validate_candidate_registry, load_historical_candidate_registry
 from runtime_commit import atomic_json, commit_runtime_run, sha256_file
-from runtime_active_model import resolve_active_model
+from runtime_active_model import resolve_active_model, resolve_active_model_p2_v2
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_policy import evaluate_quick_forecast_policy, load_and_validate_quick_forecast_policy
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
@@ -90,9 +90,28 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("The claimed job is not runnable.")
     if staging.name != job["runId"] or workspace.name != job["workspaceId"]:
         raise ValueError("Job paths do not match job identities.")
+
+    p2_policy_path = ROOT / "config" / "deployments" / job["deploymentId"] / "quick_forecast_policy.json"
+    if p2_policy_path.exists():
+        p2_data = json.loads(p2_policy_path.read_text(encoding="utf-8"))
+        if p2_data.get("schemaVersion") == "2.0":
+            policy = p2_data
+            policy_hash = canonical_policy_sha256(policy)
+            is_p2 = True
+        else:
+            policy, policy_hash = load_and_validate_quick_forecast_policy(job["deploymentId"])
+            is_p2 = False
+    else:
+        policy, policy_hash = load_and_validate_quick_forecast_policy(job["deploymentId"])
+        is_p2 = False
+
+
     if "authoritySnapshotSha256" in job:
-        authority=resolve_active_model(ROOT,runtime_root,job["deploymentId"])
-        if authority["authoritySnapshotSha256"]!=job["authoritySnapshotSha256"] or authority["modelId"]!=job.get("resolvedModelId") or authority["modelFamily"]!=job.get("resolvedModelFamily") or authority["parameterSha256"]!=job.get("resolvedModelParameterSha256") or authority["featureOrderSha256"]!=job.get("resolvedFeatureOrderSha256") or authority["candidateRegistrySha256"]!=job.get("resolvedCandidateRegistrySha256") or authority["quickPolicySha256"]!=job.get("quickPolicySha256"):
+        if is_p2:
+            authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"])
+        else:
+            authority = resolve_active_model(ROOT, runtime_root, job["deploymentId"])
+        if authority.get("modelId") != job.get("resolvedModelId") or authority.get("modelFamily") != job.get("resolvedModelFamily") or authority.get("parameterSha256") != job.get("resolvedModelParameterSha256") or authority.get("featureOrderSha256") != job.get("resolvedFeatureOrderSha256") or authority.get("candidateRegistrySha256") != job.get("resolvedCandidateRegistrySha256"):
             raise ValueError("stale_or_incompatible_active_model_authority")
 
     workspace_metadata_path = workspace / "metadata" / "workspace.json"
@@ -112,20 +131,59 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if compute_dataset_id(canonical_case.read_bytes(), canonical_climate.read_bytes(), job["deploymentId"], feature_hash) != job["datasetId"]:
         raise ValueError("Dataset identity could not be recomputed.")
 
-    policy, policy_hash = load_and_validate_quick_forecast_policy(job["deploymentId"])
-    is_p2 = policy.get("schemaVersion") == "2.0" or policy.get("requiresActiveAssignment") is True
-    profile = _json(ROOT / "config" / "deployments" / job["deploymentId"] / "profile.json")
+    assigned_model_id = None
+    assigned_model_family = None
+    assigned_param_sha = None
+    assigned_assignment_id = None
+    assigned_commit_sha = None
+    lifecycle_policy_id = None
+    lifecycle_policy_version = None
+    lifecycle_policy_sha = None
 
-    assigned_model_id = "random_forest"
-    active_authority = None
     if is_p2:
         try:
-            active_authority = resolve_active_model(ROOT, runtime_root, job["deploymentId"])
+            active_authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"])
         except Exception as exc:
             raise ValueError(f"active_model_not_assigned: {exc}") from exc
+
         if active_authority.get("authoritySource") != "committed_assignment":
             raise ValueError("active_model_not_assigned")
-        assigned_model_id = active_authority.get("modelId")
+
+        assigned_model_id = active_authority["modelId"]
+        assigned_model_family = active_authority["modelFamily"]
+        assigned_param_sha = active_authority["parameterSha256"]
+        assigned_assignment_id = active_authority["assignmentId"]
+        assigned_commit_sha = active_authority["assignmentCommitSha256"]
+        candidate_registry_sha = active_authority["candidateRegistrySha256"]
+        authority_feature_hash = active_authority["featureOrderSha256"]
+        lifecycle_policy_id = active_authority.get("policyId")
+        lifecycle_policy_version = active_authority.get("policyVersion")
+        lifecycle_policy_sha = active_authority.get("policySha256")
+
+        registry, registry_hash = load_and_validate_candidate_registry()
+        if registry_hash != candidate_registry_sha:
+            raise ValueError("Candidate registry hash mismatch against active authority.")
+        if feature_hash != authority_feature_hash:
+            raise ValueError("Feature order hash mismatch against active authority.")
+
+        candidate = next((c for c in registry["candidates"] if c["model_id"] == assigned_model_id), None)
+        if candidate is None:
+            raise ValueError(f"Unknown candidate model: {assigned_model_id}")
+        if candidate.get("candidate_class") != "learned_model" or candidate.get("selection_role") != "learned_selectable" or candidate.get("selectable") is not True:
+            raise ValueError(f"Assigned model {assigned_model_id} is not a selectable learned candidate.")
+        if candidate.get("model_family") != assigned_model_family:
+            raise ValueError("Model family mismatch against candidate registry.")
+        if candidate.get("parameters_sha256") != assigned_param_sha:
+            raise ValueError("Parameter SHA mismatch against candidate registry.")
+        if candidate.get("feature_order_sha256") != feature_hash:
+            raise ValueError("Feature order SHA mismatch against candidate registry.")
+    else:
+        profile = _json(ROOT / "config" / "deployments" / job["deploymentId"] / "profile.json")
+        assigned_model_id = "random_forest"
+        assigned_model_family = "RandomForestRegressor"
+        registry, registry_hash = load_historical_candidate_registry()
+        candidate = next((c for c in registry["candidates"] if c["model_id"] == assigned_model_id), None)
+        assigned_param_sha = candidate["parameters_sha256"]
 
     _update_job(job_path, job, progress="building_features")
     cases = pd.read_csv(canonical_case)
@@ -137,6 +195,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     latest = inference.iloc[-1]
 
     if not is_p2:
+        profile = _json(ROOT / "config" / "deployments" / job["deploymentId"] / "profile.json")
         quick = evaluate_quick_forecast_policy(policy, {
             "validation_passed": validation.get("status") == "ready",
             "deployment_id": job["deploymentId"], "deployment_gate": profile.get("deployment_gate"),
@@ -170,7 +229,6 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     shutil.copy2(validation_path, staging / "metadata" / "validation.json")
 
     generated_at = _now()
-    registry, registry_hash = load_historical_candidate_registry()
     X = training.loc[:, FEATURE_COLUMNS].apply(pd.to_numeric, errors="raise")
     y = pd.to_numeric(training[TARGET], errors="raise")
     if not np.isfinite(X.to_numpy()).all() or not np.isfinite(y.to_numpy()).all() or (y < 0).any():
@@ -210,10 +268,40 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     }
     _write_json_artifact(artifacts / "input_manifest.json", input_manifest)
     (artifacts / "model_features.csv").write_bytes(feature_bytes)
-    policy_identity = {"id": policy["policy_id"], "version": policy["policy_version"], "sha256": policy_hash}
+    policy_identity = {"id": policy.get("policy_id") or policy.get("policyId"), "version": policy.get("policy_version") or policy.get("policyVersion"), "sha256": policy_hash}
+
+    # Calibration evaluation
     available_fold_count = max(0, len(training) - INITIAL_TRAINING_ROWS - EMBARGO_ROWS)
+    supports_calibration = (assigned_model_id == "random_forest")
+    calibration_result = None
+    calibration_metrics = None
+    final_quantile_rank = None
+    final_quantile_value = None
+    calibration_available = False
+
+    if supports_calibration:
+        calibration_result = generate_runtime_rf_residuals(
+            training,
+            registry,
+            registry_sha256=registry_hash,
+            expected_registry_sha256=registry_hash,
+            expected_parameters_sha256=candidate["parameters_sha256"],
+        )
+        if calibration_result["status"] == "complete" and len(calibration_result["folds"]) == REQUIRED_RESIDUALS:
+            evaluations = build_prequential_evaluation(calibration_result["folds"], NOMINAL_COVERAGE)
+            calibration_metrics = evaluations["summary"]
+            final_quantile_rank = finite_sample_quantile(REQUIRED_RESIDUALS, NOMINAL_COVERAGE)
+            final_quantile_value = float(calibration_result["folds"][final_quantile_rank - 1]["residual"])
+            calibration_available = True
+            calibration_result["status"] = "available"
+        else:
+            calibration_result["status"] = "pending_dataset_specific_calibration"
+
+    if calibration_result is None:
+        calibration_result = {"status": "unavailable", "folds": [], "foldPlanSha256": "0" * 64}
+
     calibration_limitations = ([
-        "The empirical range uses only dataset-specific out-of-sample Random Forest rolling-origin residuals.",
+        f"The empirical range uses dataset-specific out-of-sample {assigned_model_family} rolling-origin residuals.",
         "Targets overlap and residuals are temporally dependent; historical coverage does not guarantee future coverage.",
         "The range is not a probability statement or prediction interval.",
         "The currently governed uploaded source scope is deterministic synthetic benchmark data.",
@@ -230,8 +318,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     }
     calibration_artifact = {
         "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
-        "deploymentProfileId": job["deploymentId"], "policyId": policy["policy_id"], "policyVersion": policy["policy_version"],
-        "policySha256": policy_hash, "modelId": "random_forest", "modelFamily": "RandomForestRegressor",
+        "deploymentProfileId": job["deploymentId"], "policyId": policy_identity["id"], "policyVersion": policy_identity["version"],
+        "policySha256": policy_hash, "modelId": assigned_model_id, "modelFamily": assigned_model_family,
         "modelParametersSha256": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash,
         "featureOrder": list(FEATURE_COLUMNS), "featureOrderSha256": feature_hash, "targetColumn": TARGET,
         "forecastHorizonWeeks": CALIBRATION_HORIZON_WEEKS, "initialTrainingRows": INITIAL_TRAINING_ROWS,
@@ -256,15 +344,23 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         bounds = construct_raw_interval(raw, float(final_quantile_value))
         lower_raw, upper_raw = bounds["lower_raw"], bounds["upper_raw"]
         lower_reported, upper_reported = math.floor(lower_raw), math.ceil(upper_raw)
-        uncertainty_status = "available"
+        uncertainty_status = "governed_available" if is_p2 else "available"
+        uncertainty_reason_code = None
     else:
         lower_raw = upper_raw = lower_reported = upper_reported = None
-        uncertainty_status = "pending_dataset_specific_calibration"
+        uncertainty_status = "unavailable" if is_p2 else "pending_dataset_specific_calibration"
+        uncertainty_reason_code = "model_calibration_unavailable" if is_p2 else "insufficient_residual_folds"
+
+    source_family = "quick_forecast_p2" if is_p2 else "quick_forecast_p1"
+
     forecast = {
-        "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
+        "schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
         "deploymentId": job["deploymentId"], "sourceType": "uploaded", "workflowMode": "quick_forecast",
-        "activeModelId": "random_forest", "modelFamily": "RandomForestRegressor",
+        "sourceFamily": source_family,
+        "activeModelId": assigned_model_id, "modelFamily": assigned_model_family,
         "parameterHash": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash,
+        "assignmentId": assigned_assignment_id, "assignmentCommitSha256": assigned_commit_sha,
+        "lifecyclePolicyId": lifecycle_policy_id, "lifecyclePolicyVersion": lifecycle_policy_version, "lifecyclePolicySha256": lifecycle_policy_sha,
         "policy": policy_identity, "trainingDataIdentity": training_identity, "latestObservedCases": latest_cases,
         "forecastRaw": raw, "forecastReported": reported, "targetPeriod": target_period, "target": TARGET,
         "horizonWeeks": HORIZON_WEEKS, "forecastGrowthCategory": direction,
@@ -273,10 +369,16 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "uncertaintyAvailability": uncertainty_status,
     }
     _write_json_artifact(artifacts / "forecast_output.json", forecast)
+
     uncertainty = {
-        "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
-        "deploymentId": job["deploymentId"], "activeModelId": "random_forest", "parameterHash": candidate["parameters_sha256"],
-        "uncertaintyStatus": uncertainty_status, "lowerRaw": lower_raw, "upperRaw": upper_raw,
+        "schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
+        "deploymentId": job["deploymentId"], "sourceFamily": source_family,
+        "activeModelId": assigned_model_id, "modelFamily": assigned_model_family,
+        "parameterHash": candidate["parameters_sha256"], "assignmentId": assigned_assignment_id, "assignmentCommitSha256": assigned_commit_sha,
+        "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
+        "calibrationStatus": "governed_available" if (is_p2 and calibration_available) else ("available" if calibration_available else "unavailable"),
+        "uncertaintyStatus": uncertainty_status, "uncertaintyReasonCode": uncertainty_reason_code,
+        "lowerRaw": lower_raw, "upperRaw": upper_raw,
         "lowerReported": lower_reported, "upperReported": upper_reported, "isPredictionInterval": False,
         "calibratedOnSyntheticData": calibration_available,
         "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
@@ -295,16 +397,22 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "limitations": calibration_limitations, "generatedAt": generated_at,
     }
     _write_json_artifact(artifacts / "forecast_uncertainty.json", uncertainty)
+
     history = [{"period": _period(int(row.epi_year), int(row.epi_week)), "cases": int(row.cases)} for row in cases.tail(52).itertuples()]
     chart = {"schemaVersion": "1.0", "runId": job["runId"], "history": history, "forecast": {"period": target_period, "cases": reported},
         "empiricalRange": {"lower": lower_reported, "upper": upper_reported} if calibration_available else None}
     _write_json_artifact(artifacts / "chart_data.json", chart)
+
+    run_dash = {"runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
+        "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
+        "committedAt": generated_at, "completedSteps": 6}
+    if is_p2:
+        run_dash["sourceFamily"] = source_family
+
     dashboard = {
-        "schemaVersion": "1.0", "run": {"runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
-            "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
-            "committedAt": generated_at, "completedSteps": 6},
-        "model": {"modelId": "random_forest", "modelLabel": "Random Forest", "parameterHash": candidate["parameters_sha256"],
-            "policyId": policy["policy_id"], "policyVersion": policy["policy_version"],
+        "schemaVersion": "1.0", "run": run_dash,
+        "model": {"modelId": assigned_model_id, "modelLabel": assigned_model_family, "parameterHash": candidate["parameters_sha256"],
+            "policyId": policy_identity["id"], "policyVersion": policy_identity["version"],
             "suitabilityStatus": "approved_under_quick_forecast_compatibility_policy", "comparisonPerformed": False},
         "forecast": {"latestObservedCases": latest_cases, "forecastRaw": raw, "forecastReported": reported,
             "targetPeriod": target_period, "target": TARGET, "horizonWeeks": 2, "direction": direction,
@@ -318,34 +426,41 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "policy": policy_identity, "calibration": {"path": "artifacts/forecast_calibration.json", "sha256": calibration_sha},
             "modelCard": {"path": "artifacts/model_card.json"},
             "provenance": {"datasetId": job["datasetId"], "inputManifest": "artifacts/input_manifest.json"}},
-        "limitations": ["Approved deployment model used under the governed Quick Forecast compatibility policy.",
+        "limitations": [f"Assigned model {assigned_model_id} used under governed Quick Forecast policy.",
             "No dataset-specific model comparison was performed.", *calibration_limitations,
             "Official preparedness is unavailable because no runtime planning policy is approved."],
     }
     _write_json_artifact(artifacts / "dashboard_summary.json", dashboard)
+
     pipeline_summary = {"schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "status": "commit_ready",
         "steps": ["input_revalidated", "features_built", "temporal_calibration_evaluated", "approved_model_trained", "point_forecast_generated", "artifacts_validated"],
         "candidateComparisonPerformed": False, "uncertaintyCalibrationPerformed": calibration_available, "operationalEngineExecuted": False,
         "generatedAt": generated_at}
     _write_json_artifact(artifacts / "pipeline_run_summary.json", pipeline_summary)
-    approved_model = {"schemaVersion": "1.0", "modelId": "random_forest", "modelFamily": "RandomForestRegressor",
+
+    approved_model = {"schemaVersion": "1.0", "modelId": assigned_model_id, "modelFamily": assigned_model_family,
         "parameterHash": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash, "policy": policy_identity}
     atomic_json(staging / "metadata" / "approved_model.json", approved_model)
+
     publication_sequence = ["input_manifest.json", "model_features.csv", "forecast_calibration.json", "forecast_output.json", "forecast_uncertainty.json",
         "chart_data.json", "dashboard_summary.json", "pipeline_run_summary.json", "model_card.json"]
     run_record = {"schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
-        "status": "commit_ready", "policyId": policy["policy_id"], "policyVersion": policy["policy_version"], "policySha256": policy_hash,
+        "status": "commit_ready", "policyId": policy_identity["id"], "policyVersion": policy_identity["version"], "policySha256": policy_hash,
         "createdAt": job["createdAt"], "generatedAt": generated_at, "artifactPublicationSequence": publication_sequence}
+    if is_p2:
+        run_record["sourceFamily"] = source_family
     atomic_json(staging / "metadata" / "run.json", run_record)
+
 
     pre_card_names = [name for name in publication_sequence if name != "model_card.json"]
     artifact_hashes = {name: sha256_file(artifacts / name) for name in pre_card_names}
     model_card = {
-        "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
-        "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
-        "model": {"id": "random_forest", "family": "RandomForestRegressor", "parameterHash": candidate["parameters_sha256"],
-            "candidateRegistrySha256": registry_hash, "runtimeLibrary": "scikit-learn"},
+        "schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
+        "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceFamily": source_family, "sourceType": "uploaded",
+        "model": {"id": assigned_model_id, "family": assigned_model_family, "parameterHash": candidate["parameters_sha256"],
+            "candidateRegistrySha256": registry_hash, "runtimeLibrary": candidate.get("estimator_library", "scikit-learn")},
+        "assignmentId": assigned_assignment_id, "assignmentCommitSha256": assigned_commit_sha,
         "features": {"count": 18, "orderSha256": feature_hash}, "target": TARGET, "horizonWeeks": 2,
         "training": training_identity, "policy": policy_identity, "comparisonPerformed": False, "bestModelClaim": False,
         "uncertaintyStatus": uncertainty_status,
@@ -360,11 +475,11 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "inputHashes": {"originalDengue": validation["files"]["original"]["dengueSha256"], "originalClimate": validation["files"]["original"]["climateSha256"],
             "canonicalDengue": validation["files"]["canonical"]["dengueSha256"], "canonicalClimate": validation["files"]["canonical"]["climateSha256"]},
         "artifactHashes": artifact_hashes, "commitReadiness": "ready_for_runtime_commit",
-        "intendedUse": "Approved deployment model used under the governed Quick Forecast compatibility policy.",
-        "limitations": ["Random Forest is not claimed to be the best model for this uploaded dataset.",
+        "intendedUse": f"Assigned learned model {assigned_model_id} used under governed Quick Forecast policy.",
+        "limitations": [f"Execution bound to active assignment for model {assigned_model_id}.",
             "The upload is restricted to the exact synthetic-benchmark-compatible source contract.",
-            "Dataset-specific uncertainty calibration is available only when exactly 68 complete folds are validated.",
-            "Preparedness outputs are unavailable because no runtime planning-scenario policy is approved."],
+            "Dataset-specific uncertainty calibration is available only when matching calibration residuals exist.",
+            "Preparedness outputs are unavailable because no runtime planning policy is approved."],
         "generatedAt": _now(),
     }
     _update_job(job_path, job, progress="validating_artifacts")
@@ -379,6 +494,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--runtime-root", required=True)
     parser.add_argument("--job-record", required=True)

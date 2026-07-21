@@ -9,7 +9,7 @@ sys.path.insert(0, str(ROOT / "analytics"))
 
 from tests.lifecycle_fixtures import build_one_run_chain_p2_v2
 from runtime_model_lifecycle_commit import commit_lifecycle_action
-from runtime_active_model import resolve_active_model, ActiveModelError
+from runtime_active_model import resolve_active_model, resolve_active_model_p2_v2, ActiveModelError
 
 
 class ProductV2ActiveModelResolverTests(unittest.TestCase):
@@ -17,7 +17,8 @@ class ProductV2ActiveModelResolverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
             with self.assertRaises(ActiveModelError):
-                resolve_active_model(ROOT, target, "dhaka_south")
+                resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=target, deployment_id="dhaka_south")
+
 
     def test_p2_valid_assignment_resolves_assigned_model(self):
         with tempfile.TemporaryDirectory() as directory:
