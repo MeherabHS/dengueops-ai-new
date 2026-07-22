@@ -12,6 +12,7 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parent.parent
 
 from feature_engineering import FEATURE_COLUMNS
+from model_factory import load_and_validate_candidate_registry
 from runtime_active_model import FEATURE_SHA, PARAMETER_SHA, PROFILE_SHA, QUICK_SHA, REGISTRY_SHA, resolve_active_model, resolve_active_model_p2_v2, resolve_historical_active_model_p2_v1
 from runtime_commit import atomic_json, json_sha
 from runtime_model_lifecycle import prepare_bundle, validate_schema, verify_action_sources, _extract_and_validate_policy_version
@@ -324,29 +325,72 @@ def verify_p2_v2_evidence_chain(
     if not run_meta_path.exists():
         raise ValueError(f"Forecast run metadata missing at {run_meta_path}")
 
-    run_meta = json.loads(run_meta_path.read_text(encoding="utf-8"))
-    decision_id = run_meta.get("decisionId")
-    authorization_id = run_meta.get("authorizationId")
-    assessment_id = run_meta.get("assessmentId")
-    model_id = run_meta.get("selectedModelId") or run_meta.get("modelId")
-    param_sha = run_meta.get("selectedModelParameterSha256") or run_meta.get("parameterSha256") or PARAMETER_SHA
+    run_meta = _json(run_meta_path)
+    approved_commit_path = run_dir / "metadata/commit.json"
+    approved_commit = _json(approved_commit_path)
+    validate_schema(repository_root, "runtime_approved_forecast_commit.schema.json", approved_commit)
+    if approved_commit.get("runId") != one_run_forecast_run_id:
+        raise ValueError("approved_forecast_run_id_mismatch")
+    if approved_commit.get("runRecordSha256") != raw_sha256(run_meta_path):
+        raise ValueError("approved_forecast_run_record_hash_mismatch")
 
+    model_id = approved_commit.get("selectedModelId")
     if not model_id:
-        raise ValueError("Model ID missing in forecast run metadata.")
+        raise ValueError("approved_forecast_model_id_missing")
+    registry, registry_sha = load_and_validate_candidate_registry(
+        repository_root / "config/candidate_models.json"
+    )
+    candidate = next(
+        (value for value in registry["candidates"] if value.get("model_id") == model_id),
+        None,
+    )
+    if candidate is None:
+        raise ValueError("approved_forecast_model_id_not_in_candidate_registry")
+    if candidate.get("candidate_class") != "learned_model" or candidate.get("selection_role") != "learned_selectable" or candidate.get("selectable") is not True:
+        raise ValueError("approved_forecast_model_is_not_selectable_learned_candidate")
+
+    identity_checks = (
+        ("model_family", approved_commit.get("selectedModelFamily"), candidate.get("model_family")),
+        ("parameter_identity", approved_commit.get("selectedModelParameterSha256"), candidate.get("parameters_sha256")),
+        ("preprocessing_identity", approved_commit.get("selectedModelPreprocessingIdentity"), candidate.get("preprocessing_identity")),
+        ("feature_order_identity", approved_commit.get("featureOrderSha256"), candidate.get("feature_order_sha256")),
+        ("candidate_registry_identity", approved_commit.get("candidateRegistrySha256"), registry_sha),
+    )
+    for identity_name, approved_value, registry_value in identity_checks:
+        if approved_value != registry_value:
+            raise ValueError(f"approved_{identity_name}_mismatch_against_candidate_registry")
+
+    run_identity_checks = (
+        ("model_id", run_meta.get("selectedModelId"), model_id),
+        ("model_family", run_meta.get("selectedModelFamily"), approved_commit["selectedModelFamily"]),
+        ("parameter_identity", run_meta.get("selectedModelParameterSha256"), approved_commit["selectedModelParameterSha256"]),
+        ("preprocessing_identity", run_meta.get("selectedModelPreprocessingIdentity"), approved_commit["selectedModelPreprocessingIdentity"]),
+        ("feature_order_identity", run_meta.get("featureOrderSha256"), approved_commit["featureOrderSha256"]),
+        ("candidate_registry_identity", run_meta.get("candidateRegistrySha256"), approved_commit["candidateRegistrySha256"]),
+    )
+    for identity_name, run_value, approved_value in run_identity_checks:
+        if run_value != approved_value:
+            raise ValueError(f"approved_run_{identity_name}_mismatch_against_commit")
+
+    decision_id = approved_commit.get("decisionId")
+    authorization_id = approved_commit.get("authorizationId")
+    assessment_id = approved_commit.get("assessmentId")
 
     forecast_output_path = run_dir / "artifacts/forecast_output.json"
-    if forecast_output_path.exists():
-        raw_output_sha = hashlib.sha256(forecast_output_path.read_bytes()).hexdigest()
-        if run_meta.get("forecastOutputSha256") and run_meta.get("forecastOutputSha256") != raw_output_sha:
-            raise ValueError("forecast_output_tampered")
+    if not forecast_output_path.exists() or approved_commit.get("forecastOutputSha256") != raw_sha256(forecast_output_path):
+        raise ValueError("forecast_output_tampered")
 
     policy, policy_sha = load_model_lifecycle_policy(
         policy_version="p2-v2",
         repository_root=repository_root,
         deployment_id="dhaka_south"
     )
+    if policy.get("candidateRegistrySha256") != registry_sha:
+        raise ValueError("lifecycle_policy_candidate_registry_identity_mismatch")
+    if policy.get("featureOrderSha256") != candidate.get("feature_order_sha256"):
+        raise ValueError("lifecycle_policy_feature_order_identity_mismatch")
 
-    decision_commit_sha = run_meta.get("decisionCommitSha256")
+    decision_commit_sha = approved_commit.get("decisionCommitSha256")
     if not decision_commit_sha and decision_id:
         dc_path = runtime_root / "decisions" / decision_id / "metadata/commit.json"
         if dc_path.exists():
@@ -357,7 +401,12 @@ def verify_p2_v2_evidence_chain(
     return {
         "run_meta": run_meta,
         "model_id": model_id,
-        "param_sha": param_sha,
+        "model_family": candidate["model_family"],
+        "param_sha": candidate["parameters_sha256"],
+        "preprocessing_identity": candidate["preprocessing_identity"],
+        "candidate_registry_sha": registry_sha,
+        "feature_order_sha": candidate["feature_order_sha256"],
+        "fold_plan_sha": approved_commit["foldPlanSha256"],
         "assessment_id": assessment_id,
         "decision_id": decision_id,
         "authorization_id": authorization_id,
@@ -458,12 +507,12 @@ def commit_lifecycle_action(
         "deploymentId": "dhaka_south",
         "assignmentAction": "assign_selected_model",
         "modelId": model_id,
-        "modelFamily": "RandomForestRegressor" if model_id == "random_forest" else model_id,
+        "modelFamily": evidence["model_family"],
         "parameterSha256": param_sha,
-        "preprocessingIdentity": f"p2-v2-{model_id}",
-        "candidateRegistrySha256": policy.get("candidateRegistrySha256") or REGISTRY_SHA,
-        "featureOrderSha256": policy.get("featureOrderSha256") or FEATURE_SHA,
-        "foldPlanSha256": run_meta.get("foldPlanSha256") or "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "preprocessingIdentity": evidence["preprocessing_identity"],
+        "candidateRegistrySha256": evidence["candidate_registry_sha"],
+        "featureOrderSha256": evidence["feature_order_sha"],
+        "foldPlanSha256": evidence["fold_plan_sha"],
         "sourceAssessmentId": assessment_id,
         "sourceDecisionId": decision_id,
         "sourceAuthorizationId": authorization_id,

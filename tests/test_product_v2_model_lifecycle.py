@@ -12,6 +12,8 @@ import sys
 sys.path.insert(0, str(ROOT / "analytics"))
 
 from runtime_commit import atomic_json, sha256_file
+from model_factory import load_and_validate_candidate_registry
+from runtime_active_model import resolve_active_model_p2_v2
 from runtime_worker import run_once
 from tests.test_runtime_assessment_commit import build_ready_assessment_runtime, iso_now
 from tests.lifecycle_fixtures import build_one_run_chain_p2_v2, build_promotion_chain_p2_v1
@@ -45,6 +47,8 @@ class ProductV2ModelLifecycleTests(unittest.TestCase):
             "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting",
             "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"
         )
+        registry, registry_sha = load_and_validate_candidate_registry(ROOT / "config/candidate_models.json")
+        registry_by_id = {candidate["model_id"]: candidate for candidate in registry["candidates"]}
         for model_id in learned_candidates:
             with self.subTest(model=model_id):
                 with tempfile.TemporaryDirectory() as directory:
@@ -61,11 +65,83 @@ class ProductV2ModelLifecycleTests(unittest.TestCase):
                     self.assertTrue(result["success"], f"lifecycle failed for {model_id}: {result.get('error')}")
                     self.assertEqual(result["action"], "assign_selected_model")
                     self.assertEqual(result["modelId"], model_id)
+                    candidate = registry_by_id[model_id]
+                    approved = json.loads((runtime / "runs" / chain["runId"] / "metadata/commit.json").read_text())
                     pointer = json.loads((runtime / "deployments/dhaka_south/model-assignment/latest.json").read_text())
                     self.assertEqual(pointer["assignmentId"], result["assignmentId"])
                     self.assertEqual(pointer["assignedModelId"], model_id)
                     assignment = json.loads((runtime / "model-assignments" / result["assignmentId"] / "artifacts/assignment_record.json").read_text())
                     self.assertEqual(assignment["modelId"], model_id)
+                    active = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime)
+                    expected = {
+                        "modelId": model_id,
+                        "modelFamily": candidate["model_family"],
+                        "parameterSha256": candidate["parameters_sha256"],
+                        "preprocessingIdentity": candidate["preprocessing_identity"],
+                        "featureOrderSha256": candidate["feature_order_sha256"],
+                        "candidateRegistrySha256": registry_sha,
+                    }
+                    approved_identity = {
+                        "modelId": approved["selectedModelId"],
+                        "modelFamily": approved["selectedModelFamily"],
+                        "parameterSha256": approved["selectedModelParameterSha256"],
+                        "preprocessingIdentity": approved["selectedModelPreprocessingIdentity"],
+                        "featureOrderSha256": approved["featureOrderSha256"],
+                        "candidateRegistrySha256": approved["candidateRegistrySha256"],
+                    }
+                    pointer_identity = {
+                        "modelId": pointer["assignedModelId"],
+                        **{key: pointer[key] for key in expected if key not in {"modelId", "preprocessingIdentity"}},
+                    }
+                    for actual in (approved_identity, assignment, active):
+                        for key, value in expected.items():
+                            self.assertEqual(actual[key], value, f"{model_id} {key} identity mismatch")
+                    self.assertNotIn("preprocessingIdentity", pointer)
+                    for key, value in expected.items():
+                        if key != "preprocessingIdentity":
+                            self.assertEqual(pointer_identity[key], value, f"{model_id} pointer {key} identity mismatch")
+
+    def _assert_approved_identity_tamper_fails(self, field, value, expected_error):
+        with tempfile.TemporaryDirectory() as directory:
+            chain = build_one_run_chain_p2_v2(Path(directory), ROOT, model_id="extra_trees")
+            runtime = chain["runtime"]
+            commit_path = runtime / "runs" / chain["runId"] / "metadata/commit.json"
+            approved = json.loads(commit_path.read_text())
+            approved[field] = value
+            atomic_json(commit_path, approved)
+
+            result = commit_lifecycle_action(
+                runtime,
+                one_run_forecast_run_id=chain["runId"],
+                reason="Reject inconsistent approved identity.",
+                operator_identifier="governed-test-operator",
+                acknowledgement=True,
+            )
+
+            self.assertFalse(result["success"])
+            self.assertEqual(result["error"], expected_error)
+            self.assertFalse((runtime / "deployments/dhaka_south/model-assignment/latest.json").exists())
+
+    def test_approved_model_family_disagreement_fails_closed(self):
+        self._assert_approved_identity_tamper_fails(
+            "selectedModelFamily",
+            "InconsistentEstimatorFamily",
+            "approved_model_family_mismatch_against_candidate_registry",
+        )
+
+    def test_approved_preprocessing_identity_disagreement_fails_closed(self):
+        self._assert_approved_identity_tamper_fails(
+            "selectedModelPreprocessingIdentity",
+            "0" * 64,
+            "approved_preprocessing_identity_mismatch_against_candidate_registry",
+        )
+
+    def test_approved_parameter_identity_disagreement_fails_closed(self):
+        self._assert_approved_identity_tamper_fails(
+            "selectedModelParameterSha256",
+            "0" * 64,
+            "approved_parameter_identity_mismatch_against_candidate_registry",
+        )
 
     def test_approve_eligible_non_winner_override_for_representative_models(self):
         """approve_eligible_non_winner path assigns correctly for representative eligible challengers.
