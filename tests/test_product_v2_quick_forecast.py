@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -17,6 +18,7 @@ sys.path.insert(0, str(ROOT / "analytics"))
 
 from runtime_commit import atomic_json, sha256_file
 from runtime_quick_forecast import execute
+from runtime_policy import load_and_validate_quick_forecast_policy
 from runtime_validate import validate
 from runtime_active_model import resolve_active_model_p2_v2, ActiveModelError
 from analytics.runtime_model_lifecycle_commit import commit_lifecycle_action
@@ -600,21 +602,40 @@ class ProductV2QuickForecastTests(unittest.TestCase):
             staging=str(staging_dir)
         )
 
-        qp_p2 = ROOT / "config/deployments/dhaka_south/quick_forecast_policy.json"
-        orig_p2 = qp_p2.read_bytes() if qp_p2.exists() else None
-        try:
-            if qp_p2.exists():
-                qp_p2.unlink()
-            result = execute(args)
-            self.assertTrue(result["committed"])
+        p1_policy, p1_policy_hash = load_and_validate_quick_forecast_policy("dhaka_south")
+        job.update({
+            "policyId": p1_policy["policy_id"],
+            "policyVersion": p1_policy["policy_version"],
+            "policySha256": p1_policy_hash,
+        })
+        atomic_json(job_file, job)
 
-            committed_run = runtime_root / "runs" / job["runId"]
-            forecast_output = json.loads((committed_run / "artifacts/forecast_output.json").read_text(encoding="utf-8"))
-            self.assertEqual(forecast_output["activeModelId"], "random_forest")
-            self.assertEqual(forecast_output["sourceFamily"], "quick_forecast_p1")
-        finally:
-            if orig_p2:
-                atomic_json(qp_p2, json.loads(orig_p2.decode("utf-8")))
+        with patch(
+            "runtime_quick_forecast._load_quick_forecast_policy",
+            return_value=(p1_policy, p1_policy_hash, False),
+        ):
+            result = execute(args)
+        self.assertTrue(result["committed"])
+
+        committed_run = runtime_root / "runs" / job["runId"]
+        forecast_output = json.loads((committed_run / "artifacts/forecast_output.json").read_text(encoding="utf-8"))
+        calibration = json.loads((committed_run / "artifacts/forecast_calibration.json").read_text(encoding="utf-8"))
+        uncertainty = json.loads((committed_run / "artifacts/forecast_uncertainty.json").read_text(encoding="utf-8"))
+        model_card = json.loads((committed_run / "artifacts/model_card.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(forecast_output["activeModelId"], "random_forest")
+        self.assertEqual(calibration["schemaVersion"], "1.0")
+        self.assertEqual(calibration["policyVersion"], "p1.4f-v1")
+        self.assertEqual(calibration["calibrationStatus"], "available")
+        self.assertEqual(calibration["residualCount"], 68)
+        self.assertEqual(len(calibration["folds"]), 68)
+        for artifact in (forecast_output, uncertainty, model_card):
+            self.assertNotIn("sourceFamily", artifact)
+            self.assertNotIn("assignmentId", artifact)
+            self.assertNotIn("assignmentCommitSha256", artifact)
+        self.assertNotIn("forecastPresentationMode", uncertainty)
+        self.assertNotIn("calibrationStatus", uncertainty)
+        self.assertNotIn("uncertaintyReasonCode", uncertainty)
 
 
 if __name__ == "__main__":

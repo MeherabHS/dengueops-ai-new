@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -68,11 +69,20 @@ def build_ready_runtime(base: Path, row_count: int | None = None):
 
 
 class RuntimeQuickForecastTests(unittest.TestCase):
+    def setUp(self):
+        policy, policy_hash = load_and_validate_quick_forecast_policy("dhaka_south")
+        policy_patcher = patch(
+            "runtime_quick_forecast._load_quick_forecast_policy",
+            return_value=(policy, policy_hash, False),
+        )
+        policy_patcher.start()
+        self.addCleanup(policy_patcher.stop)
+
     def test_new_quick_execution_rechecks_active_authority_without_changing_model_logic(self):
         source=(ROOT/"analytics/runtime_quick_forecast.py").read_text()
         self.assertIn("resolve_active_model",source)
         self.assertIn("authoritySnapshotSha256",source)
-        self.assertIn('model_id"] == "random_forest"',source)
+        self.assertIn('assigned_model_id = "random_forest"',source)
     def test_assignment_aware_profile_fallback_job_executes_with_complete_authority(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime,workspace,job_path,job=build_ready_runtime(Path(directory));authority=resolve_active_model(ROOT,runtime)

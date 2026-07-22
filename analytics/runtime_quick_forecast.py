@@ -36,7 +36,7 @@ from model_factory import build_candidate_estimator, load_and_validate_candidate
 from runtime_commit import atomic_json, commit_runtime_run, sha256_file
 from runtime_active_model import resolve_active_model, resolve_active_model_p2_v2
 from runtime_context import ROOT, require_absolute_directory, require_within
-from runtime_policy import evaluate_quick_forecast_policy, load_and_validate_quick_forecast_policy
+from runtime_policy import canonical_policy_sha256, evaluate_quick_forecast_policy, load_and_validate_quick_forecast_policy
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
 
 
@@ -78,6 +78,16 @@ def _write_json_artifact(path: Path, value: Any) -> None:
     atomic_json(path, value)
 
 
+def _load_quick_forecast_policy(deployment_id: str) -> tuple[dict[str, Any], str, bool]:
+    p2_policy_path = ROOT / "config" / "deployments" / deployment_id / "quick_forecast_policy.json"
+    if p2_policy_path.exists():
+        p2_policy = json.loads(p2_policy_path.read_text(encoding="utf-8"))
+        if p2_policy.get("schemaVersion") == "2.0":
+            return p2_policy, canonical_policy_sha256(p2_policy), True
+    policy, policy_hash = load_and_validate_quick_forecast_policy(deployment_id)
+    return policy, policy_hash, False
+
+
 def execute(args: argparse.Namespace) -> dict[str, Any]:
     runtime_root = require_absolute_directory(args.runtime_root, "runtime root")
     job_path = require_within(runtime_root, args.job_record, "job record")
@@ -91,20 +101,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if staging.name != job["runId"] or workspace.name != job["workspaceId"]:
         raise ValueError("Job paths do not match job identities.")
 
-    p2_policy_path = ROOT / "config" / "deployments" / job["deploymentId"] / "quick_forecast_policy.json"
-    if p2_policy_path.exists():
-        p2_data = json.loads(p2_policy_path.read_text(encoding="utf-8"))
-        if p2_data.get("schemaVersion") == "2.0":
-            policy = p2_data
-            policy_hash = canonical_policy_sha256(policy)
-            is_p2 = True
-        else:
-            policy, policy_hash = load_and_validate_quick_forecast_policy(job["deploymentId"])
-            is_p2 = False
-    else:
-        policy, policy_hash = load_and_validate_quick_forecast_policy(job["deploymentId"])
-        is_p2 = False
-
+    policy, policy_hash, is_p2 = _load_quick_forecast_policy(job["deploymentId"])
 
     if "authoritySnapshotSha256" in job:
         if is_p2:
@@ -287,15 +284,15 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             expected_registry_sha256=registry_hash,
             expected_parameters_sha256=candidate["parameters_sha256"],
         )
-        if calibration_result["status"] == "complete" and len(calibration_result["folds"]) == REQUIRED_RESIDUALS:
-            evaluations = build_prequential_evaluation(calibration_result["folds"], NOMINAL_COVERAGE)
-            calibration_metrics = evaluations["summary"]
-            final_quantile_rank = finite_sample_quantile(REQUIRED_RESIDUALS, NOMINAL_COVERAGE)
-            final_quantile_value = float(calibration_result["folds"][final_quantile_rank - 1]["residual"])
-            calibration_available = True
-            calibration_result["status"] = "available"
-        else:
-            calibration_result["status"] = "pending_dataset_specific_calibration"
+        calibration_available = calibration_result["status"] == "available"
+        if calibration_available:
+            _, calibration_metrics = build_prequential_evaluation(
+                calibration_result["residuals"], nominal_coverage=NOMINAL_COVERAGE
+            )
+            final_quantile_rank, final_quantile_value = finite_sample_quantile(
+                [row["absolute_residual"] for row in calibration_result["residuals"]],
+                nominal_coverage=NOMINAL_COVERAGE,
+            )
 
     if calibration_result is None:
         calibration_result = {"status": "unavailable", "folds": [], "foldPlanSha256": "0" * 64}
@@ -356,11 +353,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     forecast = {
         "schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
         "deploymentId": job["deploymentId"], "sourceType": "uploaded", "workflowMode": "quick_forecast",
-        "sourceFamily": source_family,
         "activeModelId": assigned_model_id, "modelFamily": assigned_model_family,
         "parameterHash": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash,
-        "assignmentId": assigned_assignment_id, "assignmentCommitSha256": assigned_commit_sha,
-        "lifecyclePolicyId": lifecycle_policy_id, "lifecyclePolicyVersion": lifecycle_policy_version, "lifecyclePolicySha256": lifecycle_policy_sha,
         "policy": policy_identity, "trainingDataIdentity": training_identity, "latestObservedCases": latest_cases,
         "forecastRaw": raw, "forecastReported": reported, "targetPeriod": target_period, "target": TARGET,
         "horizonWeeks": HORIZON_WEEKS, "forecastGrowthCategory": direction,
@@ -368,16 +362,21 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "generatedAt": generated_at, "preparednessAvailability": "unavailable_missing_planning_policy",
         "uncertaintyAvailability": uncertainty_status,
     }
+    if is_p2:
+        forecast.update({
+            "sourceFamily": source_family,
+            "assignmentId": assigned_assignment_id,
+            "assignmentCommitSha256": assigned_commit_sha,
+            "lifecyclePolicyId": lifecycle_policy_id,
+            "lifecyclePolicyVersion": lifecycle_policy_version,
+            "lifecyclePolicySha256": lifecycle_policy_sha,
+        })
     _write_json_artifact(artifacts / "forecast_output.json", forecast)
 
     uncertainty = {
         "schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
-        "deploymentId": job["deploymentId"], "sourceFamily": source_family,
-        "activeModelId": assigned_model_id, "modelFamily": assigned_model_family,
-        "parameterHash": candidate["parameters_sha256"], "assignmentId": assigned_assignment_id, "assignmentCommitSha256": assigned_commit_sha,
-        "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
-        "calibrationStatus": "governed_available" if (is_p2 and calibration_available) else ("available" if calibration_available else "unavailable"),
-        "uncertaintyStatus": uncertainty_status, "uncertaintyReasonCode": uncertainty_reason_code,
+        "deploymentId": job["deploymentId"], "activeModelId": assigned_model_id,
+        "parameterHash": candidate["parameters_sha256"], "uncertaintyStatus": uncertainty_status,
         "lowerRaw": lower_raw, "upperRaw": upper_raw,
         "lowerReported": lower_reported, "upperReported": upper_reported, "isPredictionInterval": False,
         "calibratedOnSyntheticData": calibration_available,
@@ -396,6 +395,16 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "rmseFallbackAllowed": False, "bundledP13RangeReused": False,
         "limitations": calibration_limitations, "generatedAt": generated_at,
     }
+    if is_p2:
+        uncertainty.update({
+            "sourceFamily": source_family,
+            "modelFamily": assigned_model_family,
+            "assignmentId": assigned_assignment_id,
+            "assignmentCommitSha256": assigned_commit_sha,
+            "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
+            "calibrationStatus": "governed_available" if calibration_available else "unavailable",
+            "uncertaintyReasonCode": uncertainty_reason_code,
+        })
     _write_json_artifact(artifacts / "forecast_uncertainty.json", uncertainty)
 
     history = [{"period": _period(int(row.epi_year), int(row.epi_week)), "cases": int(row.cases)} for row in cases.tail(52).itertuples()]
@@ -411,7 +420,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
 
     dashboard = {
         "schemaVersion": "1.0", "run": run_dash,
-        "model": {"modelId": assigned_model_id, "modelLabel": assigned_model_family, "parameterHash": candidate["parameters_sha256"],
+        "model": {"modelId": assigned_model_id, "modelLabel": assigned_model_family if is_p2 else "Random Forest", "parameterHash": candidate["parameters_sha256"],
             "policyId": policy_identity["id"], "policyVersion": policy_identity["version"],
             "suitabilityStatus": "approved_under_quick_forecast_compatibility_policy", "comparisonPerformed": False},
         "forecast": {"latestObservedCases": latest_cases, "forecastRaw": raw, "forecastReported": reported,
@@ -457,10 +466,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     artifact_hashes = {name: sha256_file(artifacts / name) for name in pre_card_names}
     model_card = {
         "schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
-        "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceFamily": source_family, "sourceType": "uploaded",
+        "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
         "model": {"id": assigned_model_id, "family": assigned_model_family, "parameterHash": candidate["parameters_sha256"],
             "candidateRegistrySha256": registry_hash, "runtimeLibrary": candidate.get("estimator_library", "scikit-learn")},
-        "assignmentId": assigned_assignment_id, "assignmentCommitSha256": assigned_commit_sha,
         "features": {"count": 18, "orderSha256": feature_hash}, "target": TARGET, "horizonWeeks": 2,
         "training": training_identity, "policy": policy_identity, "comparisonPerformed": False, "bestModelClaim": False,
         "uncertaintyStatus": uncertainty_status,
@@ -482,6 +490,12 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "Preparedness outputs are unavailable because no runtime planning policy is approved."],
         "generatedAt": _now(),
     }
+    if is_p2:
+        model_card.update({
+            "sourceFamily": source_family,
+            "assignmentId": assigned_assignment_id,
+            "assignmentCommitSha256": assigned_commit_sha,
+        })
     _update_job(job_path, job, progress="validating_artifacts")
     _write_json_artifact(artifacts / "model_card.json", model_card)
     logs = staging / "logs"
