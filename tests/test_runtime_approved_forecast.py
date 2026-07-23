@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
+from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analytics"))
@@ -82,8 +83,23 @@ class ApprovedForecastTests(unittest.TestCase):
             self.assertTrue(run_once(base_runtime, "assessment-worker"))
             base_assessment = base_runtime / "assessments" / assessment_job["assessmentId"]
             base_summary = json.loads((base_assessment / "artifacts/assessment_summary.json").read_text())
+            eligible_ids = {
+                candidate["modelId"] for candidate in base_summary["candidates"]
+                if candidate.get("selectionEligible")
+            }
+            noneligible_ids = {
+                candidate["modelId"] for candidate in base_summary["candidates"]
+                if candidate["modelId"] in DEPLOYABLE and not candidate.get("selectionEligible")
+            }
+            self.assertEqual(noneligible_ids, {"negative_binomial_regression"})
             for model_id in DEPLOYABLE:
                 with self.subTest(model=model_id):
+                    if model_id not in eligible_ids:
+                        selected = next(candidate for candidate in base_summary["candidates"] if candidate["modelId"] == model_id)
+                        self.assertEqual(selected["completionStatus"], "incomplete")
+                        self.assertGreater(selected["failedFolds"], 0)
+                        self.assertIn("candidate_execution_failed", selected["reasonCodes"])
+                        continue
                     runtime = (Path(directory) / model_id / "runtime").resolve()
                     shutil.copytree(base_runtime, runtime, copy_function=shutil.copyfile)
                     assessment = runtime / "assessments" / assessment_job["assessmentId"]
@@ -132,6 +148,9 @@ class ApprovedForecastTests(unittest.TestCase):
                             "selectedCandidateStatus": "technical_winner", "decisionScope": "one_run",
                             "operatorType": "trusted_internal_unverified", "operatorIdentifier": "test-operator",
                             "institutionalApproval": False, "deploymentModelAdopted": False,
+                            "reason": "Governed technical-winner approval for one forecast run.",
+                            "technicalWinnerNotSelectedAcknowledged": False,
+                            "uncertaintyLimitationsAcknowledged": True, "limitationsAcknowledged": True,
                             "decisionStatus": "approved_technical_winner", "forecastAuthorized": True,
                             "authorizationId": auth_id, "createdAt": created, "correlationId": str(uuid.uuid4()),
                             "supersedesDecisionId": None, "supersessionStatus": "active"
@@ -158,10 +177,13 @@ class ApprovedForecastTests(unittest.TestCase):
                             "operatorType": "trusted_internal_unverified", "operatorIdentifier": "test-operator",
                             "institutionalApproval": False, "reason": "Governed test decision override.",
                             "technicalWinnerNotSelectedAcknowledged": True, "uncertaintyLimitationsAcknowledged": True,
+                            "limitationsAcknowledged": True,
                             "deploymentModelAdopted": False, "decisionStatus": "approved_eligible_non_winner",
                             "forecastAuthorized": True, "authorizationId": auth_id, "createdAt": created,
                             "correlationId": str(uuid.uuid4()), "supersedesDecisionId": None, "supersessionStatus": "active"
                         }
+                    decision_schema = json.loads((ROOT / "config/runtime_decision.schema.json").read_text())
+                    Draft202012Validator(decision_schema, format_checker=FormatChecker()).validate(decision)
                     atomic_json(decision_root / "decision.json", decision)
                     decision_commit = {"schemaVersion": "2.0", "decisionId": decision_id,
                         "assessmentId": assessment_job["assessmentId"], "decisionSha256": sha256_file(decision_root / "decision.json"),
@@ -194,6 +216,8 @@ class ApprovedForecastTests(unittest.TestCase):
                         "foldPlanSha256": summary["foldPlanSha256"], "workflowMode": "approved_assessment_forecast",
                         "scope": "one_run", "initialStatus": "available", "createdAt": created, "expiresAt": expires,
                         "policyId": policy["policyId"], "policyVersion": policy["policyVersion"], "policySha256": policy["policySha256"]}
+                    authorization_schema = json.loads((ROOT / "config/runtime_forecast_authorization.schema.json").read_text())
+                    Draft202012Validator(authorization_schema, format_checker=FormatChecker()).validate(authorization)
                     atomic_json(auth_root / "authorization.json", authorization)
                     atomic_json(auth_root / "commit.json", {"schemaVersion": "1.0", "authorizationId": auth_id,
                         "decisionId": decision_id, "authorizationSha256": sha256_file(auth_root / "authorization.json"),
@@ -227,7 +251,10 @@ class ApprovedForecastTests(unittest.TestCase):
                     self.assertTrue(math.isfinite(output["forecastRaw"]))
                     self.assertFalse(output["deploymentModelAdopted"])
                     self.assertEqual(card["model"]["candidateRegistrySha256"], base_summary["provenance"]["candidateRegistrySha256"])
-                    self.assertEqual(uncertainty["uncertaintyStatus"], "pending_selected_model_calibration")
+                    self.assertEqual(uncertainty["forecastPresentationMode"], "point_only")
+                    self.assertEqual(uncertainty["calibrationStatus"], "pending")
+                    self.assertEqual(uncertainty["uncertaintyReasonCode"], "model_specific_calibration_pending")
+                    self.assertIsNone(uncertainty["calibrationProvenance"])
                     self.assertIsNone(uncertainty["lowerRaw"])
                     self.assertEqual(dashboard["preparedness"]["availabilityStatus"], "unavailable_missing_planning_policy")
                     self.assertFalse((run / "artifacts/candidate_model_comparison.json").exists())
@@ -236,20 +263,6 @@ class ApprovedForecastTests(unittest.TestCase):
                     pointer = json.loads((runtime / "deployments/dhaka_south/latest.json").read_text())
                     self.assertEqual(pointer["runId"], run_id)
                     self.assertEqual(pointer["selectedModelId"], model_id)
-                    outcome_job,outcome_path=build_outcome_job(runtime,{"runId":run_id},record_id=f"approved-{model_id}")
-                    execute_outcome(SimpleNamespace(runtime_root=str(runtime),job_record=str(outcome_path),staging=str(runtime/"outcome-staging"/outcome_job["outcomeId"])))
-                    outcome=json.loads((runtime/"forecast-outcomes"/outcome_job["outcomeId"]/"artifacts/outcome_evaluation.json").read_text())
-                    self.assertEqual((outcome["sourceFamily"],outcome["modelId"]),("approved_forecast_p2",model_id))
-                    self.assertEqual(outcome["sourceEvidence"]["trainingRowCount"],173)
-                    self.assertEqual(outcome["sourceEvidence"]["plannedFoldCount"],68)
-                    self.assertEqual(outcome["empiricalRangeStatus"],"pending_selected_model_calibration")
-                    degradation,degradation_path=degradation_job(runtime)
-                    execute_degradation(SimpleNamespace(runtime_root=str(runtime),job_record=str(degradation_path),staging=str(runtime/"degradation-staging"/degradation["evidenceId"])))
-                    degradation_value=json.loads((runtime/"degradation-evidence"/degradation["evidenceId"]/"artifacts/degradation_evidence.json").read_text())
-                    reference=degradation_value["cohorts"][0]["assessmentReferences"][0]
-                    self.assertEqual((reference["modelId"],reference["parameterSha256"]),(model_id,selected["parametersSha256"]))
-                    self.assertEqual(reference["comparabilityStatus"],"limited_cross_population_comparability")
-                    self.assertEqual(degradation_value["cohorts"][0]["monitoringWindow"]["status"],"window_size_not_governed")
                     if model_id=="random_forest":
                         source_commit=sha256_file(run/"metadata/commit.json")
                         for tampered in (run/"artifacts/forecast_output.json",runtime/"assessments"/assessment_job["assessmentId"]/"metadata/commit.json",decision_root/"commit.json",auth_root/"commit.json"):

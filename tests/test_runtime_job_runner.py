@@ -8,10 +8,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "analytics"))
 from runtime_worker import claim_one, ensure_structure, run_once
-from runtime_quick_forecast import execute as execute_forecast
 from tests.test_runtime_forecast_outcome import build_outcome_job
-from tests.test_runtime_quick_forecast import build_ready_runtime
-from types import SimpleNamespace
+from tests.test_runtime_quick_forecast import build_ready_runtime, execute_historical_quick_forecast
+from tests.test_product_v2_quick_forecast import _create_p2_v2_assignment
 
 
 class RuntimeJobRunnerTests(unittest.TestCase):
@@ -40,7 +39,9 @@ class RuntimeJobRunnerTests(unittest.TestCase):
 
     def test_worker_claims_executes_and_completes_committed_job(self):
         with tempfile.TemporaryDirectory() as directory:
-            root, _workspace, running_path, job = build_ready_runtime(Path(directory))
+            base = Path(directory)
+            assigned_runtime = Path(_create_p2_v2_assignment(base, ROOT, model_id="ridge_regression"))
+            root, _workspace, running_path, job = build_ready_runtime(base, runtime_root=assigned_runtime)
             job.update(status="queued", progress="queued", claimedAt=None, startedAt=None, heartbeatAt=None, workerId=None)
             pending = root / "jobs/pending" / running_path.name
             pending.write_text(json.dumps(job), encoding="utf-8")
@@ -60,7 +61,7 @@ class RuntimeJobRunnerTests(unittest.TestCase):
     def test_worker_executes_outcome_without_validation_workspace(self):
         with tempfile.TemporaryDirectory() as directory:
             root, workspace, forecast_path, forecast_job = build_ready_runtime(Path(directory))
-            execute_forecast(SimpleNamespace(runtime_root=str(root), job_record=str(forecast_path), workspace=str(workspace), staging=str(root / "staging" / forecast_job["runId"])))
+            execute_historical_quick_forecast(root, workspace, forecast_path, forecast_job)
             outcome_job, running = build_outcome_job(root, forecast_job, record_id="worker-observation")
             outcome_job.update(status="queued", progress="queued", claimedAt=None, startedAt=None, heartbeatAt=None, workerId=None)
             pending=root/"jobs/pending"/running.name;pending.write_text(json.dumps(outcome_job));running.unlink()

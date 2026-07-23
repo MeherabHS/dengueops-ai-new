@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -28,8 +29,8 @@ def iso_now():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def build_ready_runtime(base: Path, row_count: int | None = None):
-    runtime = base / "runtime"
+def build_ready_runtime(base: Path, row_count: int | None = None, runtime_root: Path | None = None):
+    runtime = (runtime_root or (base / "runtime")).resolve()
     workspace_id, job_id, run_id = (str(uuid.uuid4()) for _ in range(3))
     workspace = runtime / "workspaces" / workspace_id
     for relative in ("metadata", "inputs/original", "inputs/canonical", "logs", "jobs/running", "jobs/pending", "jobs/completed", "jobs/failed", "staging", "runs", "deployments", "locks"):
@@ -66,6 +67,26 @@ def build_ready_runtime(base: Path, row_count: int | None = None):
     job_path = runtime / "jobs/running" / f"{job_id}.json"
     job_path.write_text(json.dumps(job), encoding="utf-8")
     return runtime, workspace, job_path, job
+
+
+@contextmanager
+def historical_quick_policy():
+    policy, policy_hash = load_and_validate_quick_forecast_policy("dhaka_south")
+    with patch(
+        "runtime_quick_forecast._load_quick_forecast_policy",
+        return_value=(policy, policy_hash, False),
+    ):
+        yield
+
+
+def execute_historical_quick_forecast(runtime: Path, workspace: Path, job_path: Path, job: dict):
+    with historical_quick_policy():
+        return execute(SimpleNamespace(
+            runtime_root=str(runtime),
+            job_record=str(job_path),
+            workspace=str(workspace),
+            staging=str(runtime / "staging" / job["runId"]),
+        ))
 
 
 class RuntimeQuickForecastTests(unittest.TestCase):

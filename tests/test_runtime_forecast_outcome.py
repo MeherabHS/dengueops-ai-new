@@ -13,8 +13,7 @@ sys.path.insert(0,str(ROOT/"analytics"))
 from runtime_forecast_outcome import execute as execute_outcome
 from runtime_forecast_outcome_commit import ForecastOutcomeCommitError
 from runtime_forecast_outcome_policy import load_and_validate_forecast_outcome_policy
-from runtime_quick_forecast import execute as execute_forecast
-from tests.test_runtime_quick_forecast import build_ready_runtime, iso_now
+from tests.test_runtime_quick_forecast import build_ready_runtime, execute_historical_quick_forecast, iso_now
 
 def canonical_sha(value):
     return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False,allow_nan=False).encode()).hexdigest()
@@ -34,7 +33,7 @@ class RuntimeForecastOutcomeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp=tempfile.TemporaryDirectory();cls.runtime,cls.workspace,cls.forecast_job_path,cls.forecast_job=build_ready_runtime(Path(cls.temp.name))
-        execute_forecast(SimpleNamespace(runtime_root=str(cls.runtime),job_record=str(cls.forecast_job_path),workspace=str(cls.workspace),staging=str(cls.runtime/"staging"/cls.forecast_job["runId"])))
+        execute_historical_quick_forecast(cls.runtime, cls.workspace, cls.forecast_job_path, cls.forecast_job)
         cls.forecast_root=cls.runtime/"runs"/cls.forecast_job["runId"]
         cls.before={str(p.relative_to(cls.forecast_root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in cls.forecast_root.rglob("*") if p.is_file()}
 
@@ -97,7 +96,7 @@ class RuntimeForecastOutcomeTests(unittest.TestCase):
     def test_pending_empirical_range_is_not_evaluable(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime,workspace,forecast_path,forecast_job=build_ready_runtime(Path(directory),row_count=111)
-            execute_forecast(SimpleNamespace(runtime_root=str(runtime),job_record=str(forecast_path),workspace=str(workspace),staging=str(runtime/"staging"/forecast_job["runId"])))
+            execute_historical_quick_forecast(runtime, workspace, forecast_path, forecast_job)
             job,path=build_outcome_job(runtime,forecast_job,record_id="pending-range")
             execute_outcome(SimpleNamespace(runtime_root=str(runtime),job_record=str(path),staging=str(runtime/"outcome-staging"/job["outcomeId"])))
             outcome=json.loads((runtime/"forecast-outcomes"/job["outcomeId"]/"artifacts/outcome_evaluation.json").read_text())
@@ -107,7 +106,7 @@ class RuntimeForecastOutcomeTests(unittest.TestCase):
     def test_archived_phase_one_quick_outcome_remains_schema_one(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime,workspace,forecast_path,forecast_job=build_ready_runtime(Path(directory))
-            execute_forecast(SimpleNamespace(runtime_root=str(runtime),job_record=str(forecast_path),workspace=str(workspace),staging=str(runtime/"staging"/forecast_job["runId"])))
+            execute_historical_quick_forecast(runtime, workspace, forecast_path, forecast_job)
             job,path=build_outcome_job(runtime,forecast_job,record_id="historical-p1",schema_version="1.0")
             execute_outcome(SimpleNamespace(runtime_root=str(runtime),job_record=str(path),staging=str(runtime/"outcome-staging"/job["outcomeId"])))
             root=runtime/"forecast-outcomes"/job["outcomeId"]

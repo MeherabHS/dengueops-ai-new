@@ -2,11 +2,10 @@ import hashlib,json,sys,tempfile,unittest,uuid
 from pathlib import Path
 from types import SimpleNamespace
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/"analytics"))
-from runtime_quick_forecast import execute as execute_forecast
 from runtime_forecast_outcome import execute as execute_outcome
 from runtime_model_degradation_evidence import execute as execute_degradation
 from runtime_model_degradation_policy import load_and_validate_model_degradation_policy
-from tests.test_runtime_quick_forecast import build_ready_runtime,iso_now
+from tests.test_runtime_quick_forecast import build_ready_runtime,execute_historical_quick_forecast,iso_now
 from tests.test_runtime_forecast_outcome import build_outcome_job
 
 def degradation_job(runtime,evidence_id=None):
@@ -16,7 +15,7 @@ class RuntimeModelDegradationEvidenceTests(unittest.TestCase):
     def test_quick_snapshot_commits_disabled_window_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime,workspace,forecast_path,forecast_job=build_ready_runtime(Path(directory))
-            execute_forecast(SimpleNamespace(runtime_root=str(runtime),job_record=str(forecast_path),workspace=str(workspace),staging=str(runtime/"staging"/forecast_job["runId"])))
+            execute_historical_quick_forecast(runtime, workspace, forecast_path, forecast_job)
             outcome_job,outcome_path=build_outcome_job(runtime,forecast_job,record_id="degradation-quick")
             execute_outcome(SimpleNamespace(runtime_root=str(runtime),job_record=str(outcome_path),staging=str(runtime/"outcome-staging"/outcome_job["outcomeId"])))
             monitoring_before=(runtime/"deployments/dhaka_south/monitoring/latest.json").read_bytes();forecast_before=(runtime/"deployments/dhaka_south/latest.json").read_bytes()
