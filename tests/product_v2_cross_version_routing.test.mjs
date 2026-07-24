@@ -4,15 +4,18 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 
-import {
+import activeModelModule from "../lib/runtime/active-model.ts";
+import modelLifecyclePolicyModule from "../lib/runtime/model-lifecycle-policy.ts";
+
+const {
   resolveActiveModel,
   resolveActiveModelP2V2,
   resolveHistoricalActiveModelP2V1
-} from "../lib/runtime/active-model.ts";
-import {
+} = activeModelModule;
+const {
   loadModelLifecyclePolicy,
   loadModelLifecyclePolicyByIdentity
-} from "../lib/runtime/model-lifecycle-policy.ts";
+} = modelLifecyclePolicyModule;
 
 const REPO_ROOT = path.resolve(".");
 

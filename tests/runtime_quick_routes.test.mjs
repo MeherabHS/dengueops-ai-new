@@ -1,47 +1,151 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
-const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+import quickRouteModule from "../app/api/runtime/runs/quick/route.ts";
+import jobRouteModule from "../app/api/runtime/jobs/[jobId]/route.ts";
+import validateRouteModule from "../app/api/runtime/validate/route.ts";
+import { findPython, spawnPythonSync } from "./node_python_runner.mjs";
 
-test("quick start accepts identities only and never executes Python in request", async () => {
-  const source = await read("app/api/runtime/runs/quick/route.ts");
-  assert.match(source, /workspaceId.*datasetId.*deploymentId.*validationRecordSha256/s);
-  assert.match(source, /unexpected_quick_forecast_field/);
-  assert.match(source, /const allowed = new Set\(\["workspaceId", "datasetId", "deploymentId", "validationRecordSha256"\]\)/);
-  assert.doesNotMatch(source, /spawn\(|exec\(|modelId\s*:/);
-});
+const { POST: queueQuickForecast } = quickRouteModule;
+const { GET: getRuntimeJob } = jobRouteModule;
+const { POST: validateRuntime } = validateRouteModule;
+function createFixture(base, modelId) {
+  const built = spawnPythonSync(
+    ["-m", "tests.runtime_active_model_parity_probe", "create-quick", base, modelId],
+    { timeout: 360_000 },
+  );
+  assert.equal(built.status, 0, built.stdout + built.stderr);
+  return JSON.parse(built.stdout.trim().split(/\r?\n/).at(-1));
+}
 
-test("quick route allowlist rejects every prohibited client authority field", async () => {
-  const source = await read("app/api/runtime/runs/quick/route.ts");
-  const match = source.match(/const allowed = new Set\(\[(.*?)\]\)/);
-  assert.ok(match, "Allowed set not found in route.ts");
-  const allowedFields = new Set(JSON.parse(`[${match[1]}]`));
+function requestFor(fixture, extra = {}) {
+  return new Request("http://localhost/api/runtime/runs/quick", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      workspaceId: fixture.workspaceId,
+      datasetId: fixture.datasetId,
+      deploymentId: "dhaka_south",
+      validationRecordSha256: fixture.validationRecordSha256,
+      ...extra,
+    }),
+  });
+}
 
-  const prohibitedFields = [
-    "modelId",
-    "resolvedModelId",
-    "modelFamily",
-    "parameterSha256",
-    "assignmentId",
-    "assignmentCommitSha256",
-    "candidateRegistrySha256",
-    "featureOrderSha256",
-    "lifecyclePolicyId",
-    "lifecyclePolicyVersion",
-    "lifecyclePolicySha256",
-  ];
+async function withRuntime(runtime, callback) {
+  const previousRoot = process.env.DENGUEOPS_RUNTIME_ROOT;
+  const previousPython = process.env.DENGUEOPS_PYTHON_EXECUTABLE;
+  process.env.DENGUEOPS_RUNTIME_ROOT = runtime;
+  process.env.DENGUEOPS_PYTHON_EXECUTABLE = findPython().command;
+  try {
+    return await callback();
+  } finally {
+    if (previousRoot === undefined) delete process.env.DENGUEOPS_RUNTIME_ROOT;
+    else process.env.DENGUEOPS_RUNTIME_ROOT = previousRoot;
+    if (previousPython === undefined) delete process.env.DENGUEOPS_PYTHON_EXECUTABLE;
+    else process.env.DENGUEOPS_PYTHON_EXECUTABLE = previousPython;
+  }
+}
 
-  for (const field of prohibitedFields) {
-    assert.equal(allowedFields.has(field), false, `Prohibited field ${field} must not be in allowed set`);
+for (const modelId of ["random_forest", "ridge_regression"]) {
+  test(`current ${modelId} assignment queues with exact authority and status projection`, { timeout: 420_000 }, async () => {
+    const temporary = await mkdtemp(path.join(tmpdir(), `b6-quick-${modelId}-`));
+    try {
+      const fixture = createFixture(path.join(temporary, "fixture"), modelId);
+      await withRuntime(fixture.runtime, async () => {
+        if (modelId === "random_forest") {
+          const form = new FormData();
+          form.append("deploymentId", "dhaka_south");
+          form.append("workflowMode", "quick_forecast");
+          form.append("dengueFile", new Blob([await readFile(path.join(process.cwd(), "data", "dengue_cases.csv"))], { type: "text/csv" }), "dengue_cases.csv");
+          form.append("climateFile", new Blob([await readFile(path.join(process.cwd(), "data", "climate_data.csv"))], { type: "text/csv" }), "climate_data.csv");
+          const validationResponse = await validateRuntime(new Request("http://localhost/api/runtime/validate", { method: "POST", body: form }));
+          assert.equal(validationResponse.status, 200, await validationResponse.clone().text());
+          assert.deepEqual((await validationResponse.json()).activeModelAuthority, fixture.authority);
+        }
+        const response = await queueQuickForecast(requestFor(fixture));
+        assert.equal(response.status, 202, await response.clone().text());
+        const queued = await response.json();
+        assert.deepEqual(queued.activeModelAuthority, fixture.authority);
+
+        const jobPath = path.join(fixture.runtime, "jobs", "pending", `${queued.jobId}.json`);
+        const job = JSON.parse(await readFile(jobPath, "utf8"));
+        assert.equal(job.schemaVersion, "2.0");
+        assert.equal(job.assignmentCommitSha256, fixture.authority.assignmentCommitSha256);
+        assert.equal(job.lifecyclePolicySha256, fixture.authority.lifecyclePolicySha256);
+        assert.equal(job.authoritySnapshotSha256, fixture.authority.authoritySnapshotSha256);
+        assert.equal(job.resolvedPreprocessingIdentity, fixture.authority.preprocessingIdentity);
+        assert.equal(job.quickPolicySha256, "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e");
+
+        const status = await getRuntimeJob(
+          new Request(`http://localhost/api/runtime/jobs/${queued.jobId}`),
+          { params: Promise.resolve({ jobId: queued.jobId }) },
+        );
+        assert.equal(status.status, 200);
+        const statusValue = await status.json();
+        assert.deepEqual(statusValue.activeModelAuthority, fixture.authority);
+      });
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+}
+
+test("missing current assignment rejects without historical profile fallback", { timeout: 420_000 }, async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "b6-quick-missing-"));
+  try {
+    const fixture = createFixture(path.join(temporary, "fixture"), "ridge_regression");
+    await unlink(path.join(fixture.runtime, "deployments", "dhaka_south", "model-assignment", "latest.json"));
+    await withRuntime(fixture.runtime, async () => {
+      const response = await queueQuickForecast(requestFor(fixture));
+      assert.equal(response.status, 404);
+      assert.equal((await response.json()).error.code, "active_model_not_assigned");
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
   }
 });
 
+test("tampered current assignment rejects before queue publication", { timeout: 420_000 }, async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "b6-quick-tampered-"));
+  try {
+    const fixture = createFixture(path.join(temporary, "fixture"), "ridge_regression");
+    const pointerPath = path.join(fixture.runtime, "deployments", "dhaka_south", "model-assignment", "latest.json");
+    const pointer = JSON.parse(await readFile(pointerPath, "utf8"));
+    pointer.assignmentCommitSha256 = "0".repeat(64);
+    await writeFile(pointerPath, JSON.stringify(pointer));
+    await withRuntime(fixture.runtime, async () => {
+      const response = await queueQuickForecast(requestFor(fixture));
+      assert.equal(response.status, 409);
+      assert.equal((await response.json()).error.code, "active_model_integrity_error");
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
 
-
+test("client-supplied model and authority overrides are rejected", async () => {
+  const fixture = {
+    workspaceId: "00000000-0000-4000-8000-000000000000",
+    datasetId: "0".repeat(64),
+    validationRecordSha256: "0".repeat(64),
+  };
+  for (const extra of [
+    { modelId: "random_forest" },
+    { assignmentId: "00000000-0000-4000-8000-000000000000" },
+    { lifecyclePolicySha256: "0".repeat(64) },
+  ]) {
+    const response = await queueQuickForecast(requestFor(fixture, extra));
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error.code, "unexpected_quick_forecast_field");
+  }
+});
 
 test("frontend refresh is gated on completed committed run identity", async () => {
-  const source = await read("components/forecast/ForecastRunWorkflow.tsx");
+  const source = await readFile(new URL("../components/forecast/ForecastRunWorkflow.tsx", import.meta.url), "utf8");
   assert.match(source, /job\.status === "completed"/);
   assert.match(source, /latest\.runId !== job\.committedRunId/);
   assert.match(source, /dengueops-latest-dashboard/);
@@ -50,10 +154,10 @@ test("frontend refresh is gated on completed committed run identity", async () =
 });
 
 test("uploaded dashboard uses explicit unavailable states", async () => {
-  const source = await read("lib/runtime/dashboard-reader.ts");
+  const source = await readFile(new URL("../lib/runtime/dashboard-reader.ts", import.meta.url), "utf8");
   assert.match(source, /availabilityStatus: value\.forecast\.uncertaintyStatus/);
   assert.match(source, /lower: calibrated \? value\.forecast\.empiricalLower : null/);
   assert.match(source, /historicalCoverage: calibrated \? value\.forecast\.historicalCoverage : null/);
   assert.match(source, /availabilityStatus: value\.preparedness\.availabilityStatus/);
-  assert.doesNotMatch(source, /53\s*[–-]\s*187|87\s*\/\s*120\s*\/\s*153/);
+  assert.doesNotMatch(source, /53\s*[â€“-]\s*187|87\s*\/\s*120\s*\/\s*153/);
 });

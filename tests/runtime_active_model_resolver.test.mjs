@@ -1,82 +1,124 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import os from "node:os";
-import crypto from "node:crypto";
 
-import { resolveActiveModel, ActiveModelError } from "../lib/runtime/active-model-resolver.ts";
+import activeModelModule from "../lib/runtime/active-model.ts";
+import { spawnPythonSync } from "./node_python_runner.mjs";
 
-const ROOT = path.resolve(import.meta.dirname, "..");
+const { resolveActiveModel } = activeModelModule;
+const ROOT = path.resolve(".");
+const sha = value => createHash("sha256").update(value).digest("hex");
 
-test("TS Resolver: fails closed with active_model_not_assigned when no assignment exists under p2", () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ts-resolver-test-"));
+function pythonFixture(base, modelId) {
+  const result = spawnPythonSync(
+    ["-m", "tests.runtime_active_model_parity_probe", "create", base, modelId],
+    { timeout: 300_000 },
+  );
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  return JSON.parse(result.stdout.trim().split(/\r?\n/).at(-1));
+}
+
+async function expectIntegrity(runtime) {
+  await assert.rejects(
+    resolveActiveModel(ROOT, runtime, "dhaka_south"),
+    error => error.code === "active_model_integrity_error",
+  );
+}
+
+for (const modelId of ["random_forest", "ridge_regression"]) {
+  test(`Python and TypeScript resolve identical ${modelId} current authority`, { timeout: 360_000 }, async () => {
+    const temporary = await mkdtemp(path.join(tmpdir(), `b6-${modelId}-`));
+    try {
+      const fixture = pythonFixture(path.join(temporary, "fixture"), modelId);
+      const typescript = await resolveActiveModel(ROOT, fixture.runtime, "dhaka_south");
+      assert.deepEqual(typescript, fixture.authority);
+      assert.match(typescript.assignmentCommitSha256, /^[a-f0-9]{64}$/);
+      assert.match(typescript.lifecyclePolicySha256, /^[a-f0-9]{64}$/);
+      assert.match(typescript.authoritySnapshotSha256, /^[a-f0-9]{64}$/);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+}
+
+test("current resolver fails closed for missing assignment and historical profile", async () => {
+  const runtime = await mkdtemp(path.join(tmpdir(), "b6-unassigned-"));
   try {
-    assert.throws(
-      () => resolveActiveModel(ROOT, tmpDir, "dhaka_south"),
-      (err) => err instanceof ActiveModelError && err.message === "active_model_not_assigned"
+    await assert.rejects(
+      resolveActiveModel(ROOT, runtime, "dhaka_south"),
+      error => error.code === "active_model_not_assigned",
     );
   } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    await rm(runtime, { recursive: true, force: true });
   }
 });
 
-test("TS Resolver: resolves valid committed assignment", () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ts-resolver-valid-"));
+test("current resolver rejects pointer, commit, and registry identity tampering", { timeout: 360_000 }, async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "b6-tamper-"));
   try {
-    const pointerDir = path.join(tmpDir, "deployments", "dhaka_south", "model-assignment");
-    const assignmentDir = path.join(tmpDir, "model-assignments", "test-assignment-123");
-    fs.mkdirSync(pointerDir, { recursive: true });
-    fs.mkdirSync(path.join(assignmentDir, "artifacts"), { recursive: true });
-    fs.mkdirSync(path.join(assignmentDir, "metadata"), { recursive: true });
+    const fixture = pythonFixture(path.join(temporary, "fixture"), "ridge_regression");
+    const pointerPath = path.join(fixture.runtime, "deployments", "dhaka_south", "model-assignment", "latest.json");
+    const originalPointer = await readFile(pointerPath);
+    const pointer = JSON.parse(originalPointer);
+    const assignmentRoot = path.join(fixture.runtime, "model-assignments", pointer.assignmentId);
+    const recordPath = path.join(assignmentRoot, "artifacts", "assignment_record.json");
+    const commitPath = path.join(assignmentRoot, "metadata", "commit.json");
 
-    const record = {
-      schemaVersion: "2.0",
-      assignmentId: "test-assignment-123",
-      modelId: "ridge_regression",
-      modelFamily: "Ridge",
-      parameterSha256: "abc123456789",
-      preprocessingIdentity: "canonical_identity",
-      candidateRegistrySha256: "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
-      featureOrderSha256: "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
-      foldPlanSha256: "fold123",
-      sourceAssessmentId: "ass1",
-      sourceDecisionId: "dec1",
-      sourceAuthorizationId: "auth1",
-      sourceApprovedForecastRunId: "run1",
-      assignedAt: new Date().toISOString()
-    };
+    for (const mutate of [
+      value => { value.assignmentCommitSha256 = "0".repeat(64); },
+      value => { value.modelFamily = "WrongFamily"; },
+      value => { value.parameterSha256 = "0".repeat(64); },
+      value => { value.candidateRegistrySha256 = "0".repeat(64); },
+    ]) {
+      const copy = path.join(temporary, randomUUID());
+      await cp(fixture.runtime, copy, { recursive: true });
+      const copyPointerPath = path.join(copy, "deployments", "dhaka_south", "model-assignment", "latest.json");
+      const changed = JSON.parse(await readFile(copyPointerPath, "utf8"));
+      mutate(changed);
+      await writeFile(copyPointerPath, JSON.stringify(changed));
+      await expectIntegrity(copy);
+    }
 
-    const recordBuf = Buffer.from(JSON.stringify(record, null, 2));
-    fs.writeFileSync(path.join(assignmentDir, "artifacts", "assignment_record.json"), recordBuf);
+    const commitTamper = path.join(temporary, "commit-tamper");
+    await cp(fixture.runtime, commitTamper, { recursive: true });
+    const copyCommit = path.join(commitTamper, "model-assignments", pointer.assignmentId, "metadata", "commit.json");
+    const commit = JSON.parse(await readFile(copyCommit, "utf8"));
+    commit.committedAt = "2020-01-01T00:00:00Z";
+    await writeFile(copyCommit, JSON.stringify(commit));
+    await expectIntegrity(commitTamper);
 
-    const recSha = crypto.createHash("sha256").update(recordBuf).digest("hex");
+    for (const [field, value] of [
+      ["modelFamily", "WrongFamily"],
+      ["parameterSha256", "0".repeat(64)],
+      ["preprocessingIdentity", "0".repeat(64)],
+      ["candidateRegistrySha256", "0".repeat(64)],
+    ]) {
+      const copy = path.join(temporary, `record-${field}`);
+      await cp(fixture.runtime, copy, { recursive: true });
+      const copyRecordPath = path.join(copy, "model-assignments", pointer.assignmentId, "artifacts", "assignment_record.json");
+      const copyCommitPath = path.join(copy, "model-assignments", pointer.assignmentId, "metadata", "commit.json");
+      const copyPointerPath = path.join(copy, "deployments", "dhaka_south", "model-assignment", "latest.json");
+      const record = JSON.parse(await readFile(copyRecordPath, "utf8"));
+      record[field] = value;
+      const recordBytes = Buffer.from(JSON.stringify(record));
+      await writeFile(copyRecordPath, recordBytes);
+      const commitValue = JSON.parse(await readFile(copyCommitPath, "utf8"));
+      commitValue.assignmentRecordSha256 = sha(recordBytes);
+      const commitBytes = Buffer.from(JSON.stringify(commitValue));
+      await writeFile(copyCommitPath, commitBytes);
+      const pointerValue = JSON.parse(await readFile(copyPointerPath, "utf8"));
+      if (field !== "preprocessingIdentity") pointerValue[field === "modelFamily" ? "modelFamily" : field] = value;
+      pointerValue.assignmentCommitSha256 = sha(commitBytes);
+      await writeFile(copyPointerPath, JSON.stringify(pointerValue));
+      await expectIntegrity(copy);
+    }
 
-    const commit = {
-      schemaVersion: "2.0",
-      assignmentId: "test-assignment-123",
-      assignmentRecordSha256: recSha,
-      status: "committed",
-      committedAt: new Date().toISOString()
-    };
-    const commitBuf = Buffer.from(JSON.stringify(commit, null, 2));
-    fs.writeFileSync(path.join(assignmentDir, "metadata", "commit.json"), commitBuf);
-    const commitSha = crypto.createHash("sha256").update(commitBuf).digest("hex");
-
-    const pointer = {
-      schemaVersion: "2.0",
-      deploymentId: "dhaka_south",
-      assignmentId: "test-assignment-123",
-      modelId: "ridge_regression",
-      commitSha256: commitSha
-    };
-    fs.writeFileSync(path.join(pointerDir, "latest.json"), JSON.stringify(pointer));
-
-    const authority = resolveActiveModel(ROOT, tmpDir, "dhaka_south");
-    assert.equal(authority.authoritySource, "committed_assignment");
-    assert.equal(authority.modelId, "ridge_regression");
-    assert.equal(authority.assignmentId, "test-assignment-123");
+    assert.ok(await readFile(recordPath));
+    assert.ok(await readFile(commitPath));
   } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    await rm(temporary, { recursive: true, force: true });
   }
 });

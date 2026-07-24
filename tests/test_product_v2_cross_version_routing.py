@@ -57,7 +57,7 @@ class CrossVersionRoutingTests(unittest.TestCase):
             authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime)
             self.assertEqual(authority["authoritySource"], "committed_assignment")
             self.assertEqual(authority["modelId"], "poisson_regression")
-            self.assertEqual(authority["policyVersion"], "p2-v2")
+            self.assertEqual(authority["lifecyclePolicyVersion"], "p2-v2")
 
     def test_p2_v2_unassigned_with_valid_p2_v1_assignment_present(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -95,7 +95,7 @@ class CrossVersionRoutingTests(unittest.TestCase):
 
             authority_v2 = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime)
             self.assertEqual(authority_v2["authoritySource"], "committed_assignment")
-            self.assertEqual(authority_v2["policyVersion"], "p2-v2")
+            self.assertEqual(authority_v2["lifecyclePolicyVersion"], "p2-v2")
 
             # Historical resolver rejects p2-v2 pointer
             with self.assertRaises(ActiveModelError) as ctx:

@@ -10,7 +10,7 @@ import {
   rm,
 } from "node:fs/promises";
 import path from "node:path";
-import {resolveActiveModel} from "./active-model";
+import {resolveHistoricalActiveModelP2V1} from "./active-model";
 import type { RuntimeConfig } from "./config";
 import {
   loadDecisionPolicy,
@@ -477,7 +477,11 @@ export async function recordDecision(
         409,
       );
     if (choice === "keep_current_model" && !isDecisionV2 && "currentModelId" in policy) {
-      const active=evidence.isPhaseTwo?await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,evidence.summary.deploymentId):null;
+      const active=evidence.isPhaseTwo?await resolveHistoricalActiveModelP2V1({
+        repositoryRoot:config.repositoryRoot,
+        runtimeRoot:config.runtimeRoot,
+        deploymentId:evidence.summary.deploymentId,
+      }):null;
       const profile=active?null:JSON.parse(await readFile(path.join(config.repositoryRoot,"config","deployments",evidence.summary.deploymentId,"profile.json"),"utf8"));
       if (
         !selected ||

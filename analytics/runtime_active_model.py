@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
+from model_factory import load_and_validate_candidate_registry
 from runtime_model_lifecycle_policy import POLICY_SHA256, canonical_sha256, load_model_lifecycle_policy
 
 PROFILE_SHA = "53fe1fb09aea994c34a5b3d6839b60092c777030445b8ec46c32520675a7233a"
@@ -171,11 +172,27 @@ def resolve_active_model_p2_v2(
     # 1. Complete schema validation before individual fields are consumed
     _schema(repository_root, pointer, "runtime_model_assignment_latest.schema.json")
 
-    # 2. Schema and policy version checks
+    # 2. Schema, deployment, and lifecycle-policy identity checks
     if pointer.get("schemaVersion") != "2.0":
         raise ActiveModelError("Invalid pointer schema version for p2-v2 lifecycle.")
-    if pointer.get("policyVersion") != "p2-v2":
-        raise ActiveModelError("Invalid pointer policy version for p2-v2 lifecycle.")
+    if (
+        pointer.get("deploymentId"),
+        pointer.get("policyId"),
+        pointer.get("policyVersion"),
+        pointer.get("policySha256"),
+        pointer.get("assignmentAction"),
+        pointer.get("activeModelAuthority"),
+        pointer.get("automaticAction"),
+    ) != (
+        deployment_id,
+        policy["policyId"],
+        policy["policyVersion"],
+        policy_sha,
+        "assign_selected_model",
+        "committed_assignment",
+        False,
+    ):
+        raise ActiveModelError("Pointer lifecycle-policy or deployment identity mismatch.")
 
     # 3. Check half-null prior assignment pair
     prior_id = pointer.get("priorAssignmentId")
@@ -202,17 +219,20 @@ def resolve_active_model_p2_v2(
     record, record_bytes = _json_bytes(record_path)
     commit, commit_bytes = _json_bytes(commit_path)
 
-    # 5. Reconcile pointer, assignment record, and commit
-    if pointer.get("assignedModelId") != record.get("modelId"):
-        raise ActiveModelError("Pointer assignedModelId mismatch against assignment record modelId.")
+    # 5. Reconcile pointer, assignment record, and commit.
+    if commit.get("schemaVersion") != "2.0" or commit.get("assignmentId") != assignment_id:
+        raise ActiveModelError("Assignment commit identity mismatch.")
+    if (
+        record.get("schemaVersion"),
+        record.get("deploymentId"),
+        record.get("assignmentId"),
+        record.get("assignmentAction"),
+    ) != ("2.0", deployment_id, assignment_id, pointer["assignmentAction"]):
+        raise ActiveModelError("Assignment record identity mismatch.")
 
     actual_commit_sha = _sha(commit_bytes)
-    pointer_commit_sha = pointer.get("assignmentCommitSha256") or pointer.get("commitSha256")
-    if pointer_commit_sha != actual_commit_sha:
+    if pointer.get("assignmentCommitSha256") != actual_commit_sha:
         raise ActiveModelError("Pointer commit hash mismatch.")
-
-    if pointer.get("assignmentId") != record.get("assignmentId"):
-        raise ActiveModelError("Pointer assignmentId mismatch against assignment record.")
 
     if pointer.get("priorAssignmentId") != record.get("priorAssignmentId"):
         raise ActiveModelError("Pointer priorAssignmentId mismatch against assignment record.")
@@ -222,6 +242,59 @@ def resolve_active_model_p2_v2(
 
     if _sha(record_bytes) != commit.get("assignmentRecordSha256"):
         raise ActiveModelError("Assignment record hash mismatch against commit.")
+
+    pointer_record_pairs = (
+        ("assignedModelId", "modelId"),
+        ("modelFamily", "modelFamily"),
+        ("parameterSha256", "parameterSha256"),
+        ("candidateRegistrySha256", "candidateRegistrySha256"),
+        ("featureOrderSha256", "featureOrderSha256"),
+        ("assignmentAction", "assignmentAction"),
+    )
+    for pointer_field, record_field in pointer_record_pairs:
+        if pointer.get(pointer_field) != record.get(record_field):
+            raise ActiveModelError(
+                f"Pointer {pointer_field} mismatch against assignment record {record_field}."
+            )
+
+    try:
+        registry, registry_sha = load_and_validate_candidate_registry(
+            repository_root / "config/candidate_models.json"
+        )
+    except Exception as exc:
+        raise ActiveModelError("Current candidate registry is invalid.") from exc
+    if (
+        registry_sha != policy.get("candidateRegistrySha256")
+        or registry_sha != pointer.get("candidateRegistrySha256")
+        or registry_sha != record.get("candidateRegistrySha256")
+        or registry.get("feature_order_sha256") != policy.get("featureOrderSha256")
+        or registry.get("feature_order_sha256") != pointer.get("featureOrderSha256")
+        or registry.get("feature_order_sha256") != record.get("featureOrderSha256")
+    ):
+        raise ActiveModelError("Candidate registry or feature-order identity mismatch.")
+    candidate = next(
+        (item for item in registry["candidates"] if item.get("model_id") == record.get("modelId")),
+        None,
+    )
+    if (
+        candidate is None
+        or candidate.get("candidate_class") != "learned_model"
+        or candidate.get("selection_role") != "learned_selectable"
+        or candidate.get("selectable") is not True
+    ):
+        raise ActiveModelError("Assigned model is not a selectable learned candidate.")
+    if (
+        candidate.get("model_family"),
+        candidate.get("parameters_sha256"),
+        candidate.get("preprocessing_identity"),
+        candidate.get("feature_order_sha256"),
+    ) != (
+        record.get("modelFamily"),
+        record.get("parameterSha256"),
+        record.get("preprocessingIdentity"),
+        record.get("featureOrderSha256"),
+    ):
+        raise ActiveModelError("Assignment identity does not reconcile with the candidate registry.")
 
     # 6. Assignment chain verification
     seen = {str(assignment_id)}
@@ -236,32 +309,41 @@ def resolve_active_model_p2_v2(
         seen.add(curr_prior_id)
         prior_dir = runtime_root / "model-assignments" / curr_prior_id
         _within(runtime_root, prior_dir)
-        if not prior_dir.exists() or not (prior_dir / "metadata/commit.json").exists():
+        prior_record_path = prior_dir / "artifacts/assignment_record.json"
+        prior_commit_path = prior_dir / "metadata/commit.json"
+        if not prior_dir.exists() or not prior_commit_path.exists() or not prior_record_path.exists():
             raise ActiveModelError("Prior assignment missing or corrupt.")
-        if _sha((prior_dir / "metadata/commit.json").read_bytes()) != curr_prior_sha:
+        prior_commit, prior_commit_bytes = _json_bytes(prior_commit_path)
+        prior_record, prior_record_bytes = _json_bytes(prior_record_path)
+        if _sha(prior_commit_bytes) != curr_prior_sha:
             raise ActiveModelError("Prior assignment commit hash mismatch.")
-        current = json.loads((prior_dir / "artifacts/assignment_record.json").read_text(encoding="utf-8"))
+        if (
+            prior_commit.get("schemaVersion") != "2.0"
+            or prior_commit.get("assignmentId") != curr_prior_id
+            or prior_commit.get("assignmentRecordSha256") != _sha(prior_record_bytes)
+            or prior_record.get("schemaVersion") != "2.0"
+            or prior_record.get("assignmentId") != curr_prior_id
+            or prior_record.get("deploymentId") != deployment_id
+        ):
+            raise ActiveModelError("Prior assignment record or commit identity mismatch.")
+        current = prior_record
 
     return {
+        "deploymentId": deployment_id,
         "authoritySource": "committed_assignment",
-        "assignmentId": str(assignment_id),
-        "assignmentCommitSha256": actual_commit_sha,
         "modelId": record["modelId"],
         "modelFamily": record["modelFamily"],
         "parameterSha256": record["parameterSha256"],
         "preprocessingIdentity": record["preprocessingIdentity"],
         "candidateRegistrySha256": record["candidateRegistrySha256"],
         "featureOrderSha256": record["featureOrderSha256"],
-        "foldPlanSha256": record["foldPlanSha256"],
-        "sourceAssessmentId": record["sourceAssessmentId"],
-        "sourceDecisionId": record["sourceDecisionId"],
-        "sourceAuthorizationId": record["sourceAuthorizationId"],
-        "sourceApprovedForecastRunId": record["sourceApprovedForecastRunId"],
-        "policyId": policy["policyId"],
-        "policyVersion": policy["policyVersion"],
-        "policySha256": policy_sha,
-        "assignedAt": record["assignedAt"],
-        "deploymentModelAdopted": True
+        "assignmentId": str(assignment_id),
+        "assignmentCommitSha256": actual_commit_sha,
+        "assignmentAction": record["assignmentAction"],
+        "lifecyclePolicyId": policy["policyId"],
+        "lifecyclePolicyVersion": policy["policyVersion"],
+        "lifecyclePolicySha256": policy_sha,
+        "authoritySnapshotSha256": _sha(pointer_bytes),
     }
 
 
@@ -400,29 +482,10 @@ def resolve_active_model(
     runtime_root: Path = None, # type: ignore
     deployment_id: str = "dhaka_south"
 ) -> dict[str, Any]:
-    """Public active model resolution entry point routing between p2-v2 and p2-v1 based on pointer identity or fallback."""
+    """Resolve strict current p2-v2 authority. Historical resolution is explicit."""
     if runtime_root is None:
         raise ValueError("runtime_root is required.")
-
-    pointer_path = runtime_root / "deployments" / deployment_id / "model-assignment/latest.json"
-    if pointer_path.exists():
-        try:
-            pointer, _ = _json_bytes(pointer_path)
-            if pointer.get("schemaVersion") == "1.0":
-                return resolve_historical_active_model_p2_v1(
-                    repository_root=repository_root,
-                    runtime_root=runtime_root,
-                    deployment_id=deployment_id,
-                )
-        except Exception:
-            pass
-        return resolve_active_model_p2_v2(
-            repository_root=repository_root,
-            runtime_root=runtime_root,
-            deployment_id=deployment_id,
-        )
-
-    return resolve_historical_active_model_p2_v1(
+    return resolve_active_model_p2_v2(
         repository_root=repository_root,
         runtime_root=runtime_root,
         deployment_id=deployment_id,

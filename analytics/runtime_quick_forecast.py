@@ -34,7 +34,7 @@ from empirical_range import (
 )
 from model_factory import build_candidate_estimator, load_and_validate_candidate_registry, load_historical_candidate_registry
 from runtime_commit import atomic_json, commit_runtime_run, patch_running_job, sha256_file
-from runtime_active_model import resolve_active_model, resolve_active_model_p2_v2
+from runtime_active_model import resolve_active_model_p2_v2, resolve_historical_active_model_p2_v1
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_policy import canonical_policy_sha256, evaluate_quick_forecast_policy, load_and_validate_quick_forecast_policy
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
@@ -106,13 +106,58 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("Job paths do not match job identities.")
 
     policy, policy_hash, is_p2 = _load_quick_forecast_policy(job["deploymentId"])
+    policy_id = policy.get("policyId") if is_p2 else policy.get("policy_id")
+    policy_version = policy.get("policyVersion") if is_p2 else policy.get("policy_version")
+    if (
+        job.get("schemaVersion"),
+        job.get("policyId"),
+        job.get("policyVersion"),
+        job.get("policySha256"),
+        job.get("quickPolicyId"),
+        job.get("quickPolicyVersion"),
+        job.get("quickPolicySha256"),
+    ) != (
+        "2.0" if is_p2 else "1.0",
+        policy_id,
+        policy_version,
+        policy_hash,
+        policy_id if "quickPolicyId" in job else None,
+        policy_version if "quickPolicyVersion" in job else None,
+        policy_hash if "quickPolicySha256" in job else None,
+    ):
+        raise ValueError("Quick Forecast policy identity changed after queueing.")
 
+    active_authority = None
     if "authoritySnapshotSha256" in job:
+        try:
+            if is_p2:
+                authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"])
+            else:
+                authority = resolve_historical_active_model_p2_v1(
+                    repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"]
+                )
+        except Exception as exc:
+            raise ValueError(f"active_model_not_assigned: {exc}") from exc
+        active_authority = authority
+        expected_authority = {
+            "authoritySnapshotSha256": job.get("authoritySnapshotSha256"),
+            "modelId": job.get("resolvedModelId"),
+            "modelFamily": job.get("resolvedModelFamily"),
+            "parameterSha256": job.get("resolvedModelParameterSha256"),
+            "candidateRegistrySha256": job.get("resolvedCandidateRegistrySha256"),
+            "featureOrderSha256": job.get("resolvedFeatureOrderSha256"),
+        }
         if is_p2:
-            authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"])
-        else:
-            authority = resolve_active_model(ROOT, runtime_root, job["deploymentId"])
-        if authority.get("modelId") != job.get("resolvedModelId") or authority.get("modelFamily") != job.get("resolvedModelFamily") or authority.get("parameterSha256") != job.get("resolvedModelParameterSha256") or authority.get("featureOrderSha256") != job.get("resolvedFeatureOrderSha256") or authority.get("candidateRegistrySha256") != job.get("resolvedCandidateRegistrySha256"):
+            expected_authority.update({
+                "preprocessingIdentity": job.get("resolvedPreprocessingIdentity"),
+                "assignmentId": job.get("assignmentId"),
+                "assignmentCommitSha256": job.get("assignmentCommitSha256"),
+                "assignmentAction": job.get("assignmentAction"),
+                "lifecyclePolicyId": job.get("lifecyclePolicyId"),
+                "lifecyclePolicyVersion": job.get("lifecyclePolicyVersion"),
+                "lifecyclePolicySha256": job.get("lifecyclePolicySha256"),
+            })
+        if any(authority.get(key) != value for key, value in expected_authority.items()):
             raise ValueError("stale_or_incompatible_active_model_authority")
 
     workspace_metadata_path = workspace / "metadata" / "workspace.json"
@@ -144,7 +189,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
 
     if is_p2:
         try:
-            active_authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"])
+            active_authority = active_authority or resolve_active_model_p2_v2(
+                repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"]
+            )
         except Exception as exc:
             raise ValueError(f"active_model_not_assigned: {exc}") from exc
 
@@ -159,9 +206,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         assigned_preprocessing_identity = active_authority["preprocessingIdentity"]
         candidate_registry_sha = active_authority["candidateRegistrySha256"]
         authority_feature_hash = active_authority["featureOrderSha256"]
-        lifecycle_policy_id = active_authority.get("policyId")
-        lifecycle_policy_version = active_authority.get("policyVersion")
-        lifecycle_policy_sha = active_authority.get("policySha256")
+        lifecycle_policy_id = active_authority["lifecyclePolicyId"]
+        lifecycle_policy_version = active_authority["lifecyclePolicyVersion"]
+        lifecycle_policy_sha = active_authority["lifecyclePolicySha256"]
 
         registry, registry_hash = load_and_validate_candidate_registry()
         if registry_hash != candidate_registry_sha:

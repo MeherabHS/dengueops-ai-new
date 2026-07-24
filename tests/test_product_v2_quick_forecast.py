@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / "analytics"))
 from runtime_commit import RuntimeCommitError, atomic_json, commit_runtime_run, sha256_file
 from model_factory import load_and_validate_candidate_registry
 from runtime_quick_forecast import execute
-from runtime_policy import load_and_validate_quick_forecast_policy
+from runtime_policy import canonical_policy_sha256, load_and_validate_quick_forecast_policy
 from runtime_validate import validate
 from runtime_active_model import resolve_active_model_p2_v2, ActiveModelError
 from analytics.runtime_model_lifecycle_commit import commit_lifecycle_action
@@ -53,13 +53,22 @@ def build_ready_workspace(base: Path) -> tuple[Path, str, str]:
     return workspace, result["datasetId"], val_sha
 
 
-def _setup_quick_run_job(runtime_root: Path, workspace_id: str, dataset_id: str, val_sha: str) -> tuple[dict, Path, Path]:
+def _setup_quick_run_job(
+    runtime_root: Path,
+    workspace_id: str,
+    dataset_id: str,
+    val_sha: str,
+    *,
+    authority: dict | None = None,
+    allow_unresolved_authority: bool = False,
+    historical: bool = False,
+) -> tuple[dict, Path, Path]:
     job_id = str(uuid.uuid4())
     run_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     job = {
-        "schemaVersion": "1.0",
+        "schemaVersion": "1.0" if historical else "2.0",
         "jobKind": "quick_forecast",
         "jobId": job_id,
         "runId": run_id,
@@ -73,6 +82,56 @@ def _setup_quick_run_job(runtime_root: Path, workspace_id: str, dataset_id: str,
         "createdAt": now,
         "updatedAt": now
     }
+    if not historical:
+        try:
+            authority = authority or resolve_active_model_p2_v2(
+                repository_root=ROOT, runtime_root=runtime_root
+            )
+        except ActiveModelError:
+            if not allow_unresolved_authority:
+                raise
+            registry, registry_sha = load_and_validate_candidate_registry()
+            candidate = next(item for item in registry["candidates"] if item["model_id"] == "ridge_regression")
+            authority = {
+                "authoritySource": "committed_assignment",
+                "authoritySnapshotSha256": "0" * 64,
+                "assignmentId": str(uuid.uuid4()),
+                "assignmentCommitSha256": "0" * 64,
+                "assignmentAction": "assign_selected_model",
+                "modelId": candidate["model_id"],
+                "modelFamily": candidate["model_family"],
+                "parameterSha256": candidate["parameters_sha256"],
+                "preprocessingIdentity": candidate["preprocessing_identity"],
+                "candidateRegistrySha256": registry_sha,
+                "featureOrderSha256": registry["feature_order_sha256"],
+                "lifecyclePolicyId": "RUNTIME.MODEL_LIFECYCLE.DECISION",
+                "lifecyclePolicyVersion": "p2-v2",
+                "lifecyclePolicySha256": "0" * 64,
+            }
+        policy = json.loads((ROOT / "config/deployments/dhaka_south/quick_forecast_policy.json").read_text())
+        policy_sha = canonical_policy_sha256(policy)
+        job.update({
+            "policyId": policy["policyId"],
+            "policyVersion": policy["policyVersion"],
+            "policySha256": policy_sha,
+            "quickPolicyId": policy["policyId"],
+            "quickPolicyVersion": policy["policyVersion"],
+            "quickPolicySha256": policy_sha,
+            "activeModelAuthoritySource": authority["authoritySource"],
+            "authoritySnapshotSha256": authority["authoritySnapshotSha256"],
+            "assignmentId": authority["assignmentId"],
+            "assignmentCommitSha256": authority["assignmentCommitSha256"],
+            "assignmentAction": authority["assignmentAction"],
+            "resolvedModelId": authority["modelId"],
+            "resolvedModelFamily": authority["modelFamily"],
+            "resolvedModelParameterSha256": authority["parameterSha256"],
+            "resolvedPreprocessingIdentity": authority["preprocessingIdentity"],
+            "resolvedCandidateRegistrySha256": authority["candidateRegistrySha256"],
+            "resolvedFeatureOrderSha256": authority["featureOrderSha256"],
+            "lifecyclePolicyId": authority["lifecyclePolicyId"],
+            "lifecyclePolicyVersion": authority["lifecyclePolicyVersion"],
+            "lifecyclePolicySha256": authority["lifecyclePolicySha256"],
+        })
 
     job_file = runtime_root / "jobs/running" / f"{job_id}.json"
     job_file.parent.mkdir(parents=True, exist_ok=True)
@@ -185,7 +244,8 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
 
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha,
+            allow_unresolved_authority=True,
         )
 
         args = SimpleNamespace(
@@ -212,7 +272,8 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha,
+            allow_unresolved_authority=True,
         )
 
         args = SimpleNamespace(
@@ -231,7 +292,8 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
 
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha,
+            allow_unresolved_authority=True,
         )
 
         args = SimpleNamespace(
@@ -264,13 +326,13 @@ class ProductV2QuickForecastTests(unittest.TestCase):
             staging=str(staging_dir)
         )
 
-        result = execute(args)
-        committed_run = runtime_root / "runs" / job["runId"]
-        forecast_output = json.loads((committed_run / "artifacts/forecast_output.json").read_text(encoding="utf-8"))
-        self.assertEqual(forecast_output["activeModelId"], "ridge_regression")
+        with self.assertRaises(ValueError) as cm:
+            execute(args)
+        self.assertIn("stale_or_incompatible_active_model_authority", str(cm.exception))
 
     def test_quick_forecast_p2_fails_closed_for_baseline_or_diagnostic_active_model(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
 
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
@@ -296,7 +358,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -308,10 +370,11 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             execute(args)
-        self.assertIn("selectable learned candidate", str(cm.exception))
+        self.assertIn("active_model_not_assigned", str(cm.exception))
 
     def test_quick_forecast_p2_fails_closed_when_pointer_tampered(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         pointer["assignmentCommitSha256"] = "0" * 64
@@ -319,7 +382,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -335,6 +398,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
     def test_quick_forecast_p2_fails_closed_when_assignment_record_tampered(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         record_path = runtime_root / "model-assignments" / pointer["assignmentId"] / "artifacts/assignment_record.json"
@@ -344,7 +408,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -360,6 +424,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
     def test_quick_forecast_p2_fails_closed_when_assignment_commit_tampered(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         commit_path = runtime_root / "model-assignments" / pointer["assignmentId"] / "metadata/commit.json"
@@ -369,7 +434,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -385,6 +450,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
     def test_quick_forecast_p2_fails_closed_on_candidate_registry_mismatch(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         pointer["candidateRegistrySha256"] = "0" * 64
@@ -404,7 +470,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -420,6 +486,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
     def test_quick_forecast_p2_fails_closed_on_feature_order_mismatch(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         pointer["featureOrderSha256"] = "0" * 64
@@ -439,7 +506,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -455,6 +522,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
     def test_quick_forecast_p2_fails_closed_on_model_family_mismatch(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         pointer["modelFamily"] = "InvalidFamilyName"
@@ -474,7 +542,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -486,10 +554,11 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             execute(args)
-        self.assertIn("Model family mismatch", str(cm.exception))
+        self.assertIn("active_model_not_assigned", str(cm.exception))
 
     def test_quick_forecast_p2_fails_closed_on_parameter_sha_mismatch(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
         pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         pointer["parameterSha256"] = "0" * 64
@@ -509,7 +578,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, authority=authority
         )
 
         args = SimpleNamespace(
@@ -521,7 +590,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             execute(args)
-        self.assertIn("Parameter SHA mismatch", str(cm.exception))
+        self.assertIn("active_model_not_assigned", str(cm.exception))
 
     def test_quick_forecast_p2_point_only_uncertainty_succeeds_when_exact_calibration_unavailable(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
@@ -683,7 +752,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
 
         job, job_file, staging_dir = _setup_quick_run_job(
-            runtime_root, workspace_dir.name, dataset_id, val_sha
+            runtime_root, workspace_dir.name, dataset_id, val_sha, historical=True
         )
 
         args = SimpleNamespace(

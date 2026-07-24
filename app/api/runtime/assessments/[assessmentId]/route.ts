@@ -18,7 +18,7 @@ import {
   type CommittedAssessmentPolicyIdentity,
 } from "@/lib/runtime/decision-policy";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
-import {resolveActiveModel} from "@/lib/runtime/active-model";
+import {resolveActiveModel,resolveHistoricalActiveModelP2V1} from "@/lib/runtime/active-model";
 
 export const runtime = "nodejs";
 
@@ -29,7 +29,6 @@ export async function GET(
   try {
     const { assessmentId } = await context.params;
     const config = loadRuntimeConfig(false);
-    const activeModel=await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,config.defaultDeploymentId);
     const evidence = await readVerifiedAssessment(config, assessmentId);
     const summary = evidence.summary as Omit<
       DatasetAssessmentResultSuccess,
@@ -50,7 +49,14 @@ export async function GET(
       );
 
     const assessmentPolicy = evidence.rolling.assessmentPolicy as {policyId:string;policyVersion:string;policySha256:string};
-    const isPhaseTwo = assessmentPolicy.policyVersion === "p2-v1";
+    const isPhaseTwo = assessmentPolicy.policyVersion === "p2-v1" || assessmentPolicy.policyVersion === "p2-v2";
+    const activeModel=assessmentPolicy.policyVersion==="p2-v2"
+      ? await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,summary.deploymentId)
+      : await resolveHistoricalActiveModelP2V1({
+          repositoryRoot:config.repositoryRoot,
+          runtimeRoot:config.runtimeRoot,
+          deploymentId:summary.deploymentId,
+        });
     const policyIdentity = {
       schemaVersion: isPhaseTwo ? "2.0" : "1.0",
       policyId: assessmentPolicy.policyId,

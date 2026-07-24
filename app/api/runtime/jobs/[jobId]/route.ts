@@ -26,7 +26,16 @@ export async function GET(_request: Request, context: RouteContext<"/api/runtime
       ? {ok:true,jobKind:"degradation_evidence",jobId:job.jobId,evidenceId:job.evidenceId,workflowMode:job.workflowMode,status:job.status,progress:job.progress,createdAt:job.createdAt,startedAt:job.startedAt,updatedAt:job.updatedAt,completedAt:job.completedAt,retryable:false,error:job.error,committedEvidenceId:job.committedEvidenceId}
       : job.jobKind === "model_lifecycle"
       ? {ok:true,jobKind:"model_lifecycle",jobId:job.jobId,lifecycleDecisionId:job.lifecycleDecisionId,workflowMode:job.workflowMode,action:job.action,status:job.status,progress:job.progress,createdAt:job.createdAt,startedAt:job.startedAt,updatedAt:job.updatedAt,completedAt:job.completedAt,retryable:false,error:job.error,committedLifecycleDecisionId:job.committedLifecycleDecisionId}
-      : { ok: true, jobKind: "quick_forecast", jobId: job.jobId, runId: job.runId, status: job.status, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: job.error?.retryable ?? false, error: job.error, committedRunId: job.committedRunId };
+      : { ok: true, jobKind: "quick_forecast", jobId: job.jobId, runId: job.runId, status: job.status, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: job.error?.retryable ?? false, error: job.error, committedRunId: job.committedRunId,
+          ...(job.schemaVersion==="2.0"&&"assignmentAction" in job?{activeModelAuthority:{
+            deploymentId:job.deploymentId,authoritySource:job.activeModelAuthoritySource,modelId:job.resolvedModelId,
+            modelFamily:job.resolvedModelFamily,parameterSha256:job.resolvedModelParameterSha256,
+            preprocessingIdentity:job.resolvedPreprocessingIdentity,candidateRegistrySha256:job.resolvedCandidateRegistrySha256,
+            featureOrderSha256:job.resolvedFeatureOrderSha256,assignmentId:job.assignmentId,
+            assignmentCommitSha256:job.assignmentCommitSha256,assignmentAction:job.assignmentAction,
+            lifecyclePolicyId:job.lifecyclePolicyId,lifecyclePolicyVersion:job.lifecyclePolicyVersion,
+            lifecyclePolicySha256:job.lifecyclePolicySha256,authoritySnapshotSha256:job.authoritySnapshotSha256,
+          }}:{}) };
     return Response.json(response, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const failure = errorResponse(error, randomUUID());

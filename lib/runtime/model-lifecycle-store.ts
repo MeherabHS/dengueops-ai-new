@@ -2,7 +2,7 @@ import "server-only";
 import {createHash} from "node:crypto";
 import {readdir,readFile} from "node:fs/promises";
 import path from "node:path";
-import {resolveActiveModel} from "./active-model";
+import {resolveHistoricalActiveModelP2V1} from "./active-model";
 import {validateStrictJsonSchema} from "./strict-json-schema";
 import type {LifecycleAction,LifecycleAcknowledgements,LifecycleDecision,LifecycleDecisionCommit,PromotionLifecycleEvidence,VerifiedContextEvidence} from "./contracts";
 
@@ -11,7 +11,7 @@ async function schema(repositoryRoot:string,name:string){return JSON.parse(await
 async function verifiedDecision(repositoryRoot:string,bundle:string):Promise<{decision:LifecycleDecision;commit:LifecycleDecisionCommit}>{const decisionBytes=await readFile(path.join(bundle,"artifacts/lifecycle_decision.json")),commitBytes=await readFile(path.join(bundle,"metadata/lifecycle_decision_commit.json")),decision=JSON.parse(decisionBytes.toString("utf8")),commit=JSON.parse(commitBytes.toString("utf8"));validateStrictJsonSchema(await schema(repositoryRoot,"runtime_model_lifecycle_decision.schema.json"),decision);validateStrictJsonSchema(await schema(repositoryRoot,"runtime_model_lifecycle_decision_commit.schema.json"),commit);if(commit.lifecycleDecisionSha256!==sha(decisionBytes)||commit.lifecycleDecisionId!==decision.lifecycleDecisionId||commit.action!==decision.action)throw new Error("lifecycle_decision_commit_mismatch");return{decision:decision as unknown as LifecycleDecision,commit:commit as unknown as LifecycleDecisionCommit}}
 
 export async function readModelLifecycleSummary(repositoryRoot:string,runtimeRoot:string,deploymentId="dhaka_south"){
- const authority=await resolveActiveModel(repositoryRoot,runtimeRoot,deploymentId),historyRoot=path.join(runtimeRoot,"model-lifecycle"),history:Array<{lifecycleDecisionId:string;action:LifecycleAction;createdAt:string;modelIdentityChanged:boolean;assignmentProduced:boolean}>=[];
+ const authority=await resolveHistoricalActiveModelP2V1({repositoryRoot,runtimeRoot,deploymentId}),historyRoot=path.join(runtimeRoot,"model-lifecycle"),history:Array<{lifecycleDecisionId:string;action:LifecycleAction;createdAt:string;modelIdentityChanged:boolean;assignmentProduced:boolean}>=[];
  try{for(const name of await readdir(historyRoot)){const{decision}=await verifiedDecision(repositoryRoot,path.join(historyRoot,name));history.push({lifecycleDecisionId:decision.lifecycleDecisionId,action:decision.action,createdAt:decision.createdAt,modelIdentityChanged:decision.modelIdentityChanged,assignmentProduced:decision.resultingAssignmentId!==null})}}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error}
  history.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));return{authority,history:history.slice(0,20),rollbackAvailable:authority.authoritySource==="committed_assignment"&&authority.priorAssignmentId!=null,humanGoverned:true,automaticActionAllowed:false,materialWorseningStatus:"not_governed" as const,statisticalSufficiencyStatus:"not_governed" as const,modelQualificationStatus:"not_governed" as const};
 }

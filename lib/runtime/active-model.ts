@@ -18,7 +18,7 @@ import {
 import { validateStrictJsonSchema } from "./strict-json-schema";
 
 
-import type { ActiveModelAuthority } from "./contracts";
+import type { ActiveModelAuthority, CurrentActiveModelAuthority } from "./contracts";
 
 export type { ActiveModelAuthority } from "./contracts";
 
@@ -210,84 +210,150 @@ export async function resolveActiveModelP2V2(params: {
   repositoryRoot: string;
   runtimeRoot: string;
   deploymentId?: string;
-}): Promise<Record<string, any>> {
+}): Promise<CurrentActiveModelAuthority> {
   const deploymentId = params.deploymentId || "dhaka_south";
-  const policy = await loadModelLifecyclePolicy({
-    repositoryRoot: params.repositoryRoot,
-    deploymentId,
-    version: "p2-v2"
-  });
-
-  const pointerPath = path.join(params.runtimeRoot, "deployments", deploymentId, "model-assignment", "latest.json");
-  let pointerBytes: Buffer;
-  let pointer: Record<string, any>;
-
   try {
-    pointerBytes = await readFile(pointerPath);
-    pointer = JSON.parse(pointerBytes.toString("utf8"));
-  } catch (err: any) {
-    if (err.code === "ENOENT") {
-      throw new RuntimePublicError("active_model_not_assigned", "storage", "No active model assigned on p2-v2 deployment.", 404);
+    const policy = await loadModelLifecyclePolicy({
+      repositoryRoot: params.repositoryRoot,
+      deploymentId,
+      version: "p2-v2"
+    });
+    const pointerPath = path.join(params.runtimeRoot, "deployments", deploymentId, "model-assignment", "latest.json");
+    let pointerFile: JsonFile;
+    try {
+      pointerFile = await safeJson(pointerPath, params.runtimeRoot);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        throw new RuntimePublicError("active_model_not_assigned", "storage", "No active model assigned on p2-v2 deployment.", 404);
+      }
+      throw error;
     }
-    throw err;
+    const pointer = pointerFile.value;
+    await validateArtifact(params.repositoryRoot, "runtime_model_assignment_latest.schema.json", pointer);
+    if (
+      pointer.schemaVersion !== "2.0" ||
+      pointer.deploymentId !== deploymentId ||
+      pointer.policyId !== policy.policyId ||
+      pointer.policyVersion !== policy.policyVersion ||
+      pointer.policySha256 !== policy.policySha256 ||
+      pointer.assignmentAction !== "assign_selected_model" ||
+      pointer.activeModelAuthority !== "committed_assignment" ||
+      pointer.automaticAction !== false
+    ) throw new Error("pointer_identity_mismatch");
+    if (String(pointer.assignmentPath ?? "").includes("model-lifecycle")) throw new Error("cross_version_pointer");
+    if ((pointer.priorAssignmentId === null) !== (pointer.priorAssignmentCommitSha256 === null)) {
+      throw new Error("half_null_prior_assignment");
+    }
+
+    const assignmentId = String(pointer.assignmentId || "");
+    if (!assignmentId || assignmentId.includes("/") || assignmentId.includes("\\") || assignmentId.includes("..")) {
+      throw new Error("invalid_assignment_id");
+    }
+    const assignmentDir = path.join(params.runtimeRoot, "model-assignments", assignmentId);
+    await rejectSymlinkPath(params.runtimeRoot, assignmentDir);
+    const [recordFile, commitFile] = await Promise.all([
+      safeJson(path.join(assignmentDir, "artifacts", "assignment_record.json"), params.runtimeRoot),
+      safeJson(path.join(assignmentDir, "metadata", "commit.json"), params.runtimeRoot),
+    ]);
+    const record = recordFile.value;
+    const commit = commitFile.value;
+    const assignmentCommitSha256 = sha(commitFile.bytes);
+    if (
+      commit.schemaVersion !== "2.0" ||
+      commit.assignmentId !== assignmentId ||
+      commit.assignmentRecordSha256 !== sha(recordFile.bytes) ||
+      pointer.assignmentCommitSha256 !== assignmentCommitSha256
+    ) throw new Error("assignment_commit_mismatch");
+    if (
+      record.schemaVersion !== "2.0" ||
+      record.deploymentId !== deploymentId ||
+      record.assignmentId !== assignmentId ||
+      record.assignmentAction !== pointer.assignmentAction ||
+      record.priorAssignmentId !== pointer.priorAssignmentId ||
+      record.priorAssignmentCommitSha256 !== pointer.priorAssignmentCommitSha256
+    ) throw new Error("assignment_record_identity_mismatch");
+    const pointerRecordPairs: Array<[string, string]> = [
+      ["assignedModelId", "modelId"],
+      ["modelFamily", "modelFamily"],
+      ["parameterSha256", "parameterSha256"],
+      ["candidateRegistrySha256", "candidateRegistrySha256"],
+      ["featureOrderSha256", "featureOrderSha256"],
+    ];
+    if (pointerRecordPairs.some(([left, right]) => pointer[left] !== record[right])) {
+      throw new Error("pointer_record_mismatch");
+    }
+
+    const registryFile = await safeJson(path.join(params.repositoryRoot, "config", "candidate_models.json"));
+    await validateArtifact(params.repositoryRoot, "candidate_models.schema.json", registryFile.value);
+    const registry = registryFile.value;
+    const registrySha = sha(registryFile.bytes);
+    if (
+      registrySha !== policy.candidateRegistrySha256 ||
+      registrySha !== pointer.candidateRegistrySha256 ||
+      registrySha !== record.candidateRegistrySha256 ||
+      registry.feature_order_sha256 !== policy.featureOrderSha256 ||
+      registry.feature_order_sha256 !== pointer.featureOrderSha256 ||
+      registry.feature_order_sha256 !== record.featureOrderSha256
+    ) throw new Error("candidate_registry_identity_mismatch");
+    const candidate = (registry.candidates as JsonObject[]).find(item => item.model_id === record.modelId);
+    if (
+      !candidate ||
+      candidate.candidate_class !== "learned_model" ||
+      candidate.selection_role !== "learned_selectable" ||
+      candidate.selectable !== true ||
+      candidate.model_family !== record.modelFamily ||
+      candidate.parameters_sha256 !== record.parameterSha256 ||
+      candidate.preprocessing_identity !== record.preprocessingIdentity ||
+      candidate.feature_order_sha256 !== record.featureOrderSha256
+    ) throw new Error("candidate_assignment_mismatch");
+
+    const seen = new Set([assignmentId]);
+    let current = record;
+    while (current.priorAssignmentId) {
+      const priorId = String(current.priorAssignmentId);
+      const priorSha = String(current.priorAssignmentCommitSha256 ?? "");
+      if (!priorSha || seen.has(priorId) || priorId.includes("/") || priorId.includes("\\") || priorId.includes("..")) {
+        throw new Error("invalid_assignment_chain");
+      }
+      seen.add(priorId);
+      const priorDir = path.join(params.runtimeRoot, "model-assignments", priorId);
+      const [priorRecord, priorCommit] = await Promise.all([
+        safeJson(path.join(priorDir, "artifacts", "assignment_record.json"), params.runtimeRoot),
+        safeJson(path.join(priorDir, "metadata", "commit.json"), params.runtimeRoot),
+      ]);
+      if (
+        sha(priorCommit.bytes) !== priorSha ||
+        priorCommit.value.schemaVersion !== "2.0" ||
+        priorCommit.value.assignmentId !== priorId ||
+        priorCommit.value.assignmentRecordSha256 !== sha(priorRecord.bytes) ||
+        priorRecord.value.schemaVersion !== "2.0" ||
+        priorRecord.value.assignmentId !== priorId ||
+        priorRecord.value.deploymentId !== deploymentId
+      ) throw new Error("invalid_prior_assignment");
+      current = priorRecord.value;
+    }
+
+    return {
+      deploymentId,
+      authoritySource: "committed_assignment",
+      modelId: record.modelId,
+      modelFamily: record.modelFamily,
+      parameterSha256: record.parameterSha256,
+      preprocessingIdentity: record.preprocessingIdentity,
+      candidateRegistrySha256: record.candidateRegistrySha256,
+      featureOrderSha256: record.featureOrderSha256,
+      assignmentId,
+      assignmentCommitSha256,
+      assignmentAction: record.assignmentAction,
+      lifecyclePolicyId: policy.policyId,
+      lifecyclePolicyVersion: policy.policyVersion,
+      lifecyclePolicySha256: policy.policySha256,
+      authoritySnapshotSha256: sha(pointerFile.bytes),
+    };
+  } catch (error) {
+    if (error instanceof RuntimePublicError && error.code === "active_model_not_assigned") throw error;
+    return integrity();
   }
-
-
-  if (pointer.schemaVersion !== "2.0") {
-    throw new RuntimePublicError("active_model_invalid", "validation", "Invalid pointer schema version for p2-v2 lifecycle.", 400);
-  }
-
-  if (pointer.assignmentPath && String(pointer.assignmentPath).includes("model-lifecycle")) {
-    throw new RuntimePublicError("active_model_invalid", "validation", "p2-v2 pointer cannot reference model-lifecycle directory.", 400);
-  }
-
-  const assignmentId = String(pointer.assignmentId || "");
-  if (!assignmentId || assignmentId.includes("/") || assignmentId.includes("\\") || assignmentId.includes("..")) {
-    throw new RuntimePublicError("active_model_invalid", "validation", "Invalid assignmentId in pointer.", 400);
-  }
-
-  const assignmentDir = path.join(params.runtimeRoot, "model-assignments", assignmentId);
-  await rejectSymlinkPath(params.runtimeRoot, assignmentDir);
-
-  const recordPath = path.join(assignmentDir, "artifacts", "assignment_record.json");
-  const commitPath = path.join(assignmentDir, "metadata", "commit.json");
-
-  const [recordBytes, commitBytes] = await Promise.all([
-    readFile(recordPath),
-    readFile(commitPath)
-  ]);
-
-  const record = JSON.parse(recordBytes.toString("utf8"));
-  const commit = JSON.parse(commitBytes.toString("utf8"));
-
-  if (sha(recordBytes) !== commit.assignmentRecordSha256) {
-    throw new RuntimePublicError("active_model_invalid", "validation", "Assignment record hash mismatch against commit.", 400);
-  }
-
-  if (pointer.commitSha256 !== sha(commitBytes)) {
-    throw new RuntimePublicError("active_model_invalid", "validation", "Pointer commit hash mismatch.", 400);
-  }
-
-  return {
-    authoritySource: "committed_assignment",
-    assignmentId,
-    modelId: record.modelId,
-    modelFamily: record.modelFamily,
-    parameterSha256: record.parameterSha256,
-    preprocessingIdentity: record.preprocessingIdentity,
-    candidateRegistrySha256: record.candidateRegistrySha256,
-    featureOrderSha256: record.featureOrderSha256,
-    foldPlanSha256: record.foldPlanSha256,
-    sourceAssessmentId: record.sourceAssessmentId,
-    sourceDecisionId: record.sourceDecisionId,
-    sourceAuthorizationId: record.sourceAuthorizationId,
-    sourceApprovedForecastRunId: record.sourceApprovedForecastRunId,
-    policyId: policy.policy_id || policy.policyId,
-    policyVersion: policy.policy_version || policy.policyVersion,
-    policySha256: sha(commitBytes),
-    assignedAt: record.assignedAt,
-    deploymentModelAdopted: true
-  };
 }
 
 export async function resolveHistoricalActiveModelP2V1(params: {
@@ -437,7 +503,7 @@ export async function resolveActiveModel(
   repositoryRoot: string,
   runtimeRoot: string,
   deploymentId = "dhaka_south",
-): Promise<Record<string, any>> {
+): Promise<CurrentActiveModelAuthority> {
   return resolveActiveModelP2V2({
     repositoryRoot,
     runtimeRoot,

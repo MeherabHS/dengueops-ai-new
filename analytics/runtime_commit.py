@@ -456,8 +456,8 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
             "activeModelId": authority["modelId"], "modelFamily": authority["modelFamily"],
             "parameterSha256": authority["parameterSha256"], "preprocessingIdentity": authority["preprocessingIdentity"],
             "candidateRegistrySha256": authority["candidateRegistrySha256"], "featureOrderSha256": authority["featureOrderSha256"],
-            "lifecyclePolicyId": authority["policyId"], "lifecyclePolicyVersion": authority["policyVersion"],
-            "lifecyclePolicySha256": authority["policySha256"],
+            "lifecyclePolicyId": authority["lifecyclePolicyId"], "lifecyclePolicyVersion": authority["lifecyclePolicyVersion"],
+            "lifecyclePolicySha256": authority["lifecyclePolicySha256"],
         }
         if any(run.get(key) != value for key, value in expected_authority.items()):
             raise RuntimeCommitError("active_model_authority_changed_before_commit")
@@ -497,14 +497,16 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
         for artifact_authority in artifact_authorities:
             if any(artifact_authority.get(key) != expected_authority[key] for key in artifact_authority):
                 raise RuntimeCommitError("P2 artifact authority identity mismatch.")
-        lifecycle_policy = {"id": authority["policyId"], "version": authority["policyVersion"], "sha256": authority["policySha256"]}
+        lifecycle_policy = {"id": authority["lifecyclePolicyId"], "version": authority["lifecyclePolicyVersion"], "sha256": authority["lifecyclePolicySha256"]}
         if card.get("lifecyclePolicy") != lifecycle_policy or dashboard.get("evidence", {}).get("lifecyclePolicy") != lifecycle_policy:
             raise RuntimeCommitError("P2 lifecycle policy provenance mismatch.")
         if forecast.get("deploymentModelAdopted") is not False or card.get("deploymentModelAdopted") is not False:
             raise RuntimeCommitError("One-run Quick Forecast cannot adopt a deployment model.")
     elif "authoritySnapshotSha256" in job:
-        from runtime_active_model import resolve_active_model
-        authority = resolve_active_model(ROOT, runtime_root, job["deploymentId"])
+        from runtime_active_model import resolve_historical_active_model_p2_v1
+        authority = resolve_historical_active_model_p2_v1(
+            repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"]
+        )
         if authority["authoritySnapshotSha256"] != job["authoritySnapshotSha256"] or authority["modelId"] != job.get("resolvedModelId") or authority["modelFamily"] != job.get("resolvedModelFamily") or authority["parameterSha256"] != job.get("resolvedModelParameterSha256") or authority["featureOrderSha256"] != job.get("resolvedFeatureOrderSha256") or authority["candidateRegistrySha256"] != job.get("resolvedCandidateRegistrySha256") or authority["quickPolicySha256"] != job.get("quickPolicySha256"):
             raise RuntimeCommitError("active_model_authority_changed_before_commit")
     identities = (job["runId"], job["jobId"], job["datasetId"], job["deploymentId"])

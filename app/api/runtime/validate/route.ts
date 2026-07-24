@@ -217,7 +217,7 @@ export async function POST(request: Request): Promise<Response> {
       counts: validation.counts,
       issues: validation.issues,
       eligibility: validation.eligibility,
-      activeModelAuthority:(({authoritySource,authoritySnapshotSha256,modelId,bootstrapRequired,quickForecastCompatible})=>({authoritySource,authoritySnapshotSha256,modelId,bootstrapRequired,quickForecastCompatible}))(await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,validation.deploymentId)),
+      activeModelAuthority:await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,validation.deploymentId),
     };
     return Response.json(response, { status: validation.status === "ready" ? 200 : 422 });
   } catch (error) {

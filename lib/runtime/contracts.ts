@@ -128,7 +128,7 @@ export interface RuntimeValidationResponseSuccess {
   };
   issues: ValidationIssue[];
   eligibility: RuntimeEligibility;
-  activeModelAuthority?:{authoritySource:"committed_assignment"|"historical_profile_fallback_pending_explicit_bootstrap";authoritySnapshotSha256:string;modelId:"random_forest";bootstrapRequired:boolean;quickForecastCompatible:true};
+  activeModelAuthority?:CurrentActiveModelAuthority;
 }
 
 export interface RuntimeErrorResponse {
@@ -183,6 +183,7 @@ interface RuntimeJobBase {
 }
 
 export interface HistoricalQuickForecastJob extends RuntimeJobBase {
+    schemaVersion: "1.0";
     jobKind?: "quick_forecast";
     runId: string;
     workflowMode: "quick_forecast";
@@ -200,7 +201,34 @@ interface AssignmentAwareQuickBase extends HistoricalQuickForecastJob {
 export interface CommittedAssignmentQuickForecastJob extends AssignmentAwareQuickBase {activeModelAuthoritySource:"committed_assignment";assignmentPointerSha256:string;assignmentId:string;assignmentCommitSha256:string}
 export interface HistoricalProfileFallbackQuickForecastJob extends AssignmentAwareQuickBase {activeModelAuthoritySource:"historical_profile_fallback_pending_explicit_bootstrap";historicalProfileSha256:string}
 export type AssignmentAwareQuickForecastJob=CommittedAssignmentQuickForecastJob|HistoricalProfileFallbackQuickForecastJob;
-export type QuickForecastJobRecord=HistoricalQuickForecastJob|AssignmentAwareQuickForecastJob;
+export interface CurrentQuickForecastJob extends Omit<RuntimeJobBase,"schemaVersion"> {
+  schemaVersion:"2.0";
+  jobKind:"quick_forecast";
+  runId:string;
+  workflowMode:"quick_forecast";
+  policyId:"RUNTIME.QUICK_FORECAST.COMPATIBILITY";
+  policyVersion:"p2-v1";
+  policySha256:string;
+  committedRunId:string|null;
+  activeModelAuthoritySource:"committed_assignment";
+  authoritySnapshotSha256:string;
+  assignmentId:string;
+  assignmentCommitSha256:string;
+  assignmentAction:"assign_selected_model";
+  resolvedModelId:RuntimeCandidateId;
+  resolvedModelFamily:string;
+  resolvedModelParameterSha256:string;
+  resolvedPreprocessingIdentity:string;
+  resolvedCandidateRegistrySha256:string;
+  resolvedFeatureOrderSha256:string;
+  lifecyclePolicyId:"RUNTIME.MODEL_LIFECYCLE.DECISION";
+  lifecyclePolicyVersion:"p2-v2";
+  lifecyclePolicySha256:string;
+  quickPolicyId:"RUNTIME.QUICK_FORECAST.COMPATIBILITY";
+  quickPolicyVersion:"p2-v1";
+  quickPolicySha256:string;
+}
+export type QuickForecastJobRecord=HistoricalQuickForecastJob|AssignmentAwareQuickForecastJob|CurrentQuickForecastJob;
 
 export type LifecycleAction="bootstrap_historical_profile"|"retain_current_model"|"promote_selected_model"|"rollback_previous_assignment"|"defer"|"reject";
 export interface LifecycleAcknowledgements{manualActionAcknowledged:true;statisticalSufficiencyNotGovernedAcknowledged:true;materialWorseningNotClassifiedAcknowledged:true;evidenceDoesNotProveSuperiorityAcknowledged:true;quickCompatibleRandomForestOnlyAcknowledged:true}
@@ -305,13 +333,30 @@ export type ModelAssignmentLatest=(ModelAssignmentLatestBase&{assignmentAction:"
 export type HistoricalProfileActiveModelAuthority={authoritySource:"historical_profile_fallback_pending_explicit_bootstrap";authoritySnapshotSha256:string;assignmentPointerSha256:null;assignmentId:null;assignmentCommitSha256:null;modelId:"random_forest";modelFamily:"RandomForestRegressor";parameterSha256:string;featureOrderSha256:string;candidateRegistrySha256:string;quickPolicyId:"RUNTIME.QUICK_FORECAST.COMPATIBILITY";quickPolicyVersion:"p1.4f-v1";quickPolicySha256:string;lifecyclePolicyId:"RUNTIME.MODEL_LIFECYCLE.DECISION";lifecyclePolicyVersion:"p2-v1";lifecyclePolicySha256:string;profileSha256:string;bootstrapRequired:true;quickForecastCompatible:true};
 export type CommittedAssignmentActiveModelAuthority={authoritySource:"committed_assignment";authoritySnapshotSha256:string;assignmentPointerSha256:string;assignmentId:string;assignmentCommitSha256:string;assignmentAction:"bootstrap"|"promote"|"rollback";effectiveAt:string;priorAssignmentId:string|null;modelId:"random_forest";modelFamily:"RandomForestRegressor";parameterSha256:string;featureOrderSha256:string;candidateRegistrySha256:string;quickPolicyId:"RUNTIME.QUICK_FORECAST.COMPATIBILITY";quickPolicyVersion:"p1.4f-v1";quickPolicySha256:string;lifecyclePolicyId:"RUNTIME.MODEL_LIFECYCLE.DECISION";lifecyclePolicyVersion:"p2-v1";lifecyclePolicySha256:string;profileSha256:null;bootstrapRequired:false;quickForecastCompatible:true};
 export type ActiveModelAuthority=HistoricalProfileActiveModelAuthority|CommittedAssignmentActiveModelAuthority;
+export type CurrentActiveModelAuthority={
+  deploymentId:string;
+  authoritySource:"committed_assignment";
+  modelId:RuntimeCandidateId;
+  modelFamily:string;
+  parameterSha256:string;
+  preprocessingIdentity:string;
+  candidateRegistrySha256:string;
+  featureOrderSha256:string;
+  assignmentId:string;
+  assignmentCommitSha256:string;
+  assignmentAction:"assign_selected_model";
+  lifecyclePolicyId:"RUNTIME.MODEL_LIFECYCLE.DECISION";
+  lifecyclePolicyVersion:"p2-v2";
+  lifecyclePolicySha256:string;
+  authoritySnapshotSha256:string;
+};
 export type ModelLifecycleJobStatusResponse={ok:true;jobKind:"model_lifecycle";jobId:string;lifecycleDecisionId:string;workflowMode:"model_lifecycle";action:LifecycleAction;status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedLifecycleDecisionId:string|null};
 export type ModelLifecycleResponse={ok:true;authority:ActiveModelAuthority;history:Array<{lifecycleDecisionId:string;action:LifecycleAction;createdAt:string;modelIdentityChanged:boolean;assignmentProduced:boolean}>;rollbackAvailable:boolean;humanGoverned:true;automaticActionAllowed:false;materialWorseningStatus:"not_governed";statisticalSufficiencyStatus:"not_governed";modelQualificationStatus:"not_governed"}|RuntimeErrorResponse;
 
 export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord | ForecastOutcomeJobRecord | DegradationEvidenceJobRecord | ModelLifecycleJobRecord;
 
 export type StartQuickForecastResponse =
-  | { ok: true; jobId: string; runId: string; status: "queued"; statusUrl: string }
+  | { ok: true; jobId: string; runId: string; status: "queued"; statusUrl: string; activeModelAuthority:CurrentActiveModelAuthority }
   | RuntimeErrorResponse;
 
 export type StartAssessmentResponse =
@@ -319,7 +364,7 @@ export type StartAssessmentResponse =
   | RuntimeErrorResponse;
 
 export type JobStatusResponse =
-  | ({ ok: true; jobKind: "quick_forecast"; jobId: string; runId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null })
+  | ({ ok: true; jobKind: "quick_forecast"; jobId: string; runId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null; activeModelAuthority?:CurrentActiveModelAuthority })
   | ({ ok: true; jobKind: "dataset_assessment"; jobId: string; assessmentId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedAssessmentId: string | null })
   | ({ ok: true; jobKind: "approved_forecast"; jobId: string; runId: string; decisionId: string; assessmentId: string; authorizationId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null })
   | ({ ok:true; jobKind:"forecast_outcome"; jobId:string; outcomeId:string; workflowMode:"forecast_outcome_monitoring"; status:RuntimeJobStatus; progress:string; createdAt:string; startedAt:string|null; updatedAt:string; completedAt:string|null; retryable:boolean; error:RuntimeJobRecord["error"]; committedOutcomeId:string|null })
@@ -378,7 +423,7 @@ export interface AssessmentWorkflowProjection {
   assessmentPolicy: { policyId: string; policyVersion: string; policySha256: string };
   target: "target_cases_next_2w";
   horizonWeeks: 2;
-  currentApprovedModelId: "random_forest";
+  currentApprovedModelId: RuntimeCandidateId;
   currentApprovedModelFamily: string;
   candidates: AssessmentCandidateProjection[];
   technicalWinnerModelId: RuntimeCandidateId | null;
