@@ -15,6 +15,7 @@ class ForecastOutcomePolicyTests(unittest.TestCase):
         self.assertEqual(digest,policy["policy_sha256"])
         self.assertEqual(digest,canonical_policy_sha256(policy))
         self.assertEqual(set(policy["source_families"]),{"quick_forecast_p1","approved_forecast_p1","approved_forecast_p2"})
+        self.assertNotIn("quick_forecast_p2",policy["source_families"])
         self.assertFalse(policy["duplicate_rule"]["corrections_allowed"])
         self.assertIn("forecast_latest_pointer_update",policy["prohibited_actions"])
 

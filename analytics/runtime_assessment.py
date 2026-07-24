@@ -35,7 +35,7 @@ from runtime_assessment_policy import (
     load_and_validate_assessment_policy,
     select_planned_validation_indexes,
 )
-from runtime_commit import atomic_json, sha256_file
+from runtime_commit import atomic_json, patch_running_job, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
 
@@ -101,7 +101,11 @@ def _approximated(frame: pd.DataFrame) -> bool | None:
 def _update_job(path: Path, job: dict[str, Any], **changes: Any) -> None:
     job.update(changes)
     job["updatedAt"] = _now()
-    atomic_json(path, job)
+    patch_running_job(
+        path,
+        {**changes, "updatedAt": job["updatedAt"]},
+        expected_job_id=str(job["jobId"]),
+    )
 
 
 def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tuple[tuple[dict[str, Any], ...], str]:
@@ -561,7 +565,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     logs = staging / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     (logs / "events.jsonl").write_text(json.dumps({"timestamp": _now(), "eventType": "assessment_evidence_ready", "assessmentId": job["assessmentId"]}) + "\n", encoding="utf-8")
-    _update_job(job_path, job, status="committing", progress="committing_assessment")
+    _update_job(job_path, job, progress="committing_assessment")
     committed = commit_runtime_assessment(runtime_root, staging, job)
     return {"assessmentId": job["assessmentId"], "technicalWinnerModelId": winner, "foldPlanSha256": plan_hash, "committed": True, "commit": committed["commit"]}
 

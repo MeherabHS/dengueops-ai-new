@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from jsonschema import Draft202012Validator, FormatChecker
 from forecast_outcome_metrics import calculate_period_completion, evaluate_outcome
-from runtime_commit import atomic_json, sha256_file
+from runtime_commit import atomic_json, patch_running_job, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_forecast_outcome_commit import ForecastOutcomeCommitError, commit_forecast_outcome
 from runtime_forecast_outcome_policy import load_and_validate_forecast_outcome_policy
@@ -20,7 +20,9 @@ def _json(path:Path)->dict[str,Any]:
 def _schema(value:dict[str,Any],name:str)->None:
     schema=_json(ROOT/"config"/name);errors=sorted(Draft202012Validator(schema,format_checker=FormatChecker()).iter_errors(value),key=lambda e:list(e.path))
     if errors:raise ValueError(f"{name}: {errors[0].message}")
-def _update_job(path:Path,job:dict[str,Any],progress:str)->None:job.update(progress=progress,updatedAt=_now());atomic_json(path,job)
+def _update_job(path:Path,job:dict[str,Any],progress:str)->None:
+    updated_at=_now();job.update(progress=progress,updatedAt=updated_at)
+    patch_running_job(path,{"progress":progress,"updatedAt":updated_at},expected_job_id=str(job["jobId"]))
 
 def _p2_source_evidence(bundle:dict[str,Any])->dict[str,Any]:
     hashes=bundle["commit"]["artifactHashes"]

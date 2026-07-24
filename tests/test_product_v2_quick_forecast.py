@@ -16,7 +16,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analytics"))
 
-from runtime_commit import atomic_json, sha256_file
+from runtime_commit import RuntimeCommitError, atomic_json, commit_runtime_run, sha256_file
+from model_factory import load_and_validate_candidate_registry
 from runtime_quick_forecast import execute
 from runtime_policy import load_and_validate_quick_forecast_policy
 from runtime_validate import validate
@@ -121,6 +122,8 @@ class ProductV2QuickForecastTests(unittest.TestCase):
             "extra_trees",
             "hist_gradient_boosting"
         ]
+        registry, registry_sha = load_and_validate_candidate_registry()
+        registry_by_id = {candidate["model_id"]: candidate for candidate in registry["candidates"]}
 
         for model_id in learned_candidates:
             with self.subTest(model_id=model_id):
@@ -146,16 +149,34 @@ class ProductV2QuickForecastTests(unittest.TestCase):
                 forecast_output = json.loads((committed_run / "artifacts/forecast_output.json").read_text(encoding="utf-8"))
                 model_card = json.loads((committed_run / "artifacts/model_card.json").read_text(encoding="utf-8"))
                 uncertainty = json.loads((committed_run / "artifacts/forecast_uncertainty.json").read_text(encoding="utf-8"))
+                calibration = json.loads((committed_run / "artifacts/forecast_calibration.json").read_text(encoding="utf-8"))
+                run_record = json.loads((committed_run / "metadata/run.json").read_text(encoding="utf-8"))
+                candidate = registry_by_id[model_id]
 
                 self.assertEqual(forecast_output["activeModelId"], model_id)
                 self.assertEqual(forecast_output["sourceFamily"], "quick_forecast_p2")
-                self.assertEqual(forecast_output["policyVersion"], "p2-v1")
-                self.assertEqual(forecast_output["policyId"], "RUNTIME.QUICK_FORECAST.COMPATIBILITY")
-                self.assertEqual(forecast_output["policySha256"], "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e")
+                self.assertEqual(forecast_output["policy"]["version"], "p2-v1")
+                self.assertEqual(forecast_output["policy"]["id"], "RUNTIME.QUICK_FORECAST.COMPATIBILITY")
+                self.assertEqual(forecast_output["policy"]["sha256"], "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e")
                 self.assertEqual(model_card["model"]["id"], model_id)
                 self.assertEqual(model_card["sourceFamily"], "quick_forecast_p2")
                 self.assertEqual(uncertainty["activeModelId"], model_id)
                 self.assertEqual(uncertainty["sourceFamily"], "quick_forecast_p2")
+                for artifact in (forecast_output, uncertainty, calibration, model_card, run_record):
+                    self.assertEqual(artifact["schemaVersion"], "2.0")
+                self.assertEqual(run_record["modelFamily"], candidate["model_family"])
+                self.assertEqual(run_record["parameterSha256"], candidate["parameters_sha256"])
+                self.assertEqual(run_record["preprocessingIdentity"], candidate["preprocessing_identity"])
+                self.assertEqual(run_record["candidateRegistrySha256"], registry_sha)
+                self.assertEqual(run_record["featureOrderSha256"], candidate["feature_order_sha256"])
+                if model_id == "random_forest":
+                    self.assertEqual(calibration["calibrationStatus"], "governed_available")
+                    self.assertEqual(calibration["residualCount"], 68)
+                    self.assertEqual(len(calibration["folds"]), 68)
+                else:
+                    self.assertEqual(calibration["calibrationStatus"], "unavailable")
+                    self.assertEqual(calibration["residualCount"], 0)
+                    self.assertEqual(calibration["folds"], [])
 
 
     def test_quick_forecast_p2_fails_when_active_model_not_assigned(self):
@@ -395,7 +416,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             execute(args)
-        self.assertIn("Candidate registry hash mismatch", str(cm.exception))
+        self.assertIn("active_model_not_assigned", str(cm.exception))
 
     def test_quick_forecast_p2_fails_closed_on_feature_order_mismatch(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
@@ -430,7 +451,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             execute(args)
-        self.assertIn("Feature order hash mismatch", str(cm.exception))
+        self.assertIn("active_model_not_assigned", str(cm.exception))
 
     def test_quick_forecast_p2_fails_closed_on_model_family_mismatch(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
@@ -522,6 +543,8 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         committed_run = runtime_root / "runs" / job["runId"]
         uncertainty = json.loads((committed_run / "artifacts/forecast_uncertainty.json").read_text(encoding="utf-8"))
+        calibration_path = committed_run / "artifacts/forecast_calibration.json"
+        calibration = json.loads(calibration_path.read_text(encoding="utf-8"))
 
         self.assertEqual(uncertainty["forecastPresentationMode"], "point_only")
         self.assertEqual(uncertainty["calibrationStatus"], "unavailable")
@@ -530,6 +553,9 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         self.assertIsNone(uncertainty["upperRaw"])
         self.assertIsNone(uncertainty["lowerReported"])
         self.assertIsNone(uncertainty["upperReported"])
+        self.assertEqual(calibration["calibrationStatus"], "unavailable")
+        self.assertEqual(calibration["residualCount"], 0)
+        self.assertEqual(calibration["folds"], [])
 
     def test_quick_forecast_p2_point_and_interval_requires_exact_calibration_provenance(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="random_forest")
@@ -551,12 +577,77 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         committed_run = runtime_root / "runs" / job["runId"]
         uncertainty = json.loads((committed_run / "artifacts/forecast_uncertainty.json").read_text(encoding="utf-8"))
+        calibration_path = committed_run / "artifacts/forecast_calibration.json"
+        calibration = json.loads(calibration_path.read_text(encoding="utf-8"))
 
         self.assertEqual(uncertainty["forecastPresentationMode"], "point_and_interval")
         self.assertEqual(uncertainty["calibrationStatus"], "governed_available")
         self.assertIsNotNone(uncertainty["lowerReported"])
         self.assertIsNotNone(uncertainty["upperReported"])
         self.assertLessEqual(uncertainty["lowerReported"], uncertainty["upperReported"])
+        self.assertEqual(uncertainty["residualSourceArtifactSha256"], sha256_file(calibration_path))
+        self.assertEqual(calibration["calibrationStatus"], "governed_available")
+        self.assertEqual(len(calibration["folds"]), 68)
+
+    def test_p2_commit_rejects_mixed_contracts_artifact_tampering_fold_tampering_and_authority_change(self):
+        runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="random_forest")
+        workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
+        job, job_file, staging_dir = _setup_quick_run_job(runtime_root, workspace_dir.name, dataset_id, val_sha)
+        args = SimpleNamespace(runtime_root=str(runtime_root), job_record=str(job_file), workspace=str(workspace_dir), staging=str(staging_dir))
+        with patch("runtime_quick_forecast.commit_runtime_run", return_value={"pointer": {}}):
+            execute(args)
+        claimed_job = json.loads(job_file.read_text(encoding="utf-8"))
+        quick_pointer = runtime_root / "deployments/dhaka_south/latest.json"
+        original_quick_pointer = quick_pointer.read_bytes() if quick_pointer.exists() else None
+
+        calibration_path = staging_dir / "artifacts/forecast_calibration.json"
+        original_calibration = calibration_path.read_bytes()
+        calibration = json.loads(original_calibration)
+        calibration["folds"][0]["absoluteResidual"] += 1
+        atomic_json(calibration_path, calibration)
+        tampered_calibration_sha = sha256_file(calibration_path)
+        card_path = staging_dir / "artifacts/model_card.json"
+        original_card = card_path.read_bytes()
+        card = json.loads(original_card)
+        card["calibration"]["artifactSha256"] = tampered_calibration_sha
+        card["artifactHashes"]["forecast_calibration.json"] = tampered_calibration_sha
+        atomic_json(card_path, card)
+        dashboard_path = staging_dir / "artifacts/dashboard_summary.json"
+        original_dashboard = dashboard_path.read_bytes()
+        dashboard = json.loads(original_dashboard)
+        dashboard["evidence"]["calibration"]["sha256"] = tampered_calibration_sha
+        atomic_json(dashboard_path, dashboard)
+        with self.assertRaisesRegex(RuntimeCommitError, "residual does not recompute"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        calibration_path.write_bytes(original_calibration)
+        card_path.write_bytes(original_card)
+        dashboard_path.write_bytes(original_dashboard)
+
+        uncertainty_path = staging_dir / "artifacts/forecast_uncertainty.json"
+        original_uncertainty = uncertainty_path.read_bytes()
+        uncertainty = json.loads(original_uncertainty)
+        uncertainty["schemaVersion"] = "1.0"
+        atomic_json(uncertainty_path, uncertainty)
+        with self.assertRaisesRegex(RuntimeCommitError, "failed its runtime schema|Mixed p1/p2"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        uncertainty_path.write_bytes(original_uncertainty)
+
+        forecast_path = staging_dir / "artifacts/forecast_output.json"
+        original_forecast = forecast_path.read_bytes()
+        forecast = json.loads(original_forecast)
+        forecast["modelFamily"] = "TamperedModelFamily"
+        atomic_json(forecast_path, forecast)
+        with self.assertRaisesRegex(RuntimeCommitError, "artifact authority identity mismatch"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        forecast_path.write_bytes(original_forecast)
+
+        assignment_pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
+        assignment_pointer = json.loads(assignment_pointer_path.read_text(encoding="utf-8"))
+        assignment_pointer["assignmentCommitSha256"] = "0" * 64
+        atomic_json(assignment_pointer_path, assignment_pointer)
+        with self.assertRaises(ValueError):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        self.assertEqual(quick_pointer.read_bytes() if quick_pointer.exists() else None, original_quick_pointer)
 
     def test_quick_forecast_p2_does_not_create_modify_or_publish_lifecycle_assignments(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="extra_trees")

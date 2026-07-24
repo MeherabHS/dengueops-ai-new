@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "analytics"))
 from runtime_commit import RuntimeCommitError, commit_runtime_run
 from runtime_quick_forecast import execute
+from runtime_policy import load_and_validate_quick_forecast_policy
 from tests.test_runtime_quick_forecast import build_ready_runtime
 
 
@@ -35,7 +36,9 @@ class RuntimeCommitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             runtime, workspace, job_path, job = build_ready_runtime(Path(directory))
             staging = runtime / "staging" / job["runId"]
-            with patch("runtime_quick_forecast.commit_runtime_run", return_value={"pointer": {}}):
+            policy, policy_hash = load_and_validate_quick_forecast_policy("dhaka_south")
+            with patch("runtime_quick_forecast._load_quick_forecast_policy", return_value=(policy, policy_hash, False)), \
+                    patch("runtime_quick_forecast.commit_runtime_run", return_value={"pointer": {}}):
                 execute(SimpleNamespace(runtime_root=str(runtime), job_record=str(job_path), workspace=str(workspace), staging=str(staging)))
             calibration_path = staging / "artifacts/forecast_calibration.json"
             calibration = json.loads(calibration_path.read_text())

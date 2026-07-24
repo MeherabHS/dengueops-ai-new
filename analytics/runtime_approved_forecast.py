@@ -21,7 +21,7 @@ from feature_engineering import FEATURE_COLUMNS, build_features, build_inference
 from model_factory import build_candidate_estimator, canonical_sha256, load_and_validate_candidate_registry, load_historical_candidate_registry
 from runtime_approved_forecast_commit import commit_approved_forecast
 from runtime_assessment_policy import load_and_validate_assessment_policy
-from runtime_commit import atomic_json, sha256_file
+from runtime_commit import atomic_json, patch_running_job, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_validate import HORIZON_WEEKS, TARGET, compute_dataset_id
 from runtime_uncertainty import validate_uncertainty_contract
@@ -61,7 +61,11 @@ def _advance(year: int, week: int, count: int) -> tuple[int, int]:
 def _update(path: Path, job: dict[str, Any], **changes: Any) -> None:
     job.update(changes)
     job["updatedAt"] = _now()
-    atomic_json(path, job)
+    patch_running_job(
+        path,
+        {**changes, "updatedAt": job["updatedAt"]},
+        expected_job_id=str(job["jobId"]),
+    )
 
 
 def _write(path: Path, value: Any) -> None:
@@ -497,7 +501,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     _write(artifacts / "model_card.json", card)
     (staging / "logs/events.jsonl").write_text(json.dumps({"timestamp": _now(), "eventType": "approved_forecast_artifacts_ready",
                                                            "runId": job["runId"]}) + "\n", encoding="utf-8")
-    _update(job_path, job, status="committing", progress="committing_run")
+    _update(job_path, job, progress="committing_run")
     committed = commit_approved_forecast(root, staging, job)
     return {"runId": job["runId"], "forecastReported": reported, "latest": committed["pointer"]}
 

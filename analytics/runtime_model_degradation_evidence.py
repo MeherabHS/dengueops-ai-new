@@ -10,7 +10,7 @@ from typing import Any, Mapping
 from jsonschema import Draft202012Validator, FormatChecker
 
 from model_degradation_metrics import aggregate_metrics, canonical_json, canonical_sha256, metric_delta, metric_ratio, ordered_outcome_set_hash, ordered_outcomes, period_warnings, strict_cohort_identity, strict_cohort_key, training_history_context
-from runtime_commit import atomic_json
+from runtime_commit import atomic_json, patch_running_job
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_model_degradation_policy import load_and_validate_model_degradation_policy
 from runtime_model_degradation_source import verify_model_degradation_source
@@ -24,7 +24,9 @@ def _json(path: Path) -> dict[str, Any]:
 def _schema(value: Mapping[str,Any], name: str) -> None:
     schema=_json(ROOT/"config"/name);errors=sorted(Draft202012Validator(schema,format_checker=FormatChecker()).iter_errors(value),key=lambda error:list(error.path))
     if errors:raise ValueError(f"{name}: {errors[0].message}")
-def _update_job(path:Path,job:dict[str,Any],progress:str)->None:job.update(progress=progress,updatedAt=_now());atomic_json(path,job)
+def _update_job(path:Path,job:dict[str,Any],progress:str)->None:
+    updated_at=_now();job.update(progress=progress,updatedAt=updated_at)
+    patch_running_job(path,{"progress":progress,"updatedAt":updated_at},expected_job_id=str(job["jobId"]))
 
 
 def build_model_degradation_evidence(job: Mapping[str,Any], policy: Mapping[str,Any], policy_sha: str, source: Mapping[str,Any], generated_at: str) -> tuple[dict[str,Any],dict[str,Any]]:

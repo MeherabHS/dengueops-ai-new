@@ -23,6 +23,57 @@ from tests.test_runtime_forecast_outcome import build_outcome_job
 from tests.test_runtime_model_degradation_evidence import degradation_job
 
 
+def _require_completed_assessment_job(runtime: Path, pending_job: Path, job: dict) -> Path:
+    completed_path = runtime / "jobs/completed" / pending_job.name
+    failed_path = runtime / "jobs/failed" / pending_job.name
+    assessment = runtime / "assessments" / job["assessmentId"]
+    summary_path = assessment / "artifacts/assessment_summary.json"
+    commit_path = assessment / "metadata/commit.json"
+
+    if not completed_path.is_file():
+        diagnostics = [
+            f"completedJob={completed_path} (missing)",
+            f"failedJob={failed_path} ({'present' if failed_path.is_file() else 'missing'})",
+        ]
+        if failed_path.is_file():
+            try:
+                failed = json.loads(failed_path.read_text(encoding="utf-8"))
+                error = failed.get("error") if isinstance(failed.get("error"), dict) else {}
+                diagnostics.extend((
+                    f"status={failed.get('status')!r}",
+                    f"progress={failed.get('progress')!r}",
+                    f"errorCode={error.get('code')!r}",
+                    f"errorMessage={error.get('message')!r}",
+                ))
+            except Exception as exc:
+                diagnostics.append(f"failedJobReadError={exc!r}")
+                diagnostics.append(f"failedJobRaw={failed_path.read_text(encoding='utf-8', errors='replace')!r}")
+        logs = runtime / "assessment-staging" / job["assessmentId"] / "logs"
+        for name in ("stderr.log", "stdout.log"):
+            path = logs / name
+            diagnostics.append(
+                f"{name}={path.read_text(encoding='utf-8', errors='replace')!r}"
+                if path.is_file() else f"{name}=<missing>"
+            )
+        raise AssertionError("Assessment job did not complete:\n" + "\n".join(diagnostics))
+
+    completed = json.loads(completed_path.read_text(encoding="utf-8"))
+    if (
+        completed.get("status") != "completed"
+        or completed.get("progress") != "completed"
+        or completed.get("committedAssessmentId") != job["assessmentId"]
+    ):
+        raise AssertionError(f"Completed assessment job record is inconsistent: {completed!r}")
+    for path, label in (
+        (assessment, "committed assessment directory"),
+        (summary_path, "assessment summary"),
+        (commit_path, "assessment commit"),
+    ):
+        if not path.exists():
+            raise AssertionError(f"Completed assessment job is missing its {label}: {path}")
+    return assessment
+
+
 def build_promotion_chain_p2_v1(base: Path, repository_root: Path, model_id: str = "random_forest") -> dict:
     base_runtime, _workspace, _pending, assessment_job = build_ready_assessment_runtime(
         base / "base", assessment_policy_version="p2-v1"
@@ -329,11 +380,11 @@ def build_one_run_chain_p2_v2(
                         (assessment chain is patched so model_id is eligible
                         if it isn't already, while preserving the real winner)
     """
-    base_runtime, _workspace, _pending, assessment_job = build_ready_assessment_runtime(
+    base_runtime, _workspace, pending, assessment_job = build_ready_assessment_runtime(
         base / "base", assessment_policy_version="p2-v2"
     )
-    if not run_once(base_runtime, "one-run-assessment"):
-        raise AssertionError("p2-v2 assessment did not execute")
+    run_once(base_runtime, "one-run-assessment")
+    _require_completed_assessment_job(base_runtime, pending, assessment_job)
 
     runtime = (base / model_id / "runtime").resolve()
     shutil.copytree(base_runtime, runtime, copy_function=shutil.copyfile)

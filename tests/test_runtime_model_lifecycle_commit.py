@@ -246,6 +246,7 @@ class LifecycleCommitTests(unittest.TestCase):
                 elif label=="rollback_rollback":
                     rollback_b,rollback_b_path=lifecycle_job(runtime,"rollback_previous_assignment",expectedAssignmentPointerState="present",expectedAssignmentPointerSha256=expected);jobs=[(rollback_a,rollback_a_path),(rollback_b,rollback_b_path)]
                 else:
+                    pointer=runtime/"deployments/dhaka_south/model-assignment/latest.json";pointer_bytes=pointer.read_bytes()
                     retain,retain_path=lifecycle_job(runtime,"retain_current_model",expectedAssignmentPointerState="present",expectedAssignmentPointerSha256=expected,**context);jobs=[(retain,retain_path),(promotion,promotion_path)]
                 before=len(list((runtime/"model-lifecycle").glob("*/artifacts/model_assignment.json")))
                 def run(pair):
@@ -254,7 +255,14 @@ class LifecycleCommitTests(unittest.TestCase):
                     except Exception as error:return error
                 with ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(run,jobs))
                 after=len(list((runtime/"model-lifecycle").glob("*/artifacts/model_assignment.json")))
-                self.assertEqual(after-before,1,label);self.assertEqual(assignment_pointer_state(runtime)[0],"present",label)
+                if label=="retention_promotion":
+                    retention_result,promotion_result=results
+                    self.assertIsInstance(retention_result,dict,label);self.assertEqual(retention_result["lifecycleDecisionId"],retain["lifecycleDecisionId"],label);self.assertIsNone(retention_result["assignmentId"],label)
+                    self.assertIsInstance(promotion_result,ValueError,label);self.assertEqual(str(promotion_result),"cannot_promote_currently_active_model",label)
+                    self.assertEqual(after-before,0,label);self.assertEqual(pointer.read_bytes(),pointer_bytes,label);self.assertEqual(sha256_file(pointer),expected,label)
+                    retention_bundle=runtime/"model-lifecycle"/retain["lifecycleDecisionId"];self.assertTrue((retention_bundle/"artifacts/lifecycle_decision.json").is_file(),label);self.assertFalse((retention_bundle/"artifacts/model_assignment.json").exists(),label)
+                else:self.assertEqual(after-before,1,label)
+                self.assertEqual(assignment_pointer_state(runtime)[0],"present",label)
 
 
 if __name__=="__main__":unittest.main()

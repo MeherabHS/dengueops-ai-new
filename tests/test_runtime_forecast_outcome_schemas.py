@@ -26,6 +26,11 @@ class ForecastOutcomeSchemaTests(unittest.TestCase):
         schema=json.loads((ROOT/"config/runtime_forecast_outcome.schema.json").read_text())
         phase2=schema["$defs"]["phase2"]
         self.assertEqual(set(phase2["properties"]["sourceFamily"]["enum"]),{"quick_forecast_p1","approved_forecast_p1","approved_forecast_p2"})
+        self.assertNotIn("quick_forecast_p2",phase2["properties"]["sourceFamily"]["enum"])
+        self.assertIn("extra_trees",phase2["properties"]["modelId"]["enum"])
+        self.assertEqual(set(phase2["properties"]["candidateRegistrySha256"]["enum"]),{
+            "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+            "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"})
         self.assertIn("forecastCalibrationPath",schema["$defs"]["quickEvidence"]["required"])
         self.assertNotIn("forecastCalibrationPath",schema["$defs"]["approvedEvidence"]["properties"])
         self.assertIn("authorizationCommitSha256",schema["$defs"]["approvedEvidence"]["required"])

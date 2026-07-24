@@ -17,7 +17,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from runtime_commit import atomic_json
+from runtime_commit import finalize_running_job, patch_running_job
 from runtime_context import ROOT, require_absolute_directory, require_within
 
 
@@ -56,11 +56,13 @@ def load_job(path: Path) -> dict[str, Any]:
 
 
 def update_job(path: Path, job: dict[str, Any], **changes: Any) -> dict[str, Any]:
-    latest = load_job(path) if path.exists() else job
-    latest.update(changes)
-    latest["updatedAt"] = now()
-    atomic_json(path, latest)
-    return latest
+    patch = {**changes, "updatedAt": now()}
+    return patch_running_job(path, patch, expected_job_id=str(job["jobId"]))
+
+
+def finalize_job(path: Path, destination: Path, job: dict[str, Any], **changes: Any) -> dict[str, Any]:
+    patch = {**changes, "updatedAt": now()}
+    return finalize_running_job(path, destination, patch, expected_job_id=str(job["jobId"]))
 
 
 def acquire_global_lock(root: Path) -> int | None:
@@ -136,15 +138,14 @@ def recover_stale_jobs(root: Path) -> None:
             if age <= STALE_SECONDS:
                 continue
             terminate_abandoned_pid(int(job.get("processId") or -1))
-            job = update_job(path, job, status="failed", progress="abandoned_job_quarantined", completedAt=now(),
-                processId=None, error={"code": "worker_abandoned", "message": "The worker stopped before the run committed.", "retryable": True})
             kind = job.get("jobKind", "quick_forecast")
             identity = job["assessmentId"] if kind == "dataset_assessment" else job["outcomeId"] if kind == "forecast_outcome" else job["evidenceId"] if kind == "degradation_evidence" else job["lifecycleDecisionId"] if kind=="model_lifecycle" else job["runId"]
             staging = root / ("assessment-staging" if kind == "dataset_assessment" else "outcome-staging" if kind == "forecast_outcome" else "degradation-staging" if kind == "degradation_evidence" else "lifecycle-staging" if kind=="model_lifecycle" else "staging") / identity
             if staging.exists():
                 quarantine = staging.with_name(f"{identity}.failed-{int(time.time())}")
                 os.replace(staging, quarantine)
-            os.replace(path, failed / path.name)
+            finalize_job(path, failed / path.name, job, status="failed", progress="abandoned_job_quarantined", completedAt=now(),
+                processId=None, error={"code": "worker_abandoned", "message": "The worker stopped before the run committed.", "retryable": True})
         except Exception:
             continue
 
@@ -196,7 +197,7 @@ def execute_claimed(root: Path, job_path: Path, worker_id: str) -> None:
     command.extend(["--staging", str(staging)])
     process = subprocess.Popen(command, cwd=ROOT, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         start_new_session=(os.name != "nt"), creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0))
-    job = update_job(job_path, job, processId=process.pid, progress="validating_forecast_commit" if kind == "forecast_outcome" else "verifying_monitoring_snapshot" if kind == "degradation_evidence" else "building_features")
+    job = update_job(job_path, job, processId=process.pid)
     deadline = time.monotonic() + int(job["timeoutSeconds"])
     next_heartbeat = time.monotonic() + HEARTBEAT_SECONDS
     timed_out = False
@@ -214,33 +215,29 @@ def execute_claimed(root: Path, job_path: Path, worker_id: str) -> None:
         stdout_path.write_bytes(stdout_bytes[-1_000_000:])
         stderr_path.write_bytes(stderr_bytes[-1_000_000:])
     if timed_out:
-        job = update_job(job_path, job, status="timed_out", progress="timed_out", completedAt=now(), processId=None,
+        finalize_job(job_path, root / "jobs" / "failed" / job_path.name, job, status="timed_out", progress="timed_out", completedAt=now(), processId=None,
             error={"code": "assessment_timeout" if kind == "dataset_assessment" else "approved_forecast_timeout" if kind == "approved_forecast" else "forecast_outcome_timeout" if kind == "forecast_outcome" else "degradation_evidence_timeout" if kind == "degradation_evidence" else "model_lifecycle_timeout" if kind == "model_lifecycle" else "quick_forecast_timeout",
                 "message": "The dataset assessment exceeded its execution limit." if kind == "dataset_assessment" else "The approved forecast exceeded its execution limit." if kind == "approved_forecast" else "Forecast outcome evaluation exceeded its execution limit." if kind == "forecast_outcome" else "Model-degradation evidence generation exceeded its execution limit." if kind == "degradation_evidence" else "The model lifecycle action exceeded its execution limit." if kind == "model_lifecycle" else "The Quick Forecast exceeded its execution limit.", "retryable": kind not in {"approved_forecast","degradation_evidence","model_lifecycle"}})
-        os.replace(job_path, root / "jobs" / "failed" / job_path.name)
         return
     if process.returncode != 0:
         marker = stderr_bytes.decode("utf-8", errors="ignore").strip().split("outcome_failure:")[-1].splitlines()[0].split(":") if kind == "forecast_outcome" and b"outcome_failure:" in stderr_bytes else []
         outcome_code = marker[0] if marker else "forecast_outcome_failed"; outcome_retryable = bool(marker and len(marker)>1 and marker[1]=="1")
-        job = update_job(job_path, job, status="failed", progress="execution_failed", completedAt=now(), processId=None,
+        finalize_job(job_path, root / "jobs" / "failed" / job_path.name, job, status="failed", progress="execution_failed", completedAt=now(), processId=None,
             error={"code": "assessment_failed" if kind == "dataset_assessment" else "approved_forecast_failed" if kind == "approved_forecast" else outcome_code if kind == "forecast_outcome" else "degradation_evidence_failed" if kind == "degradation_evidence" else "model_lifecycle_failed" if kind == "model_lifecycle" else "quick_forecast_failed",
                 "message": "The isolated dataset assessment did not complete." if kind == "dataset_assessment" else "The approved forecast did not complete." if kind == "approved_forecast" else "Forecast outcome evaluation did not complete." if kind == "forecast_outcome" else "Model-degradation evidence generation did not complete." if kind == "degradation_evidence" else "The model lifecycle action did not complete." if kind == "model_lifecycle" else "The isolated Quick Forecast did not complete.", "retryable": outcome_retryable if kind == "forecast_outcome" else kind not in {"approved_forecast","degradation_evidence","model_lifecycle"}})
-        os.replace(job_path, root / "jobs" / "failed" / job_path.name)
         return
     committed_root = root / ("assessments" if kind == "dataset_assessment" else "forecast-outcomes" if kind == "forecast_outcome" else "degradation-evidence" if kind == "degradation_evidence" else "model-lifecycle" if kind == "model_lifecycle" else "runs") / identity
     latest = root / "deployments" / job["deploymentId"] / ("monitoring/latest.json" if kind == "forecast_outcome" else "degradation/latest.json" if kind == "degradation_evidence" else "latest.json")
     assignment_action=kind=="model_lifecycle" and job.get("action") in {"bootstrap_historical_profile","promote_selected_model","rollback_previous_assignment"}
     if kind=="model_lifecycle": latest=root/"deployments"/job["deploymentId"]/"model-assignment/latest.json"
     if not committed_root.exists() or (kind in {"quick_forecast", "approved_forecast", "forecast_outcome", "degradation_evidence"} and not latest.exists()) or (assignment_action and not latest.exists()):
-        job = update_job(job_path, job, status="failed", progress="commit_failed", completedAt=now(), processId=None,
+        finalize_job(job_path, root / "jobs" / "failed" / job_path.name, job, status="failed", progress="commit_failed", completedAt=now(), processId=None,
             error={"code": "assessment_commit_missing" if kind == "dataset_assessment" else "forecast_outcome_commit_missing" if kind == "forecast_outcome" else "degradation_evidence_commit_missing" if kind == "degradation_evidence" else "model_lifecycle_commit_missing" if kind == "model_lifecycle" else "runtime_commit_missing",
                 "message": "The process exited without a valid immutable commit.", "retryable": kind != "model_lifecycle"})
-        os.replace(job_path, root / "jobs" / "failed" / job_path.name)
         return
     completion = {"committedAssessmentId": job["assessmentId"]} if kind == "dataset_assessment" else {"committedOutcomeId": job["outcomeId"]} if kind == "forecast_outcome" else {"committedEvidenceId": job["evidenceId"]} if kind == "degradation_evidence" else {"committedLifecycleDecisionId":job["lifecycleDecisionId"]} if kind=="model_lifecycle" else {"committedRunId": job["runId"]}
-    job = update_job(job_path, job, status="completed", progress="completed", completedAt=now(), heartbeatAt=now(),
+    finalize_job(job_path, root / "jobs" / "completed" / job_path.name, job, status="completed", progress="completed", completedAt=now(), heartbeatAt=now(),
         processId=None, error=None, **completion)
-    os.replace(job_path, root / "jobs" / "completed" / job_path.name)
 
 
 def run_once(root: Path, worker_id: str) -> bool:
@@ -256,9 +253,9 @@ def run_once(root: Path, worker_id: str) -> bool:
         except Exception:
             if job_path.exists():
                 try:
-                    job = update_job(job_path, load_job(job_path), status="failed", progress="worker_failed", completedAt=now(), processId=None,
+                    job = load_job(job_path)
+                    finalize_job(job_path, root / "jobs" / "failed" / job_path.name, job, status="failed", progress="worker_failed", completedAt=now(), processId=None,
                         error={"code": "runtime_worker_failed", "message": "The runtime worker could not complete the job.", "retryable": True})
-                    os.replace(job_path, root / "jobs" / "failed" / job_path.name)
                 except Exception:
                     pass
         return True

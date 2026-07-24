@@ -31,6 +31,22 @@ def _finite(value: Any, name: str) -> float:
         raise ValueError(f"{name} must be finite.")
     return number
 
+def _uncertainty_status(uncertainty: Mapping[str, Any]) -> str:
+    legacy = uncertainty.get("uncertaintyStatus")
+    if legacy is not None:
+        if any(key in uncertainty for key in ("forecastPresentationMode", "calibrationStatus", "uncertaintyReasonCode", "calibrationProvenance")):
+            raise ValueError("Mixed committed uncertainty contracts are unsupported.")
+        return str(legacy)
+    normalized = (
+        uncertainty.get("forecastPresentationMode"),
+        uncertainty.get("calibrationStatus"),
+        uncertainty.get("uncertaintyReasonCode"),
+        uncertainty.get("calibrationProvenance"),
+    )
+    if normalized == ("point_only", "pending", "model_specific_calibration_pending", None):
+        return "pending_selected_model_calibration"
+    raise ValueError("Unsupported normalized committed uncertainty contract.")
+
 def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mapping[str, Any], include_eligibility: bool = False) -> dict[str, Any]:
     forecast = _finite(forecast_raw, "forecastRaw")
     if isinstance(observed_raw, bool) or not isinstance(observed_raw, int) or observed_raw < 0:
@@ -46,7 +62,7 @@ def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mappin
         "percentageMetricStatus": "available" if percentage is not None else "not_evaluable_zero_observed"}
     if include_eligibility:
         result["percentageErrorEligible"] = percentage is not None
-    status = uncertainty.get("uncertaintyStatus")
+    status = _uncertainty_status(uncertainty)
     if status == "available":
         lower, upper = _finite(uncertainty.get("lowerRaw"), "lowerRaw"), _finite(uncertainty.get("upperRaw"), "upperRaw")
         if lower < 0 or lower > upper:

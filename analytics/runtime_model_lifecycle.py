@@ -14,7 +14,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from runtime_active_model import FEATURE_SHA, PARAMETER_SHA, PROFILE_SHA, QUICK_SHA, REGISTRY_SHA, resolve_active_model, resolve_active_model_p2_v2, resolve_historical_active_model_p2_v1
 from runtime_commit import atomic_json, json_sha
 from runtime_model_lifecycle_policy import POLICY_ID, POLICY_SHA256, load_model_lifecycle_policy
-from runtime_model_lifecycle_source import resolve_previous_assignment, verify_expected_pointer, verify_monitoring_and_degradation_context, verify_promotion_sources
+from runtime_model_lifecycle_source import resolve_previous_assignment, verify_expected_pointer, verify_monitoring_and_degradation_context, verify_promotion_sources, verify_reject_assessment_decision
 
 
 def _extract_and_validate_policy_version(job: Mapping[str, Any]) -> str:
@@ -41,7 +41,7 @@ def validate_schema(repository_root: Path, name: str, value: Mapping[str, Any]) 
 
 def verify_action_sources(repository_root: Path, runtime_root: Path, job: Mapping[str, Any], active: Mapping[str, Any]) -> dict[str, Any]:
     action = job["action"]
-    if action not in ("bootstrap_historical_profile", "promote_selected_model", "rollback_previous_assignment", "defer", "retain_active_model", "reject"):
+    if action not in ("bootstrap_historical_profile", "promote_selected_model", "rollback_previous_assignment", "defer", "retain_current_model", "reject"):
         raise ValueError("unsupported_lifecycle_action")
 
     if any(job.get(field) is not True for field in ACK_FIELDS):
@@ -56,7 +56,7 @@ def verify_action_sources(repository_root: Path, runtime_root: Path, job: Mappin
 
     if action == "promote_selected_model":
         verified = verify_promotion_sources(repository_root, runtime_root, job)
-        if active["authoritySource"] == "committed_assignment" and active.get("assignmentAction") != "bootstrap_historical_profile" and verified["selectedModelId"] == active.get("modelId") and verified["selectedModelParameterSha256"] == active.get("parameterSha256"):
+        if active["authoritySource"] == "committed_assignment" and active.get("assignmentAction") != "bootstrap" and verified["selectedModelId"] == active.get("modelId") and verified["selectedModelParameterSha256"] == active.get("parameterSha256"):
             raise ValueError("cannot_promote_currently_active_model")
         return {"promotion": verified, "monitoring": None, "degradation": None, "prior": active if active["authoritySource"] == "committed_assignment" else None}
 
@@ -65,11 +65,14 @@ def verify_action_sources(repository_root: Path, runtime_root: Path, job: Mappin
     if action == "rollback_previous_assignment":
         if active["authoritySource"] != "committed_assignment":
             raise ValueError("rollback_requires_committed_active_assignment")
-        prior = resolve_previous_assignment(repository_root, runtime_root, active)
+        prior = resolve_previous_assignment(runtime_root, active)
         if active.get("priorAssignmentId") is None or prior is None:
             raise ValueError("rollback_target_assignment_missing")
-        verified_context = verify_monitoring_and_degradation_context(repository_root, runtime_root, job, active)
-        return {"promotion": None, "monitoring": verified_context.get("monitoring"), "degradation": verified_context.get("degradation"), "prior": prior}
+        return {"promotion": None, "monitoring": None, "degradation": None, "prior": prior}
+
+    if action == "reject" and job.get("evidenceContextStatus") == "verified_assessment_and_decision":
+        verify_reject_assessment_decision(repository_root, runtime_root, job)
+        return {"promotion": None, "monitoring": None, "degradation": None, "prior": active if active["authoritySource"] == "committed_assignment" else None}
 
     verified_context = verify_monitoring_and_degradation_context(repository_root, runtime_root, job, active)
     return {"promotion": None, "monitoring": verified_context.get("monitoring"), "degradation": verified_context.get("degradation"), "prior": active if active["authoritySource"] == "committed_assignment" else None}
@@ -100,9 +103,11 @@ def build_decision(job: Mapping[str, Any], active: Mapping[str, Any], verified: 
         **{field:True for field in ACK_FIELDS},"expectedAssignmentPointerState":job["expectedAssignmentPointerState"],"expectedAssignmentPointerSha256":job["expectedAssignmentPointerSha256"],"activeModelIdBefore":active["modelId"],"activeModelFamilyBefore":active["modelFamily"],"activeParameterSha256Before":active["parameterSha256"],"activeAuthoritySourceBefore":active["authoritySource"],"activeAuthoritySnapshotSha256Before":active["authoritySnapshotSha256"],"priorAssignmentId":active.get("assignmentId"),"priorAssignmentCommitSha256":active.get("assignmentCommitSha256"),"resultingAssignmentId":assignment_id,"modelIdentityChanged":False,"materialWorseningStatus":"not_governed","statisticalSufficiencyStatus":"not_governed","automaticAction":False,"createdAt":job["createdAt"],"decisionStatus":"committed",**_evidence_fields(job),
     }
     if job["action"] == "promote_selected_model":
-        decision.update({"assessmentId":verified["sourceAssessmentId"],"sourceDecisionId":verified["sourceDecisionId"],"authorizationId":verified["sourceAuthorizationId"],"approvedForecastRunId":verified["sourceApprovedForecastId"],"outcomeId":verified["sourceOutcomeId"],"degradationEvidenceId":verified["sourceDegradationEvidenceId"],"assessmentReferenceCohortId":verified["assessmentReferenceCohortId"],"assessmentReferenceDimensionId":verified["assessmentReferenceDimensionId"],"selectedModelId":verified["selectedModelId"],"selectedModelFamily":verified["selectedModelFamily"],"selectedParameterSha256":verified["selectedModelParameterSha256"],"candidateRegistrySha256":verified["candidateRegistrySha256"],"featureOrderSha256":verified["featureOrderSha256"]})
+        promotion = verified["promotion"]
+        decision.update({"assessmentId":promotion["sourceAssessmentId"],"sourceDecisionId":promotion["sourceDecisionId"],"authorizationId":promotion["sourceAuthorizationId"],"approvedForecastRunId":promotion["sourceApprovedForecastId"],"outcomeId":promotion["sourceOutcomeId"],"degradationEvidenceId":promotion["sourceDegradationEvidenceId"],"assessmentReferenceCohortId":promotion["assessmentReferenceCohortId"],"assessmentReferenceDimensionId":promotion["assessmentReferenceDimensionId"],"selectedModelId":promotion["selectedModelId"],"selectedModelFamily":promotion["selectedModelFamily"],"selectedParameterSha256":promotion["selectedModelParameterSha256"],"candidateRegistrySha256":promotion["candidateRegistrySha256"],"featureOrderSha256":promotion["featureOrderSha256"]})
     elif job["action"] == "rollback_previous_assignment":
-        decision.update({"rollbackSourceAssignmentId":verified["assignment"]["assignmentId"],"rollbackSourceAssignmentCommitSha256":verified["commitSha256"]})
+        prior = verified["prior"]
+        decision.update({"rollbackSourceAssignmentId":prior["assignment"]["assignmentId"],"rollbackSourceAssignmentCommitSha256":prior["commitSha256"]})
     return decision
 
 
@@ -116,7 +121,9 @@ def build_decision_commit(job: Mapping[str, Any], decision: Mapping[str, Any], v
     elif job["action"] in {"retain_current_model","reject"} or (job["action"] == "defer" and job["evidenceContextStatus"] == "verified_monitoring_and_degradation"):
         commit.update({"evidenceContextStatus":"verified_monitoring_and_degradation","monitoringLatestSha256":job["expectedMonitoringLatestSha256"],"monitoringSummarySha256":job["expectedMonitoringSummarySha256"],"monitoringIncludedOutcomeSetSha256":job["expectedMonitoringIncludedOutcomeSetSha256"],"degradationLatestSha256":job["expectedDegradationLatestSha256"],"degradationEvidenceCommitSha256":job["expectedDegradationEvidenceCommitSha256"],"degradationEvidenceSha256":job["expectedDegradationEvidenceSha256"]})
     elif job["action"] == "defer": commit["evidenceContextStatus"] = "explicit_no_evidence"
-    elif job["action"] == "rollback_previous_assignment": commit.update({"rollbackSourceAssignmentId":verified["assignment"]["assignmentId"],"rollbackSourceAssignmentCommitSha256":verified["commitSha256"]})
+    elif job["action"] == "rollback_previous_assignment":
+        prior = verified["prior"]
+        commit.update({"rollbackSourceAssignmentId":prior["assignment"]["assignmentId"],"rollbackSourceAssignmentCommitSha256":prior["commitSha256"]})
     return commit
 
 
@@ -125,8 +132,11 @@ def build_assignment(job: Mapping[str, Any], active: Mapping[str, Any], verified
     assignment: dict[str, Any] = {"schemaVersion":"1.0","assignmentId":assignment_id,"assignmentReason":{"bootstrap":"historical_profile_bootstrap","promote":"manual_selected_model_promotion","rollback":"controlled_previous_assignment_rollback"}[action],"deploymentId":"dhaka_south","geography":{"level":"city","id":"BGD-DHAKA-SOUTH","name":"Dhaka South"},"target":"target_cases_next_2w","forecastHorizonWeeks":2,"policyId":POLICY_ID,"policyVersion":"p2-v1","policySha256":POLICY_SHA256,"lifecycleDecisionId":job["lifecycleDecisionId"],"lifecycleDecisionCommitSha256":decision_commit_sha,"assignmentAction":action,"assignedModelId":"random_forest","modelFamily":"RandomForestRegressor","parameterSha256":PARAMETER_SHA,"featureOrderSha256":FEATURE_SHA,"candidateRegistrySha256":REGISTRY_SHA,"quickForecastPolicyId":"RUNTIME.QUICK_FORECAST.COMPATIBILITY","quickForecastPolicyVersion":"p1.4f-v1","quickForecastPolicySha256":QUICK_SHA,"quickCompatibilityStatus":"compatible_exact_governed_random_forest","priorAssignmentId":active.get("assignmentId"),"priorAssignmentCommitSha256":active.get("assignmentCommitSha256"),"effectiveAt":job["createdAt"],"assignmentStatus":"committed","modelQualificationStatus":"not_governed","materialWorseningStatus":"not_governed","statisticalSufficiencyStatus":"not_governed","automaticAction":False,"modelIdentityChanged":False}
     if action == "bootstrap": assignment["profileRawSha256"] = PROFILE_SHA
     elif action == "promote":
-        for key in ("sourceAssessmentId","sourceAssessmentCommitSha256","sourceDecisionId","sourceDecisionArtifactSha256","sourceDecisionCommitSha256","sourceAuthorizationId","sourceAuthorizationRecordSha256","sourceAuthorizationCommitSha256","sourceAuthorizationConsumptionSha256","sourceApprovedForecastId","sourceApprovedForecastCommitSha256","sourceOutcomeId","sourceOutcomeCommitSha256","sourceMonitoringLatestSha256","sourceMonitoringSummarySha256","sourceMonitoringIncludedOutcomeSetSha256","sourceDegradationLatestSha256","sourceDegradationEvidenceId","sourceDegradationEvidenceCommitSha256","sourceDegradationEvidenceSha256","assessmentReferenceCohortId","assessmentReferenceDimensionId"): assignment[key]=verified[key]
-    else: assignment.update({"rollbackSourceAssignmentId":verified["assignment"]["assignmentId"],"rollbackSourceAssignmentCommitSha256":verified["commitSha256"]})
+        promotion = verified["promotion"]
+        for key in ("sourceAssessmentId","sourceAssessmentCommitSha256","sourceDecisionId","sourceDecisionArtifactSha256","sourceDecisionCommitSha256","sourceAuthorizationId","sourceAuthorizationRecordSha256","sourceAuthorizationCommitSha256","sourceAuthorizationConsumptionSha256","sourceApprovedForecastId","sourceApprovedForecastCommitSha256","sourceOutcomeId","sourceOutcomeCommitSha256","sourceMonitoringLatestSha256","sourceMonitoringSummarySha256","sourceMonitoringIncludedOutcomeSetSha256","sourceDegradationLatestSha256","sourceDegradationEvidenceId","sourceDegradationEvidenceCommitSha256","sourceDegradationEvidenceSha256","assessmentReferenceCohortId","assessmentReferenceDimensionId"): assignment[key]=promotion[key]
+    else:
+        prior = verified["prior"]
+        assignment.update({"rollbackSourceAssignmentId":prior["assignment"]["assignmentId"],"rollbackSourceAssignmentCommitSha256":prior["commitSha256"]})
     return assignment
 
 
@@ -140,6 +150,13 @@ def build_assignment_commit(job: Mapping[str, Any], assignment: Mapping[str, Any
 
 
 def prepare_bundle(repository_root: Path, runtime_root: Path, job: Mapping[str, Any], active: Mapping[str, Any], verified: Mapping[str, Any]) -> dict[str, dict[str, Any] | None]:
+    if not {"promotion","monitoring","degradation","prior"}.issubset(verified):
+        verified = {
+            "promotion": verified if job["action"] == "promote_selected_model" else None,
+            "monitoring": None,
+            "degradation": None,
+            "prior": verified if job["action"] == "rollback_previous_assignment" else None,
+        }
     assignment_id = deterministic_assignment_id(job); decision = build_decision(job, active, verified, assignment_id); decision_commit = build_decision_commit(job, decision, verified); decision_commit_sha = json_sha(decision_commit)
     assignment = build_assignment(job, active, verified, assignment_id, decision_commit_sha) if assignment_id else None
     assignment_commit = build_assignment_commit(job, assignment, decision_commit_sha) if assignment else None

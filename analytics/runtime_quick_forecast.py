@@ -33,7 +33,7 @@ from empirical_range import (
     generate_runtime_rf_residuals,
 )
 from model_factory import build_candidate_estimator, load_and_validate_candidate_registry, load_historical_candidate_registry
-from runtime_commit import atomic_json, commit_runtime_run, sha256_file
+from runtime_commit import atomic_json, commit_runtime_run, patch_running_job, sha256_file
 from runtime_active_model import resolve_active_model, resolve_active_model_p2_v2
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_policy import canonical_policy_sha256, evaluate_quick_forecast_policy, load_and_validate_quick_forecast_policy
@@ -71,7 +71,11 @@ def _approximated(frame: pd.DataFrame) -> bool | None:
 def _update_job(path: Path, job: dict[str, Any], **changes: Any) -> None:
     job.update(changes)
     job["updatedAt"] = _now()
-    atomic_json(path, job)
+    patch_running_job(
+        path,
+        {**changes, "updatedAt": job["updatedAt"]},
+        expected_job_id=str(job["jobId"]),
+    )
 
 
 def _write_json_artifact(path: Path, value: Any) -> None:
@@ -133,6 +137,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     assigned_param_sha = None
     assigned_assignment_id = None
     assigned_commit_sha = None
+    assigned_preprocessing_identity = None
     lifecycle_policy_id = None
     lifecycle_policy_version = None
     lifecycle_policy_sha = None
@@ -151,6 +156,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         assigned_param_sha = active_authority["parameterSha256"]
         assigned_assignment_id = active_authority["assignmentId"]
         assigned_commit_sha = active_authority["assignmentCommitSha256"]
+        assigned_preprocessing_identity = active_authority["preprocessingIdentity"]
         candidate_registry_sha = active_authority["candidateRegistrySha256"]
         authority_feature_hash = active_authority["featureOrderSha256"]
         lifecycle_policy_id = active_authority.get("policyId")
@@ -172,6 +178,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("Model family mismatch against candidate registry.")
         if candidate.get("parameters_sha256") != assigned_param_sha:
             raise ValueError("Parameter SHA mismatch against candidate registry.")
+        if candidate.get("preprocessing_identity") != assigned_preprocessing_identity:
+            raise ValueError("Preprocessing identity mismatch against candidate registry.")
         if candidate.get("feature_order_sha256") != feature_hash:
             raise ValueError("Feature order SHA mismatch against candidate registry.")
     else:
@@ -314,7 +322,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "maximum": calibration_metrics["maximum_interval_width"],
     }
     calibration_artifact = {
-        "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
+        "schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
         "deploymentProfileId": job["deploymentId"], "policyId": policy_identity["id"], "policyVersion": policy_identity["version"],
         "policySha256": policy_hash, "modelId": assigned_model_id, "modelFamily": assigned_model_family,
         "modelParametersSha256": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash,
@@ -323,7 +331,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "embargoRows": EMBARGO_ROWS, "foldStepRows": FOLD_STEP_ROWS, "requiredResidualCount": REQUIRED_RESIDUALS,
         "calibrationWarmupFoldCount": WARMUP_FOLDS, "nominalCoverage": NOMINAL_COVERAGE,
         "calibrationMethod": "prequential_expanding_window_prior_residuals_only", "uncertaintyMethod": METHOD_ID,
-        "uncertaintyMethodVersion": METHOD_VERSION, "calibrationStatus": calibration_result["status"],
+        "uncertaintyMethodVersion": METHOD_VERSION,
+        "calibrationStatus": ("governed_available" if calibration_available else "unavailable") if is_p2 else calibration_result["status"],
         "residualCount": len(calibration_result["folds"]), "foldPlanSha256": calibration_result["foldPlanSha256"],
         "finalQuantileRank": final_quantile_rank, "finalQuantileValue": final_quantile_value,
         "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
@@ -334,6 +343,14 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "intervalWidthSummary": width_summary, "generatedAt": generated_at,
         "limitations": calibration_limitations, "folds": calibration_result["folds"],
     }
+    if is_p2:
+        calibration_artifact.update({
+            "sourceFamily": "quick_forecast_p2",
+            "preprocessingIdentity": assigned_preprocessing_identity,
+            "assignmentId": assigned_assignment_id,
+            "assignmentCommitSha256": assigned_commit_sha,
+            "uncertaintyReasonCode": None if calibration_available else "model_calibration_unavailable",
+        })
     _write_json_artifact(artifacts / "forecast_calibration.json", calibration_artifact)
     calibration_sha = sha256_file(artifacts / "forecast_calibration.json")
     if calibration_available:
@@ -365,11 +382,16 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if is_p2:
         forecast.update({
             "sourceFamily": source_family,
+            "preprocessingIdentity": assigned_preprocessing_identity,
             "assignmentId": assigned_assignment_id,
             "assignmentCommitSha256": assigned_commit_sha,
             "lifecyclePolicyId": lifecycle_policy_id,
             "lifecyclePolicyVersion": lifecycle_policy_version,
             "lifecyclePolicySha256": lifecycle_policy_sha,
+            "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
+            "calibrationStatus": "governed_available" if calibration_available else "unavailable",
+            "uncertaintyReasonCode": uncertainty_reason_code,
+            "deploymentModelAdopted": False,
         })
     _write_json_artifact(artifacts / "forecast_output.json", forecast)
 
@@ -383,7 +405,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
         "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
         "calibrationMethod": "prequential_expanding_window_prior_residuals_only" if calibration_available else None,
-        "residualCount": REQUIRED_RESIDUALS if calibration_available else None,
+        "residualCount": REQUIRED_RESIDUALS if calibration_available else (0 if is_p2 else None),
         "coveredFoldCount": None if calibration_metrics is None else calibration_metrics["covered_fold_count"],
         "calibrationWarmupFoldCount": WARMUP_FOLDS if calibration_available else None,
         "lowerMissCount": None if calibration_metrics is None else calibration_metrics["lower_miss_count"],
@@ -399,6 +421,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         uncertainty.update({
             "sourceFamily": source_family,
             "modelFamily": assigned_model_family,
+            "preprocessingIdentity": assigned_preprocessing_identity,
+            "candidateRegistrySha256": registry_hash,
+            "featureOrderSha256": feature_hash,
             "assignmentId": assigned_assignment_id,
             "assignmentCommitSha256": assigned_commit_sha,
             "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
@@ -416,10 +441,14 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
         "committedAt": generated_at, "completedSteps": 6}
     if is_p2:
-        run_dash["sourceFamily"] = source_family
+        run_dash.update({
+            "sourceFamily": source_family,
+            "assignmentId": assigned_assignment_id,
+            "assignmentCommitSha256": assigned_commit_sha,
+        })
 
     dashboard = {
-        "schemaVersion": "1.0", "run": run_dash,
+        "schemaVersion": "2.0" if is_p2 else "1.0", "run": run_dash,
         "model": {"modelId": assigned_model_id, "modelLabel": assigned_model_family if is_p2 else "Random Forest", "parameterHash": candidate["parameters_sha256"],
             "policyId": policy_identity["id"], "policyVersion": policy_identity["version"],
             "suitabilityStatus": "approved_under_quick_forecast_compatibility_policy", "comparisonPerformed": False},
@@ -439,6 +468,21 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "No dataset-specific model comparison was performed.", *calibration_limitations,
             "Official preparedness is unavailable because no runtime planning policy is approved."],
     }
+    if is_p2:
+        dashboard["model"].update({
+            "modelFamily": assigned_model_family,
+            "preprocessingIdentity": assigned_preprocessing_identity,
+            "candidateRegistrySha256": registry_hash,
+            "featureOrderSha256": feature_hash,
+        })
+        dashboard["forecast"].update({
+            "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
+            "calibrationStatus": "governed_available" if calibration_available else "unavailable",
+            "uncertaintyReasonCode": uncertainty_reason_code,
+        })
+        dashboard["evidence"]["lifecyclePolicy"] = {
+            "id": lifecycle_policy_id, "version": lifecycle_policy_version, "sha256": lifecycle_policy_sha,
+        }
     _write_json_artifact(artifacts / "dashboard_summary.json", dashboard)
 
     pipeline_summary = {"schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "status": "commit_ready",
@@ -453,12 +497,25 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
 
     publication_sequence = ["input_manifest.json", "model_features.csv", "forecast_calibration.json", "forecast_output.json", "forecast_uncertainty.json",
         "chart_data.json", "dashboard_summary.json", "pipeline_run_summary.json", "model_card.json"]
-    run_record = {"schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
+    run_record = {"schemaVersion": "2.0" if is_p2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "workspaceId": job["workspaceId"],
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",
         "status": "commit_ready", "policyId": policy_identity["id"], "policyVersion": policy_identity["version"], "policySha256": policy_hash,
         "createdAt": job["createdAt"], "generatedAt": generated_at, "artifactPublicationSequence": publication_sequence}
     if is_p2:
-        run_record["sourceFamily"] = source_family
+        run_record.update({
+            "sourceFamily": source_family,
+            "assignmentId": assigned_assignment_id,
+            "assignmentCommitSha256": assigned_commit_sha,
+            "activeModelId": assigned_model_id,
+            "modelFamily": assigned_model_family,
+            "parameterSha256": candidate["parameters_sha256"],
+            "preprocessingIdentity": assigned_preprocessing_identity,
+            "candidateRegistrySha256": registry_hash,
+            "featureOrderSha256": feature_hash,
+            "lifecyclePolicyId": lifecycle_policy_id,
+            "lifecyclePolicyVersion": lifecycle_policy_version,
+            "lifecyclePolicySha256": lifecycle_policy_sha,
+        })
     atomic_json(staging / "metadata" / "run.json", run_record)
 
 
@@ -475,7 +532,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "calibration": {"artifactPath": "artifacts/forecast_calibration.json", "artifactSha256": calibration_sha,
             "status": uncertainty_status, "methodId": METHOD_ID if calibration_available else None,
             "methodVersion": METHOD_VERSION if calibration_available else None,
-            "residualCount": REQUIRED_RESIDUALS if calibration_available else None,
+            "residualCount": REQUIRED_RESIDUALS if calibration_available else (0 if is_p2 else None),
             "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
             "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
             "isPredictionInterval": False, "limitations": calibration_limitations},
@@ -491,10 +548,18 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "generatedAt": _now(),
     }
     if is_p2:
+        model_card["model"]["preprocessingIdentity"] = assigned_preprocessing_identity
         model_card.update({
             "sourceFamily": source_family,
             "assignmentId": assigned_assignment_id,
             "assignmentCommitSha256": assigned_commit_sha,
+            "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
+            "calibrationStatus": "governed_available" if calibration_available else "unavailable",
+            "uncertaintyReasonCode": uncertainty_reason_code,
+            "deploymentModelAdopted": False,
+            "lifecyclePolicy": {
+                "id": lifecycle_policy_id, "version": lifecycle_policy_version, "sha256": lifecycle_policy_sha,
+            },
         })
     _update_job(job_path, job, progress="validating_artifacts")
     _write_json_artifact(artifacts / "model_card.json", model_card)
@@ -502,7 +567,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     (logs / "stdout.log").write_text("Quick Forecast analytical artifacts completed; commit validation starting.\n", encoding="utf-8")
     (logs / "stderr.log").write_text("", encoding="utf-8")
     (logs / "events.jsonl").write_text(json.dumps({"timestamp": _now(), "eventType": "artifacts_ready", "runId": job["runId"]}) + "\n", encoding="utf-8")
-    _update_job(job_path, job, status="committing", progress="committing_run")
+    _update_job(job_path, job, progress="committing_run")
     committed = commit_runtime_run(runtime_root, staging, job)
     return {"runId": job["runId"], "forecastReported": reported, "committed": True, "latest": committed["pointer"]}
 

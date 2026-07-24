@@ -9,14 +9,17 @@ from typing import Any, Mapping
 from jsonschema import Draft202012Validator, FormatChecker
 
 from forecast_outcome_metrics import parse_target_period
+from model_factory import load_and_validate_candidate_registry
 from runtime_commit import sha256_file
 from runtime_context import ROOT
 
 QUICK_POLICY = ("RUNTIME.QUICK_FORECAST.COMPATIBILITY", "p1.4f-v1", "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a")
 ASSESSMENT_P1 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p1.4d-1-v1", "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af")
 ASSESSMENT_P2 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p2-v1", "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff")
+ASSESSMENT_P2_V2 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p2-v2", "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8")
 DECISION_P1 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p1.4d-3-e-v1", "8fece340b85951d3bee8b037c4ac79ae82636ee371a934e9371bcb4a633491a4")
 DECISION_P2 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p2-v1", "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdcb4a")
+DECISION_P2_V2 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p2-v2", "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d")
 REGISTRY_SHA = "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
 FEATURE_SHA = "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
 MODEL_FAMILIES = {"ridge_regression":"Ridge", "poisson_regression":"PoissonRegressor", "random_forest":"RandomForestRegressor", "gradient_boosting":"GradientBoostingRegressor"}
@@ -42,6 +45,19 @@ def _schema(value: Mapping[str, Any], name: str) -> None:
 
 def _policy_tuple(value: Mapping[str, Any], camel: bool = False) -> tuple[Any, Any, Any]:
     return (value.get("policyId" if camel else "id"), value.get("policyVersion" if camel else "version"), value.get("policySha256" if camel else "sha256"))
+
+
+def _flat_policy_tuple(value: Mapping[str, Any], prefix: str) -> tuple[Any, Any, Any]:
+    return (value.get(f"{prefix}PolicyId"), value.get(f"{prefix}PolicyVersion"), value.get(f"{prefix}PolicySha256"))
+
+
+def _approved_p2_contract(commit: Mapping[str, Any]) -> tuple[str, tuple[str, str, str], tuple[str, str, str]]:
+    policies = (_policy_tuple(commit.get("assessmentPolicy", {}), True), _policy_tuple(commit.get("decisionPolicy", {}), True))
+    if policies == (ASSESSMENT_P2, DECISION_P2):
+        return "p2-v1", ASSESSMENT_P2, DECISION_P2
+    if policies == (ASSESSMENT_P2_V2, DECISION_P2_V2):
+        return "p2-v2", ASSESSMENT_P2_V2, DECISION_P2_V2
+    raise ForecastSourceError("Approved Phase 2 policy identity is unknown or mixed.", "forecast_not_eligible")
 
 
 def _advance(origin: str) -> str:
@@ -89,27 +105,42 @@ def _approved(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commi
     forecast=_json(run/"artifacts/forecast_output.json"); card=_json(run/"artifacts/model_card.json"); uncertainty=_json(run/"artifacts/forecast_uncertainty.json")
     _schema(forecast,"runtime_approved_forecast_output.schema.json"); _schema(card,"runtime_approved_forecast_model_card.schema.json"); _schema(uncertainty,"runtime_approved_forecast_uncertainty.schema.json")
     if forecast.get("schemaVersion")!=version or card.get("schemaVersion")!=version or commit.get("workflowMode")!="approved_assessment_forecast": raise ForecastSourceError("Approved source is hybrid.","forecast_not_eligible")
+    common_identity=(run_id,commit.get("datasetId"),"dhaka_south","approved_assessment_forecast")
+    for value in (forecast,card):
+        if (value.get("runId"),value.get("datasetId"),value.get("deploymentId"),value.get("workflowMode"))!=common_identity:
+            raise ForecastSourceError("Approved artifact identity mismatch.")
+    if (uncertainty.get("runId"),uncertainty.get("datasetId"),uncertainty.get("deploymentId"))!=common_identity[:3]:
+        raise ForecastSourceError("Approved uncertainty identity mismatch.")
     ids=(commit.get("assessmentId"),commit.get("decisionId"),commit.get("authorizationId"))
     if ids != (forecast.get("assessmentId"),forecast.get("decisionId"),forecast.get("authorizationId")) or ids != (card.get("assessment",{}).get("id"),card.get("decision",{}).get("id"),card.get("authorization",{}).get("id")): raise ForecastSourceError("Approved lifecycle identity mismatch.")
+    if ids[:2] != (uncertainty.get("assessmentId"),uncertainty.get("decisionId")):
+        raise ForecastSourceError("Approved uncertainty lifecycle mismatch.")
     assessment_id,decision_id,authorization_id=ids
     assessment_commit_path=root/"assessments"/assessment_id/"metadata/commit.json";decision_path=root/"decisions"/decision_id/"decision.json";decision_commit_path=root/"decisions"/decision_id/"commit.json";authorization_path=root/"authorizations"/authorization_id/"authorization.json";authorization_commit_path=root/"authorizations"/authorization_id/"commit.json"
     for path in (assessment_commit_path,decision_path,decision_commit_path,authorization_path,authorization_commit_path):
         if not path.is_file(): raise ForecastSourceError("Approved lifecycle evidence is missing.")
-    assessment_commit=_json(assessment_commit_path);decision=_json(decision_path);authorization=_json(authorization_path)
-    _schema(assessment_commit,"runtime_assessment_commit.schema.json");_schema(decision,"runtime_decision.schema.json");_schema(authorization,"runtime_forecast_authorization.schema.json")
+    assessment_commit=_json(assessment_commit_path);decision=_json(decision_path);decision_commit=_json(decision_commit_path)
+    authorization=_json(authorization_path);authorization_commit=_json(authorization_commit_path)
+    _schema(assessment_commit,"runtime_assessment_commit.schema.json");_schema(decision,"runtime_decision.schema.json")
+    _schema(decision_commit,"runtime_decision_commit.schema.json");_schema(authorization,"runtime_forecast_authorization.schema.json")
+    _schema(authorization_commit,"runtime_forecast_authorization_commit.schema.json")
     lifecycle_hashes={"assessmentCommitSha256":sha256_file(assessment_commit_path),"decisionCommitSha256":sha256_file(decision_commit_path),"authorizationCommitSha256":sha256_file(authorization_commit_path)}
     if lifecycle_hashes["assessmentCommitSha256"]!=commit.get("assessmentCommitSha256") or lifecycle_hashes["decisionCommitSha256"]!=commit.get("decisionCommitSha256"): raise ForecastSourceError("Approved lifecycle commit binding mismatch.")
     if authorization.get("assessmentCommitSha256")!=lifecycle_hashes["assessmentCommitSha256"] or authorization.get("decisionCommitSha256")!=lifecycle_hashes["decisionCommitSha256"]: raise ForecastSourceError("Authorization lifecycle binding mismatch.")
+    if (decision_commit.get("decisionId"),decision_commit.get("assessmentId"),decision_commit.get("decisionSha256"),decision_commit.get("assessmentCommitSha256"))!=(decision_id,assessment_id,sha256_file(decision_path),lifecycle_hashes["assessmentCommitSha256"]):
+        raise ForecastSourceError("Decision commit content mismatch.")
+    if (authorization_commit.get("authorizationId"),authorization_commit.get("decisionId"),authorization_commit.get("authorizationSha256"),authorization_commit.get("decisionCommitSha256"))!=(authorization_id,decision_id,sha256_file(authorization_path),lifecycle_hashes["decisionCommitSha256"]):
+        raise ForecastSourceError("Authorization commit content mismatch.")
     model_id=commit.get("selectedModelId");family=card.get("model",{}).get("family");parameter=commit.get("selectedModelParameterSha256")
-    if MODEL_FAMILIES.get(model_id)!=family or parameter!=forecast.get("selectedModelParameterSha256") or parameter!=card.get("model",{}).get("parameterHash") or authorization.get("selectedModelId")!=model_id or authorization.get("selectedModelParameterSha256")!=parameter: raise ForecastSourceError("Approved selected-model binding mismatch.")
-    if card.get("model",{}).get("candidateRegistrySha256")!=REGISTRY_SHA or card.get("features",{}).get("orderSha256")!=FEATURE_SHA: raise ForecastSourceError("Approved registry or feature binding mismatch.")
+    if parameter!=forecast.get("selectedModelParameterSha256") or parameter!=card.get("model",{}).get("parameterHash") or authorization.get("selectedModelId")!=model_id or authorization.get("selectedModelParameterSha256")!=parameter:
+        raise ForecastSourceError("Approved selected-model binding mismatch.")
     if forecast.get("target")!="target_cases_next_2w" or forecast.get("horizonWeeks")!=2 or card.get("target")!="target_cases_next_2w" or card.get("horizonWeeks")!=2: raise ForecastSourceError("Approved target contract mismatch.","forecast_not_eligible")
     training=forecast.get("trainingDataIdentity",{});dashboard=_json(run/"artifacts/dashboard_summary.json");history=dashboard.get("history",[]);origin=(history[-1] if history else {}).get("period")
     if _advance(origin)!=forecast.get("targetPeriod"): raise ForecastSourceError("Approved target period mismatch.","target_period_mismatch")
     if forecast.get("forecastReported")!=int(round(max(0.0,float(forecast.get("forecastRaw"))))): raise ForecastSourceError("Approved reported forecast changed.")
-    if uncertainty.get("uncertaintyStatus")!="pending_selected_model_calibration" or any(uncertainty.get(k) is not None for k in ("lowerRaw","upperRaw")): raise ForecastSourceError("Approved uncertainty evidence mismatch.")
     if version=="1.0":
-        family_name="approved_forecast_p1"; assessment_policy=ASSESSMENT_P1;decision_policy=DECISION_P1
+        contract_version="p1";family_name="approved_forecast_p1"; assessment_policy=ASSESSMENT_P1;decision_policy=DECISION_P1
+        registry_sha=REGISTRY_SHA
         assessment_summary=_json(root/"assessments"/assessment_id/"artifacts/assessment_summary.json")
         rolling=_json(root/"assessments"/assessment_id/"artifacts/rolling_validation.json");folds=rolling.get("folds",[])
         planned=assessment_summary.get("foldPolicy",{}).get("plannedFoldCount");selected_period={"start":folds[0]["targetPeriod"],"end":folds[-1]["targetPeriod"]} if folds else None
@@ -118,15 +149,68 @@ def _approved(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commi
         if (decision.get("assessmentPolicyId"),decision.get("assessmentPolicyVersion"),decision.get("assessmentPolicySha256"))!=assessment_policy or (decision.get("decisionPolicyId"),decision.get("decisionPolicyVersion"),decision.get("decisionPolicySha256"))!=decision_policy: raise ForecastSourceError("Historical approved policy mismatch.")
         fold_plan=assessment_commit.get("foldPlanSha256");successful=68;failed=0;matrix=training.get("featureMatrixSha256")
     else:
-        family_name="approved_forecast_p2";assessment_policy=ASSESSMENT_P2;decision_policy=DECISION_P2
+        contract_version,assessment_policy,decision_policy=_approved_p2_contract(commit)
+        family_name="approved_forecast_p2"
         governance=forecast.get("governanceEvidence",{});labelled=governance.get("assessmentLabelledRows");planned=governance.get("assessmentPlannedFoldCount");selected_period=governance.get("selectedEvaluationPeriod");fold_plan=governance.get("foldPlanSha256");successful=governance.get("successfulFolds");failed=governance.get("failedFolds");matrix=training.get("featureMatrixSha256")
         if not isinstance(labelled,int) or labelled<157 or training.get("trainingRowCount")!=labelled or not isinstance(planned,int) or not 52<=planned<=68 or successful!=planned or failed!=0: raise ForecastSourceError("Phase 2 dynamic evidence mismatch.")
         if _policy_tuple(governance.get("assessmentPolicy",{}),True)!=assessment_policy or _policy_tuple(governance.get("decisionPolicy",{}),True)!=decision_policy: raise ForecastSourceError("Phase 2 policy binding mismatch.")
-        expected={**lifecycle_hashes,"candidateRegistrySha256":REGISTRY_SHA,"foldPlanSha256":fold_plan}
+        if _flat_policy_tuple(decision,"assessment")!=assessment_policy or _flat_policy_tuple(decision,"decision")!=decision_policy or _flat_policy_tuple(authorization,"assessment")!=assessment_policy or _flat_policy_tuple(authorization,"decision")!=decision_policy:
+            raise ForecastSourceError("Phase 2 lifecycle policy mismatch.")
+        if _flat_policy_tuple(decision_commit,"assessment")!=assessment_policy or _flat_policy_tuple(decision_commit,"decision")!=decision_policy:
+            raise ForecastSourceError("Phase 2 decision commit policy mismatch.")
+        if (_policy_tuple(card.get("assessment",{}).get("policy",{}),True),_policy_tuple(card.get("decision",{}).get("policy",{}),True))!=(assessment_policy,decision_policy):
+            raise ForecastSourceError("Phase 2 model-card policy mismatch.")
+        registry=None;registry_sha=REGISTRY_SHA
+        if contract_version=="p2-v2":
+            registry,registry_sha=load_and_validate_candidate_registry()
+        expected={**lifecycle_hashes,"candidateRegistrySha256":registry_sha,"foldPlanSha256":fold_plan}
         if any(governance.get(k)!=v for k,v in expected.items()) or commit.get("authorizationCommitSha256")!=lifecycle_hashes["authorizationCommitSha256"]: raise ForecastSourceError("Phase 2 governance hash mismatch.")
         if commit.get("technicalWinnerModelId")!=forecast.get("technicalWinnerModelId") or commit.get("technicalWinnerParameterSha256")!=forecast.get("technicalWinnerParameterSha256"): raise ForecastSourceError("Technical-winner evidence mismatch.")
+    if contract_version=="p2-v2":
+        assert registry is not None
+        candidates={candidate["model_id"]:candidate for candidate in registry["candidates"] if candidate.get("selectable") is True and candidate.get("selection_role")=="learned_selectable"}
+        candidate=candidates.get(model_id)
+        if candidate is None:
+            raise ForecastSourceError("Approved selected model is not supported by the current candidate registry.","forecast_not_eligible")
+        preprocessing=candidate["preprocessing_identity"]
+        model_values=(commit.get("selectedModelId"),forecast.get("selectedModelId"),card.get("model",{}).get("id"),decision.get("selectedModelId"),authorization.get("selectedModelId"),uncertainty.get("selectedModelId"))
+        registry_values=(commit.get("candidateRegistrySha256"),forecast.get("candidateRegistrySha256"),forecast.get("governanceEvidence",{}).get("candidateRegistrySha256"),card.get("model",{}).get("candidateRegistrySha256"),decision.get("candidateRegistrySha256"),authorization.get("candidateRegistrySha256"),assessment_commit.get("candidateRegistrySha256"),uncertainty.get("candidateRegistrySha256"))
+        feature_values=(commit.get("featureOrderSha256"),forecast.get("featureOrderSha256"),forecast.get("governanceEvidence",{}).get("featureOrderSha256"),training.get("featureOrderSha256"),card.get("features",{}).get("orderSha256"),decision.get("featureOrderSha256"),authorization.get("featureOrderSha256"),uncertainty.get("featureOrderSha256"))
+        family_values=(family,commit.get("selectedModelFamily"),forecast.get("selectedModelFamily"),forecast.get("governanceEvidence",{}).get("selectedModelFamily"),decision.get("selectedModelFamily"),authorization.get("selectedModelFamily"),uncertainty.get("modelFamily"))
+        parameter_values=(parameter,candidate.get("parameters_sha256"),forecast.get("selectedModelParameterSha256"),card.get("model",{}).get("parameterHash"),decision.get("selectedModelParameterSha256"),authorization.get("selectedModelParameterSha256"),uncertainty.get("selectedModelParameterSha256"))
+        preprocessing_values=(preprocessing,commit.get("selectedModelPreprocessingIdentity"),forecast.get("selectedModelPreprocessingIdentity"),forecast.get("governanceEvidence",{}).get("selectedModelPreprocessingIdentity"),training.get("preprocessingIdentity"),card.get("model",{}).get("preprocessingIdentity"),card.get("training",{}).get("preprocessingIdentity"),decision.get("selectedModelPreprocessingIdentity"),authorization.get("selectedModelPreprocessingIdentity"),uncertainty.get("preprocessingIdentity"))
+        fold_plan_values=(commit.get("foldPlanSha256"),forecast.get("foldPlanSha256"),forecast.get("governanceEvidence",{}).get("foldPlanSha256"),decision.get("foldPlanSha256"),authorization.get("foldPlanSha256"),assessment_commit.get("foldPlanSha256"),uncertainty.get("foldPlanSha256"))
+        if any(value!=model_id for value in model_values):
+            raise ForecastSourceError("Approved current model identity mismatch.")
+        if any(value!=registry_sha for value in registry_values) or any(value!=FEATURE_SHA for value in feature_values):
+            raise ForecastSourceError("Approved current registry or feature binding mismatch.")
+        if any(value!=candidate["model_family"] for value in family_values):
+            raise ForecastSourceError("Approved current model-family binding mismatch.")
+        if any(value!=candidate["parameters_sha256"] for value in parameter_values):
+            raise ForecastSourceError("Approved current parameter binding mismatch.")
+        if any(value!=preprocessing for value in preprocessing_values):
+            raise ForecastSourceError("Approved current preprocessing binding mismatch.")
+        if any(value!=fold_plan for value in fold_plan_values):
+            raise ForecastSourceError("Approved current fold-plan binding mismatch.")
+        technical_winner=(commit.get("technicalWinnerModelId"),commit.get("technicalWinnerParameterSha256"))
+        if any(value!=technical_winner for value in ((forecast.get("technicalWinnerModelId"),forecast.get("technicalWinnerParameterSha256")),(decision.get("technicalWinnerModelId"),decision.get("technicalWinnerParameterSha256")),(card.get("model",{}).get("technicalWinnerId"),card.get("model",{}).get("technicalWinnerParameterHash")))) or authorization.get("technicalWinnerModelId")!=technical_winner[0]:
+            raise ForecastSourceError("Approved current technical-winner binding mismatch.")
+        if _flat_policy_tuple(authorization,"decision")!=_policy_tuple(authorization,True):
+            raise ForecastSourceError("Approved authorization policy identity mismatch.")
+        if any(value is not False for value in (commit.get("deploymentModelAdopted"),forecast.get("deploymentModelAdopted"),card.get("deploymentModelAdopted"),decision.get("deploymentModelAdopted"),authorization.get("deploymentModelAdopted"))):
+            raise ForecastSourceError("Approved one-run forecast cannot adopt a deployment model.")
+        uncertainty_contract=(uncertainty.get("forecastPresentationMode"),uncertainty.get("calibrationStatus"),uncertainty.get("uncertaintyReasonCode"),uncertainty.get("calibrationProvenance"))
+        if uncertainty_contract!=("point_only","pending","model_specific_calibration_pending",None) or any(uncertainty.get(k) is not None for k in ("lowerRaw","upperRaw")):
+            raise ForecastSourceError("Approved p2-v2 uncertainty contract mismatch.")
+    else:
+        if MODEL_FAMILIES.get(model_id)!=family:
+            raise ForecastSourceError("Approved selected-model binding mismatch.")
+        if card.get("model",{}).get("candidateRegistrySha256")!=REGISTRY_SHA or card.get("features",{}).get("orderSha256")!=FEATURE_SHA:
+            raise ForecastSourceError("Approved registry or feature binding mismatch.")
+        if uncertainty.get("uncertaintyStatus")!="pending_selected_model_calibration" or any(uncertainty.get(k) is not None for k in ("lowerRaw","upperRaw")):
+            raise ForecastSourceError("Approved uncertainty evidence mismatch.")
     lifecycle={"assessmentId":assessment_id,"assessmentCommitSha256":lifecycle_hashes["assessmentCommitSha256"],"assessmentPolicy":{"policyId":assessment_policy[0],"policyVersion":assessment_policy[1],"policySha256":assessment_policy[2]},"decisionId":decision_id,"decisionCommitSha256":lifecycle_hashes["decisionCommitSha256"],"decisionPolicy":{"policyId":decision_policy[0],"policyVersion":decision_policy[1],"policySha256":decision_policy[2]},"authorizationId":authorization_id,"authorizationCommitSha256":lifecycle_hashes["authorizationCommitSha256"],"technicalWinnerModelId":commit.get("technicalWinnerModelId",forecast.get("technicalWinnerModelId")),"technicalWinnerParameterSha256":commit.get("technicalWinnerParameterSha256",decision.get("technicalWinnerParameterSha256")),"trainingRowCount":training.get("trainingRowCount"),"trainingPeriod":training.get("trainingPeriod"),"plannedFoldCount":planned,"successfulFolds":successful,"failedFolds":failed,"selectedEvaluationPeriod":selected_period,"foldPlanSha256":fold_plan,"featureMatrixSha256":matrix}
-    return {"sourceFamily":family_name,"commit":commit,"forecast":forecast,"uncertainty":uncertainty,"calibration":None,"card":card,"snapshot":snapshot,"origin":origin,"modelId":model_id,"modelFamily":family,"parameterHash":parameter,"candidateRegistrySha256":REGISTRY_SHA,"featureOrderSha256":FEATURE_SHA,"sourcePolicy":{"policyId":decision_policy[0],"policyVersion":decision_policy[1],"policySha256":decision_policy[2]},"lifecycle":lifecycle}
+    return {"sourceFamily":family_name,"sourceContractVersion":contract_version,"commit":commit,"forecast":forecast,"uncertainty":uncertainty,"calibration":None,"card":card,"snapshot":snapshot,"origin":origin,"modelId":model_id,"modelFamily":family,"parameterHash":parameter,"candidateRegistrySha256":registry_sha,"featureOrderSha256":FEATURE_SHA,"sourcePolicy":{"policyId":decision_policy[0],"policyVersion":decision_policy[1],"policySha256":decision_policy[2]},"lifecycle":lifecycle}
 
 
 def verify_forecast_source(root: Path, run_id: str, expected_commit: str, allowed_families: set[str] | None = None) -> dict[str,Any]:
