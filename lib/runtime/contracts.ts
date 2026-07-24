@@ -201,8 +201,7 @@ interface AssignmentAwareQuickBase extends HistoricalQuickForecastJob {
 export interface CommittedAssignmentQuickForecastJob extends AssignmentAwareQuickBase {activeModelAuthoritySource:"committed_assignment";assignmentPointerSha256:string;assignmentId:string;assignmentCommitSha256:string}
 export interface HistoricalProfileFallbackQuickForecastJob extends AssignmentAwareQuickBase {activeModelAuthoritySource:"historical_profile_fallback_pending_explicit_bootstrap";historicalProfileSha256:string}
 export type AssignmentAwareQuickForecastJob=CommittedAssignmentQuickForecastJob|HistoricalProfileFallbackQuickForecastJob;
-export interface CurrentQuickForecastJob extends Omit<RuntimeJobBase,"schemaVersion"> {
-  schemaVersion:"2.0";
+interface GovernedQuickForecastJob extends Omit<RuntimeJobBase,"schemaVersion"> {
   jobKind:"quick_forecast";
   runId:string;
   workflowMode:"quick_forecast";
@@ -228,7 +227,9 @@ export interface CurrentQuickForecastJob extends Omit<RuntimeJobBase,"schemaVers
   quickPolicyVersion:"p2-v1";
   quickPolicySha256:string;
 }
-export type QuickForecastJobRecord=HistoricalQuickForecastJob|AssignmentAwareQuickForecastJob|CurrentQuickForecastJob;
+export interface ArchivedP2QuickForecastJob extends GovernedQuickForecastJob {schemaVersion:"2.0"}
+export interface CurrentQuickForecastJob extends GovernedQuickForecastJob {schemaVersion:"2.1"}
+export type QuickForecastJobRecord=HistoricalQuickForecastJob|AssignmentAwareQuickForecastJob|ArchivedP2QuickForecastJob|CurrentQuickForecastJob;
 
 export type LifecycleAction="bootstrap_historical_profile"|"retain_current_model"|"promote_selected_model"|"rollback_previous_assignment"|"defer"|"reject";
 export interface LifecycleAcknowledgements{manualActionAcknowledged:true;statisticalSufficiencyNotGovernedAcknowledged:true;materialWorseningNotClassifiedAcknowledged:true;evidenceDoesNotProveSuperiorityAcknowledged:true;quickCompatibleRandomForestOnlyAcknowledged:true}

@@ -2,7 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {"$ref": "#/$defs/p1"},
-    {"$ref": "#/$defs/p2"}
+    {"$ref": "#/$defs/p2"},
+    {"$ref": "#/$defs/p21"}
   ],
   "$defs": {
     "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
@@ -27,6 +28,19 @@
         "deploymentId": {"const": "dhaka_south"}, "workflowMode": {"const": "quick_forecast"}, "sourceType": {"const": "uploaded"}, "status": {"const": "commit_ready"},
         "policyId": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"}, "policyVersion": {"const": "p2-v1"}, "policySha256": {"const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"},
         "assignmentId": {"$ref": "#/$defs/uuid"}, "assignmentCommitSha256": {"$ref": "#/$defs/sha"}, "activeModelId": {"type": "string", "minLength": 1}, "modelFamily": {"type": "string", "minLength": 1},
+        "parameterSha256": {"$ref": "#/$defs/sha"}, "preprocessingIdentity": {"$ref": "#/$defs/sha"}, "candidateRegistrySha256": {"const": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"}, "featureOrderSha256": {"const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"},
+        "lifecyclePolicyId": {"const": "RUNTIME.MODEL_LIFECYCLE.DECISION"}, "lifecyclePolicyVersion": {"const": "p2-v2"}, "lifecyclePolicySha256": {"$ref": "#/$defs/sha"},
+        "createdAt": {"$ref": "#/$defs/dateTime"}, "generatedAt": {"$ref": "#/$defs/dateTime"}, "artifactPublicationSequence": {"$ref": "#/$defs/sequence"}
+      }
+    },
+    "p21": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "sourceFamily", "runId", "jobId", "workspaceId", "datasetId", "deploymentId", "workflowMode", "sourceType", "status", "policyId", "policyVersion", "policySha256", "assignmentId", "assignmentCommitSha256", "assignmentAction", "authoritySnapshotSha256", "activeModelId", "modelFamily", "parameterSha256", "preprocessingIdentity", "candidateRegistrySha256", "featureOrderSha256", "lifecyclePolicyId", "lifecyclePolicyVersion", "lifecyclePolicySha256", "createdAt", "generatedAt", "artifactPublicationSequence"],
+      "properties": {
+        "schemaVersion": {"const": "2.1"}, "sourceFamily": {"const": "quick_forecast_p2"}, "runId": {"$ref": "#/$defs/uuid"}, "jobId": {"$ref": "#/$defs/uuid"}, "workspaceId": {"$ref": "#/$defs/uuid"}, "datasetId": {"$ref": "#/$defs/sha"},
+        "deploymentId": {"const": "dhaka_south"}, "workflowMode": {"const": "quick_forecast"}, "sourceType": {"const": "uploaded"}, "status": {"const": "commit_ready"},
+        "policyId": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"}, "policyVersion": {"const": "p2-v1"}, "policySha256": {"const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"},
+        "assignmentId": {"$ref": "#/$defs/uuid"}, "assignmentCommitSha256": {"$ref": "#/$defs/sha"}, "assignmentAction": {"const": "assign_selected_model"}, "authoritySnapshotSha256": {"$ref": "#/$defs/sha"}, "activeModelId": {"type": "string", "minLength": 1}, "modelFamily": {"type": "string", "minLength": 1},
         "parameterSha256": {"$ref": "#/$defs/sha"}, "preprocessingIdentity": {"$ref": "#/$defs/sha"}, "candidateRegistrySha256": {"const": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"}, "featureOrderSha256": {"const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"},
         "lifecyclePolicyId": {"const": "RUNTIME.MODEL_LIFECYCLE.DECISION"}, "lifecyclePolicyVersion": {"const": "p2-v2"}, "lifecyclePolicySha256": {"$ref": "#/$defs/sha"},
         "createdAt": {"$ref": "#/$defs/dateTime"}, "generatedAt": {"$ref": "#/$defs/dateTime"}, "artifactPublicationSequence": {"$ref": "#/$defs/sequence"}

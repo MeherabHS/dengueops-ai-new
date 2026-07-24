@@ -106,7 +106,7 @@ export async function POST(request: Request): Promise<Response> {
     const marker = assertContained(workspace.metadata, path.join(workspace.metadata, "quick_forecast_started.json"));
     await createWorkspaceStartMarker(marker, { schemaVersion: "1.0", workspaceId: body.workspaceId, datasetId: body.datasetId, jobId, runId, createdAt: now });
     const job: RuntimeJobRecord = {
-      schemaVersion: "2.0", jobKind: "quick_forecast", jobId, runId, workspaceId: String(body.workspaceId), datasetId: String(body.datasetId), deploymentId: String(body.deploymentId),
+      schemaVersion: "2.1", jobKind: "quick_forecast", jobId, runId, workspaceId: String(body.workspaceId), datasetId: String(body.datasetId), deploymentId: String(body.deploymentId),
       workflowMode: "quick_forecast", validationRecordSha256: String(body.validationRecordSha256), policyId: policy.policyId, policyVersion: policy.policyVersion,
       policySha256: policyHash, status: "queued", progress: "queued", createdAt: now, claimedAt: null, startedAt: null, updatedAt: now,
       completedAt: null, heartbeatAt: null, workerId: null, processId: null, timeoutSeconds: config.quickForecastTimeoutSeconds,

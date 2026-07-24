@@ -76,14 +76,17 @@ class LifecycleSchemaTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    runtime,_workspace,_path,job=build_ready_runtime(Path(directory));self.assertFalse(list(validator.iter_errors(job)));job["authoritySnapshotSha256"]="0"*64;self.assertTrue(list(validator.iter_errors(job)))
    authority=resolve_historical_active_model_p2_v1(repository_root=ROOT,runtime_root=runtime);job.update({"activeModelAuthoritySource":authority["authoritySource"],"authoritySnapshotSha256":authority["authoritySnapshotSha256"],"historicalProfileSha256":PROFILE_SHA,"resolvedModelId":"random_forest","resolvedModelFamily":"RandomForestRegressor","resolvedModelParameterSha256":PARAMETER_SHA,"resolvedFeatureOrderSha256":FEATURE_SHA,"resolvedCandidateRegistrySha256":REGISTRY_SHA,"quickPolicyId":"RUNTIME.QUICK_FORECAST.COMPATIBILITY","quickPolicyVersion":"p1.4f-v1","quickPolicySha256":QUICK_SHA});self.assertFalse(list(validator.iter_errors(job)))
- def test_p2_quick_job_branch_is_closed_and_rejects_mixed_contracts(self):
+ def test_p2_quick_job_branches_are_closed_and_reject_mixed_contracts(self):
   schema=json.loads((ROOT/"config/runtime_job.schema.json").read_text());validator=Draft202012Validator(schema);sha="0"*64
   with tempfile.TemporaryDirectory() as directory:
    _runtime,_workspace,_path,p1=build_ready_runtime(Path(directory))
    p2={**p1,"jobKind":"quick_forecast","schemaVersion":"2.0","policyVersion":"p2-v1","policySha256":"4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e","activeModelAuthoritySource":"committed_assignment","authoritySnapshotSha256":sha,"assignmentId":str(uuid.uuid4()),"assignmentCommitSha256":sha,"assignmentAction":"assign_selected_model","resolvedModelId":"ridge_regression","resolvedModelFamily":"Ridge","resolvedModelParameterSha256":"f59e0d298750b54d9ab8312c6a68a4eaf4910bea81042dd3a1c4711dcb307e5b","resolvedPreprocessingIdentity":"9a666eb944a664443f4141b148eefb109cf3894674076df8f163d0d835474645","resolvedCandidateRegistrySha256":"74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0","resolvedFeatureOrderSha256":FEATURE_SHA,"lifecyclePolicyId":"RUNTIME.MODEL_LIFECYCLE.DECISION","lifecyclePolicyVersion":"p2-v2","lifecyclePolicySha256":"294b7949adecc39b284adaa198db47109ee4b1cc39259e87bc9073e1bff93b64","quickPolicyId":"RUNTIME.QUICK_FORECAST.COMPATIBILITY","quickPolicyVersion":"p2-v1","quickPolicySha256":"4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"}
    self.assertFalse(list(validator.iter_errors(p2)))
+   p21={**p2,"schemaVersion":"2.1"}
+   self.assertFalse(list(validator.iter_errors(p21)))
    for missing in ("assignmentCommitSha256","lifecyclePolicySha256","resolvedPreprocessingIdentity","authoritySnapshotSha256"):
-    invalid=dict(p2);invalid.pop(missing);self.assertTrue(list(validator.iter_errors(invalid)),missing)
+    for valid in (p2,p21):
+     invalid=dict(valid);invalid.pop(missing);self.assertTrue(list(validator.iter_errors(invalid)),f"{valid['schemaVersion']}:{missing}")
    legacy=dict(p2);legacy.pop("assignmentCommitSha256");legacy["commitSha256"]=sha;self.assertTrue(list(validator.iter_errors(legacy)))
    self.assertTrue(list(validator.iter_errors({**p1,"resolvedPreprocessingIdentity":sha})))
    historical_authority={**p1,"activeModelAuthoritySource":"historical_profile_fallback_pending_explicit_bootstrap","authoritySnapshotSha256":sha,"historicalProfileSha256":PROFILE_SHA,"resolvedModelId":"random_forest","resolvedModelFamily":"RandomForestRegressor","resolvedModelParameterSha256":PARAMETER_SHA,"resolvedFeatureOrderSha256":FEATURE_SHA,"resolvedCandidateRegistrySha256":REGISTRY_SHA,"quickPolicyId":"RUNTIME.QUICK_FORECAST.COMPATIBILITY","quickPolicyVersion":"p1.4f-v1","quickPolicySha256":QUICK_SHA}

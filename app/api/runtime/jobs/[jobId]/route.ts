@@ -27,7 +27,7 @@ export async function GET(_request: Request, context: RouteContext<"/api/runtime
       : job.jobKind === "model_lifecycle"
       ? {ok:true,jobKind:"model_lifecycle",jobId:job.jobId,lifecycleDecisionId:job.lifecycleDecisionId,workflowMode:job.workflowMode,action:job.action,status:job.status,progress:job.progress,createdAt:job.createdAt,startedAt:job.startedAt,updatedAt:job.updatedAt,completedAt:job.completedAt,retryable:false,error:job.error,committedLifecycleDecisionId:job.committedLifecycleDecisionId}
       : { ok: true, jobKind: "quick_forecast", jobId: job.jobId, runId: job.runId, status: job.status, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: job.error?.retryable ?? false, error: job.error, committedRunId: job.committedRunId,
-          ...(job.schemaVersion==="2.0"&&"assignmentAction" in job?{activeModelAuthority:{
+          ...((job.schemaVersion==="2.0"||job.schemaVersion==="2.1")&&"assignmentAction" in job?{activeModelAuthority:{
             deploymentId:job.deploymentId,authoritySource:job.activeModelAuthoritySource,modelId:job.resolvedModelId,
             modelFamily:job.resolvedModelFamily,parameterSha256:job.resolvedModelParameterSha256,
             preprocessingIdentity:job.resolvedPreprocessingIdentity,candidateRegistrySha256:job.resolvedCandidateRegistrySha256,

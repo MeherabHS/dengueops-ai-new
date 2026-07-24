@@ -12,11 +12,15 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pandas as pd
+from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analytics"))
 
-from runtime_commit import RuntimeCommitError, atomic_json, commit_runtime_run, sha256_file
+from runtime_commit import (
+    RuntimeCommitError, atomic_json, commit_runtime_run, sha256_file,
+    verify_run_record_binding,
+)
 from model_factory import load_and_validate_candidate_registry
 from runtime_quick_forecast import execute
 from runtime_policy import canonical_policy_sha256, load_and_validate_quick_forecast_policy
@@ -68,7 +72,7 @@ def _setup_quick_run_job(
     now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     job = {
-        "schemaVersion": "1.0" if historical else "2.0",
+        "schemaVersion": "1.0" if historical else "2.1",
         "jobKind": "quick_forecast",
         "jobId": job_id,
         "runId": run_id,
@@ -209,7 +213,9 @@ class ProductV2QuickForecastTests(unittest.TestCase):
                 model_card = json.loads((committed_run / "artifacts/model_card.json").read_text(encoding="utf-8"))
                 uncertainty = json.loads((committed_run / "artifacts/forecast_uncertainty.json").read_text(encoding="utf-8"))
                 calibration = json.loads((committed_run / "artifacts/forecast_calibration.json").read_text(encoding="utf-8"))
+                dashboard = json.loads((committed_run / "artifacts/dashboard_summary.json").read_text(encoding="utf-8"))
                 run_record = json.loads((committed_run / "metadata/run.json").read_text(encoding="utf-8"))
+                commit = json.loads((committed_run / "metadata/commit.json").read_text(encoding="utf-8"))
                 candidate = registry_by_id[model_id]
 
                 self.assertEqual(forecast_output["activeModelId"], model_id)
@@ -221,8 +227,27 @@ class ProductV2QuickForecastTests(unittest.TestCase):
                 self.assertEqual(model_card["sourceFamily"], "quick_forecast_p2")
                 self.assertEqual(uncertainty["activeModelId"], model_id)
                 self.assertEqual(uncertainty["sourceFamily"], "quick_forecast_p2")
-                for artifact in (forecast_output, uncertainty, calibration, model_card, run_record):
-                    self.assertEqual(artifact["schemaVersion"], "2.0")
+                for artifact in (forecast_output, uncertainty, calibration, dashboard, model_card, run_record):
+                    self.assertEqual(artifact["schemaVersion"], "2.1")
+                for artifact in (run_record, forecast_output, model_card):
+                    self.assertEqual(artifact["assignmentAction"], job["assignmentAction"])
+                    self.assertEqual(artifact["authoritySnapshotSha256"], job["authoritySnapshotSha256"])
+                self.assertEqual(commit["schemaVersion"], "2.1")
+                self.assertEqual(commit["runRecordSha256"], sha256_file(committed_run / "metadata/run.json"))
+                verify_run_record_binding(committed_run, commit)
+                if model_id == "ridge_regression":
+                    governed = (
+                        (run_record, "runtime_run.schema.json"),
+                        (forecast_output, "runtime_forecast_output.schema.json"),
+                        (model_card, "runtime_model_card.schema.json"),
+                    )
+                    for record, schema_name in governed:
+                        schema = json.loads((ROOT / "config" / schema_name).read_text(encoding="utf-8"))
+                        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+                        for missing in ("assignmentAction", "authoritySnapshotSha256"):
+                            invalid = dict(record)
+                            invalid.pop(missing)
+                            self.assertTrue(list(validator.iter_errors(invalid)), f"{schema_name}:{missing}")
                 self.assertEqual(run_record["modelFamily"], candidate["model_family"])
                 self.assertEqual(run_record["parameterSha256"], candidate["parameters_sha256"])
                 self.assertEqual(run_record["preprocessingIdentity"], candidate["preprocessing_identity"])
@@ -695,11 +720,36 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         uncertainty_path = staging_dir / "artifacts/forecast_uncertainty.json"
         original_uncertainty = uncertainty_path.read_bytes()
         uncertainty = json.loads(original_uncertainty)
-        uncertainty["schemaVersion"] = "1.0"
+        uncertainty["schemaVersion"] = "2.0"
         atomic_json(uncertainty_path, uncertainty)
         with self.assertRaisesRegex(RuntimeCommitError, "failed its runtime schema|Mixed p1/p2"):
             commit_runtime_run(runtime_root, staging_dir, claimed_job)
         uncertainty_path.write_bytes(original_uncertainty)
+
+        run_path = staging_dir / "metadata/run.json"
+        original_run = run_path.read_bytes()
+        run_record = json.loads(original_run)
+        run_record["assignmentAction"] = "tampered_action"
+        atomic_json(run_path, run_record)
+        with self.assertRaisesRegex(RuntimeCommitError, "failed its runtime schema|authority_changed"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        run_path.write_bytes(original_run)
+
+        run_record = json.loads(original_run)
+        run_record["authoritySnapshotSha256"] = "f" * 64
+        atomic_json(run_path, run_record)
+        with self.assertRaisesRegex(RuntimeCommitError, "active_model_authority_changed_before_commit"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        run_path.write_bytes(original_run)
+
+        run_record = json.loads(original_run)
+        run_record["schemaVersion"] = "2.0"
+        run_record.pop("assignmentAction")
+        run_record.pop("authoritySnapshotSha256")
+        atomic_json(run_path, run_record)
+        with self.assertRaisesRegex(RuntimeCommitError, "Mixed p1/p2"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        run_path.write_bytes(original_run)
 
         forecast_path = staging_dir / "artifacts/forecast_output.json"
         original_forecast = forecast_path.read_bytes()
@@ -710,6 +760,20 @@ class ProductV2QuickForecastTests(unittest.TestCase):
             commit_runtime_run(runtime_root, staging_dir, claimed_job)
         forecast_path.write_bytes(original_forecast)
 
+        forecast = json.loads(original_forecast)
+        forecast["authoritySnapshotSha256"] = "f" * 64
+        atomic_json(forecast_path, forecast)
+        with self.assertRaisesRegex(RuntimeCommitError, "artifact authority identity mismatch"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        forecast_path.write_bytes(original_forecast)
+
+        card = json.loads(original_card)
+        card["authoritySnapshotSha256"] = "f" * 64
+        atomic_json(card_path, card)
+        with self.assertRaisesRegex(RuntimeCommitError, "artifact authority identity mismatch"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        card_path.write_bytes(original_card)
+
         assignment_pointer_path = runtime_root / "deployments/dhaka_south/model-assignment/latest.json"
         assignment_pointer = json.loads(assignment_pointer_path.read_text(encoding="utf-8"))
         assignment_pointer["assignmentCommitSha256"] = "0" * 64
@@ -717,6 +781,48 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             commit_runtime_run(runtime_root, staging_dir, claimed_job)
         self.assertEqual(quick_pointer.read_bytes() if quick_pointer.exists() else None, original_quick_pointer)
+
+    def test_archived_p2_job_executes_without_synthetic_p21_provenance(self):
+        runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="ridge_regression")
+        workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
+        job, job_file, staging_dir = _setup_quick_run_job(
+            runtime_root, workspace_dir.name, dataset_id, val_sha
+        )
+        job["schemaVersion"] = "2.0"
+        atomic_json(job_file, job)
+        result = execute(SimpleNamespace(
+            runtime_root=str(runtime_root), job_record=str(job_file),
+            workspace=str(workspace_dir), staging=str(staging_dir),
+        ))
+        self.assertTrue(result["committed"])
+        committed_run = runtime_root / "runs" / job["runId"]
+        records = [
+            json.loads((committed_run / relative).read_text(encoding="utf-8"))
+            for relative in (
+                "metadata/run.json",
+                "artifacts/forecast_output.json",
+                "artifacts/forecast_calibration.json",
+                "artifacts/forecast_uncertainty.json",
+                "artifacts/dashboard_summary.json",
+                "artifacts/model_card.json",
+            )
+        ]
+        self.assertTrue(all(record["schemaVersion"] == "2.0" for record in records))
+        for record in (records[0], records[1], records[5]):
+            self.assertNotIn("assignmentAction", record)
+            self.assertNotIn("authoritySnapshotSha256", record)
+        for record, schema_name in (
+            (records[0], "runtime_run.schema.json"),
+            (records[1], "runtime_forecast_output.schema.json"),
+            (records[5], "runtime_model_card.schema.json"),
+        ):
+            schema = json.loads((ROOT / "config" / schema_name).read_text(encoding="utf-8"))
+            invalid = {**record, "assignmentAction": "assign_selected_model", "authoritySnapshotSha256": "0" * 64}
+            self.assertTrue(list(Draft202012Validator(schema).iter_errors(invalid)))
+        commit = json.loads((committed_run / "metadata/commit.json").read_text(encoding="utf-8"))
+        self.assertEqual(commit["schemaVersion"], "1.0")
+        self.assertNotIn("runRecordSha256", commit)
+        verify_run_record_binding(committed_run, commit)
 
     def test_quick_forecast_p2_does_not_create_modify_or_publish_lifecycle_assignments(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="extra_trees")

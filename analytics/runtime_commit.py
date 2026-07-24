@@ -69,6 +69,16 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def verify_run_record_binding(run_root: Path, commit: Mapping[str, Any]) -> None:
+    """Verify the exact persisted run-record bytes bound by a 2.1 commit."""
+    if commit.get("schemaVersion") != "2.1":
+        if "runRecordSha256" in commit:
+            raise RuntimeCommitError("Historical runtime commits cannot carry a 2.1 run-record binding.")
+        return
+    expected = commit.get("runRecordSha256")
+    if not isinstance(expected, str) or sha256_file(run_root / "metadata" / "run.json") != expected:
+        raise RuntimeCommitError("Runtime run-record hash mismatch.")
+
 
 def atomic_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -271,7 +281,7 @@ def _validate_calibration_bundle(
 ) -> None:
     pipeline = _load_json(artifacts / "pipeline_run_summary.json")
     calibration_sha = sha256_file(artifacts / "forecast_calibration.json")
-    is_p2 = run.get("schemaVersion") == "2.0"
+    is_p2 = run.get("schemaVersion") in {"2.0", "2.1"}
     if tuple(calibration.get(key) for key in ("runId", "jobId", "datasetId")) != (
         job["runId"], job["jobId"], job["datasetId"],
     ):
@@ -439,10 +449,10 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
         run.get("schemaVersion"), forecast.get("schemaVersion"), calibration.get("schemaVersion"),
         uncertainty.get("schemaVersion"), dashboard.get("schemaVersion"), card.get("schemaVersion"),
     }
-    if artifact_versions != {contract_version} or contract_version not in {"1.0", "2.0"}:
+    if artifact_versions != {contract_version} or contract_version not in {"1.0", "2.0", "2.1"}:
         raise RuntimeCommitError("Mixed p1/p2 runtime artifact contracts are prohibited.")
 
-    if contract_version == "2.0":
+    if contract_version in {"2.0", "2.1"}:
         from runtime_active_model import resolve_active_model_p2_v2
         authority = resolve_active_model_p2_v2(
             repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"]
@@ -459,6 +469,19 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
             "lifecyclePolicyId": authority["lifecyclePolicyId"], "lifecyclePolicyVersion": authority["lifecyclePolicyVersion"],
             "lifecyclePolicySha256": authority["lifecyclePolicySha256"],
         }
+        if contract_version == "2.1":
+            expected_authority.update({
+                "assignmentAction": authority["assignmentAction"],
+                "authoritySnapshotSha256": authority["authoritySnapshotSha256"],
+            })
+            if (
+                job.get("assignmentAction"),
+                job.get("authoritySnapshotSha256"),
+            ) != (
+                authority["assignmentAction"],
+                authority["authoritySnapshotSha256"],
+            ):
+                raise RuntimeCommitError("active_model_authority_changed_before_commit")
         if any(run.get(key) != value for key, value in expected_authority.items()):
             raise RuntimeCommitError("active_model_authority_changed_before_commit")
         if registry_sha != authority["candidateRegistrySha256"] or (
@@ -494,6 +517,17 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
              "parameterSha256": card.get("model", {}).get("parameterHash"), "preprocessingIdentity": card.get("model", {}).get("preprocessingIdentity"),
              "candidateRegistrySha256": card.get("model", {}).get("candidateRegistrySha256"), "featureOrderSha256": card.get("features", {}).get("orderSha256")},
         )
+        if contract_version == "2.1":
+            artifact_authorities = (
+                {**artifact_authorities[0],
+                 "assignmentAction": forecast.get("assignmentAction"),
+                 "authoritySnapshotSha256": forecast.get("authoritySnapshotSha256")},
+                artifact_authorities[1],
+                artifact_authorities[2],
+                {**artifact_authorities[3],
+                 "assignmentAction": card.get("assignmentAction"),
+                 "authoritySnapshotSha256": card.get("authoritySnapshotSha256")},
+            )
         for artifact_authority in artifact_authorities:
             if any(artifact_authority.get(key) != expected_authority[key] for key in artifact_authority):
                 raise RuntimeCommitError("P2 artifact authority identity mismatch.")
@@ -535,13 +569,17 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
 
     committed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     commit = {
-        "schemaVersion": "1.0", "runId": job["runId"], "jobId": job["jobId"],
+        "schemaVersion": "2.1" if contract_version == "2.1" else "1.0",
+        "runId": job["runId"], "jobId": job["jobId"],
         "workspaceId": job["workspaceId"], "datasetId": job["datasetId"],
         "deploymentId": job["deploymentId"], "workflowMode": "quick_forecast",
         "sourceType": "uploaded", "status": "committed", "policySha256": run["policySha256"],
         "artifactHashes": artifact_hashes, "modelCardPublishedLast": True,
         "prohibitedArtifactsAbsent": True, "committedAt": committed_at,
     }
+    if contract_version == "2.1":
+        commit["runRecordSha256"] = sha256_file(metadata / "run.json")
+    verify_run_record_binding(staging_root, commit)
     commit_schema = json.loads((ROOT / "config" / "runtime_commit.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator(commit_schema, format_checker=FormatChecker()).validate(commit)
     atomic_json(metadata / "commit.json", commit)
@@ -564,6 +602,7 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
         committed_commit = committed_root / "metadata" / "commit.json"
         if sha256_file(committed_card) != artifact_hashes["model_card.json"]:
             raise RuntimeCommitError("Committed model card changed before pointer publication.")
+        verify_run_record_binding(committed_root, commit)
         pointer = {
             "schemaVersion": "1.0", "deploymentId": job["deploymentId"], "runId": job["runId"],
             "datasetId": job["datasetId"], "workflowMode": "quick_forecast", "sourceType": "uploaded",

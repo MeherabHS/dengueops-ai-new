@@ -2043,6 +2043,9 @@
         },
         {
           "$ref": "#/$defs/quickP2"
+        },
+        {
+          "$ref": "#/$defs/quickP21"
         }
       ]
     },
@@ -2427,6 +2430,217 @@
         },
         "schemaVersion": {
           "const": "2.0"
+        },
+        "jobId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "runId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/sha"
+        },
+        "deploymentId": {
+          "const": "dhaka_south"
+        },
+        "workflowMode": {
+          "const": "quick_forecast"
+        },
+        "validationRecordSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "policyId": {
+          "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
+        },
+        "policyVersion": {
+          "const": "p2-v1"
+        },
+        "policySha256": {
+          "const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "progress": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "claimedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "startedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "heartbeatAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "workerId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "processId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retryCount": {
+          "const": 0
+        },
+        "error": {
+          "$ref": "#/$defs/error"
+        },
+        "committedRunId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "activeModelAuthoritySource": {
+          "const": "committed_assignment"
+        },
+        "authoritySnapshotSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "assignmentCommitSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "assignmentAction": {
+          "const": "assign_selected_model"
+        },
+        "resolvedModelId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolvedModelFamily": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolvedModelParameterSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "resolvedPreprocessingIdentity": {
+          "$ref": "#/$defs/sha"
+        },
+        "resolvedFeatureOrderSha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "resolvedCandidateRegistrySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "lifecyclePolicyId": {
+          "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
+        },
+        "lifecyclePolicyVersion": {
+          "const": "p2-v2"
+        },
+        "lifecyclePolicySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "quickPolicyId": {
+          "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
+        },
+        "quickPolicyVersion": {
+          "const": "p2-v1"
+        },
+        "quickPolicySha256": {
+          "const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"
+        }
+      }
+    },
+    "quickP21": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jobKind",
+        "schemaVersion",
+        "jobId",
+        "runId",
+        "workspaceId",
+        "datasetId",
+        "deploymentId",
+        "workflowMode",
+        "validationRecordSha256",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "status",
+        "progress",
+        "createdAt",
+        "claimedAt",
+        "startedAt",
+        "updatedAt",
+        "completedAt",
+        "heartbeatAt",
+        "workerId",
+        "processId",
+        "timeoutSeconds",
+        "retryCount",
+        "error",
+        "committedRunId",
+        "activeModelAuthoritySource",
+        "authoritySnapshotSha256",
+        "assignmentId",
+        "assignmentCommitSha256",
+        "assignmentAction",
+        "resolvedModelId",
+        "resolvedModelFamily",
+        "resolvedModelParameterSha256",
+        "resolvedPreprocessingIdentity",
+        "resolvedFeatureOrderSha256",
+        "resolvedCandidateRegistrySha256",
+        "lifecyclePolicyId",
+        "lifecyclePolicyVersion",
+        "lifecyclePolicySha256",
+        "quickPolicyId",
+        "quickPolicyVersion",
+        "quickPolicySha256"
+      ],
+      "properties": {
+        "jobKind": {
+          "const": "quick_forecast"
+        },
+        "schemaVersion": {
+          "const": "2.1"
         },
         "jobId": {
           "$ref": "#/$defs/uuid"

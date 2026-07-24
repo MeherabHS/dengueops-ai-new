@@ -73,7 +73,7 @@ for (const modelId of ["random_forest", "ridge_regression"]) {
 
         const jobPath = path.join(fixture.runtime, "jobs", "pending", `${queued.jobId}.json`);
         const job = JSON.parse(await readFile(jobPath, "utf8"));
-        assert.equal(job.schemaVersion, "2.0");
+        assert.equal(job.schemaVersion, "2.1");
         assert.equal(job.assignmentCommitSha256, fixture.authority.assignmentCommitSha256);
         assert.equal(job.lifecyclePolicySha256, fixture.authority.lifecyclePolicySha256);
         assert.equal(job.authoritySnapshotSha256, fixture.authority.authoritySnapshotSha256);
