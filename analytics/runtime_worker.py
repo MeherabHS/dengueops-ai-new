@@ -41,17 +41,28 @@ def ensure_structure(root: Path) -> None:
 
 def load_job(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict) or value.get("schemaVersion") not in {"1.0", "2.0"}:
+    if not isinstance(value, dict):
         raise ValueError("Invalid runtime job record.")
-    kind = value.get("jobKind", "quick_forecast")
-    if value.get("schemaVersion") == "2.0" and (kind != "forecast_outcome" or value.get("policyVersion") != "p2-v1"):
+    schema = json.loads((ROOT / "config" / "runtime_job.schema.json").read_text(encoding="utf-8"))
+    Draft202012Validator(schema, format_checker=FormatChecker()).validate(value)
+    kind = value.get("jobKind")
+    if kind is None:
+        if value.get("schemaVersion") != "1.0" or value.get("workflowMode") != "quick_forecast":
+            raise ValueError("Invalid runtime job record.")
+        kind = "quick_forecast"
+    if kind not in {
+        "quick_forecast",
+        "forecast_outcome",
+        "dataset_assessment",
+        "approved_forecast",
+        "degradation_evidence",
+        "model_lifecycle",
+    }:
         raise ValueError("Invalid runtime job record.")
     identity_field = "assessmentId" if kind == "dataset_assessment" else "outcomeId" if kind == "forecast_outcome" else "evidenceId" if kind == "degradation_evidence" else "lifecycleDecisionId" if kind == "model_lifecycle" else "runId"
     fields = ("jobId", identity_field) if kind in {"forecast_outcome", "degradation_evidence", "model_lifecycle"} else ("jobId", "workspaceId", identity_field)
     for field in fields:
         uuid.UUID(str(value[field]))
-    schema = json.loads((ROOT / "config" / "runtime_job.schema.json").read_text(encoding="utf-8"))
-    Draft202012Validator(schema, format_checker=FormatChecker()).validate(value)
     return value
 
 

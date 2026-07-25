@@ -433,6 +433,22 @@
           "$ref": "#/$defs/sha"
         }
       }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "assignmentId",
+        "assignmentRecordSha256",
+        "committedAt"
+      ],
+      "properties": {
+        "schemaVersion": {"const": "2.0"},
+        "assignmentId": {"$ref": "#/$defs/uuid"},
+        "assignmentRecordSha256": {"$ref": "#/$defs/sha"},
+        "committedAt": {"type": "string", "format": "date-time"}
+      }
     }
   ],
   "$defs": {

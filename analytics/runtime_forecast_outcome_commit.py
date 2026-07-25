@@ -44,7 +44,7 @@ def _observation_signature(value:Mapping[str,Any])->str:
     return hashlib.sha256(json.dumps({k:value[k] for k in keys},sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
 def _validate_outcome_arithmetic(observation:Mapping[str,Any],outcome:Mapping[str,Any])->None:
     if observation["observedRaw"]!=outcome["observedRaw"] or observation["forecastRunId"]!=_run_id(outcome):raise ForecastOutcomeCommitError("Observation and outcome binding mismatch.","outcome_integrity_error")
-    expected=evaluate_outcome(outcome["forecastRaw"],observation["observedRaw"],{"uncertaintyStatus":outcome["empiricalRangeStatus"],"lowerRaw":outcome["lowerRaw"],"upperRaw":outcome["upperRaw"]},outcome["schemaVersion"]=="2.0")
+    expected=evaluate_outcome(outcome["forecastRaw"],observation["observedRaw"],{"uncertaintyStatus":outcome["empiricalRangeStatus"],"lowerRaw":outcome["lowerRaw"],"upperRaw":outcome["upperRaw"]},outcome["schemaVersion"] in {"2.0","2.1"})
     if any(outcome.get(k)!=v for k,v in expected.items()):raise ForecastOutcomeCommitError("Outcome metric arithmetic mismatch.","outcome_metric_mismatch")
 def _verified_existing(root:Path)->tuple[dict[str,Any],dict[str,Any],dict[str,Any],str]:
     commit=_validate(root/"metadata/commit.json","runtime_forecast_outcome_commit.schema.json");artifacts=root/"artifacts"
@@ -52,6 +52,9 @@ def _verified_existing(root:Path)->tuple[dict[str,Any],dict[str,Any],dict[str,An
         if not (artifacts/name).is_file() or sha256_file(artifacts/name)!=digest:raise ForecastOutcomeCommitError("Committed outcome artifact changed.","outcome_integrity_error")
     observation=_validate(artifacts/"observation.json",SCHEMAS["observation.json"]);outcome=_validate(artifacts/"outcome_evaluation.json",SCHEMAS["outcome_evaluation.json"]);_validate_outcome_arithmetic(observation,outcome)
     if _run_id(outcome)!=commit["forecastRunId"] or _commit_sha(outcome)!=commit["forecastCommitSha256"]:raise ForecastOutcomeCommitError("Committed source binding changed.","outcome_integrity_error")
+    try:source=verify_forecast_source(root.parent.parent,_run_id(outcome),_commit_sha(outcome),{_source_family(outcome)})
+    except ForecastSourceError as exc:raise ForecastOutcomeCommitError(str(exc),exc.code) from exc
+    if source["sourceFamily"]!=_source_family(outcome):raise ForecastOutcomeCommitError("Committed source family changed.","outcome_integrity_error")
     return commit,observation,outcome,sha256_file(root/"metadata/commit.json")
 def _breakdowns(records:list[dict[str,Any]],key)->list[dict[str,Any]]:
     groups:dict[str,list[dict[str,Any]]]={}
@@ -63,6 +66,14 @@ def _breakdowns(records:list[dict[str,Any]],key)->list[dict[str,Any]]:
 def _policy_identity(value:Any)->str:
     if not isinstance(value,Mapping):return "not_applicable"
     return f"{value.get('policyId')}|{value.get('policyVersion')}|{value.get('policySha256')}"
+def _performance_identity(value:Mapping[str,Any])->str:
+    evidence=value.get("sourceEvidence",{});presentation=evidence.get("forecastPresentationMode","historical");calibration=evidence.get("calibrationStatus",value.get("empiricalRangeStatus"))
+    return "|".join(str(item) for item in (value.get("deploymentId"),_source_family(value),value.get("modelId"),value.get("modelFamily"),value.get("modelParametersSha256"),value.get("preprocessingIdentity"),value.get("candidateRegistrySha256"),value.get("featureOrderSha256"),_policy_identity(_source_policy(value)),value.get("forecastHorizonWeeks"),presentation,calibration))
+def _assignment_identity(value:Mapping[str,Any])->str|None:
+    provenance=value.get("sourceEvidence",{}).get("assignmentProvenance")
+    if not isinstance(provenance,Mapping):return None
+    lifecycle=provenance.get("lifecyclePolicy")
+    return "|".join(str(item) for item in (provenance.get("assignmentId"),provenance.get("assignmentCommitSha256"),provenance.get("assignmentAction"),provenance.get("authoritySnapshotSha256"),_policy_identity(lifecycle)))
 def _eligible_runs(runtime_root:Path,as_of:str,allowed:set[str])->set[str]:
     instant=__import__("datetime").datetime.fromisoformat(as_of.replace("Z","+00:00"));eligible=set()
     for run_root in sorted((runtime_root/"runs").glob("*")):
@@ -116,8 +127,11 @@ def commit_forecast_outcome(runtime_root:Path,staging_path:Path,job:dict[str,Any
         version=job["schemaVersion"]
         limitations=["Synthetic benchmark outcome monitoring only; not operational surveillance.","Observed outcomes do not retrain, promote, or replace any model.","Empirical range coverage is historical evidence and not prediction-interval coverage."] if version=="1.0" else ["Evidence-only monitoring; no degradation classification is produced.","Observed outcomes do not promote, retain, replace, or roll back any model.","Missing actual observations are pending evidence, not integrity failures."]
         summary={"schemaVersion":version,"deploymentId":job["deploymentId"],"policyId":policy["policy_id"],"policyVersion":policy["policy_version"],"policySha256":policy["policy_sha256"],"generatedAt":outcome["evaluatedAt"],"eligibilityAsOf":outcome["evaluatedAt"],**aggregate,"totalEligibleForecastCount":len(eligible_runs),"pendingOutcomeCount":len(eligible_runs-{_run_id(r) for r in records}),"modelBreakdowns":_breakdowns(records,lambda r:f"{r['modelId']}|{r['modelFamily']}|{r['modelParametersSha256']}"),"forecastPolicyBreakdowns":_breakdowns(records,lambda r:_policy_identity(_source_policy(r))),"uncertaintyStatusBreakdowns":_breakdowns(records,lambda r:r["empiricalRangeStatus"]),"includedOutcomes":sorted(included,key=lambda x:x["outcomeId"]),"outcomeSetSha256":deterministic_outcome_set_hash(records),"limitations":limitations}
-        if version=="2.0":
+        if version in {"2.0","2.1"}:
             summary.update({"sourceFamilyBreakdowns":_breakdowns(records,lambda r:_source_family(r)),"monitoringPolicyBreakdowns":_breakdowns(records,lambda r:_policy_identity(r.get("monitoringPolicy",{"policyId":"RUNTIME.FORECAST_OUTCOME.MONITORING","policyVersion":"p1.4g-v1","policySha256":"0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249"}))),"assessmentPolicyBreakdowns":_breakdowns(records,lambda r:_policy_identity(r.get("sourceEvidence",{}).get("assessmentPolicy"))),"decisionPolicyBreakdowns":_breakdowns(records,lambda r:_policy_identity(r.get("sourceEvidence",{}).get("decisionPolicy"))),"latestSourceEvidence":{"sourceFamily":_source_family(outcome),"modelId":outcome["modelId"],"trainingRowCount":outcome.get("sourceEvidence",{}).get("trainingRowCount"),"plannedFoldCount":outcome.get("sourceEvidence",{}).get("plannedFoldCount"),"targetPeriod":outcome["forecastTargetPeriod"]}})
+        if version=="2.1":
+            assigned=[record for record in records if _assignment_identity(record) is not None]
+            summary.update({"performanceAuthorityBreakdowns":_breakdowns(records,_performance_identity),"assignmentProvenanceBreakdowns":_breakdowns(assigned,lambda r:str(_assignment_identity(r))) if assigned else []})
         atomic_json(artifacts/"monitoring_summary.json",summary);_validate(artifacts/"monitoring_summary.json",SCHEMAS["monitoring_summary.json"])
         hashes={name:sha256_file(artifacts/name) for name in SCHEMAS};committed_at=outcome["evaluatedAt"]
         commit={"schemaVersion":version,"outcomeId":job["outcomeId"],"jobId":job["jobId"],"forecastRunId":job["forecastRunId"],"sourceFamily":_source_family(outcome),"observationRecordId":observation["observationRecordId"],"deploymentId":job["deploymentId"],"policyId":policy["policy_id"],"policyVersion":policy["policy_version"],"policySha256":policy["policy_sha256"],"forecastCommitSha256":job["expectedForecastCommitSha256"],"status":"committed","artifactHashes":hashes,"latestForecastPointerModified":False,"profileModified":False,"authorizationModified":False,"committedAt":committed_at}

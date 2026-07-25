@@ -3,13 +3,13 @@ import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
 import { RuntimePublicError } from "./errors";
 import { forecastOutcomePaths, monitoringPaths } from "./paths";
-const P1="0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249",P2="c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab";
+const P1="0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249",P2="c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab",P21="5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const sha256=(value:Buffer|string)=>createHash("sha256").update(value).digest("hex");
 function canonical(value:unknown):string{if(Array.isArray(value))return`[${value.map(canonical).join(",")}]`;if(value&&typeof value==="object")return`{${Object.entries(value as Record<string,unknown>).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;return JSON.stringify(value);}
 async function json(file:string){const bytes=await readFile(file);const value=JSON.parse(bytes.toString("utf8")) as Record<string,any>;if(!value||Array.isArray(value)||typeof value!=="object")throw new Error("object required");return{bytes,value};}
 function integrity():never{throw new RuntimePublicError("forecast_outcome_integrity_error","storage","Forecast outcome evidence failed integrity verification.",409);}
-function policy(version:unknown,digest:unknown,schema:unknown){return(schema==="1.0"&&version==="p1.4g-v1"&&digest===P1)||(schema==="2.0"&&version==="p2-v1"&&digest===P2);}
+function policy(version:unknown,digest:unknown,schema:unknown){return(schema==="1.0"&&version==="p1.4g-v1"&&digest===P1)||(schema==="2.0"&&version==="p2-v1"&&digest===P2)||(schema==="2.1"&&version==="p2-v2"&&digest===P21);}
 
 export async function readVerifiedForecastOutcome(runtimeRoot:string,outcomeId:string){
   const p=forecastOutcomePaths(runtimeRoot,outcomeId);const stat=await lstat(p.committed).catch(()=>null);if(!stat?.isDirectory()||stat.isSymbolicLink())throw new RuntimePublicError("forecast_outcome_not_found","validation","The committed forecast outcome was not found.",404);
@@ -19,12 +19,14 @@ export async function readVerifiedForecastOutcome(runtimeRoot:string,outcomeId:s
     const runId=String(c.forecastRunId??"");if(!UUID.test(runId))return integrity();const sourceRoot=path.join(runtimeRoot,"runs",runId),sourceCommit=await readFile(path.join(sourceRoot,"metadata","commit.json"));const sourceCommitValue=JSON.parse(sourceCommit.toString("utf8")) as Record<string,any>,sourceSha=sha256(sourceCommit);const outcomeSourceSha=String(e.forecastCommitSha256??e.sourceForecastCommitSha256??"");
     const hashes=c.artifactHashes as Record<string,string>;if(c.forecastCommitSha256!==sourceSha||outcomeSourceSha!==sourceSha||hashes["observation.json"]!==sha256(observation.bytes)||hashes["outcome_evaluation.json"]!==sha256(evaluation.bytes)||hashes["monitoring_summary.json"]!==sha256(summary.bytes)||e.observationArtifactSha256!==sha256(observation.bytes)||e.outcomeId!==outcomeId)return integrity();
     if(version==="1.0"&&(e.workflowMode!=="quick_forecast"||e.modelId!=="random_forest"))return integrity();
-    if(version==="2.0"){
-      if(!["quick_forecast_p1","approved_forecast_p1","approved_forecast_p2"].includes(e.sourceFamily)||e.sourceForecastRunId!==runId||o.sourceFamily!==e.sourceFamily||e.monitoringPolicy?.policyVersion!=="p2-v1"||e.monitoringPolicy?.policySha256!==P2||c.sourceFamily!==e.sourceFamily||c.profileModified!==false||c.authorizationModified!==false)return integrity();
-      const approved=e.sourceFamily!=="quick_forecast_p1",expectedWorkflow=approved?"approved_assessment_forecast":"quick_forecast",expectedSchema=e.sourceFamily==="approved_forecast_p2"?"2.0":"1.0";if(sourceCommitValue.workflowMode!==expectedWorkflow||sourceCommitValue.schemaVersion!==expectedSchema)return integrity();
-      const sourceHashes=sourceCommitValue.artifactHashes as Record<string,string>,evidence=e.sourceEvidence as Record<string,string>;const required=approved?["forecast_output.json","forecast_uncertainty.json","model_card.json"]:["forecast_output.json","forecast_uncertainty.json","forecast_calibration.json","model_card.json"];
+    if(version==="2.0"||version==="2.1"){
+      const allowed=version==="2.0"?["quick_forecast_p1","approved_forecast_p1","approved_forecast_p2"]:["quick_forecast_p1","quick_forecast_p2","approved_forecast_p1","approved_forecast_p2"],expectedPolicy=version==="2.0"?"p2-v1":"p2-v2",expectedPolicySha=version==="2.0"?P2:P21;
+      if(!allowed.includes(e.sourceFamily)||e.sourceForecastRunId!==runId||o.sourceFamily!==e.sourceFamily||e.monitoringPolicy?.policyVersion!==expectedPolicy||e.monitoringPolicy?.policySha256!==expectedPolicySha||c.sourceFamily!==e.sourceFamily||c.profileModified!==false||c.authorizationModified!==false)return integrity();
+      const approved=e.sourceFamily.startsWith("approved_forecast"),expectedWorkflow=approved?"approved_assessment_forecast":"quick_forecast",expectedSchema=e.sourceFamily==="quick_forecast_p2"?"2.1":e.sourceFamily==="approved_forecast_p2"?"2.0":"1.0";if(sourceCommitValue.workflowMode!==expectedWorkflow||sourceCommitValue.schemaVersion!==expectedSchema)return integrity();
+      const sourceHashes=sourceCommitValue.artifactHashes as Record<string,string>,evidence=e.sourceEvidence as Record<string,any>;const required=approved?["forecast_output.json","forecast_uncertainty.json","model_card.json"]:["forecast_output.json","forecast_uncertainty.json","forecast_calibration.json","model_card.json"];
       for(const name of required){const bytes=await readFile(path.join(sourceRoot,"artifacts",name));if(sourceHashes[name]!==sha256(bytes))return integrity();}
       if(evidence.forecastOutputSha256!==sourceHashes["forecast_output.json"]||evidence.forecastUncertaintySha256!==sourceHashes["forecast_uncertainty.json"]||evidence.modelCardSha256!==sourceHashes["model_card.json"]||(!approved&&evidence.forecastCalibrationSha256!==sourceHashes["forecast_calibration.json"]))return integrity();
+      if(e.sourceFamily==="quick_forecast_p2"){const runBytes=await readFile(path.join(sourceRoot,"metadata","run.json"));if(sourceCommitValue.runRecordSha256!==sha256(runBytes)||evidence.runRecordSha256!==sha256(runBytes)||evidence.assessmentReferenceStatus!=="not_applicable_no_assessment_reference"||evidence.deploymentModelAdopted!==false)return integrity();}
     }
     const source={observationSourceType:o.observationSourceType,observationSourceId:o.observationSourceId,observationRecordId:o.observationRecordId,observationRecordedAt:o.observationRecordedAt};
     return{outcome:e,observation:source,summary:s,integrity:{outcomeCommitSha256:sha256(commit.bytes),outcomeEvaluationSha256:sha256(evaluation.bytes),observationSha256:sha256(observation.bytes)}};

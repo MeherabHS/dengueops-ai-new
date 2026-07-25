@@ -11,11 +11,13 @@ class ForecastOutcomePolicyTests(unittest.TestCase):
     def test_policy_identity_and_governed_bindings(self):
         policy,digest=load_and_validate_forecast_outcome_policy("dhaka_south")
         self.assertEqual(policy["policy_id"],"RUNTIME.FORECAST_OUTCOME.MONITORING")
-        self.assertEqual(policy["policy_version"],"p2-v1")
+        self.assertEqual((policy["schema_version"],policy["policy_version"]),("2.1","p2-v2"))
         self.assertEqual(digest,policy["policy_sha256"])
         self.assertEqual(digest,canonical_policy_sha256(policy))
-        self.assertEqual(set(policy["source_families"]),{"quick_forecast_p1","approved_forecast_p1","approved_forecast_p2"})
-        self.assertNotIn("quick_forecast_p2",policy["source_families"])
+        self.assertEqual(set(policy["source_families"]),{"quick_forecast_p1","quick_forecast_p2","approved_forecast_p1","approved_forecast_p2"})
+        quick=policy["source_families"]["quick_forecast_p2"]
+        self.assertEqual((quick["commit_schema_version"],quick["forecast_schema_version"]),("2.1","2.1"))
+        self.assertTrue(quick["assignment_provenance_required"]);self.assertTrue(quick["run_record_sha256_required"])
         self.assertFalse(policy["duplicate_rule"]["corrections_allowed"])
         self.assertIn("forecast_latest_pointer_update",policy["prohibited_actions"])
 
@@ -26,5 +28,11 @@ class ForecastOutcomePolicyTests(unittest.TestCase):
         policy,digest=load_and_validate_forecast_outcome_policy("dhaka_south","1.0","p1.4g-v1","0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249")
         self.assertEqual((policy["policy_version"],digest),("p1.4g-v1","0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249"))
         with self.assertRaises(ValueError):load_and_validate_forecast_outcome_policy("dhaka_south","1.0","p2-v1")
+
+    def test_archived_p2_v1_is_version_routed_and_unchanged(self):
+        policy,digest=load_and_validate_forecast_outcome_policy("dhaka_south","2.0","p2-v1","c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab")
+        self.assertEqual((policy["schema_version"],policy["policy_version"]),("2.0","p2-v1"))
+        self.assertNotIn("quick_forecast_p2",policy["source_families"])
+        self.assertEqual(digest,"c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab")
 
 if __name__=="__main__":unittest.main()

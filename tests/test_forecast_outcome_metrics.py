@@ -50,6 +50,18 @@ class ForecastOutcomeMetricTests(unittest.TestCase):
         self.assertAlmostEqual(first["cumulativeMAPE"], 45.0)
         self.assertEqual(first["empiricalCoverage"], 1.0)
 
+    def test_quick_p2_point_only_is_point_evaluable_but_range_ineligible(self):
+        value=evaluate_outcome(10.0,13,{"uncertaintyStatus":"unavailable","forecastPresentationMode":"point_only","calibrationStatus":"unavailable","uncertaintyReasonCode":"model_calibration_unavailable","lowerRaw":None,"upperRaw":None},True)
+        self.assertEqual(value["signedError"],3.0);self.assertEqual(value["absoluteError"],3.0)
+        self.assertEqual(value["empiricalRangeStatus"],"not_evaluable_model_calibration_unavailable")
+        self.assertEqual(value["coverageOutcome"],"not_evaluable_no_empirical_range");self.assertIsNone(value["intervalWidth"])
+        aggregate=aggregate_outcomes([{"outcomeId":"p","forecastRunId":"p","forecastTargetPeriod":"2024-W01",**value}])
+        self.assertEqual(aggregate["evaluatedForecastCount"],1);self.assertEqual(aggregate["empiricalRangeEvaluatedCount"],0)
+
+    def test_quick_p2_governed_range_is_evaluable(self):
+        value=evaluate_outcome(10.0,13,{"uncertaintyStatus":"governed_available","forecastPresentationMode":"point_and_interval","calibrationStatus":"governed_available","uncertaintyReasonCode":None,"lowerRaw":9.0,"upperRaw":14.0},True)
+        self.assertEqual(value["empiricalRangeStatus"],"available");self.assertEqual(value["coverageOutcome"],"covered")
+
     def test_iso_completion_and_validation(self):
         self.assertEqual(parse_target_period("2024-W52"), (2024, 52))
         self.assertEqual(calculate_period_completion("2024-W52"), datetime(2024, 12, 29, 18, tzinfo=timezone.utc))

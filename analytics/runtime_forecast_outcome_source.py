@@ -14,6 +14,8 @@ from runtime_commit import sha256_file
 from runtime_context import ROOT
 
 QUICK_POLICY = ("RUNTIME.QUICK_FORECAST.COMPATIBILITY", "p1.4f-v1", "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a")
+QUICK_P2_POLICY = ("RUNTIME.QUICK_FORECAST.COMPATIBILITY", "p2-v1", "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e")
+LIFECYCLE_P2_V2 = ("RUNTIME.MODEL_LIFECYCLE.DECISION", "p2-v2", "294b7949adecc39b284adaa198db47109ee4b1cc39259e87bc9073e1bff93b64")
 ASSESSMENT_P1 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p1.4d-1-v1", "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af")
 ASSESSMENT_P2 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p2-v1", "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff")
 ASSESSMENT_P2_V2 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p2-v2", "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8")
@@ -22,6 +24,7 @@ DECISION_P2 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p2-v1", "aaef2ed2afd3
 DECISION_P2_V2 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p2-v2", "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d")
 REGISTRY_SHA = "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
 FEATURE_SHA = "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+CURRENT_REGISTRY_SHA = "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"
 MODEL_FAMILIES = {"ridge_regression":"Ridge", "poisson_regression":"PoissonRegressor", "random_forest":"RandomForestRegressor", "gradient_boosting":"GradientBoostingRegressor"}
 
 
@@ -77,6 +80,147 @@ def _snapshot_and_commit(root: Path, run_id: str, expected_commit: str) -> tuple
     for name, digest in commit.get("artifactHashes", {}).items():
         if snapshot.get(f"artifacts/{name}") != digest: raise ForecastSourceError("Committed forecast artifact hash mismatch.")
     return run, snapshot, commit
+
+
+def _verify_assignment_archive(root: Path, authority: Mapping[str, Any]) -> dict[str, Any]:
+    assignment_id = authority.get("assignmentId")
+    expected_commit_sha = authority.get("assignmentCommitSha256")
+    if not isinstance(assignment_id, str) or "/" in assignment_id or "\\" in assignment_id or ".." in assignment_id:
+        raise ForecastSourceError("Quick assignment identity is invalid.")
+    assignment_root = root / "model-assignments" / assignment_id
+    record_path = assignment_root / "artifacts/assignment_record.json"
+    commit_path = assignment_root / "metadata/commit.json"
+    if not record_path.is_file() or not commit_path.is_file():
+        raise ForecastSourceError("Quick assignment archive is missing.")
+    record = _json(record_path); commit = _json(commit_path)
+    _schema(record, "runtime_model_assignment.schema.json")
+    _schema(commit, "runtime_model_assignment_commit.schema.json")
+    if commit.get("schemaVersion") != "2.0" or record.get("schemaVersion") != "2.0":
+        raise ForecastSourceError("Quick assignment archive contract is not p2-v2.")
+    if commit.get("assignmentId") != assignment_id or record.get("assignmentId") != assignment_id:
+        raise ForecastSourceError("Quick assignment archive identity mismatch.")
+    if sha256_file(commit_path) != expected_commit_sha:
+        raise ForecastSourceError("Quick assignment commit hash mismatch.")
+    if sha256_file(record_path) != commit.get("assignmentRecordSha256"):
+        raise ForecastSourceError("Quick assignment record hash mismatch.")
+    expected = (
+        assignment_id, "dhaka_south", "assign_selected_model",
+        authority.get("modelId"), authority.get("modelFamily"), authority.get("parameterSha256"),
+        authority.get("preprocessingIdentity"), authority.get("candidateRegistrySha256"),
+        authority.get("featureOrderSha256"),
+    )
+    actual = (
+        record.get("assignmentId"), record.get("deploymentId"), record.get("assignmentAction"),
+        record.get("modelId"), record.get("modelFamily"), record.get("parameterSha256"),
+        record.get("preprocessingIdentity"), record.get("candidateRegistrySha256"),
+        record.get("featureOrderSha256"),
+    )
+    if actual != expected:
+        raise ForecastSourceError("Quick assignment authority does not match its archive.")
+    seen = {assignment_id}
+    current = record
+    while current.get("priorAssignmentId") is not None:
+        prior_id = current.get("priorAssignmentId"); prior_sha = current.get("priorAssignmentCommitSha256")
+        if not isinstance(prior_id, str) or not isinstance(prior_sha, str) or prior_id in seen or "/" in prior_id or "\\" in prior_id or ".." in prior_id:
+            raise ForecastSourceError("Quick prior-assignment linkage is invalid.")
+        seen.add(prior_id)
+        prior_root = root / "model-assignments" / prior_id
+        prior_record_path = prior_root / "artifacts/assignment_record.json"
+        prior_commit_path = prior_root / "metadata/commit.json"
+        if not prior_record_path.is_file() or not prior_commit_path.is_file():
+            raise ForecastSourceError("Quick prior assignment archive is missing.")
+        prior_record = _json(prior_record_path); prior_commit = _json(prior_commit_path)
+        _schema(prior_record, "runtime_model_assignment.schema.json")
+        _schema(prior_commit, "runtime_model_assignment_commit.schema.json")
+        if (prior_record.get("schemaVersion"), prior_commit.get("schemaVersion"), prior_record.get("assignmentId"), prior_commit.get("assignmentId")) != ("2.0", "2.0", prior_id, prior_id):
+            raise ForecastSourceError("Quick prior assignment contract is invalid.")
+        if sha256_file(prior_commit_path) != prior_sha or sha256_file(prior_record_path) != prior_commit.get("assignmentRecordSha256"):
+            raise ForecastSourceError("Quick prior assignment hash binding is invalid.")
+        current = prior_record
+    return record
+
+
+def _quick_p2(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commit: dict[str,Any]) -> dict[str,Any]:
+    _schema(commit, "runtime_commit.schema.json")
+    if commit.get("workflowMode") != "quick_forecast" or commit.get("schemaVersion") != "2.1":
+        raise ForecastSourceError("Quick p2 source requires the complete 2.1 contract.", "forecast_not_eligible")
+    run_record_path = run / "metadata/run.json"
+    if not run_record_path.is_file() or commit.get("runRecordSha256") != sha256_file(run_record_path):
+        raise ForecastSourceError("Quick p2 run-record binding mismatch.")
+    run_record = _json(run_record_path)
+    artifacts = {
+        "forecast": ("forecast_output.json", "runtime_forecast_output.schema.json"),
+        "calibration": ("forecast_calibration.json", "runtime_forecast_calibration.schema.json"),
+        "uncertainty": ("forecast_uncertainty.json", "runtime_forecast_uncertainty.schema.json"),
+        "dashboard": ("dashboard_summary.json", "runtime_dashboard_summary.schema.json"),
+        "card": ("model_card.json", "runtime_model_card.schema.json"),
+    }
+    values: dict[str, dict[str, Any]] = {}
+    _schema(run_record, "runtime_run.schema.json")
+    for key, (filename, schema_name) in artifacts.items():
+        value = _json(run / "artifacts" / filename); _schema(value, schema_name); values[key] = value
+        if value.get("schemaVersion") != "2.1":
+            raise ForecastSourceError("Quick p2 source contains a mixed 2.0/2.1 bundle.", "forecast_not_eligible")
+    forecast=values["forecast"];calibration=values["calibration"];uncertainty=values["uncertainty"];dashboard=values["dashboard"];card=values["card"]
+    if run_record.get("schemaVersion") != "2.1":
+        raise ForecastSourceError("Quick p2 run record is not schema 2.1.", "forecast_not_eligible")
+    common = (run_id, commit.get("jobId"), commit.get("datasetId"), "dhaka_south")
+    for value in (run_record, forecast, calibration, uncertainty, card):
+        if (value.get("runId"), value.get("jobId"), value.get("datasetId"), value.get("deploymentId", value.get("deploymentProfileId"))) != common:
+            raise ForecastSourceError("Quick p2 run/artifact identity mismatch.")
+    if (dashboard.get("run",{}).get("runId"),dashboard.get("run",{}).get("jobId"),dashboard.get("run",{}).get("datasetId"),dashboard.get("run",{}).get("deploymentId")) != common:
+        raise ForecastSourceError("Quick p2 dashboard identity mismatch.")
+    authority = {
+        "assignmentId": run_record.get("assignmentId"),
+        "assignmentCommitSha256": run_record.get("assignmentCommitSha256"),
+        "assignmentAction": run_record.get("assignmentAction"),
+        "authoritySnapshotSha256": run_record.get("authoritySnapshotSha256"),
+        "modelId": run_record.get("activeModelId"),
+        "modelFamily": run_record.get("modelFamily"),
+        "parameterSha256": run_record.get("parameterSha256"),
+        "preprocessingIdentity": run_record.get("preprocessingIdentity"),
+        "candidateRegistrySha256": run_record.get("candidateRegistrySha256"),
+        "featureOrderSha256": run_record.get("featureOrderSha256"),
+        "lifecyclePolicyId": run_record.get("lifecyclePolicyId"),
+        "lifecyclePolicyVersion": run_record.get("lifecyclePolicyVersion"),
+        "lifecyclePolicySha256": run_record.get("lifecyclePolicySha256"),
+    }
+    authority_rows = [
+        authority,
+        {"assignmentId":forecast.get("assignmentId"),"assignmentCommitSha256":forecast.get("assignmentCommitSha256"),"assignmentAction":forecast.get("assignmentAction"),"authoritySnapshotSha256":forecast.get("authoritySnapshotSha256"),"modelId":forecast.get("activeModelId"),"modelFamily":forecast.get("modelFamily"),"parameterSha256":forecast.get("parameterHash"),"preprocessingIdentity":forecast.get("preprocessingIdentity"),"candidateRegistrySha256":forecast.get("candidateRegistrySha256"),"featureOrderSha256":forecast.get("trainingDataIdentity",{}).get("featureOrderSha256"),"lifecyclePolicyId":forecast.get("lifecyclePolicyId"),"lifecyclePolicyVersion":forecast.get("lifecyclePolicyVersion"),"lifecyclePolicySha256":forecast.get("lifecyclePolicySha256")},
+        {"assignmentId":card.get("assignmentId"),"assignmentCommitSha256":card.get("assignmentCommitSha256"),"assignmentAction":card.get("assignmentAction"),"authoritySnapshotSha256":card.get("authoritySnapshotSha256"),"modelId":card.get("model",{}).get("id"),"modelFamily":card.get("model",{}).get("family"),"parameterSha256":card.get("model",{}).get("parameterHash"),"preprocessingIdentity":card.get("model",{}).get("preprocessingIdentity"),"candidateRegistrySha256":card.get("model",{}).get("candidateRegistrySha256"),"featureOrderSha256":card.get("features",{}).get("orderSha256"),"lifecyclePolicyId":card.get("lifecyclePolicy",{}).get("id"),"lifecyclePolicyVersion":card.get("lifecyclePolicy",{}).get("version"),"lifecyclePolicySha256":card.get("lifecyclePolicy",{}).get("sha256")},
+    ]
+    if any(row != authority for row in authority_rows) or (authority["assignmentAction"],authority["candidateRegistrySha256"],authority["featureOrderSha256"]) != ("assign_selected_model",CURRENT_REGISTRY_SHA,FEATURE_SHA):
+        raise ForecastSourceError("Quick p2 committed authority is inconsistent.")
+    if (authority["lifecyclePolicyId"],authority["lifecyclePolicyVersion"],authority["lifecyclePolicySha256"]) != LIFECYCLE_P2_V2:
+        raise ForecastSourceError("Quick p2 lifecycle policy mismatch.")
+    _verify_assignment_archive(root, authority)
+    if _policy_tuple(forecast.get("policy",{})) != QUICK_P2_POLICY or _policy_tuple(card.get("policy",{})) != QUICK_P2_POLICY:
+        raise ForecastSourceError("Quick p2 policy mismatch.", "forecast_not_eligible")
+    if (run_record.get("policyId"),run_record.get("policyVersion"),run_record.get("policySha256")) != QUICK_P2_POLICY:
+        raise ForecastSourceError("Quick p2 run policy mismatch.", "forecast_not_eligible")
+    if any(value is not False for value in (forecast.get("deploymentModelAdopted"),card.get("deploymentModelAdopted"))):
+        raise ForecastSourceError("Quick p2 forecast cannot adopt the deployment model.")
+    presentation=(forecast.get("forecastPresentationMode"),forecast.get("calibrationStatus"),forecast.get("uncertaintyReasonCode"))
+    if presentation != (uncertainty.get("forecastPresentationMode"),uncertainty.get("calibrationStatus"),uncertainty.get("uncertaintyReasonCode")) or presentation != (card.get("forecastPresentationMode"),card.get("calibrationStatus"),card.get("uncertaintyReasonCode")):
+        raise ForecastSourceError("Quick p2 presentation/calibration contract mismatch.")
+    calibration_sha=snapshot.get("artifacts/forecast_calibration.json")
+    if card.get("calibration",{}).get("artifactSha256") != calibration_sha:
+        raise ForecastSourceError("Quick p2 model-card calibration binding mismatch.")
+    if presentation == ("point_and_interval","governed_available",None):
+        if any(uncertainty.get(k) is None for k in ("lowerRaw","upperRaw")) or uncertainty.get("residualSourceArtifactSha256") != calibration_sha or calibration.get("calibrationStatus") != "governed_available":
+            raise ForecastSourceError("Quick p2 governed calibration evidence is incomplete.")
+    elif presentation == ("point_only","unavailable","model_calibration_unavailable"):
+        if any(uncertainty.get(k) is not None for k in ("lowerRaw","upperRaw","residualSourceArtifactSha256")) or calibration.get("calibrationStatus") != "unavailable":
+            raise ForecastSourceError("Quick p2 unavailable calibration contains interval evidence.")
+    else:
+        raise ForecastSourceError("Quick p2 presentation/calibration contract is unsupported.")
+    history=dashboard.get("history",[]);origin=(history[-1] if history else {}).get("period")
+    if forecast.get("target")!="target_cases_next_2w" or forecast.get("horizonWeeks")!=2 or _advance(origin)!=forecast.get("targetPeriod"):
+        raise ForecastSourceError("Quick p2 forecast target contract mismatch.", "target_period_mismatch")
+    if forecast.get("forecastReported") != int(round(max(0.0,float(forecast.get("forecastRaw"))))):
+        raise ForecastSourceError("Quick p2 reported forecast changed.")
+    return {"sourceFamily":"quick_forecast_p2","sourceContractVersion":"p2-v2","commit":commit,"runRecord":run_record,"forecast":forecast,"uncertainty":uncertainty,"calibration":calibration,"card":card,"snapshot":snapshot,"origin":origin,"modelId":authority["modelId"],"modelFamily":authority["modelFamily"],"parameterHash":authority["parameterSha256"],"preprocessingIdentity":authority["preprocessingIdentity"],"candidateRegistrySha256":authority["candidateRegistrySha256"],"featureOrderSha256":authority["featureOrderSha256"],"sourcePolicy":{"policyId":QUICK_P2_POLICY[0],"policyVersion":QUICK_P2_POLICY[1],"policySha256":QUICK_P2_POLICY[2]},"assignment":authority,"lifecycle":{}}
 
 
 def _quick(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commit: dict[str,Any]) -> dict[str,Any]:
@@ -216,6 +360,6 @@ def _approved(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commi
 def verify_forecast_source(root: Path, run_id: str, expected_commit: str, allowed_families: set[str] | None = None) -> dict[str,Any]:
     run,snapshot,commit=_snapshot_and_commit(root,run_id,expected_commit)
     workflow=commit.get("workflowMode")
-    bundle=_quick(root,run,run_id,snapshot,commit) if workflow=="quick_forecast" else _approved(root,run,run_id,snapshot,commit) if workflow=="approved_assessment_forecast" else None
+    bundle=(_quick_p2(root,run,run_id,snapshot,commit) if commit.get("schemaVersion")=="2.1" else _quick(root,run,run_id,snapshot,commit)) if workflow=="quick_forecast" else _approved(root,run,run_id,snapshot,commit) if workflow=="approved_assessment_forecast" else None
     if bundle is None or (allowed_families is not None and bundle["sourceFamily"] not in allowed_families): raise ForecastSourceError("Forecast source family is not governed.","forecast_not_eligible")
     return bundle

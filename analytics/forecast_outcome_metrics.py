@@ -33,18 +33,26 @@ def _finite(value: Any, name: str) -> float:
 
 def _uncertainty_status(uncertainty: Mapping[str, Any]) -> str:
     legacy = uncertainty.get("uncertaintyStatus")
-    if legacy is not None:
-        if any(key in uncertainty for key in ("forecastPresentationMode", "calibrationStatus", "uncertaintyReasonCode", "calibrationProvenance")):
-            raise ValueError("Mixed committed uncertainty contracts are unsupported.")
-        return str(legacy)
     normalized = (
         uncertainty.get("forecastPresentationMode"),
         uncertainty.get("calibrationStatus"),
         uncertainty.get("uncertaintyReasonCode"),
         uncertainty.get("calibrationProvenance"),
     )
+    if legacy is not None:
+        if (legacy, normalized) == ("governed_available", ("point_and_interval", "governed_available", None, None)):
+            return "available"
+        if (legacy, normalized) == ("unavailable", ("point_only", "unavailable", "model_calibration_unavailable", None)):
+            return "not_evaluable_model_calibration_unavailable"
+        if any(key in uncertainty for key in ("forecastPresentationMode", "calibrationStatus", "uncertaintyReasonCode", "calibrationProvenance")):
+            raise ValueError("Mixed committed uncertainty contracts are unsupported.")
+        return str(legacy)
     if normalized == ("point_only", "pending", "model_specific_calibration_pending", None):
         return "pending_selected_model_calibration"
+    if normalized == ("point_and_interval", "governed_available", None, None):
+        return "available"
+    if normalized == ("point_only", "unavailable", "model_calibration_unavailable", None):
+        return "not_evaluable_model_calibration_unavailable"
     raise ValueError("Unsupported normalized committed uncertainty contract.")
 
 def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mapping[str, Any], include_eligibility: bool = False) -> dict[str, Any]:
@@ -70,7 +78,7 @@ def evaluate_outcome(forecast_raw: float, observed_raw: int, uncertainty: Mappin
         coverage = "lower_miss" if observed_raw < lower else "upper_miss" if observed_raw > upper else "covered"
         result.update(empiricalRangeStatus="available", lowerRaw=lower, upperRaw=upper,
                       coverageOutcome=coverage, intervalWidth=upper-lower)
-    elif status in {"pending_dataset_specific_calibration", "pending_selected_model_calibration"}:
+    elif status in {"pending_dataset_specific_calibration", "pending_selected_model_calibration", "not_evaluable_model_calibration_unavailable"}:
         if any(uncertainty.get(k) is not None for k in ("lowerRaw", "upperRaw")):
             raise ValueError("Pending empirical range contains bounds.")
         result.update(empiricalRangeStatus=status, lowerRaw=None, upperRaw=None,

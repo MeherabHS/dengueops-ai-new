@@ -26,7 +26,8 @@ def build_outcome_job(runtime:Path,forecast_job:dict,record_id="observation-1",o
     run=runtime/"runs"/forecast_job["runId"]
     forecast=json.loads((run/"artifacts/forecast_output.json").read_text())
     commit_sha=hashlib.sha256((run/"metadata/commit.json").read_bytes()).hexdigest()
-    policy,digest=load_and_validate_forecast_outcome_policy("dhaka_south",schema_version,"p1.4g-v1" if schema_version=="1.0" else "p2-v1")
+    policy_version="p1.4g-v1" if schema_version=="1.0" else "p2-v1" if schema_version=="2.0" else "p2-v2"
+    policy,digest=load_and_validate_forecast_outcome_policy("dhaka_south",schema_version,policy_version)
     observation={"deploymentId":"dhaka_south","geography":{"level":"city","id":"BGD-DHAKA-SOUTH","name":"Dhaka South"},"targetColumn":"target_cases_next_2w","forecastHorizonWeeks":2,"forecastTargetPeriod":forecast["targetPeriod"],"observedRaw":observed,"observationSourceType":"synthetic_benchmark","observationSourceId":"dhaka_south_synthetic_benchmark","observationRecordId":record_id,"observationRecordedAt":iso_now(),"limitationsAcknowledged":True}
     job_id=str(uuid.uuid4());outcome_id=outcome_id or str(uuid.uuid4());created=iso_now()
     job={"schemaVersion":policy["schema_version"],"jobKind":"forecast_outcome","jobId":job_id,"outcomeId":outcome_id,"forecastRunId":forecast_job["runId"],"expectedForecastCommitSha256":commit_sha,"observation":observation,"observationPayloadSha256":canonical_sha(observation),"operatorIdentifier":"test-operator","deploymentId":"dhaka_south","workflowMode":"forecast_outcome_monitoring","policyId":policy["policy_id"],"policyVersion":policy["policy_version"],"policySha256":digest,"status":"running","progress":"validating_forecast_commit","createdAt":created,"claimedAt":created,"startedAt":created,"updatedAt":created,"completedAt":None,"heartbeatAt":created,"workerId":"test","processId":None,"timeoutSeconds":120,"retryCount":0,"error":None,"committedOutcomeId":None}

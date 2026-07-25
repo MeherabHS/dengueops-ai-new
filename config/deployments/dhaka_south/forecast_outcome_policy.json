@@ -1,9 +1,9 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "2.1",
   "policy_id": "RUNTIME.FORECAST_OUTCOME.MONITORING",
-  "policy_version": "p2-v1",
+  "policy_version": "p2-v2",
   "policy_status": "active",
-  "policy_sha256": "c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab",
+  "policy_sha256": "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6",
   "policy_hash_method": "sha256_canonical_json_excluding_policy_sha256",
   "deployment_id": "dhaka_south",
   "geography": {"level": "city", "id": "BGD-DHAKA-SOUTH", "name": "Dhaka South"},
@@ -18,6 +18,20 @@
       "model_family": "RandomForestRegressor",
       "model_parameters_sha256": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0",
       "calibration_required": true
+    },
+    "quick_forecast_p2": {
+      "workflow_mode": "quick_forecast",
+      "commit_schema_version": "2.1",
+      "forecast_schema_version": "2.1",
+      "forecast_policy": {"policy_id": "RUNTIME.QUICK_FORECAST.COMPATIBILITY", "policy_version": "p2-v1", "policy_sha256": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"},
+      "lifecycle_policy": {"policy_id": "RUNTIME.MODEL_LIFECYCLE.DECISION", "policy_version": "p2-v2", "policy_sha256": "294b7949adecc39b284adaa198db47109ee4b1cc39259e87bc9073e1bff93b64"},
+      "candidate_registry_sha256": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
+      "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
+      "assignment_provenance_required": true,
+      "run_record_sha256_required": true,
+      "assessment_reference_status": "not_applicable_no_assessment_reference",
+      "point_error_monitoring": true,
+      "empirical_range_evaluation": "conditional_governed_calibration_only"
     },
     "approved_forecast_p1": {
       "workflow_mode": "approved_assessment_forecast",
@@ -41,14 +55,18 @@
       "calibration_required": false
     }
   },
-  "candidate_registry_sha256": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
+  "candidate_registry_sha256": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
   "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
   "target_column": "target_cases_next_2w",
   "forecast_horizon_weeks": 2,
   "observation_scope": {"source_type": "synthetic_benchmark", "source_id": "dhaka_south_synthetic_benchmark", "operator_type": "trusted_internal_unverified", "observed_value_type": "nonnegative_integer_weekly_case_count"},
   "timing_rule": {"period_format": "YYYY-Www", "supported_weeks": "1_through_52", "completion_rule": "following_monday_00_00_deployment_timezone", "server_time_must_be_on_or_after_completion": true, "observation_recorded_at_must_be_on_or_after_completion": true, "late_observations_allowed": true, "year_times_52_arithmetic_prohibited": true},
   "duplicate_rule": {"maximum_outcomes_per_forecast_run": 1, "same_job_outcome_retry_idempotent": true, "different_outcome_for_evaluated_forecast_rejected": true, "conflicting_observation_record_reuse_rejected": true, "identical_observation_reuse_across_matching_forecasts_allowed": true, "corrections_allowed": false, "supersession_allowed": false, "correction_error_code": "correction_workflow_not_governed"},
-  "metric_policy": {"forecast_value": "forecastRaw", "signed_error": "observedRaw - forecastRaw", "positive_signed_error": "underforecast", "negative_signed_error": "overforecast", "absolute_error": "abs(signedError)", "squared_error": "signedError ** 2", "percentage_error": "signedError / observedRaw * 100 when observedRaw > 0 else null", "absolute_percentage_error": "abs(percentageError) when observedRaw > 0 else null", "range_coverage": "lowerRaw <= observedRaw <= upperRaw", "interval_width": "upperRaw - lowerRaw", "cumulative_mae": "mean(absoluteError)", "cumulative_rmse": "sqrt(mean(squaredError))", "cumulative_bias": "mean(signedError)", "cumulative_mpe": "mean(valid percentageError)", "cumulative_mape": "mean(valid absolutePercentageError)", "empirical_coverage": "coveredCount / empiricalRangeEvaluatedCount", "round_before_aggregation": false, "prediction_interval_claim_allowed": false},
+  "metric_policy": {"forecast_value": "forecastRaw", "signed_error": "observedRaw - forecastRaw", "positive_signed_error": "underforecast", "negative_signed_error": "overforecast", "absolute_error": "abs(signedError)", "squared_error": "signedError ** 2", "percentage_error": "signedError / observedRaw * 100 when observedRaw > 0 else null", "absolute_percentage_error": "abs(percentageError) when observedRaw > 0 else null", "point_only_forecasts_evaluable": true, "range_coverage": "lowerRaw <= observedRaw <= upperRaw only when committed governed calibration is available", "interval_width": "upperRaw - lowerRaw only when committed governed calibration is available", "unavailable_calibration_range_status": "not_evaluable_model_calibration_unavailable", "cumulative_mae": "mean(absoluteError)", "cumulative_rmse": "sqrt(mean(squaredError))", "cumulative_bias": "mean(signedError)", "cumulative_mpe": "mean(valid percentageError)", "cumulative_mape": "mean(valid absolutePercentageError)", "empirical_coverage": "coveredCount / empiricalRangeEvaluatedCount", "round_before_aggregation": false, "prediction_interval_claim_allowed": false},
+  "monitoring_dimensions": {
+    "performance_authority": ["deploymentId", "sourceFamily", "modelId", "modelFamily", "modelParametersSha256", "preprocessingIdentity", "candidateRegistrySha256", "featureOrderSha256", "sourcePolicy", "forecastHorizonWeeks", "forecastPresentationMode", "calibrationStatus"],
+    "assignment_provenance": ["assignmentId", "assignmentCommitSha256", "assignmentAction", "authoritySnapshotSha256", "lifecyclePolicy"]
+  },
   "formula_registry": {"version": "p1.3-v1", "sha256": "e67552dbe4b5a80b9a082f0beb3ff70ba0ad5378a25b845e8d195352df3357cc", "referenced_formula_ids": ["METRIC.MAE", "METRIC.RMSE", "METRIC.MAPE"]},
   "prohibited_actions": ["model_retraining", "candidate_comparison", "model_promotion", "model_replacement", "calibration_residual_rewrite", "preparedness_generation", "facility_action", "alert_generation", "directive_generation", "forecast_latest_pointer_update", "deployment_model_assignment", "lifecycle_state_transition", "authorization_mutation"],
   "prohibited_claims": ["prediction_interval_coverage", "operational_surveillance_readiness", "institutional_approval", "official_public_health_monitoring", "degradation_classification", "lifecycle_recommendation"],

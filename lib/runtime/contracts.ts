@@ -288,15 +288,16 @@ interface ForecastOutcomeJobCommon {
   completedAt:string|null; heartbeatAt:string|null; workerId:string|null; processId:number|null; timeoutSeconds:number;
   retryCount:number; error:{code:string;message:string;retryable:boolean}|null; committedOutcomeId:string|null;
 }
-export type ForecastOutcomeJobRecord=(ForecastOutcomeJobCommon&{schemaVersion:"1.0";policyVersion:"p1.4g-v1"})|(ForecastOutcomeJobCommon&{schemaVersion:"2.0";policyVersion:"p2-v1"});
+export type ForecastOutcomeJobRecord=(ForecastOutcomeJobCommon&{schemaVersion:"1.0";policyVersion:"p1.4g-v1"})|(ForecastOutcomeJobCommon&{schemaVersion:"2.0";policyVersion:"p2-v1"})|(ForecastOutcomeJobCommon&{schemaVersion:"2.1";policyVersion:"p2-v2"});
 
-export type ForecastOutcomeSourceFamily="quick_forecast_p1"|"approved_forecast_p1"|"approved_forecast_p2";
+export type ForecastOutcomeSourceFamily="quick_forecast_p1"|"quick_forecast_p2"|"approved_forecast_p1"|"approved_forecast_p2";
 export interface MonitoringBreakdown {identity:string;evaluatedForecastCount:number;cumulativeMAE:number;cumulativeRMSE:number;cumulativeBias:number}
 export interface MonitoringSummary {
-  schemaVersion:"1.0"|"2.0";deploymentId:"dhaka_south";policyId:"RUNTIME.FORECAST_OUTCOME.MONITORING";policyVersion:"p1.4g-v1"|"p2-v1";policySha256:string;
+  schemaVersion:"1.0"|"2.0"|"2.1";deploymentId:"dhaka_south";policyId:"RUNTIME.FORECAST_OUTCOME.MONITORING";policyVersion:"p1.4g-v1"|"p2-v1"|"p2-v2";policySha256:string;
   evaluatedForecastCount:number;totalEligibleForecastCount:number;pendingOutcomeCount:number;cumulativeMAE:number;cumulativeRMSE:number;cumulativeBias:number;cumulativeMPE:number|null;cumulativeMAPE:number|null;
   percentageMetricEvaluatedCount:number;zeroObservedCount:number;empiricalRangeEvaluatedCount:number;empiricalRangeCoveredCount:number;empiricalCoverage:number|null;latestEvaluatedTargetPeriod:string;
   modelBreakdowns:MonitoringBreakdown[];forecastPolicyBreakdowns:MonitoringBreakdown[];uncertaintyStatusBreakdowns:MonitoringBreakdown[];sourceFamilyBreakdowns?:MonitoringBreakdown[];monitoringPolicyBreakdowns?:MonitoringBreakdown[];
+  performanceAuthorityBreakdowns?:MonitoringBreakdown[];assignmentProvenanceBreakdowns?:MonitoringBreakdown[];
   latestSourceEvidence?:{sourceFamily:ForecastOutcomeSourceFamily;modelId:string;trainingRowCount:number|null;plannedFoldCount:number|null;targetPeriod:string};outcomeSetSha256:string;limitations:string[];
 }
 export type MonitoringSummaryResponse={ok:true;pointer:Record<string,unknown>;summary:MonitoringSummary;latestOutcome:Record<string,unknown>}|RuntimeErrorResponse;
