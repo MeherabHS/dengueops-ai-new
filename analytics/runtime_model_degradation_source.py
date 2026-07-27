@@ -11,10 +11,15 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from model_degradation_metrics import canonical_sha256, ordered_outcome_set_hash
 from runtime_commit import sha256_file
-from runtime_context import ROOT, require_absolute_directory
+from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_forecast_outcome_source import ForecastSourceError, verify_forecast_source
 
-MONITORING_SHA = "c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab"
+MONITORING_SHA = "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"
+MONITORING_POLICY = ("RUNTIME.FORECAST_OUTCOME.MONITORING", "p2-v2", MONITORING_SHA)
+ALLOWED_SOURCE_FAMILIES = {"quick_forecast_p1", "quick_forecast_p2", "approved_forecast_p1", "approved_forecast_p2"}
+HISTORICAL_MONITORING_SHA = "c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab"
+HISTORICAL_MONITORING_POLICY = ("RUNTIME.FORECAST_OUTCOME.MONITORING", "p2-v1", HISTORICAL_MONITORING_SHA)
+HISTORICAL_SOURCE_FAMILIES = {"quick_forecast_p1", "approved_forecast_p1", "approved_forecast_p2"}
 
 
 class ModelDegradationSourceError(RuntimeError):
@@ -78,17 +83,39 @@ def _assessment_reference(runtime_root: Path, outcome: Mapping[str, Any]) -> dic
     return {"assessmentId":assessment_id,"assessmentCommitSha256":commit_sha,"candidateComparisonSha256":comparison_sha,"assessmentPolicy":dict(policy),"modelId":model_id,"modelFamily":family,"parameterSha256":parameter,"foldPlanSha256":comparison.get("foldPlanSha256"),"selectedEvaluationPeriod":selected_period,"plannedFoldCount":planned,"successfulFolds":planned,"failedFolds":0,"assessmentMAE":mae,"assessmentRMSE":rmse,"clippingCount":clipping}
 
 
-def verify_model_degradation_source(runtime_root: str | Path, expected_latest_sha256: str | None = None, expected_summary_sha256: str | None = None, expected_outcome_set_sha256: str | None = None) -> dict[str, Any]:
-    root = require_absolute_directory(runtime_root,"runtime root"); latest_path = root / "deployments/dhaka_south/monitoring/latest.json"
-    if not latest_path.is_file(): raise ModelDegradationSourceError("A p2 monitoring latest pointer is required.")
-    latest = _json(latest_path); _schema(latest,"runtime_monitoring_latest.schema.json"); latest_sha = sha256_file(latest_path)
-    if latest.get("schemaVersion") != "2.0" or (latest.get("policyId"),latest.get("policyVersion"),latest.get("policySha256")) != ("RUNTIME.FORECAST_OUTCOME.MONITORING","p2-v1",MONITORING_SHA): raise ModelDegradationSourceError("Standalone p1 or unknown monitoring input is not accepted.")
+def _snapshot_json(raw: bytes) -> dict[str, Any]:
+    try: value = json.loads(raw.decode("utf-8"))
+    except Exception as exc: raise ModelDegradationSourceError("Monitoring latest snapshot is invalid JSON.") from exc
+    if not isinstance(value, dict): raise ModelDegradationSourceError("Monitoring latest snapshot must be an object.")
+    return value
+
+
+def verify_model_degradation_snapshot(runtime_root: str | Path, latest_bytes: bytes, expected_latest_sha256: str | None = None, expected_summary_sha256: str | None = None, expected_outcome_set_sha256: str | None = None, monitoring_policy_version: str = "p2-v2") -> dict[str, Any]:
+    root = require_absolute_directory(runtime_root,"runtime root")
+    latest = _snapshot_json(latest_bytes); _schema(latest,"runtime_monitoring_latest.schema.json")
+    latest_sha = hashlib.sha256(latest_bytes).hexdigest()
+    current = monitoring_policy_version == "p2-v2"
+    historical = monitoring_policy_version == "p2-v1"
+    if not current and not historical:
+        raise ModelDegradationSourceError("Unknown monitoring policy version.")
+    expected_schema = "2.1" if current else "2.0"
+    expected_policy = MONITORING_POLICY if current else HISTORICAL_MONITORING_POLICY
+    allowed_families = ALLOWED_SOURCE_FAMILIES if current else HISTORICAL_SOURCE_FAMILIES
+    if latest.get("schemaVersion") != expected_schema or (latest.get("policyId"),latest.get("policyVersion"),latest.get("policySha256")) != expected_policy:
+        raise ModelDegradationSourceError("Monitoring policy/schema identity is not accepted.")
     if expected_latest_sha256 not in (None, latest_sha): raise ModelDegradationSourceError("Monitoring latest pointer hash mismatch.")
-    summary_path = root / str(latest.get("monitoringSummaryPath")); summary = _json(summary_path); _schema(summary,"runtime_monitoring_summary.schema.json"); summary_sha = sha256_file(summary_path)
-    if summary.get("schemaVersion") != "2.0" or summary.get("policySha256") != MONITORING_SHA or latest.get("monitoringSummarySha256") != summary_sha: raise ModelDegradationSourceError("Monitoring summary identity mismatch.")
+    relative_summary = str(latest.get("monitoringSummaryPath",""))
+    summary_path = require_within(root, root / relative_summary, "monitoring summary")
+    summary = _json(summary_path); _schema(summary,"runtime_monitoring_summary.schema.json"); summary_sha = sha256_file(summary_path)
+    if summary.get("schemaVersion") != expected_schema or (summary.get("policyId"),summary.get("policyVersion"),summary.get("policySha256")) != expected_policy or latest.get("monitoringSummarySha256") != summary_sha:
+        raise ModelDegradationSourceError("Monitoring summary identity mismatch.")
     if expected_summary_sha256 not in (None, summary_sha) or expected_outcome_set_sha256 not in (None, summary.get("outcomeSetSha256")): raise ModelDegradationSourceError("Monitoring summary input hash mismatch.")
+    included_rows = summary.get("includedOutcomes")
+    if not isinstance(included_rows, list) or len(included_rows) != summary.get("evaluatedForecastCount") or len({row.get("outcomeId") for row in included_rows if isinstance(row, Mapping)}) != len(included_rows):
+        raise ModelDegradationSourceError("Monitoring included-outcome count is invalid.")
     records: list[dict[str, Any]] = []; included_commits: list[dict[str, str]] = []; references: dict[str, dict[str, Any]] = {}
-    for included in summary.get("includedOutcomes", []):
+    for included in included_rows:
+        if not isinstance(included, Mapping): raise ModelDegradationSourceError("Monitoring outcome reference is invalid.")
         outcome_id = str(included.get("outcomeId", "")); outcome_root = root / "forecast-outcomes" / outcome_id; commit_path = outcome_root / "metadata/commit.json"; evaluation_path = outcome_root / "artifacts/outcome_evaluation.json"
         commit, outcome = _json(commit_path), _json(evaluation_path); _schema(commit,"runtime_forecast_outcome_commit.schema.json"); _schema(outcome,"runtime_forecast_outcome.schema.json")
         commit_sha, evidence_sha = sha256_file(commit_path), sha256_file(evaluation_path)
@@ -96,14 +123,20 @@ def verify_model_degradation_source(runtime_root: str | Path, expected_latest_sh
         for name, digest in commit.get("artifactHashes", {}).items():
             if sha256_file(outcome_root/"artifacts"/name) != digest: raise ModelDegradationSourceError("Outcome artifact hash mismatch.")
         source_run = str(outcome.get("sourceForecastRunId", outcome.get("forecastRunId", ""))); source_sha = str(outcome.get("sourceForecastCommitSha256", outcome.get("forecastCommitSha256", "")))
-        try: bundle = verify_forecast_source(root,source_run,source_sha,{"quick_forecast_p1","approved_forecast_p1","approved_forecast_p2"})
+        try: bundle = verify_forecast_source(root,source_run,source_sha,allowed_families)
         except ForecastSourceError as exc: raise ModelDegradationSourceError(str(exc)) from exc
         source_family = str(outcome.get("sourceFamily", "quick_forecast_p1" if outcome.get("schemaVersion") == "1.0" else ""))
-        if bundle["sourceFamily"] != source_family or commit.get("forecastCommitSha256") != source_sha: raise ModelDegradationSourceError("Outcome source-family binding mismatch.")
+        if source_family not in allowed_families or bundle["sourceFamily"] != source_family or commit.get("forecastCommitSha256") != source_sha: raise ModelDegradationSourceError("Outcome source-family binding mismatch.")
         record = dict(outcome); record["sourceFamily"] = source_family; record["outcomeEvidenceSha256"] = evidence_sha; record["outcomeCommitSha256"] = commit_sha; records.append(record)
         included_commits.append({"outcomeId":outcome_id,"outcomeCommitSha256":commit_sha,"outcomeEvidenceSha256":evidence_sha})
-        if source_family != "quick_forecast_p1":
+        if source_family in {"approved_forecast_p1","approved_forecast_p2"}:
             reference = _assessment_reference(root,record); references[reference["assessmentId"]] = reference
     if len(records) != summary.get("evaluatedForecastCount") or ordered_outcome_set_hash(records) != summary.get("outcomeSetSha256"):
         raise ModelDegradationSourceError("Monitoring included-outcome set does not reconcile.")
-    return {"latest":latest,"latestSha256":latest_sha,"latestPath":"deployments/dhaka_south/monitoring/latest.json","summary":summary,"summarySha256":summary_sha,"summaryPath":str(latest["monitoringSummaryPath"]),"outcomes":records,"includedOutcomes":sorted(included_commits,key=lambda value:value["outcomeId"]),"assessmentReferences":references}
+    return {"latest":latest,"latestBytes":latest_bytes,"latestSha256":latest_sha,"latestPath":"deployments/dhaka_south/monitoring/latest.json","summary":summary,"summarySha256":summary_sha,"summaryPath":relative_summary,"outcomes":records,"includedOutcomes":sorted(included_commits,key=lambda value:value["outcomeId"]),"assessmentReferences":references}
+
+
+def verify_model_degradation_source(runtime_root: str | Path, expected_latest_sha256: str | None = None, expected_summary_sha256: str | None = None, expected_outcome_set_sha256: str | None = None, monitoring_policy_version: str = "p2-v1") -> dict[str, Any]:
+    root = require_absolute_directory(runtime_root,"runtime root"); latest_path = root / "deployments/dhaka_south/monitoring/latest.json"
+    if not latest_path.is_file() or latest_path.is_symlink(): raise ModelDegradationSourceError("A safe current monitoring latest pointer is required.")
+    return verify_model_degradation_snapshot(root, latest_path.read_bytes(), expected_latest_sha256, expected_summary_sha256, expected_outcome_set_sha256, monitoring_policy_version)

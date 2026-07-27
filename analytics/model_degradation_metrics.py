@@ -81,31 +81,86 @@ def _policy(value: Any) -> dict[str, str] | None:
 
 def strict_cohort_identity(record: Mapping[str, Any]) -> dict[str, Any]:
     source_family = str(record.get("sourceFamily", "quick_forecast_p1" if record.get("schemaVersion") == "1.0" else ""))
-    if source_family not in {"quick_forecast_p1", "approved_forecast_p1", "approved_forecast_p2"}:
+    if source_family not in {"quick_forecast_p1", "quick_forecast_p2", "approved_forecast_p1", "approved_forecast_p2"}:
         raise ModelDegradationMetricError("Unknown forecast source family.")
-    monitoring = record.get("monitoringPolicy") or ({"policyId":"RUNTIME.FORECAST_OUTCOME.MONITORING","policyVersion":"p1.4g-v1","policySha256":"0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249"} if record.get("schemaVersion") == "1.0" else None)
     source = record.get("sourcePolicy") or {"policyId":record.get("forecastPolicyId"),"policyVersion":record.get("forecastPolicyVersion"),"policySha256":record.get("forecastPolicySha256")}
     evidence = record.get("sourceEvidence") if isinstance(record.get("sourceEvidence"), Mapping) else {}
-    approved = source_family != "quick_forecast_p1"
+    presentation = evidence.get("forecastPresentationMode", "historical")
+    calibration = evidence.get("calibrationStatus", record.get("empiricalRangeStatus"))
     identity = {
-        "deploymentId": record.get("deploymentId"), "geography": record.get("geography"),
-        "target": record.get("targetColumn"), "forecastHorizonWeeks": record.get("forecastHorizonWeeks"),
-        "sourceFamily": source_family, "monitoringPolicy": _policy(monitoring), "forecastPolicy": _policy(source),
+        "deploymentId": record.get("deploymentId"), "sourceFamily": source_family,
         "modelId": record.get("modelId"), "modelFamily": record.get("modelFamily"),
-        "parameterSha256": record.get("modelParametersSha256"), "featureOrderSha256": record.get("featureOrderSha256"),
+        "parameterSha256": record.get("modelParametersSha256"),
+        "preprocessingIdentity": record.get("preprocessingIdentity"),
         "candidateRegistrySha256": record.get("candidateRegistrySha256"),
-        "assessmentPolicy": _policy(evidence.get("assessmentPolicy")) if approved else None,
-        "decisionPolicy": _policy(evidence.get("decisionPolicy")) if approved else None,
-        "uncertaintyStatus": record.get("empiricalRangeStatus"),
+        "featureOrderSha256": record.get("featureOrderSha256"),
+        "sourcePolicy": _policy(source),
+        "forecastHorizonWeeks": record.get("forecastHorizonWeeks"),
+        "forecastPresentationMode": presentation,
+        "calibrationStatus": calibration,
     }
-    required = ("deploymentId","geography","target","forecastHorizonWeeks","modelId","modelFamily","parameterSha256","featureOrderSha256","candidateRegistrySha256","uncertaintyStatus")
+    required = ("deploymentId","sourceFamily","modelId","modelFamily","parameterSha256","candidateRegistrySha256","featureOrderSha256","sourcePolicy","forecastHorizonWeeks","forecastPresentationMode","calibrationStatus")
     if any(identity[key] in (None, "") for key in required):
         raise ModelDegradationMetricError("Strict cohort identity is incomplete.")
+    if source_family == "quick_forecast_p2" and identity["preprocessingIdentity"] in (None, ""):
+        raise ModelDegradationMetricError("Quick p2 performance authority lacks preprocessing identity.")
     return identity
 
 
 def strict_cohort_key(record: Mapping[str, Any]) -> str:
     return canonical_sha256(strict_cohort_identity(record))
+
+
+def historical_strict_cohort_identity(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the frozen p2-v1 cohort identity used by historical lifecycle evidence."""
+    source_family = str(record.get("sourceFamily", "quick_forecast_p1" if record.get("schemaVersion") == "1.0" else ""))
+    if source_family not in {"quick_forecast_p1", "approved_forecast_p1", "approved_forecast_p2"}:
+        raise ModelDegradationMetricError("Unknown historical forecast source family.")
+    monitoring = record.get("monitoringPolicy") or (
+        {
+            "policyId": "RUNTIME.FORECAST_OUTCOME.MONITORING",
+            "policyVersion": "p1.4g-v1",
+            "policySha256": "0121c2fad28b7b8e9080df52698593d1cab677febf4fa668e11f6f19541fb249",
+        }
+        if record.get("schemaVersion") == "1.0"
+        else None
+    )
+    source = record.get("sourcePolicy") or {
+        "policyId": record.get("forecastPolicyId"),
+        "policyVersion": record.get("forecastPolicyVersion"),
+        "policySha256": record.get("forecastPolicySha256"),
+    }
+    evidence = record.get("sourceEvidence") if isinstance(record.get("sourceEvidence"), Mapping) else {}
+    approved = source_family != "quick_forecast_p1"
+    identity = {
+        "deploymentId": record.get("deploymentId"),
+        "geography": record.get("geography"),
+        "target": record.get("targetColumn"),
+        "forecastHorizonWeeks": record.get("forecastHorizonWeeks"),
+        "sourceFamily": source_family,
+        "monitoringPolicy": _policy(monitoring),
+        "forecastPolicy": _policy(source),
+        "modelId": record.get("modelId"),
+        "modelFamily": record.get("modelFamily"),
+        "parameterSha256": record.get("modelParametersSha256"),
+        "featureOrderSha256": record.get("featureOrderSha256"),
+        "candidateRegistrySha256": record.get("candidateRegistrySha256"),
+        "assessmentPolicy": _policy(evidence.get("assessmentPolicy")) if approved else None,
+        "decisionPolicy": _policy(evidence.get("decisionPolicy")) if approved else None,
+        "uncertaintyStatus": record.get("empiricalRangeStatus"),
+    }
+    required = (
+        "deploymentId", "geography", "target", "forecastHorizonWeeks", "modelId",
+        "modelFamily", "parameterSha256", "featureOrderSha256",
+        "candidateRegistrySha256", "uncertaintyStatus",
+    )
+    if any(identity[key] in (None, "") for key in required):
+        raise ModelDegradationMetricError("Historical strict cohort identity is incomplete.")
+    return identity
+
+
+def historical_strict_cohort_key(record: Mapping[str, Any]) -> str:
+    return canonical_sha256(historical_strict_cohort_identity(record))
 
 
 def ordered_outcome_set_hash(records: Sequence[Mapping[str, Any]]) -> str:
@@ -171,10 +226,47 @@ def aggregate_metrics(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         if coverage in {"covered","lower_miss","upper_miss"}: range_values.append(coverage == "covered")
         elif coverage != "not_evaluable_no_empirical_range": raise ModelDegradationMetricError("Unknown range coverage status.")
     count = len(values); mae = math.fsum(abs(v) for v in residuals)/count; rmse = math.sqrt(math.fsum(v*v for v in residuals)/count); bias = math.fsum(residuals)/count
+    covered_count=sum(range_values)
+    lower_miss_count=sum(record.get("coverageOutcome")=="lower_miss" for record in values)
+    upper_miss_count=sum(record.get("coverageOutcome")=="upper_miss" for record in values)
     result = {"count":count,"positiveActualCount":len(percentages),"zeroActualCount":count-len(percentages),"actualSum":math.fsum(actuals),"actualMean":math.fsum(actuals)/count,"actualMinimum":min(actuals),"actualMaximum":max(actuals),
         "mae":mae,"rmse":rmse,"signedBias":bias,"absoluteBias":abs(bias),"mpe":math.fsum(percentages)/len(percentages) if percentages else None,"mape":math.fsum(abs(v) for v in percentages)/len(percentages) if percentages else None,
-        "percentageEligibleCount":len(percentages),"rangeEligibleCount":len(range_values),"empiricalCoverage":sum(range_values)/len(range_values) if range_values else None}
+        "percentageEligibleCount":len(percentages),"rangeEligibleCount":len(range_values),"empiricalRangeEvaluatedCount":len(range_values),"empiricalRangeCoveredCount":covered_count,
+        "empiricalCoverage":covered_count/len(range_values) if range_values else None,"lowerMissCount":lower_miss_count,"upperMissCount":upper_miss_count}
     canonical_json(result)
+    return result
+
+
+def historical_aggregate_metrics(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Preserve the exact p2-v1 population metric shape."""
+    result = aggregate_metrics(records)
+    for key in (
+        "empiricalRangeEvaluatedCount",
+        "empiricalRangeCoveredCount",
+        "lowerMissCount",
+        "upperMissCount",
+    ):
+        result.pop(key)
+    return result
+
+
+def assignment_provenance(record: Mapping[str, Any]) -> dict[str, Any] | None:
+    evidence = record.get("sourceEvidence")
+    value = evidence.get("assignmentProvenance") if isinstance(evidence, Mapping) else None
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        raise ModelDegradationMetricError("Assignment provenance must be an object.")
+    lifecycle = _policy(value.get("lifecyclePolicy"))
+    result = {
+        "assignmentId": value.get("assignmentId"),
+        "assignmentCommitSha256": value.get("assignmentCommitSha256"),
+        "assignmentAction": value.get("assignmentAction"),
+        "authoritySnapshotSha256": value.get("authoritySnapshotSha256"),
+        "lifecyclePolicy": lifecycle,
+    }
+    if any(result[key] in (None, "") for key in result):
+        raise ModelDegradationMetricError("Assignment provenance is incomplete.")
     return result
 
 

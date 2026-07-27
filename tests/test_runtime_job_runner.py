@@ -4,6 +4,7 @@ import tempfile
 import unittest
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 
 from jsonschema import ValidationError
 
@@ -11,6 +12,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "analytics"))
 from runtime_worker import claim_one, ensure_structure, load_job, run_once
 from tests.test_runtime_forecast_outcome import build_outcome_job
+from runtime_forecast_outcome import execute as execute_outcome
+from tests.test_runtime_model_degradation_evidence import degradation_job
 from tests.test_runtime_quick_forecast import build_ready_runtime, execute_historical_quick_forecast
 from tests.test_product_v2_quick_forecast import (
     _create_p2_v2_assignment,
@@ -19,8 +22,8 @@ from tests.test_product_v2_quick_forecast import (
 )
 
 
-def build_pending_governed_quick_job(base: Path, schema_version: str = "2.1"):
-    root = Path(_create_p2_v2_assignment(base, ROOT, model_id="ridge_regression"))
+def build_pending_governed_quick_job(base: Path, schema_version: str = "2.1", model_id: str = "ridge_regression"):
+    root = Path(_create_p2_v2_assignment(base, ROOT, model_id=model_id))
     workspace, dataset_id, validation_sha = build_ready_workspace(root)
     job, running_path, staging = _setup_quick_run_job(
         root, workspace.name, dataset_id, validation_sha
@@ -55,6 +58,7 @@ class RuntimeJobRunnerTests(unittest.TestCase):
         self.assertIn('"degradation-staging"',source)
         self.assertIn('"degradation-evidence"',source)
         self.assertIn('"degradation/latest.json"',source)
+        self.assertIn('"degradation/latest_p2-v2.json"',source)
     def test_worker_has_isolated_model_lifecycle_dispatch(self):
         source=(ROOT/"analytics/runtime_worker.py").read_text()
         self.assertIn('"model_lifecycle"',source)
@@ -153,6 +157,51 @@ class RuntimeJobRunnerTests(unittest.TestCase):
             self.assertTrue(completed.exists(),(root/"jobs/failed"/pending.name).read_text() if (root/"jobs/failed"/pending.name).exists() else "missing")
             value=json.loads(completed.read_text());self.assertEqual(value["committedOutcomeId"],outcome_job["outcomeId"])
             self.assertTrue((root/"deployments/dhaka_south/monitoring/latest.json").exists())
+
+    def test_worker_executes_p2_v2_degradation_and_requires_versioned_pointer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, _, forecast_job = build_pending_governed_quick_job(Path(directory), "2.1")
+            self.assertTrue(run_once(root, "degradation-source-worker"))
+            outcome_job, running = build_outcome_job(
+                root,
+                forecast_job,
+                record_id="worker-degradation-p2-v2",
+                schema_version="2.1",
+            )
+            execute_outcome(
+                SimpleNamespace(
+                    runtime_root=str(root),
+                    job_record=str(running),
+                    staging=str(root / "outcome-staging" / outcome_job["outcomeId"]),
+                )
+            )
+            job, running = degradation_job(root)
+            job.update(
+                status="queued",
+                progress="queued",
+                claimedAt=None,
+                startedAt=None,
+                heartbeatAt=None,
+                workerId=None,
+            )
+            pending = root / "jobs/pending" / running.name
+            pending.write_text(json.dumps(job), encoding="utf-8")
+            running.unlink()
+            self.assertTrue(run_once(root, "degradation-p2-v2-worker"))
+            completed = root / "jobs/completed" / pending.name
+            failed = root / "jobs/failed" / pending.name
+            self.assertTrue(
+                completed.is_file(),
+                failed.read_text() if failed.is_file() else "missing degradation job record",
+            )
+            value = json.loads(completed.read_text())
+            self.assertEqual(value["committedEvidenceId"], job["evidenceId"])
+            self.assertTrue(
+                (root / "deployments/dhaka_south/degradation/latest_p2-v2.json").is_file()
+            )
+            self.assertFalse(
+                (root / "deployments/dhaka_south/degradation/latest.json").exists()
+            )
 
 
 if __name__ == "__main__":

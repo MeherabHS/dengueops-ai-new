@@ -28,5 +28,23 @@ class ModelDegradationMetricsTests(unittest.TestCase):
     def test_strict_identity_separates_parameters_and_sources(self):
         first=record(1);second=record(2);second["modelParametersSha256"]="1"*64
         self.assertNotEqual(strict_cohort_key(first),strict_cohort_key(second))
+    def test_assignment_provenance_does_not_split_performance_identity(self):
+        first=record(1);second=record(2)
+        for value,assignment_id in ((first,"20000000-0000-4000-8000-000000000001"),(second,"20000000-0000-4000-8000-000000000002")):
+            value.update(schemaVersion="2.1",sourceFamily="quick_forecast_p2",preprocessingIdentity=SHA)
+            value["sourceEvidence"]={"forecastPresentationMode":"point_only","calibrationStatus":"unavailable","assignmentProvenance":{"assignmentId":assignment_id,"assignmentCommitSha256":SHA,"assignmentAction":"assign_selected_model","authoritySnapshotSha256":SHA,"lifecyclePolicy":{"policyId":"RUNTIME.MODEL_LIFECYCLE.DECISION","policyVersion":"p2-v2","policySha256":SHA}}}
+            value["empiricalRangeStatus"]="not_evaluable_model_calibration_unavailable";value["coverageOutcome"]="not_evaluable_no_empirical_range"
+        self.assertEqual(strict_cohort_key(first),strict_cohort_key(second))
+        self.assertNotEqual(assignment_provenance(first),assignment_provenance(second))
+        metrics=aggregate_metrics([first,second])
+        self.assertEqual(metrics["rangeEligibleCount"],0);self.assertIsNone(metrics["empiricalCoverage"])
+    def test_governed_interval_counts_are_descriptive(self):
+        values=[record(1),record(2),record(3)]
+        values[1]["coverageOutcome"]="lower_miss";values[2]["coverageOutcome"]="upper_miss"
+        metrics=aggregate_metrics(values)
+        self.assertEqual(metrics["empiricalRangeEvaluatedCount"],3)
+        self.assertEqual(metrics["empiricalRangeCoveredCount"],1)
+        self.assertEqual(metrics["lowerMissCount"],1);self.assertEqual(metrics["upperMissCount"],1)
+        self.assertAlmostEqual(metrics["empiricalCoverage"],1/3)
 
 if __name__=="__main__":unittest.main()

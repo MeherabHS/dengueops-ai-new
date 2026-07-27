@@ -117,6 +117,9 @@
       "$ref": "#/$defs/degradationEvidence"
     },
     {
+      "$ref": "#/$defs/degradationEvidenceP2"
+    },
+    {
       "$ref": "#/$defs/modelLifecycle"
     }
   ],
@@ -3838,6 +3841,47 @@
           ],
           "format": "uuid"
         }
+      }
+    },
+    "degradationEvidenceP2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "jobKind", "jobId", "evidenceId", "deploymentId", "geography", "workflowMode",
+        "policyId", "policyVersion", "policySha256", "expectedMonitoringLatestSha256",
+        "expectedMonitoringSummarySha256", "expectedIncludedOutcomeSetSha256", "evidenceOnlyAcknowledged",
+        "status", "progress", "createdAt", "claimedAt", "startedAt", "updatedAt", "completedAt",
+        "heartbeatAt", "workerId", "processId", "timeoutSeconds", "retryCount", "error", "committedEvidenceId"
+      ],
+      "properties": {
+        "schemaVersion": {"const": "2.0"},
+        "jobKind": {"const": "degradation_evidence"},
+        "jobId": {"$ref": "#/$defs/uuid"},
+        "evidenceId": {"$ref": "#/$defs/uuid"},
+        "deploymentId": {"const": "dhaka_south"},
+        "geography": {"const": {"level": "city", "id": "BGD-DHAKA-SOUTH", "name": "Dhaka South"}},
+        "workflowMode": {"const": "degradation_evidence"},
+        "policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"},
+        "policyVersion": {"const": "p2-v2"},
+        "policySha256": {"const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"},
+        "expectedMonitoringLatestSha256": {"$ref": "#/$defs/sha"},
+        "expectedMonitoringSummarySha256": {"$ref": "#/$defs/sha"},
+        "expectedIncludedOutcomeSetSha256": {"$ref": "#/$defs/sha"},
+        "evidenceOnlyAcknowledged": {"const": true},
+        "status": {"$ref": "#/$defs/status"},
+        "progress": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "claimedAt": {"type": ["string", "null"], "format": "date-time"},
+        "startedAt": {"type": ["string", "null"], "format": "date-time"},
+        "updatedAt": {"type": "string", "format": "date-time"},
+        "completedAt": {"type": ["string", "null"], "format": "date-time"},
+        "heartbeatAt": {"type": ["string", "null"]},
+        "workerId": {"type": ["string", "null"]},
+        "processId": {"type": ["integer", "null"]},
+        "timeoutSeconds": {"type": "integer", "minimum": 1},
+        "retryCount": {"const": 0},
+        "error": {"$ref": "#/$defs/error"},
+        "committedEvidenceId": {"type": ["string", "null"], "format": "uuid"}
       }
     }
   }
