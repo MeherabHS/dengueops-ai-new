@@ -144,16 +144,9 @@
       ]
     },
     "error": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
-      "required": [
-        "code",
-        "message",
-        "retryable"
-      ],
+      "required": ["code", "message", "retryable"],
       "properties": {
         "code": {
           "type": "string"
@@ -199,17 +192,11 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "updatedAt": {
@@ -217,30 +204,18 @@
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -377,44 +352,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -427,10 +384,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             },
             "expectedProfileSha256": {
@@ -552,10 +506,7 @@
               "const": true
             },
             "expectedAssignmentPointerState": {
-              "enum": [
-                "absent",
-                "present"
-              ]
+              "enum": ["absent", "present"]
             },
             "expectedAssignmentPointerSha256": {
               "anyOf": [
@@ -578,44 +529,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -628,10 +561,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             },
             "expectedAssessmentCommitSha256": {
@@ -805,10 +735,7 @@
               "const": true
             },
             "expectedAssignmentPointerState": {
-              "enum": [
-                "absent",
-                "present"
-              ]
+              "enum": ["absent", "present"]
             },
             "expectedAssignmentPointerSha256": {
               "anyOf": [
@@ -831,44 +758,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -881,10 +790,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             },
             "evidenceContextStatus": {
@@ -1055,44 +961,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -1105,10 +993,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             }
           }
@@ -1223,10 +1108,7 @@
               "const": true
             },
             "expectedAssignmentPointerState": {
-              "enum": [
-                "absent",
-                "present"
-              ]
+              "enum": ["absent", "present"]
             },
             "expectedAssignmentPointerSha256": {
               "anyOf": [
@@ -1249,44 +1131,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -1299,10 +1163,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             },
             "evidenceContextStatus": {
@@ -1458,10 +1319,7 @@
               "const": true
             },
             "expectedAssignmentPointerState": {
-              "enum": [
-                "absent",
-                "present"
-              ]
+              "enum": ["absent", "present"]
             },
             "expectedAssignmentPointerSha256": {
               "anyOf": [
@@ -1484,44 +1342,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -1534,10 +1374,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             },
             "evidenceContextStatus": {
@@ -1681,10 +1518,7 @@
               "const": true
             },
             "expectedAssignmentPointerState": {
-              "enum": [
-                "absent",
-                "present"
-              ]
+              "enum": ["absent", "present"]
             },
             "expectedAssignmentPointerSha256": {
               "anyOf": [
@@ -1707,44 +1541,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -1757,10 +1573,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             },
             "evidenceContextStatus": {
@@ -1918,10 +1731,7 @@
               "const": true
             },
             "expectedAssignmentPointerState": {
-              "enum": [
-                "absent",
-                "present"
-              ]
+              "enum": ["absent", "present"]
             },
             "expectedAssignmentPointerSha256": {
               "anyOf": [
@@ -1944,44 +1754,26 @@
               "format": "date-time"
             },
             "claimedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "startedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
             "completedAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "heartbeatAt": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "workerId": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "processId": {
-              "type": [
-                "integer",
-                "null"
-              ]
+              "type": ["integer", "null"]
             },
             "timeoutSeconds": {
               "type": "integer",
@@ -1994,10 +1786,7 @@
               "$ref": "#/$defs/error"
             },
             "committedLifecycleDecisionId": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "format": "uuid"
             },
             "evidenceContextStatus": {
@@ -2130,17 +1919,11 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "updatedAt": {
@@ -2148,30 +1931,18 @@
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -2185,10 +1956,7 @@
           "$ref": "#/$defs/error"
         },
         "committedRunId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "activeModelAuthoritySource": {
@@ -2243,74 +2011,46 @@
           "not": {
             "anyOf": [
               {
-                "required": [
-                  "activeModelAuthoritySource"
-                ]
+                "required": ["activeModelAuthoritySource"]
               },
               {
-                "required": [
-                  "authoritySnapshotSha256"
-                ]
+                "required": ["authoritySnapshotSha256"]
               },
               {
-                "required": [
-                  "assignmentPointerSha256"
-                ]
+                "required": ["assignmentPointerSha256"]
               },
               {
-                "required": [
-                  "assignmentId"
-                ]
+                "required": ["assignmentId"]
               },
               {
-                "required": [
-                  "assignmentCommitSha256"
-                ]
+                "required": ["assignmentCommitSha256"]
               },
               {
-                "required": [
-                  "historicalProfileSha256"
-                ]
+                "required": ["historicalProfileSha256"]
               },
               {
-                "required": [
-                  "resolvedModelId"
-                ]
+                "required": ["resolvedModelId"]
               },
               {
-                "required": [
-                  "resolvedModelFamily"
-                ]
+                "required": ["resolvedModelFamily"]
               },
               {
-                "required": [
-                  "resolvedModelParameterSha256"
-                ]
+                "required": ["resolvedModelParameterSha256"]
               },
               {
-                "required": [
-                  "resolvedFeatureOrderSha256"
-                ]
+                "required": ["resolvedFeatureOrderSha256"]
               },
               {
-                "required": [
-                  "resolvedCandidateRegistrySha256"
-                ]
+                "required": ["resolvedCandidateRegistrySha256"]
               },
               {
-                "required": [
-                  "quickPolicyId"
-                ]
+                "required": ["quickPolicyId"]
               },
               {
-                "required": [
-                  "quickPolicyVersion"
-                ]
+                "required": ["quickPolicyVersion"]
               },
               {
-                "required": [
-                  "quickPolicySha256"
-                ]
+                "required": ["quickPolicySha256"]
               }
             ]
           }
@@ -2341,15 +2081,11 @@
                 }
               },
               "not": {
-                "required": [
-                  "historicalProfileSha256"
-                ]
+                "required": ["historicalProfileSha256"]
               }
             },
             {
-              "required": [
-                "historicalProfileSha256"
-              ],
+              "required": ["historicalProfileSha256"],
               "properties": {
                 "activeModelAuthoritySource": {
                   "const": "historical_profile_fallback_pending_explicit_bootstrap"
@@ -2358,19 +2094,13 @@
               "not": {
                 "anyOf": [
                   {
-                    "required": [
-                      "assignmentPointerSha256"
-                    ]
+                    "required": ["assignmentPointerSha256"]
                   },
                   {
-                    "required": [
-                      "assignmentId"
-                    ]
+                    "required": ["assignmentId"]
                   },
                   {
-                    "required": [
-                      "assignmentCommitSha256"
-                    ]
+                    "required": ["assignmentCommitSha256"]
                   }
                 ]
               }
@@ -2475,17 +2205,11 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "updatedAt": {
@@ -2493,30 +2217,18 @@
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -2529,10 +2241,7 @@
           "$ref": "#/$defs/error"
         },
         "committedRunId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "activeModelAuthoritySource": {
@@ -2686,17 +2395,11 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "updatedAt": {
@@ -2704,30 +2407,18 @@
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -2740,10 +2431,7 @@
           "$ref": "#/$defs/error"
         },
         "committedRunId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "activeModelAuthoritySource": {
@@ -2884,17 +2572,11 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "updatedAt": {
@@ -2902,29 +2584,17 @@
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -2938,10 +2608,7 @@
           "$ref": "#/$defs/error"
         },
         "committedAssessmentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       }
@@ -3019,16 +2686,10 @@
           "const": "dhaka_south"
         },
         "selectedModelId": {
-          "enum": [
-            "ridge_regression",
-            "poisson_regression",
-            "random_forest",
-            "gradient_boosting",
-            "elastic_net",
-            "negative_binomial_regression",
-            "extra_trees",
-            "hist_gradient_boosting"
-          ]
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "minLength": 1,
+          "maxLength": 128
         },
         "selectedModelParameterSha256": {
           "$ref": "#/$defs/sha"
@@ -3050,44 +2711,26 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -3101,10 +2744,7 @@
           "$ref": "#/$defs/error"
         },
         "committedRunId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       }
@@ -3271,44 +2911,26 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -3322,10 +2944,7 @@
           "$ref": "#/$defs/error"
         },
         "committedOutcomeId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       }
@@ -3479,44 +3098,26 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -3530,10 +3131,7 @@
           "$ref": "#/$defs/error"
         },
         "committedOutcomeId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       }
@@ -3541,11 +3139,120 @@
     "outcomeP21": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion","jobKind","jobId","outcomeId","forecastRunId","expectedForecastCommitSha256","observationPayloadSha256","observation","operatorIdentifier","deploymentId","workflowMode","policyId","policyVersion","policySha256","status","progress","createdAt","claimedAt","startedAt","updatedAt","completedAt","heartbeatAt","workerId","processId","timeoutSeconds","retryCount","error","committedOutcomeId"],
+      "required": [
+        "schemaVersion",
+        "jobKind",
+        "jobId",
+        "outcomeId",
+        "forecastRunId",
+        "expectedForecastCommitSha256",
+        "observationPayloadSha256",
+        "observation",
+        "operatorIdentifier",
+        "deploymentId",
+        "workflowMode",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "status",
+        "progress",
+        "createdAt",
+        "claimedAt",
+        "startedAt",
+        "updatedAt",
+        "completedAt",
+        "heartbeatAt",
+        "workerId",
+        "processId",
+        "timeoutSeconds",
+        "retryCount",
+        "error",
+        "committedOutcomeId"
+      ],
       "properties": {
-        "schemaVersion":{"const":"2.1"},"jobKind":{"const":"forecast_outcome"},"jobId":{"$ref":"#/$defs/uuid"},"outcomeId":{"$ref":"#/$defs/uuid"},"forecastRunId":{"$ref":"#/$defs/uuid"},"expectedForecastCommitSha256":{"$ref":"#/$defs/sha"},"observationPayloadSha256":{"$ref":"#/$defs/sha"},
-        "observation":{"type":"object","additionalProperties":false,"required":["deploymentId","geography","targetColumn","forecastHorizonWeeks","forecastTargetPeriod","observedRaw","observationSourceType","observationSourceId","observationRecordId","observationRecordedAt","limitationsAcknowledged"],"properties":{"deploymentId":{"const":"dhaka_south"},"geography":{"const":{"level":"city","id":"BGD-DHAKA-SOUTH","name":"Dhaka South"}},"targetColumn":{"const":"target_cases_next_2w"},"forecastHorizonWeeks":{"const":2},"forecastTargetPeriod":{"type":"string","pattern":"^[0-9]{4}-W[0-9]{2}$"},"observedRaw":{"type":"integer","minimum":0},"observationSourceType":{"const":"synthetic_benchmark"},"observationSourceId":{"const":"dhaka_south_synthetic_benchmark"},"observationRecordId":{"type":"string","minLength":1,"maxLength":128,"pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},"observationRecordedAt":{"type":"string","format":"date-time","pattern":"Z$"},"limitationsAcknowledged":{"const":true}}},
-        "operatorIdentifier":{"type":"string","minLength":1,"maxLength":128},"deploymentId":{"const":"dhaka_south"},"workflowMode":{"const":"forecast_outcome_monitoring"},"policyId":{"const":"RUNTIME.FORECAST_OUTCOME.MONITORING"},"policyVersion":{"const":"p2-v2"},"policySha256":{"const":"5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"},"status":{"$ref":"#/$defs/status"},"progress":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"claimedAt":{"type":["string","null"]},"startedAt":{"type":["string","null"]},"updatedAt":{"type":"string","format":"date-time"},"completedAt":{"type":["string","null"]},"heartbeatAt":{"type":["string","null"]},"workerId":{"type":["string","null"]},"processId":{"type":["integer","null"]},"timeoutSeconds":{"type":"integer","minimum":1},"retryCount":{"type":"integer","minimum":0},"error":{"$ref":"#/$defs/error"},"committedOutcomeId":{"type":["string","null"],"format":"uuid"}
+        "schemaVersion": { "const": "2.1" },
+        "jobKind": { "const": "forecast_outcome" },
+        "jobId": { "$ref": "#/$defs/uuid" },
+        "outcomeId": { "$ref": "#/$defs/uuid" },
+        "forecastRunId": { "$ref": "#/$defs/uuid" },
+        "expectedForecastCommitSha256": { "$ref": "#/$defs/sha" },
+        "observationPayloadSha256": { "$ref": "#/$defs/sha" },
+        "observation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "deploymentId",
+            "geography",
+            "targetColumn",
+            "forecastHorizonWeeks",
+            "forecastTargetPeriod",
+            "observedRaw",
+            "observationSourceType",
+            "observationSourceId",
+            "observationRecordId",
+            "observationRecordedAt",
+            "limitationsAcknowledged"
+          ],
+          "properties": {
+            "deploymentId": { "const": "dhaka_south" },
+            "geography": {
+              "const": {
+                "level": "city",
+                "id": "BGD-DHAKA-SOUTH",
+                "name": "Dhaka South"
+              }
+            },
+            "targetColumn": { "const": "target_cases_next_2w" },
+            "forecastHorizonWeeks": { "const": 2 },
+            "forecastTargetPeriod": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-W[0-9]{2}$"
+            },
+            "observedRaw": { "type": "integer", "minimum": 0 },
+            "observationSourceType": { "const": "synthetic_benchmark" },
+            "observationSourceId": {
+              "const": "dhaka_south_synthetic_benchmark"
+            },
+            "observationRecordId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+            },
+            "observationRecordedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "limitationsAcknowledged": { "const": true }
+          }
+        },
+        "operatorIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "deploymentId": { "const": "dhaka_south" },
+        "workflowMode": { "const": "forecast_outcome_monitoring" },
+        "policyId": { "const": "RUNTIME.FORECAST_OUTCOME.MONITORING" },
+        "policyVersion": { "const": "p2-v2" },
+        "policySha256": {
+          "const": "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"
+        },
+        "status": { "$ref": "#/$defs/status" },
+        "progress": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "claimedAt": { "type": ["string", "null"] },
+        "startedAt": { "type": ["string", "null"] },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": ["string", "null"] },
+        "heartbeatAt": { "type": ["string", "null"] },
+        "workerId": { "type": ["string", "null"] },
+        "processId": { "type": ["integer", "null"] },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "retryCount": { "type": "integer", "minimum": 0 },
+        "error": { "$ref": "#/$defs/error" },
+        "committedOutcomeId": { "type": ["string", "null"], "format": "uuid" }
       }
     },
     "assessmentP2": {
@@ -3611,7 +3318,7 @@
         "assessmentPolicyId": {
           "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
         },
-        "assessmentPolicyVersion": {"enum": ["p2-v1", "p2-v2"]},
+        "assessmentPolicyVersion": { "enum": ["p2-v1", "p2-v2"] },
         "assessmentPolicySha256": {
           "$ref": "#/$defs/sha"
         },
@@ -3629,17 +3336,11 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "updatedAt": {
@@ -3647,29 +3348,17 @@
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -3683,10 +3372,7 @@
           "$ref": "#/$defs/error"
         },
         "committedAssessmentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       }
@@ -3782,17 +3468,11 @@
           "format": "date-time"
         },
         "claimedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "startedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "updatedAt": {
@@ -3800,29 +3480,17 @@
           "format": "date-time"
         },
         "completedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "heartbeatAt": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "workerId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "processId": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "timeoutSeconds": {
           "type": "integer",
@@ -3835,10 +3503,7 @@
           "$ref": "#/$defs/error"
         },
         "committedEvidenceId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       }
@@ -3847,41 +3512,72 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "schemaVersion", "jobKind", "jobId", "evidenceId", "deploymentId", "geography", "workflowMode",
-        "policyId", "policyVersion", "policySha256", "expectedMonitoringLatestSha256",
-        "expectedMonitoringSummarySha256", "expectedIncludedOutcomeSetSha256", "evidenceOnlyAcknowledged",
-        "status", "progress", "createdAt", "claimedAt", "startedAt", "updatedAt", "completedAt",
-        "heartbeatAt", "workerId", "processId", "timeoutSeconds", "retryCount", "error", "committedEvidenceId"
+        "schemaVersion",
+        "jobKind",
+        "jobId",
+        "evidenceId",
+        "deploymentId",
+        "geography",
+        "workflowMode",
+        "policyId",
+        "policyVersion",
+        "policySha256",
+        "expectedMonitoringLatestSha256",
+        "expectedMonitoringSummarySha256",
+        "expectedIncludedOutcomeSetSha256",
+        "evidenceOnlyAcknowledged",
+        "status",
+        "progress",
+        "createdAt",
+        "claimedAt",
+        "startedAt",
+        "updatedAt",
+        "completedAt",
+        "heartbeatAt",
+        "workerId",
+        "processId",
+        "timeoutSeconds",
+        "retryCount",
+        "error",
+        "committedEvidenceId"
       ],
       "properties": {
-        "schemaVersion": {"const": "2.0"},
-        "jobKind": {"const": "degradation_evidence"},
-        "jobId": {"$ref": "#/$defs/uuid"},
-        "evidenceId": {"$ref": "#/$defs/uuid"},
-        "deploymentId": {"const": "dhaka_south"},
-        "geography": {"const": {"level": "city", "id": "BGD-DHAKA-SOUTH", "name": "Dhaka South"}},
-        "workflowMode": {"const": "degradation_evidence"},
-        "policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"},
-        "policyVersion": {"const": "p2-v2"},
-        "policySha256": {"const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"},
-        "expectedMonitoringLatestSha256": {"$ref": "#/$defs/sha"},
-        "expectedMonitoringSummarySha256": {"$ref": "#/$defs/sha"},
-        "expectedIncludedOutcomeSetSha256": {"$ref": "#/$defs/sha"},
-        "evidenceOnlyAcknowledged": {"const": true},
-        "status": {"$ref": "#/$defs/status"},
-        "progress": {"type": "string"},
-        "createdAt": {"type": "string", "format": "date-time"},
-        "claimedAt": {"type": ["string", "null"], "format": "date-time"},
-        "startedAt": {"type": ["string", "null"], "format": "date-time"},
-        "updatedAt": {"type": "string", "format": "date-time"},
-        "completedAt": {"type": ["string", "null"], "format": "date-time"},
-        "heartbeatAt": {"type": ["string", "null"]},
-        "workerId": {"type": ["string", "null"]},
-        "processId": {"type": ["integer", "null"]},
-        "timeoutSeconds": {"type": "integer", "minimum": 1},
-        "retryCount": {"const": 0},
-        "error": {"$ref": "#/$defs/error"},
-        "committedEvidenceId": {"type": ["string", "null"], "format": "uuid"}
+        "schemaVersion": { "const": "2.0" },
+        "jobKind": { "const": "degradation_evidence" },
+        "jobId": { "$ref": "#/$defs/uuid" },
+        "evidenceId": { "$ref": "#/$defs/uuid" },
+        "deploymentId": { "const": "dhaka_south" },
+        "geography": {
+          "const": {
+            "level": "city",
+            "id": "BGD-DHAKA-SOUTH",
+            "name": "Dhaka South"
+          }
+        },
+        "workflowMode": { "const": "degradation_evidence" },
+        "policyId": { "const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE" },
+        "policyVersion": { "const": "p2-v2" },
+        "policySha256": {
+          "const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"
+        },
+        "expectedMonitoringLatestSha256": { "$ref": "#/$defs/sha" },
+        "expectedMonitoringSummarySha256": { "$ref": "#/$defs/sha" },
+        "expectedIncludedOutcomeSetSha256": { "$ref": "#/$defs/sha" },
+        "evidenceOnlyAcknowledged": { "const": true },
+        "status": { "$ref": "#/$defs/status" },
+        "progress": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "claimedAt": { "type": ["string", "null"], "format": "date-time" },
+        "startedAt": { "type": ["string", "null"], "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": ["string", "null"], "format": "date-time" },
+        "heartbeatAt": { "type": ["string", "null"] },
+        "workerId": { "type": ["string", "null"] },
+        "processId": { "type": ["integer", "null"] },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "retryCount": { "const": 0 },
+        "error": { "$ref": "#/$defs/error" },
+        "committedEvidenceId": { "type": ["string", "null"], "format": "uuid" }
       }
     }
   }

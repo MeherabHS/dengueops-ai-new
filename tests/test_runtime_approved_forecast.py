@@ -27,7 +27,14 @@ from runtime_model_degradation_evidence import execute as execute_degradation
 from tests.test_runtime_model_degradation_evidence import degradation_job
 from types import SimpleNamespace
 
-DEPLOYABLE = ("ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting")
+_CURRENT_REGISTRY, _ = load_and_validate_candidate_registry()
+DEPLOYABLE = tuple(
+    candidate["model_id"]
+    for candidate in _CURRENT_REGISTRY["candidates"]
+    if candidate["candidate_class"] == "learned_model"
+    and candidate["selection_role"] == "learned_selectable"
+    and candidate["selectable"] is True
+)
 
 
 class ApprovedForecastTests(unittest.TestCase):

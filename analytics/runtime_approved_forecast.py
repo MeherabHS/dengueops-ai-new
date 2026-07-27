@@ -35,7 +35,6 @@ P2_DECISION_SHA = "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdc
 P2_V2_DECISION_SHA = "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d"
 ASSESSMENT_POLICY_ID = "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
 DECISION_POLICY_ID = "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION"
-DEPLOYABLE = {"ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"}
 
 
 def _now() -> str:
@@ -201,7 +200,22 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     compared = next((value for value in comparison_candidates if value.get("modelId") == job["selectedModelId"]), None)
     winner = next((value for value in candidates if value.get("modelId") == summary.get("technicalWinnerModelId")), None)
     compared_winner = next((value for value in comparison_candidates if value.get("modelId") == comparison.get("technicalWinnerModelId")), None)
-    if (not candidate or not compared or job["selectedModelId"] not in DEPLOYABLE
+    registry, registry_hash = load_and_validate_candidate_registry() if decision_v2 else load_historical_candidate_registry()
+    registry_candidate = next(
+        (value for value in registry["candidates"] if value["model_id"] == job["selectedModelId"]),
+        None,
+    )
+    current_approved = (
+        not decision_v2
+        or (
+            registry_candidate is not None
+            and registry_candidate.get("candidate_class") == "learned_model"
+            and registry_candidate.get("selection_role") == "learned_selectable"
+            and registry_candidate.get("selectable") is True
+            and job["selectedModelId"] in policy.get("allowedCandidateIds", [])
+        )
+    )
+    if (not candidate or not compared or not current_approved
             or (candidate.get("candidateClass") != "learned_model" if decision_v2 else candidate.get("deployabilityClass") != "deployable_learned_model")
             or candidate.get("completionStatus") != "complete" or candidate.get("selectionEligible") is not True
             or candidate.get("parametersSha256") != job["selectedModelParameterSha256"]
@@ -297,10 +311,10 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if (not np.isfinite(X.to_numpy()).all() or not np.isfinite(y.to_numpy()).all()
             or (y < 0).any() or not np.isfinite(x_latest.to_numpy()).all()):
         raise ValueError("Approved forecast training data contains invalid values.")
-    registry, registry_hash = load_and_validate_candidate_registry() if decision_v2 else load_historical_candidate_registry()
     if registry_hash != summary["provenance"]["candidateRegistrySha256"] or registry_hash != policy["candidateRegistrySha256"]:
         raise ValueError("Candidate registry identity changed after assessment.")
-    registry_candidate = next(value for value in registry["candidates"] if value["model_id"] == job["selectedModelId"])
+    if registry_candidate is None:
+        raise ValueError("Selected model is absent from the governed candidate registry.")
     if registry_candidate["parameters_sha256"] != job["selectedModelParameterSha256"]:
         raise ValueError("Selected-model parameter identity changed.")
 

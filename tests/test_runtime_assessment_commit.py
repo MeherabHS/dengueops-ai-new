@@ -102,7 +102,17 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             self.assertFalse(rolling["foldCapApplied"])
             self.assertEqual(len(rolling["folds"]), 52)
             self.assertEqual([fold["sequence"] for fold in rolling["folds"]], list(range(1, 53)))
-            self.assertTrue(all(len(fold["predictions"]) == 10 for fold in rolling["folds"]))
+            registry = json.loads((ROOT / "config/candidate_models.json").read_text())
+            expected_candidate_ids = [
+                candidate["model_id"] for candidate in registry["candidates"]
+            ]
+            self.assertEqual(rolling["candidateIds"], expected_candidate_ids)
+            self.assertTrue(
+                all(
+                    len(fold["predictions"]) == len(expected_candidate_ids)
+                    for fold in rolling["folds"]
+                )
+            )
             expected_targets = [fold["actualTarget"] for fold in rolling["folds"]]
             for model_id in rolling["candidateIds"]:
                 records = [next(item for item in fold["predictions"] if item["modelId"] == model_id) for fold in rolling["folds"]]
@@ -122,6 +132,77 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             self.assertEqual(winner["candidateClass"], "learned_model")
             self.assertIn("best-performing eligible learned model within this governed assessment", comparison["selectionReason"])
             self.assertTrue(all(candidate["plannedFolds"] == 52 for candidate in comparison["candidates"]))
+            prediction_parity = [
+                {
+                    "foldId": fold["foldId"],
+                    "sequence": fold["sequence"],
+                    "trainingMatrixSha256": fold["trainingMatrixSha256"],
+                    "validationMatrixSha256": fold["validationMatrixSha256"],
+                    "actualTarget": fold["actualTarget"],
+                    "predictions": [
+                        {
+                            key: prediction[key]
+                            for key in (
+                                "modelId", "foldStatus", "rawPrediction",
+                                "publishedPrediction", "clippingApplied",
+                                "signedError", "absoluteError", "squaredError",
+                                "failureReasonCode", "warningCodes",
+                            )
+                        }
+                        for prediction in fold["predictions"]
+                    ],
+                }
+                for fold in rolling["folds"]
+            ]
+            metrics_parity = []
+            for candidate in comparison["candidates"]:
+                value = {
+                    key: candidate.get(key)
+                    for key in (
+                        "modelId", "eligible", "completionStatus",
+                        "successfulFolds", "failedFolds", "selectionEligible",
+                        "selectionComplexityRank", "metrics", "status",
+                    )
+                }
+                if value["metrics"]:
+                    value["metrics"] = dict(value["metrics"])
+                    value["metrics"].pop("runtimeSeconds", None)
+                metrics_parity.append(value)
+            digest = lambda value: hashlib.sha256(
+                json.dumps(
+                    value, sort_keys=True, separators=(",", ":"), allow_nan=False
+                ).encode()
+            ).hexdigest()
+            eligible = sorted(
+                (
+                    candidate
+                    for candidate in comparison["candidates"]
+                    if candidate["selectionEligible"]
+                ),
+                key=lambda candidate: (
+                    candidate["metrics"]["mae"],
+                    candidate["metrics"]["rmse"],
+                    candidate["metrics"]["wape"],
+                    candidate["metrics"]["medianAbsoluteError"],
+                    candidate["metrics"]["maximumAbsoluteError"],
+                    candidate["selectionComplexityRank"],
+                    candidate["modelId"],
+                ),
+            )
+            self.assertEqual(
+                rolling["foldPlanSha256"],
+                "23894ebae72417819a7010ce6d4aa1c020406880593184947454864eded9292b",
+            )
+            self.assertEqual(
+                digest(prediction_parity),
+                "6ab7a6de8c47a85090f99a2f945a45b8dbb3fd9b3dc343f92c9fc15b54c7c6bd",
+            )
+            self.assertEqual(
+                digest(metrics_parity),
+                "2234cdb57fd0b7bc8e8ed35b3d319e105a8c9002df8d127de6c1a2e7ed4d61e3",
+            )
+            self.assertEqual(comparison["technicalWinnerModelId"], "extra_trees")
+            self.assertEqual(eligible[1]["modelId"], "random_forest")
 
     def test_worker_commits_direct_ten_candidate_assessment_without_latest(self):
         before = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (ROOT / "data").glob("*") if path.is_file()}
@@ -141,7 +222,13 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             comparison = json.loads((committed / "artifacts/candidate_model_comparison.json").read_text())
             recommendation = json.loads((committed / "artifacts/recommendation.json").read_text())
             self.assertEqual(len(rolling["folds"]), 68)
-            self.assertTrue(all(len(fold["predictions"]) == 10 for fold in rolling["folds"]))
+            current_registry = json.loads((ROOT / "config/candidate_models.json").read_text())
+            self.assertTrue(
+                all(
+                    len(fold["predictions"]) == len(current_registry["candidates"])
+                    for fold in rolling["folds"]
+                )
+            )
             expected_targets = [fold["actualTarget"] for fold in rolling["folds"]]
             for model_id in rolling["candidateIds"]:
                 model_records = [next(item for item in fold["predictions"] if item["modelId"] == model_id) for fold in rolling["folds"]]

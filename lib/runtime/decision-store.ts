@@ -29,16 +29,6 @@ import { writeJsonAtomic } from "./store";
 const sha256 = (value: Buffer) =>
   createHash("sha256").update(value).digest("hex");
 const now = () => new Date().toISOString();
-const DEPLOYABLE = new Set([
-  "ridge_regression",
-  "poisson_regression",
-  "random_forest",
-  "gradient_boosting",
-  "elastic_net",
-  "negative_binomial_regression",
-  "extra_trees",
-  "hist_gradient_boosting",
-]);
 export type DecisionChoice =
   | "approve_technical_winner"
   | "approve_eligible_non_winner"
@@ -48,6 +38,7 @@ export type DecisionChoice =
 
 async function jsonBytes(
   file: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ bytes: Buffer; value: Record<string, any> }> {
   const bytes = await readFile(file);
   return { bytes, value: JSON.parse(bytes.toString("utf8")) };
@@ -171,6 +162,7 @@ export async function readVerifiedAssessment(
       409,
     );
   const validation = JSON.parse(validationBytes.toString("utf8"));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const assessmentPolicy = rolling.assessmentPolicy as Record<string, any>;
   const isPhaseTwo = summary.schemaVersion === "2.0";
   const policyIdentity: CommittedAssessmentPolicyIdentity = isPhaseTwo
@@ -392,11 +384,13 @@ export async function recordDecision(
       );
     const winner = evidence.summary.technicalWinnerModelId as string | null;
     const candidates = evidence.summary.candidates as Array<
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Record<string, any>
     >;
     const winnerCandidate =
       candidates.find((value) => value.modelId === winner) ?? null;
     const comparisonCandidates = evidence.comparison.candidates as Array<
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Record<string, any>
     >;
     const comparisonWinner =
@@ -426,6 +420,7 @@ export async function recordDecision(
     const current = !isDecisionV2 && "currentModelId" in policy
       ? candidates.find((value) => value.modelId === policy.currentModelId) ?? null
       : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let selected: Record<string, any> | null = null;
     if (choice === "approve_technical_winner") selected = winnerCandidate;
     if (choice === "approve_eligible_non_winner") selected = candidates.find((value) => value.modelId === requestedModelId) ?? null;
@@ -437,7 +432,8 @@ export async function recordDecision(
         selected.parametersSha256 !== selectedComparison.parametersSha256 ||
         selected.successfulFolds !== selectedComparison.successfulFolds ||
         selected.failedFolds !== selectedComparison.failedFolds ||
-        !DEPLOYABLE.has(selected.modelId) ||
+        (policy.policyVersion === "p2-v2" &&
+          !policy.allowedCandidateIds.includes(selected.modelId)) ||
         selected.completionStatus !== "complete" ||
         selected.selectionEligible !== true ||
         selected.successfulFolds !== requiredFolds ||
@@ -750,6 +746,7 @@ export async function readVerifiedDecision(
     decision.deploymentId,
     assessmentIdentity,
   );
+  const policyV2 = policy.policyVersion === "p2-v2" ? policy : null;
   if (
     decision.schemaVersion !== policy.schemaVersion ||
     decision.decisionPolicyId !== policy.policyId ||
@@ -775,10 +772,11 @@ export async function readVerifiedDecision(
         commit.assessmentPlannedFoldCount !==
           decision.assessmentPlannedFoldCount)) ||
     (decision.decisionPolicyVersion === "p2-v2" &&
-      (decision.featureOrderSha256 !== (policy as any).featureOrderSha256 ||
+      (!policyV2 ||
+        decision.featureOrderSha256 !== policyV2.featureOrderSha256 ||
         decision.deploymentModelAdopted !== false ||
         decision.uncertaintyLimitationsAcknowledged !== true ||
-        !DEPLOYABLE.has(decision.selectedModelId) ||
+        !policyV2.allowedCandidateIds.includes(decision.selectedModelId) ||
         !["technical_winner", "eligible_non_winner"].includes(decision.selectedCandidateStatus))) ||
     commit.latestPointerUpdated !== false
   )
@@ -788,6 +786,7 @@ export async function readVerifiedDecision(
       "The model-use decision failed integrity verification.",
       409,
     );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let authorization: null | Record<string, any> = null,
     authorizationCommitSha256: string | null = null,
     committedRunId: string | null = null,

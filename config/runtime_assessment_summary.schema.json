@@ -398,8 +398,7 @@
         },
         "candidates": {
           "type": "array",
-          "minItems": 7,
-          "maxItems": 10,
+          "minItems": 2,
           "items": {
             "$ref": "#/$defs/p2/candidate"
           }
@@ -504,7 +503,41 @@
         "decisionCompatibilityStatus": {
           "const": "phase2_decision_policy_not_yet_available"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "provenance": {
+                "properties": {
+                  "candidateRegistrySha256": {
+                    "const": "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
+                  }
+                },
+                "required": ["candidateRegistrySha256"]
+              }
+            },
+            "required": ["provenance"]
+          },
+          "then": {
+            "properties": {
+              "candidates": {
+                "minItems": 7,
+                "maxItems": 7,
+                "items": {
+                  "allOf": [
+                    {"$ref": "#/$defs/p2/candidate"},
+                    {"properties": {"modelId": {"$ref": "#/$defs/p2/legacyModel"}}}
+                  ]
+                }
+              },
+              "technicalWinnerModelId": {
+                "anyOf": [{"$ref": "#/$defs/p2/legacyModel"}, {"type": "null"}]
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "$defs": {
@@ -678,7 +711,7 @@
           }
         }
       },
-      "model": {
+      "legacyModel": {
         "enum": [
           "previous_week_naive",
           "moving_average_4w",
@@ -686,12 +719,14 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting",
-          "elastic_net",
-          "negative_binomial_regression",
-          "extra_trees",
-          "hist_gradient_boosting"
+          "gradient_boosting"
         ]
+      },
+      "model": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "minLength": 1,
+        "maxLength": 128
       },
       "candidate": {
         "type": "object",

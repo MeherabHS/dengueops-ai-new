@@ -111,7 +111,12 @@
         "decisionScope": { "const": "one_run" },
         "allowedDecisions": { "const": ["approve_technical_winner", "approve_eligible_non_winner"] },
         "allowedCandidateStatuses": { "const": ["technical_winner", "eligible_non_winner"] },
-        "allowedCandidateIds": { "const": ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"] },
+        "allowedCandidateIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$", "minLength": 1, "maxLength": 128}
+        },
         "baselineApprovalAllowed": { "const": false },
         "diagnosticApprovalAllowed": { "const": false },
         "arbitraryParametersAllowed": { "const": false },

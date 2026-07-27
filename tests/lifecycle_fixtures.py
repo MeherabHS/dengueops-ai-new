@@ -16,12 +16,21 @@ from runtime_model_degradation_evidence import execute as execute_degradation
 from runtime_assessment_evidence import (
     aggregate_candidate,
     select_technical_winner,
-    NONNEGATIVE_RAW_MODEL_IDS,
 )
 from tests.test_runtime_assessment_commit import build_ready_assessment_runtime, iso_now
 from tests.test_runtime_forecast_outcome import build_outcome_job
 from tests.test_runtime_model_degradation_evidence import degradation_job
 
+_CURRENT_REGISTRY = json.loads((ROOT / "config/candidate_models.json").read_text(encoding="utf-8"))
+_OUTPUT_RULES = {
+    candidate["model_id"]: candidate["output_domain_rule"]
+    for candidate in _CURRENT_REGISTRY["candidates"]
+}
+_NEGATIVE_FAIL_RULES = {
+    "nonnegative_source_expected_fail_if_invalid",
+    "nonnegative_training_targets_expected_fail_if_invalid",
+    "negative_or_nonfinite_output_fails_fold",
+}
 
 def _require_completed_assessment_job(runtime: Path, pending_job: Path, job: dict) -> Path:
     completed_path = runtime / "jobs/completed" / pending_job.name
@@ -171,7 +180,7 @@ def _force_assessment_winner(
             raw_diff = float(dp["rawPrediction"]) - actual
             pub_diff = float(dp["publishedPrediction"]) - actual
             new_raw = round(actual + 0.9 * raw_diff, 6)
-            new_pub = max(0.0, round(actual + 0.9 * pub_diff, 6)) if target_id in NONNEGATIVE_RAW_MODEL_IDS else round(actual + 0.9 * pub_diff, 6)
+            new_pub = max(0.0, round(actual + 0.9 * pub_diff, 6)) if _OUTPUT_RULES.get(target_id) in _NEGATIVE_FAIL_RULES else round(actual + 0.9 * pub_diff, 6)
             new_abs_err = round(abs(new_pub - actual), 6)
             new_target["rawPrediction"] = new_raw
             new_target["publishedPrediction"] = new_pub

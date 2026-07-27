@@ -276,33 +276,11 @@
             "candidateEligibility": {
               "type": "object",
               "additionalProperties": false,
-              "required": [
-                "moving_average_4w",
-                "seasonal_naive_52w",
-                "ridge_regression",
-                "poisson_regression",
-                "random_forest",
-                "gradient_boosting",
-                "elastic_net",
-                "negative_binomial_regression",
-                "extra_trees",
-                "hist_gradient_boosting"
-              ],
-              "properties": {
-                "moving_average_4w": { "$ref": "#/$defs/candidateEligibility" },
-                "seasonal_naive_52w": {
+              "minProperties": 2,
+              "patternProperties": {
+                "^[a-z][a-z0-9_]*$": {
                   "$ref": "#/$defs/candidateEligibility"
-                },
-                "ridge_regression": { "$ref": "#/$defs/candidateEligibility" },
-                "poisson_regression": {
-                  "$ref": "#/$defs/candidateEligibility"
-                },
-                "random_forest": { "$ref": "#/$defs/candidateEligibility" },
-                "gradient_boosting": { "$ref": "#/$defs/candidateEligibility" },
-                "elastic_net": { "$ref": "#/$defs/candidateEligibility" },
-                "negative_binomial_regression": { "$ref": "#/$defs/candidateEligibility" },
-                "extra_trees": { "$ref": "#/$defs/candidateEligibility" },
-                "hist_gradient_boosting": { "$ref": "#/$defs/candidateEligibility" }
+                }
               }
             },
             "recommendationEligibility": { "const": false },
@@ -329,7 +307,9 @@
             "assessmentPolicyId": {
               "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
             },
-            "assessmentPolicyVersion": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"] },
+            "assessmentPolicyVersion": {
+              "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"]
+            },
             "assessmentPolicySha256": { "$ref": "#/$defs/sha256" },
             "decisionCompatibilityStatus": {
               "enum": [
@@ -449,7 +429,9 @@
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 }
         },
-        "candidateClass": { "enum": ["naive_baseline", "comparison_baseline", "learned_model"] },
+        "candidateClass": {
+          "enum": ["naive_baseline", "comparison_baseline", "learned_model"]
+        },
         "deployabilityClassification": {
           "enum": [
             "baseline_not_runtime_deployable",

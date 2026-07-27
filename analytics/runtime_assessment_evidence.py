@@ -17,7 +17,7 @@ SELECTION_STAGES = (
     ("median_absolute_error", "medianAbsoluteError"),
     ("maximum_absolute_error", "maximumAbsoluteError"),
 )
-NONNEGATIVE_RAW_MODEL_IDS = {
+HISTORICAL_NONNEGATIVE_RAW_MODEL_IDS = {
     "moving_average_4w",
     "seasonal_naive_52w",
     "poisson_regression",
@@ -48,12 +48,23 @@ def prediction_evidence(
     raw: float,
     runtime_seconds: float,
     warning_codes: Sequence[str],
+    *,
+    output_domain_rule: str | None = None,
 ) -> dict[str, Any]:
     if not math.isfinite(actual) or actual < 0:
         raise AssessmentEvidenceError("invalid_actual_target")
     if not math.isfinite(raw):
         raise AssessmentEvidenceError("nonfinite_prediction")
-    if model_id in NONNEGATIVE_RAW_MODEL_IDS and raw < 0:
+    effective_output_domain_rule = output_domain_rule or (
+        "nonnegative_training_targets_expected_fail_if_invalid"
+        if model_id in HISTORICAL_NONNEGATIVE_RAW_MODEL_IDS
+        else "preserve_raw_and_clip_published_at_zero"
+    )
+    if effective_output_domain_rule in {
+        "nonnegative_source_expected_fail_if_invalid",
+        "nonnegative_training_targets_expected_fail_if_invalid",
+        "negative_or_nonfinite_output_fails_fold",
+    } and raw < 0:
         raise AssessmentEvidenceError("prohibited_negative_prediction")
     if not math.isfinite(runtime_seconds) or runtime_seconds < 0:
         raise AssessmentEvidenceError("invalid_runtime")
@@ -341,7 +352,7 @@ def validate_fold_identities(
     selected_validation_indexes: Sequence[int], initial_training_rows: int,
     embargo_rows: int, horizon_weeks: int,
 ) -> tuple[list[float], dict[str, list[Mapping[str, Any]]]]:
-    if len(folds) != len(selected_validation_indexes) or not folds or len(candidate_ids) not in {7, 10} or len(set(candidate_ids)) != len(candidate_ids):
+    if len(folds) != len(selected_validation_indexes) or not folds or not candidate_ids or len(set(candidate_ids)) != len(candidate_ids):
         raise AssessmentEvidenceError("invalid_fold_or_candidate_count")
     records: dict[str, list[Mapping[str, Any]]] = {model_id: [] for model_id in candidate_ids}
     actuals: list[float] = []
@@ -388,7 +399,8 @@ def validate_fold_identities(
 
 
 def validate_prediction_record(
-    model_id: str, actual: float, record: Mapping[str, Any]
+    model_id: str, actual: float, record: Mapping[str, Any], *,
+    output_domain_rule: str | None = None,
 ) -> None:
     runtime_seconds = float(record["runtimeSeconds"])
     if not math.isfinite(runtime_seconds) or runtime_seconds < 0:
@@ -412,6 +424,7 @@ def validate_prediction_record(
         float(record["rawPrediction"]),
         runtime_seconds,
         list(record["warningCodes"]),
+        output_domain_rule=output_domain_rule,
     )
     if status != expected["foldStatus"]:
         raise AssessmentEvidenceError("warning_status_mismatch")

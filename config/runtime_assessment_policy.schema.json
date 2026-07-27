@@ -153,7 +153,23 @@
     {
       "if": { "properties": { "policy_version": { "const": "p1.4d-1-v1" } } },
       "then": {
-        "properties": { "schema_version": { "const": "1.0" } },
+        "properties": {
+          "schema_version": { "const": "1.0" },
+          "candidate_eligibility_policy": {
+            "properties": {
+              "candidates": {
+                "minItems": 7,
+                "maxItems": 7,
+                "items": {
+                  "allOf": [
+                    {"$ref": "#/$defs/candidate"},
+                    {"properties": {"model_id": {"$ref": "#/$defs/legacyModel"}}}
+                  ]
+                }
+              }
+            }
+          }
+        },
         "not": {
           "anyOf": [
             { "required": ["decision_compatibility"] },
@@ -165,7 +181,23 @@
     {
       "if": { "properties": { "policy_version": { "const": "p2-v1" } } },
       "then": {
-        "properties": { "schema_version": { "const": "2.0" } },
+        "properties": {
+          "schema_version": { "const": "2.0" },
+          "candidate_eligibility_policy": {
+            "properties": {
+              "candidates": {
+                "minItems": 7,
+                "maxItems": 7,
+                "items": {
+                  "allOf": [
+                    {"$ref": "#/$defs/candidate"},
+                    {"properties": {"model_id": {"$ref": "#/$defs/legacyModel"}}}
+                  ]
+                }
+              }
+            }
+          }
+        },
         "required": ["decision_compatibility", "prohibited_actions"]
       }
     },
@@ -387,19 +419,10 @@
       ],
       "properties": {
         "model_id": {
-          "enum": [
-            "previous_week_naive",
-            "moving_average_4w",
-            "seasonal_naive_52w",
-            "ridge_regression",
-            "poisson_regression",
-            "random_forest",
-            "gradient_boosting",
-            "elastic_net",
-            "negative_binomial_regression",
-            "extra_trees",
-            "hist_gradient_boosting"
-          ]
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "minLength": 1,
+          "maxLength": 128
         },
         "model_family": { "$ref": "#/$defs/nonEmpty" },
         "candidate_class": {
@@ -422,8 +445,7 @@
         },
         "selection_complexity_rank": {
           "type": "integer",
-          "minimum": 1,
-          "maximum": 10
+          "minimum": 1
         }
       }
     },
@@ -459,11 +481,21 @@
         "deployable_learned_model_required": { "const": true },
         "candidates": {
           "type": "array",
-          "minItems": 7,
-          "maxItems": 10,
+          "minItems": 2,
           "items": { "$ref": "#/$defs/candidate" }
         }
       }
+    },
+    "legacyModel": {
+      "enum": [
+        "previous_week_naive",
+        "moving_average_4w",
+        "seasonal_naive_52w",
+        "ridge_regression",
+        "poisson_regression",
+        "random_forest",
+        "gradient_boosting"
+      ]
     },
     "comparisonPolicy": {
       "type": "object",

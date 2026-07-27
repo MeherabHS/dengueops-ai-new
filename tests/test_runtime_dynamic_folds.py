@@ -69,7 +69,11 @@ class RuntimeDynamicFoldPolicyTests(unittest.TestCase):
         self.assertEqual(phase_one["properties"]["folds"]["maxItems"], 68)
         self.assertEqual(phase_two["properties"]["folds"]["minItems"], 52)
         self.assertEqual(phase_two["properties"]["folds"]["maxItems"], 68)
-        self.assertEqual(len(phase_two["properties"]["candidateIds"]["oneOf"][1]["const"]), 10)
+        candidate_ids = phase_two["properties"]["candidateIds"]
+        self.assertEqual(candidate_ids["minItems"], 2)
+        self.assertTrue(candidate_ids["uniqueItems"])
+        self.assertNotIn("maxItems", candidate_ids)
+        self.assertNotIn("const", candidate_ids)
         self.assertFalse(phase_one["additionalProperties"])
         self.assertFalse(phase_two["additionalProperties"])
 

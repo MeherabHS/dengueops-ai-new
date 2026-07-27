@@ -237,10 +237,10 @@
           "maximum": 68
         },
         "candidateIds": {
-          "oneOf": [
-            {"const": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]},
-            {"const": ["moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"]}
-          ]
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/p2/modelId"}
         },
         "featureOrderSha256": {
           "$ref": "#/$defs/p2/sha"
@@ -285,7 +285,43 @@
         "selectedEvaluationPeriod": {
           "$ref": "#/$defs/p2/range"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "assessmentPolicy": {
+                "properties": {"policyVersion": {"const": "p2-v1"}},
+                "required": ["policyVersion"]
+              }
+            },
+            "required": ["assessmentPolicy"]
+          },
+          "then": {
+            "properties": {
+              "candidateIds": {
+                "const": ["previous_week_naive", "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting"]
+              },
+              "folds": {
+                "items": {
+                  "properties": {
+                    "predictions": {
+                      "minItems": 7,
+                      "maxItems": 7,
+                      "items": {
+                        "allOf": [
+                          {"$ref": "#/$defs/p2/prediction"},
+                          {"properties": {"modelId": {"$ref": "#/$defs/p2/legacyModelId"}}}
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "$defs": {
@@ -535,6 +571,12 @@
         "pattern": "^[0-9]{4}-W[0-9]{2}$"
       },
       "modelId": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "legacyModelId": {
         "enum": [
           "previous_week_naive",
           "moving_average_4w",
@@ -542,11 +584,7 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting",
-          "elastic_net",
-          "negative_binomial_regression",
-          "extra_trees",
-          "hist_gradient_boosting"
+          "gradient_boosting"
         ]
       },
       "assessmentPolicy": {
@@ -733,8 +771,7 @@
           },
           "predictions": {
             "type": "array",
-            "minItems": 7,
-            "maxItems": 10,
+            "minItems": 2,
             "items": {
               "$ref": "#/$defs/p2/prediction"
             }

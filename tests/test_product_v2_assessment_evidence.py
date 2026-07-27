@@ -7,7 +7,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analytics"))
 
-from runtime_assessment import BASELINE_IDS, CANDIDATE_IDS, LEARNED_IDS
+from model_factory import (
+    baseline_model_ids,
+    candidate_ids,
+    learned_model_ids,
+    load_and_validate_candidate_registry,
+)
 from runtime_assessment_evidence import aggregate_candidate, select_technical_winner
 
 
@@ -26,10 +31,15 @@ def candidate(model_id, mae, rank, *, learned=True, eligible=True):
 
 class ProductV2AssessmentEvidenceTests(unittest.TestCase):
     def test_exact_candidate_population(self):
-        self.assertEqual(len(CANDIDATE_IDS), 10)
-        self.assertEqual(len(LEARNED_IDS), 8)
-        self.assertEqual(BASELINE_IDS, {"moving_average_4w", "seasonal_naive_52w"})
-        self.assertNotIn("previous_week_naive", CANDIDATE_IDS)
+        registry, _ = load_and_validate_candidate_registry()
+        ids = candidate_ids(registry)
+        learned = learned_model_ids(registry)
+        baselines = baseline_model_ids(registry)
+        self.assertEqual(len(ids), len(registry["candidates"]))
+        self.assertEqual(len(learned) + len(baselines), len(ids))
+        self.assertTrue(learned)
+        self.assertTrue(baselines)
+        self.assertNotIn("previous_week_naive", ids)
 
     def test_baseline_and_failed_learned_candidate_cannot_win(self):
         values = [

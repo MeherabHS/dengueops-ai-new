@@ -158,8 +158,7 @@ function assertCommon(policy: RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPol
   ) throw invalid();
 }
 
-function assertPhaseTwoV2(policy: RuntimeDecisionPolicyPhaseTwoV2): void {
-  const learned = ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"];
+function assertPhaseTwoV2(policy: RuntimeDecisionPolicyPhaseTwoV2, learned: string[]): void {
   if (
     policy.policyStatus !== "active" || policy.policyId !== POLICY_ID || policy.policyVersion !== "p2-v2" ||
     policy.deploymentId !== DEPLOYMENT_ID || policy.allowedAssessmentPolicyId !== ASSESSMENT_POLICY_ID ||
@@ -167,7 +166,10 @@ function assertPhaseTwoV2(policy: RuntimeDecisionPolicyPhaseTwoV2): void {
     policy.candidateRegistrySha256 !== CANDIDATE_REGISTRY_V2_SHA || policy.featureOrderSha256 !== FEATURE_ORDER_SHA ||
     JSON.stringify(policy.allowedDecisions) !== JSON.stringify(["approve_technical_winner", "approve_eligible_non_winner"]) ||
     JSON.stringify(policy.allowedCandidateStatuses) !== JSON.stringify(["technical_winner", "eligible_non_winner"]) ||
-    JSON.stringify(policy.allowedCandidateIds) !== JSON.stringify(learned) || policy.baselineApprovalAllowed !== false ||
+    !Array.isArray(policy.allowedCandidateIds) || policy.allowedCandidateIds.length === 0 ||
+    new Set(policy.allowedCandidateIds).size !== policy.allowedCandidateIds.length ||
+    policy.allowedCandidateIds.some((modelId) => !learned.includes(modelId)) ||
+    policy.baselineApprovalAllowed !== false ||
     policy.diagnosticApprovalAllowed !== false || policy.arbitraryParametersAllowed !== false ||
     policy.deploymentWideAdoptionAllowed !== false || policy.decisionScope !== "one_run" ||
     policy.authorizationPolicy.scope !== "one_run" || policy.authorizationPolicy.oneAuthorizationPerFinalDecision !== true ||
@@ -218,7 +220,26 @@ export async function loadDecisionPolicy(
   delete withoutHash.policySha256;
   const digest = createHash("sha256").update(canonical(withoutHash), "utf8").digest("hex");
   if (policy.policySha256 !== digest) throw invalid();
-  if (policy.policyVersion === "p2-v2") assertPhaseTwoV2(policy as RuntimeDecisionPolicyPhaseTwoV2);
+  if (policy.policyVersion === "p2-v2") {
+    let registryBytes: Buffer;
+    let registry: { candidates?: Array<Record<string, unknown>> };
+    try {
+      registryBytes = await readFile(path.join(repositoryRoot, "config", "candidate_models.json"));
+      registry = JSON.parse(registryBytes.toString("utf8")) as { candidates?: Array<Record<string, unknown>> };
+    } catch {
+      throw invalid();
+    }
+    if (createHash("sha256").update(registryBytes).digest("hex") !== policy.candidateRegistrySha256 ||
+        !Array.isArray(registry.candidates)) throw invalid();
+    const learned = registry.candidates
+      .filter((candidate) =>
+        candidate.candidate_class === "learned_model" &&
+        candidate.selection_role === "learned_selectable" &&
+        candidate.selectable === true)
+      .map((candidate) => String(candidate.model_id));
+    if (learned.length === 0 || new Set(learned).size !== learned.length) throw invalid();
+    assertPhaseTwoV2(policy as RuntimeDecisionPolicyPhaseTwoV2, learned);
+  }
   else assertCommon(policy as RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPolicyPhaseTwo);
 
   if (policy.policyVersion === "p2-v2") {

@@ -11,7 +11,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analytics"))
 
-from model_factory import LEARNED_MODEL_IDS, load_and_validate_candidate_registry
+from model_factory import learned_model_ids, load_and_validate_candidate_registry
 
 
 def canonical(value: dict) -> str:
@@ -43,7 +43,7 @@ class PhaseBDecisionPolicyTests(unittest.TestCase):
         )
         registry, digest = load_and_validate_candidate_registry()
         self.assertEqual(policy["candidateRegistrySha256"], digest)
-        self.assertEqual(set(policy["allowedCandidateIds"]), LEARNED_MODEL_IDS)
+        self.assertEqual(set(policy["allowedCandidateIds"]), set(learned_model_ids(registry)))
         self.assertFalse(any(candidate["candidate_class"] != "learned_model" for candidate in registry["candidates"] if candidate["model_id"] in policy["allowedCandidateIds"]))
 
     def test_archived_p2_v1_decision_policy_is_unchanged(self):

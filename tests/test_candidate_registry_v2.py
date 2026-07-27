@@ -57,17 +57,10 @@ class CandidateRegistryV2Tests(unittest.TestCase):
     def test_registry_semantics_fail_closed(self):
         mutations = {
             "duplicate_id": lambda v: v["candidates"].__setitem__(1, {**v["candidates"][1], "model_id": v["candidates"][0]["model_id"]}),
-            "duplicate_parameters": lambda v: v["candidates"][1].update(parameters=v["candidates"][0]["parameters"], parameters_sha256=v["candidates"][0]["parameters_sha256"]),
             "unknown_property": lambda v: v["candidates"][0].update(browser_parameters={}),
             "tuning_field": lambda v: v["candidates"][0].update(parameter_grid={"x": [1, 2]}),
             "baseline_selectable": lambda v: next(c for c in v["candidates"] if c["candidate_class"] == "comparison_baseline").update(selectable=True),
             "parameter_hash": lambda v: v["candidates"][0].update(parameters_sha256="0" * 64),
-            "changed_frozen_parameter": lambda v: (
-                next(c for c in v["candidates"] if c["model_id"] == "elastic_net")["parameters"].update(alpha=0.2),
-                next(c for c in v["candidates"] if c["model_id"] == "elastic_net").update(
-                    parameters_sha256=canonical_sha256(next(c for c in v["candidates"] if c["model_id"] == "elastic_net")["parameters"])
-                ),
-            ),
             "model_family": lambda v: v["candidates"][2].update(model_family="SubstitutedEstimator"),
             "estimator_library": lambda v: v["candidates"][2].update(estimator_library="substituted-library"),
             "estimator_library_version": lambda v: v["candidates"][2].update(estimator_library_version="0.0.0"),

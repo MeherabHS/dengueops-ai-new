@@ -299,8 +299,7 @@
         },
         "candidates": {
           "type": "array",
-          "minItems": 7,
-          "maxItems": 10,
+          "minItems": 2,
           "items": {
             "$ref": "#/$defs/p2/candidate"
           }
@@ -384,7 +383,38 @@
         "selectedEvaluationPeriod": {
           "$ref": "#/$defs/p2/range"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "comparisonPolicy": {
+                "properties": {"policyVersion": {"const": "p1.4d-1-v1"}},
+                "required": ["policyVersion"]
+              }
+            },
+            "required": ["comparisonPolicy"]
+          },
+          "then": {
+            "properties": {
+              "candidates": {
+                "minItems": 7,
+                "maxItems": 7,
+                "items": {
+                  "allOf": [
+                    {"$ref": "#/$defs/p2/candidate"},
+                    {"properties": {"modelId": {"$ref": "#/$defs/p2/legacyModel"}}}
+                  ]
+                }
+              },
+              "selectionEligibleCandidateIds": {"items": {"$ref": "#/$defs/p2/legacyModel"}},
+              "technicalWinnerModelId": {
+                "anyOf": [{"$ref": "#/$defs/p2/legacyModel"}, {"type": "null"}]
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "$defs": {
@@ -634,7 +664,7 @@
           }
         }
       },
-      "model": {
+      "legacyModel": {
         "enum": [
           "previous_week_naive",
           "moving_average_4w",
@@ -642,12 +672,14 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting",
-          "elastic_net",
-          "negative_binomial_regression",
-          "extra_trees",
-          "hist_gradient_boosting"
+          "gradient_boosting"
         ]
+      },
+      "model": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "minLength": 1,
+        "maxLength": 128
       },
       "setStatus": {
         "enum": [
@@ -804,8 +836,7 @@
           },
           "selectionComplexityRank": {
             "type": "integer",
-            "minimum": 1,
-            "maximum": 10
+            "minimum": 1
           },
           "metrics": {
             "anyOf": [

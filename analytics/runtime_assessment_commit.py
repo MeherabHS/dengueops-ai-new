@@ -128,6 +128,17 @@ def _reconcile(
     minimum_rows = int(fold_policy.get("minimum_labelled_rows", fold_policy.get("recommendation_grade_minimum_labelled_rows", 0)))
     minimum_folds = int(fold_policy.get("minimum_fold_count", fold_policy.get("recommendation_grade_minimum_folds", 0)))
     maximum_folds = int(fold_policy.get("maximum_fold_count", fold_policy.get("maximum_fold_behavior", {}).get("currently_governed_maximum_folds", 0)))
+    current_registry = None
+    output_domain_rules: dict[str, str] = {}
+    if policy["policy_version"] == "p2-v2":
+        current_registry, _ = load_and_validate_candidate_registry()
+        expected_ids = [candidate["model_id"] for candidate in current_registry["candidates"]]
+        if candidate_ids != expected_ids:
+            raise RuntimeAssessmentCommitError("Assessment candidate order differs from registry v2.")
+        output_domain_rules = {
+            candidate["model_id"]: candidate["output_domain_rule"]
+            for candidate in current_registry["candidates"]
+        }
     if policy["policy_version"] == "p1.4d-1-v1" and labelled_rows != 173:
         raise RuntimeAssessmentCommitError("Phase 1 assessment must contain exactly 173 labelled rows.")
     if labelled_rows < minimum_rows:
@@ -176,7 +187,10 @@ def _reconcile(
     for model_id, candidate_records in records.items():
         try:
             for actual, record in zip(actuals, candidate_records):
-                validate_prediction_record(model_id, actual, record)
+                validate_prediction_record(
+                    model_id, actual, record,
+                    output_domain_rule=output_domain_rules.get(model_id),
+                )
         except (AssessmentEvidenceError, TypeError, ValueError, KeyError) as exc:
             raise RuntimeAssessmentCommitError(f"Candidate fold evidence is invalid: {model_id}: {exc}.") from exc
         successful = sum(item["foldStatus"] in {"success", "warning"} for item in candidate_records)
@@ -233,10 +247,9 @@ def _reconcile(
     if comparison["winnerParameterSha256"] != (winner_candidate["parametersSha256"] if winner_candidate else None):
         raise RuntimeAssessmentCommitError("Winner parameter identity does not reconcile.")
     if policy["policy_version"] == "p2-v2":
-        registry, _ = load_and_validate_candidate_registry()
+        registry = current_registry
+        assert registry is not None
         registered = {candidate["model_id"]: candidate for candidate in registry["candidates"]}
-        if candidate_ids != [candidate["model_id"] for candidate in registry["candidates"]]:
-            raise RuntimeAssessmentCommitError("Assessment candidate order differs from registry v2.")
         for summary in recomputed:
             candidate = registered[summary["modelId"]]
             expected_status = (

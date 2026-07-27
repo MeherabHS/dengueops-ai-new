@@ -505,7 +505,26 @@
           "type": "integer",
           "minimum": 156
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "assessmentPolicySha256": {
+                "const": "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff"
+              }
+            },
+            "required": ["assessmentPolicySha256"]
+          },
+          "then": {
+            "properties": {
+              "technicalWinnerModelId": {
+                "anyOf": [{"$ref": "#/$defs/p2/legacyModel"}, {"type": "null"}]
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "$defs": {
@@ -539,7 +558,7 @@
         "type": "string",
         "pattern": "^[a-f0-9]{64}$"
       },
-      "model": {
+      "legacyModel": {
         "enum": [
           "previous_week_naive",
           "moving_average_4w",
@@ -547,12 +566,14 @@
           "ridge_regression",
           "poisson_regression",
           "random_forest",
-          "gradient_boosting",
-          "elastic_net",
-          "negative_binomial_regression",
-          "extra_trees",
-          "hist_gradient_boosting"
+          "gradient_boosting"
         ]
+      },
+      "model": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "minLength": 1,
+        "maxLength": 128
       }
     }
   }

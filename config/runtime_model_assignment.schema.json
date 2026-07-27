@@ -570,8 +570,8 @@
         "assignmentId": {"$ref": "#/$defs/uuid"},
         "deploymentId": {"const": "dhaka_south"},
         "assignmentAction": {"const": "assign_selected_model"},
-        "modelId": {"enum": ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"]},
-        "modelFamily": {"enum": ["Ridge", "PoissonRegressor", "RandomForestRegressor", "GradientBoostingRegressor", "ElasticNet", "StatsmodelsNegativeBinomialNB2", "ExtraTreesRegressor", "HistGradientBoostingRegressor"]},
+        "modelId": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$", "minLength": 1, "maxLength": 128},
+        "modelFamily": {"type": "string", "minLength": 1, "maxLength": 256},
         "parameterSha256": {"$ref": "#/$defs/sha"},
         "preprocessingIdentity": {"$ref": "#/$defs/sha"},
         "candidateRegistrySha256": {"const": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"},
@@ -588,18 +588,6 @@
         "assignedAt": {"type": "string", "format": "date-time"}
       },
       "allOf": [
-        {
-          "oneOf": [
-            {"properties": {"modelId": {"const": "ridge_regression"}, "modelFamily": {"const": "Ridge"}, "parameterSha256": {"const": "f59e0d298750b54d9ab8312c6a68a4eaf4910bea81042dd3a1c4711dcb307e5b"}, "preprocessingIdentity": {"const": "9a666eb944a664443f4141b148eefb109cf3894674076df8f163d0d835474645"}}},
-            {"properties": {"modelId": {"const": "poisson_regression"}, "modelFamily": {"const": "PoissonRegressor"}, "parameterSha256": {"const": "f1d10b8e22303b8d4f550861b54971e5ef2beba310a11b6458544be97871098b"}, "preprocessingIdentity": {"const": "9a666eb944a664443f4141b148eefb109cf3894674076df8f163d0d835474645"}}},
-            {"properties": {"modelId": {"const": "random_forest"}, "modelFamily": {"const": "RandomForestRegressor"}, "parameterSha256": {"const": "ac37d2d2947de2f6004d39ecdfa3290c5d65901b796f1eb1fd248ad658e1b1e0"}, "preprocessingIdentity": {"const": "47cee049c760f3f036cd525133ab0fe0f849ade9e41033cf437f470d9b843796"}}},
-            {"properties": {"modelId": {"const": "gradient_boosting"}, "modelFamily": {"const": "GradientBoostingRegressor"}, "parameterSha256": {"const": "4741d1f17b3bf98988b886dcb6157a9382b569e3264e1004d2f3eb474bd34963"}, "preprocessingIdentity": {"const": "47cee049c760f3f036cd525133ab0fe0f849ade9e41033cf437f470d9b843796"}}},
-            {"properties": {"modelId": {"const": "elastic_net"}, "modelFamily": {"const": "ElasticNet"}, "parameterSha256": {"const": "780e70db5088d04dfb4ac303fe4ef63db07ce115060e3c70129ec9df28f36542"}, "preprocessingIdentity": {"const": "9a666eb944a664443f4141b148eefb109cf3894674076df8f163d0d835474645"}}},
-            {"properties": {"modelId": {"const": "negative_binomial_regression"}, "modelFamily": {"const": "StatsmodelsNegativeBinomialNB2"}, "parameterSha256": {"const": "b559617142d071297a6563a0834dddc6ab1f11f06d9168d33e14f3b2d051d8b7"}, "preprocessingIdentity": {"const": "9a666eb944a664443f4141b148eefb109cf3894674076df8f163d0d835474645"}}},
-            {"properties": {"modelId": {"const": "extra_trees"}, "modelFamily": {"const": "ExtraTreesRegressor"}, "parameterSha256": {"const": "aa7cd8f0395c6e2dfead3b831e2ed5b3dcf939335e0b668c07746d2952243956"}, "preprocessingIdentity": {"const": "47cee049c760f3f036cd525133ab0fe0f849ade9e41033cf437f470d9b843796"}}},
-            {"properties": {"modelId": {"const": "hist_gradient_boosting"}, "modelFamily": {"const": "HistGradientBoostingRegressor"}, "parameterSha256": {"const": "de877edd7bb851b44e93fde49d06e1b913b43440114d0708577c2df72b855362"}, "preprocessingIdentity": {"const": "47cee049c760f3f036cd525133ab0fe0f849ade9e41033cf437f470d9b843796"}}}
-          ]
-        },
         {
           "oneOf": [
             {"properties": {"priorAssignmentId": {"const": null}, "priorAssignmentCommitSha256": {"const": null}}},

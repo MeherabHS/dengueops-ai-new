@@ -40,16 +40,9 @@ from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
 
 
-CANDIDATE_IDS = (
-    "moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression",
-    "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression",
-    "extra_trees", "hist_gradient_boosting",
-)
-LEARNED_IDS = {
+HISTORICAL_LEARNED_IDS = {
     "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting",
-    "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting",
 }
-BASELINE_IDS = set(CANDIDATE_IDS) - LEARNED_IDS
 SCHEMAS = {
     "rolling_validation.json": "runtime_rolling_validation.schema.json",
     "candidate_model_comparison.json": "runtime_candidate_comparison.schema.json",
@@ -151,8 +144,14 @@ def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tu
     return tuple(descriptors), fold_plan_sha256(descriptors)
 
 
-def _prediction(model_id: str, actual: float, raw: float, runtime: float, warning_codes: list[str]) -> dict[str, Any]:
-    return prediction_evidence(model_id, actual, raw, runtime, warning_codes)
+def _prediction(
+    model_id: str, actual: float, raw: float, runtime: float,
+    warning_codes: list[str], output_domain_rule: str | None,
+) -> dict[str, Any]:
+    return prediction_evidence(
+        model_id, actual, raw, runtime, warning_codes,
+        output_domain_rule=output_domain_rule,
+    )
 
 
 def _failed(model_id: str, reason: str, runtime: float = 0.0, warnings_: list[str] | None = None) -> dict[str, Any]:
@@ -214,7 +213,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     candidate_ids = tuple(candidate["model_id"] for candidate in registry["candidates"])
     learned_ids = {
         candidate["model_id"] for candidate in registry["candidates"]
-        if candidate.get("candidate_class") == "learned_model" or candidate["model_id"] in LEARNED_IDS
+        if candidate.get("candidate_class") == "learned_model"
+        or candidate["model_id"] in HISTORICAL_LEARNED_IDS
     }
     baseline_ids = set(candidate_ids) - learned_ids
     cases = pd.read_csv(canonical_case)
@@ -318,7 +318,11 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
                     warning_codes = [item.category.__name__ for item in caught]
                     if any(issubclass(item.category, ConvergenceWarning) for item in caught):
                         raise ValueError("convergence_failure")
-                predictions[model_id].append(_prediction(model_id, descriptor["actualTarget"], raw, time.perf_counter() - started, warning_codes))
+                predictions[model_id].append(_prediction(
+                    model_id, descriptor["actualTarget"], raw,
+                    time.perf_counter() - started, warning_codes,
+                    registry_by_id[model_id].get("output_domain_rule"),
+                ))
             except Exception as exc:
                 reason = str(exc) if str(exc) in {"seasonal_source_missing", "convergence_failure", "nonfinite_prediction", "prohibited_negative_prediction"} else "candidate_execution_failed"
                 predictions[model_id].append(_failed(model_id, reason, time.perf_counter() - started, warning_codes))
