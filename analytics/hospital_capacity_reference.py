@@ -89,7 +89,10 @@ def load_capacity_reference(path: str | Path = REFERENCE_PATH) -> dict[str, Any]
 
 
 def build_official_inventory_seed(reference: dict[str, Any] | None = None) -> dict[str, Any]:
+    from synthetic_hospital_inventory import load_scenario_policy
+
     authority = reference or load_capacity_reference()
+    participating_ids = set(load_scenario_policy()["participatingHospitalIds"])
     references = [
         {
             "verificationReferenceId": item["verificationReferenceId"],
@@ -108,9 +111,12 @@ def build_official_inventory_seed(reference: dict[str, Any] | None = None) -> di
         location_status = (
             "official_metropolitan_location_city_field_missing"
             if city == "metropolitan_location_registry_field_missing"
+            else "official_dhaka_district_management_included"
+            if city == "outside_city_corporation_management_included"
             else "official_city_corporation_only"
         )
         quantity = item["selectedBedCapacity"]["quantity"]
+        included = item["hospitalId"] in participating_ids
         hospitals.append({
             "hospitalId": item["hospitalId"],
             "officialFacilityRegistryId": item["officialFacilityRegistryId"],
@@ -121,6 +127,10 @@ def build_official_inventory_seed(reference: dict[str, Any] | None = None) -> di
             "ownership": "government_autonomous" if item["ownership"] == "government_autonomous" else "public_government",
             "active": True,
             "denguePreparednessEligibility": item["denguePreparednessEligibility"],
+            "participationStatus": "included" if included else "not_included",
+            "managementDecisionStatus": "pending_review" if included else "not_applicable",
+            "selectedBedCapacity": quantity,
+            "currentAvailableBeds": None,
             "location": {
                 "address": None,
                 "administrativeArea": "Dhaka",
@@ -141,7 +151,7 @@ def build_official_inventory_seed(reference: dict[str, Any] | None = None) -> di
                     "dataStatus": "verified_capacity_reference" if quantity is not None else "unavailable",
                     "availabilityStatus": "not_known",
                     "asOf": source_as_of if quantity is not None else None,
-                    "verificationReferenceId": item["verificationReferenceId"],
+                    "verificationReferenceId": item["selectedBedCapacity"]["verificationReferenceId"],
                 },
                 {
                     "resourceType": "available_beds",
@@ -160,13 +170,13 @@ def build_official_inventory_seed(reference: dict[str, Any] | None = None) -> di
         })
     return {
         "schemaVersion": "1.0",
-        "inventoryId": "dhaka-government-hospitals-20260728-v2",
-        "inventoryVersion": "2.0.0",
+        "inventoryId": "dhaka-government-hospitals-20260729-v3",
+        "inventoryVersion": "3.0.0",
         "deploymentId": "dhaka_south",
         "deploymentDisplayName": "Dhaka",
-        "changeReason": "Expand the official inventory to all verified inpatient candidates in the governed 2026-07-28 capacity reference.",
+        "changeReason": "Import management-directed unified 13-hospital participating cohort version.",
         "createdAt": authority["retrievedAt"],
-        "operatorIdentifier": "repository-seed",
+        "operatorIdentifier": "management-governance",
         "verificationStatus": "identity_and_capacity_reference_verified",
         "capacityReferenceId": authority["capacityReferenceId"],
         "capacityReferenceSha256": authority["capacityReferenceCanonicalSha256"],

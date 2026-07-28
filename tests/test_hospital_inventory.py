@@ -14,14 +14,33 @@ from hospital_inventory import HospitalInventoryError, inventory_diff, load_inve
 
 def test_seed_has_official_identities_and_unknown_resources() -> None:
     inventory = load_inventory()
-    assert inventory["inventoryId"] == "dhaka-government-hospitals-20260728-v2"
-    assert inventory["inventoryVersion"] == "2.0.0"
-    assert len(inventory["hospitals"]) == 38
+    assert inventory["inventoryId"] == "dhaka-government-hospitals-20260729-v3"
+    assert inventory["inventoryVersion"] == "3.0.0"
+    assert len(inventory["hospitals"]) == 41
     assert inventory["allocationStatus"] == "not_configured"
     assert inventory["stalenessThresholdStatus"] == "not_governed"
-    assert all(reference["sourceUrl"].startswith("https://hris.mohfw.gov.bd/") for reference in inventory["sourceReferences"])
+    assert all(reference["sourceUrl"].startswith("https://") for reference in inventory["sourceReferences"])
     assert all(hospital["ownership"] in {"public_government", "government_autonomous"} for hospital in inventory["hospitals"])
     assert all(hospital["allocationShare"] == {"status": "not_configured", "value": None} for hospital in inventory["hospitals"])
+    participating = [hospital for hospital in inventory["hospitals"] if hospital["participationStatus"] == "included"]
+    assert len(participating) == 13
+    assert {hospital["hospitalId"] for hospital in participating} == {
+        "mugda-medical-college-hospital",
+        "dhaka-medical-college-hospital",
+        "dncc-dedicated-specialized-hospital",
+        "shaheed-suhrawardy-medical-college-hospital",
+        "bangladesh-medical-university",
+        "sir-salimullah-medical-college-mitford-hospital",
+        "kurmitola-general-hospital",
+        "railway-general-hospital-kamalapur",
+        "lalkuthi-maternal-child-health-institute",
+        "kamrangirchar-31-bed-hospital",
+        "aminbazar-20-bed-government-hospital",
+        "bangladesh-shishu-hospital-institute",
+        "institute-child-mother-health-matuail",
+    }
+    assert all(hospital["active"] and hospital["managementDecisionStatus"] == "pending_review" for hospital in participating)
+    assert all(hospital["currentAvailableBeds"] is None for hospital in inventory["hospitals"])
     resources = [resource for hospital in inventory["hospitals"] for resource in hospital["resources"]]
     available = [resource for resource in resources if resource["resourceType"] == "available_beds"]
     assert available and all(resource["quantity"] is None and resource["dataStatus"] == "unknown" for resource in available)
@@ -29,6 +48,21 @@ def test_seed_has_official_identities_and_unknown_resources() -> None:
     serialized = str(inventory)
     assert "Synthetic Benchmark Facility" not in serialized
     assert "INV-F" not in serialized
+
+
+def test_historical_v2_inventory_contract_remains_readable() -> None:
+    inventory = load_inventory()
+    inventory["inventoryId"] = "historical-inventory-v2"
+    inventory["inventoryVersion"] = "2.0.0"
+    for hospital in inventory["hospitals"]:
+        for field in (
+            "participationStatus",
+            "managementDecisionStatus",
+            "selectedBedCapacity",
+            "currentAvailableBeds",
+        ):
+            hospital.pop(field)
+    assert validate_inventory(inventory)["inventoryVersion"] == "2.0.0"
 
 
 def test_zero_is_known_and_null_is_unknown() -> None:
@@ -59,8 +93,8 @@ def test_duplicate_ids_and_active_names_fail() -> None:
 
 def test_deactivation_and_diff_are_non_destructive() -> None:
     before, after = load_inventory(), copy.deepcopy(load_inventory())
-    after["inventoryId"] = "dhaka-government-hospitals-20260728-v2"
-    after["inventoryVersion"] = "1.0.1"
+    after["inventoryId"] = "dhaka-government-hospitals-20260729-v4"
+    after["inventoryVersion"] = "3.0.1"
     after["hospitals"][0]["active"] = False
     assert validate_inventory(after)["hospitals"][0]["active"] is False
     assert inventory_diff(before, after)["deactivatedHospitalIds"] == [before["hospitals"][0]["hospitalId"]]

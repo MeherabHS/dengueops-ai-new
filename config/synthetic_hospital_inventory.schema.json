@@ -13,7 +13,7 @@
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "syntheticInventoryId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
-    "syntheticInventoryVersion": {"const": "1.0.0"},
+    "syntheticInventoryVersion": {"enum": ["1.0.0", "2.0.0"]},
     "derivedFromOfficialCapacityReferenceId": {"type": "string", "minLength": 1},
     "derivedFromOfficialCapacityReferenceSha256": {"$ref": "#/$defs/sha"},
     "evidenceScope": {"const": "synthetic_qualification"},
@@ -47,6 +47,8 @@
               "properties": {
                 "hospitalId": {"type": "string", "minLength": 1},
                 "eligibility": {"enum": ["eligible", "potentially_eligible", "not_eligible", "not_verified"]},
+                "participationStatus": {"const": "included"},
+                "managementDecisionStatus": {"const": "pending_review"},
                 "allocationShare": {"type": ["string", "null"], "pattern": "^(?:0\\.[0-9]{6}|1\\.000000)$"},
                 "allocationStatus": {"enum": ["configured", "not_eligible", "eligibility_not_verified", "insufficient_capacity_reference"]},
                 "synthetic": {"const": true},

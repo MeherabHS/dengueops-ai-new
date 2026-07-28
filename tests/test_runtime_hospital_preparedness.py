@@ -84,8 +84,12 @@ def test_three_scenarios_publish_immutable_packages_and_only_qualification_point
         assert verified["evidence"]["evidenceScope"] == "synthetic_qualification"
         assert verified["evidence"]["operationalUseAllowed"] is False
         statuses = {row["status"] for row in verified["evidence"]["hospitals"]}
-        assert "eligibility_not_verified" in statuses
         assert "insufficient_capacity_reference" in statuses
+        assert statuses <= {
+            "calculated_synthetic_gap_present",
+            "no_calculated_synthetic_gap",
+            "insufficient_capacity_reference",
+        }
     assert list_qualifications(runtime) == sorted(ids)
     assert model_pointer.read_bytes() == model_before
     assert not (runtime / "deployments/dhaka_south/hospital-preparedness/latest.json").exists()

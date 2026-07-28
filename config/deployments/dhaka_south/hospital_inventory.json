@@ -1,15 +1,15 @@
 {
   "schemaVersion": "1.0",
-  "inventoryId": "dhaka-government-hospitals-20260728-v2",
-  "inventoryVersion": "2.0.0",
+  "inventoryId": "dhaka-government-hospitals-20260729-v3",
+  "inventoryVersion": "3.0.0",
   "deploymentId": "dhaka_south",
   "deploymentDisplayName": "Dhaka",
-  "changeReason": "Expand the official inventory to all verified inpatient candidates in the governed 2026-07-28 capacity reference.",
-  "createdAt": "2026-07-28T16:00:00+06:00",
-  "operatorIdentifier": "repository-seed",
+  "changeReason": "Import management-directed unified 13-hospital participating cohort version.",
+  "createdAt": "2026-07-29T00:37:53+06:00",
+  "operatorIdentifier": "management-governance",
   "verificationStatus": "identity_and_capacity_reference_verified",
-  "capacityReferenceId": "dhaka-government-hospital-capacity-20260728-v1",
-  "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1",
+  "capacityReferenceId": "dhaka-government-hospital-capacity-20260729-v2",
+  "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4",
   "stalenessThresholdStatus": "not_governed",
   "allocationStatus": "not_configured",
   "sourceReferences": [
@@ -582,6 +582,81 @@
         "facilityIdentity",
         "bedCapacityReference"
       ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-16765",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/16765/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-29T00:37:53+06:00",
+      "verifiedAt": "2026-07-29T00:37:53+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-24118",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/24118/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-29T00:37:53+06:00",
+      "verifiedAt": "2026-07-29T00:37:53+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "bshi-official-history-2026",
+      "sourceOrganization": "Bangladesh Shishu Hospital and Institute",
+      "sourceUrl": "https://bshi.gov.bd/pages/static-pages/695e3b0dc4774958d7b723b0",
+      "retrievedAt": "2026-07-29T00:37:53+06:00",
+      "verifiedAt": "2026-07-29T00:37:53+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-25259",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/25259/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-29T00:37:53+06:00",
+      "verifiedAt": "2026-07-29T00:37:53+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "dghs-dncc-bed-dashboard-20260711",
+      "sourceOrganization": "DGHS MIS DHIS2 COVID-19 Bed Dashboard",
+      "sourceUrl": "https://dashboard.dghs.gov.bd/pages/covid19-bedstatus-display-summary_old_version.php",
+      "retrievedAt": "2026-07-29T00:37:53+06:00",
+      "verifiedAt": "2026-07-29T00:37:53+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
     }
   ],
   "hospitals": [
@@ -595,6 +670,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 500,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -604,7 +683,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-6",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -645,6 +724,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 1250,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -654,7 +737,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-7",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -695,6 +778,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 870,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -704,7 +791,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-8",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -745,6 +832,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 500,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -754,7 +845,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-9",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -795,6 +886,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 400,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -804,7 +899,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-10",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -845,6 +940,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 250,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -854,7 +953,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-11",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -895,6 +994,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 180,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -904,7 +1007,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-13",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -945,6 +1048,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 200,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -954,7 +1061,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-26",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -995,6 +1102,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 30,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1004,7 +1115,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-29",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1045,6 +1156,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 2600,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1054,7 +1169,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-31",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1097,6 +1212,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 150,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1106,7 +1225,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-32",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1147,6 +1266,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 1350,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1156,7 +1279,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-47",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1197,6 +1320,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 150,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1206,7 +1333,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-50",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1249,6 +1376,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 900,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1258,7 +1389,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-52",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1299,6 +1430,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1308,7 +1443,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-53",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1349,6 +1484,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1358,7 +1497,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-54",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1399,6 +1538,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 100,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1408,7 +1551,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-66",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1451,6 +1594,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1460,7 +1607,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-2247",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1501,6 +1648,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 100,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1510,7 +1661,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-2249",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1553,6 +1704,10 @@
       "ownership": "government_autonomous",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1562,7 +1717,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-13048",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1603,6 +1758,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 453,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1612,7 +1771,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-13562",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1644,6 +1803,62 @@
       ]
     },
     {
+      "hospitalId": "aminbazar-20-bed-government-hospital",
+      "officialFacilityRegistryId": 16765,
+      "officialFacilityCode": "10017200",
+      "officialName": "Aminbazar 20 bed Hospital",
+      "alternateNames": [
+        "Aminbazar 20-Bed Government Hospital"
+      ],
+      "facilityType": "20-bed Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 20,
+      "currentAvailableBeds": null,
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "outside_city_corporation_management_included",
+        "locationStatus": "official_dhaka_district_management_included"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-16765",
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 20,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-29T00:37:53+06:00",
+          "verificationReferenceId": "mohfw-facility-16765"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-16765"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
       "hospitalId": "dmch-burn-unit",
       "officialFacilityRegistryId": 16772,
       "officialFacilityCode": "10017207",
@@ -1653,6 +1868,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 100,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1662,7 +1881,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-16772",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1703,6 +1922,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 250,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1712,7 +1935,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-16773",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1755,6 +1978,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 1200,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1764,7 +1991,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-16774",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1805,6 +2032,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 500,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1814,7 +2045,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-16775",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1855,6 +2086,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 100,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1864,7 +2099,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-18687",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1905,6 +2140,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 50,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1914,7 +2153,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-18786",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -1955,6 +2194,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -1964,7 +2207,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-22869",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2005,6 +2248,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2014,7 +2261,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-22956",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2055,6 +2302,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2064,7 +2315,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-23232",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2107,6 +2358,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2116,7 +2371,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-23233",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2157,6 +2412,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 210,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2166,7 +2425,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-23250",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2207,6 +2466,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2216,7 +2479,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-23277",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2257,6 +2520,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "potentially_eligible",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 31,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2266,7 +2533,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-23886",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2298,6 +2565,62 @@
       ]
     },
     {
+      "hospitalId": "bangladesh-shishu-hospital-institute",
+      "officialFacilityRegistryId": 24118,
+      "officialFacilityCode": "10024530",
+      "officialName": "Bangladesh Shishu Hospital and Institute",
+      "alternateNames": [
+        "Dhaka Shishu Hospital"
+      ],
+      "facilityType": "Statutory specialized children hospital and institute",
+      "ownership": "government_autonomous",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 681,
+      "currentAvailableBeds": null,
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-24118",
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 681,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-06-02T15:00:05+06:00",
+          "verificationReferenceId": "bshi-official-history-2026"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-24118"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
       "hospitalId": "mohammadpur-fertility-services-centre",
       "officialFacilityRegistryId": 24220,
       "officialFacilityCode": "10024632",
@@ -2307,6 +2630,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2316,7 +2643,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-24220",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2357,6 +2684,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": null,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2366,7 +2697,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-24232",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2409,6 +2740,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 442,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2418,7 +2753,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-24589",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2459,6 +2794,10 @@
       "ownership": "public_government",
       "active": true,
       "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "not_included",
+      "managementDecisionStatus": "not_applicable",
+      "selectedBedCapacity": 250,
+      "currentAvailableBeds": null,
       "location": {
         "address": null,
         "administrativeArea": "Dhaka",
@@ -2468,7 +2807,7 @@
       "identityVerification": {
         "status": "verified",
         "verificationReferenceId": "mohfw-facility-24610",
-        "verifiedAt": "2026-07-28T16:00:00+06:00"
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
       },
       "allocationShare": {
         "status": "not_configured",
@@ -2492,6 +2831,63 @@
           "availabilityStatus": "not_known",
           "asOf": null,
           "verificationReferenceId": "mohfw-facility-24610"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "dncc-dedicated-specialized-hospital",
+      "officialFacilityRegistryId": 25259,
+      "officialFacilityCode": "10025671",
+      "officialName": "DNCC Isolation Center, Mohakhali, Dhaka",
+      "alternateNames": [
+        "DNCC Dedicated COVID-19 Hospital",
+        "DNCC Dedicated COVID/Specialized Hospital"
+      ],
+      "facilityType": "Specialized Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "participationStatus": "included",
+      "managementDecisionStatus": "pending_review",
+      "selectedBedCapacity": 1054,
+      "currentAvailableBeds": null,
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-25259",
+        "verifiedAt": "2026-07-29T00:37:53+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 1054,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-11T00:00:00+06:00",
+          "verificationReferenceId": "dghs-dncc-bed-dashboard-20260711"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-25259"
         }
       ],
       "limitations": [

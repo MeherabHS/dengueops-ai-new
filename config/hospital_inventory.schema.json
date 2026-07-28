@@ -59,8 +59,8 @@
       "properties": {
         "address": {"type": ["string", "null"], "minLength": 1, "maxLength": 500},
         "administrativeArea": {"type": "string", "minLength": 1, "maxLength": 128},
-        "cityCorporation": {"enum": ["Dhaka North City Corporation", "Dhaka South City Corporation", "metropolitan_location_registry_field_missing"]},
-        "locationStatus": {"enum": ["official_address_verified", "official_city_corporation_only", "official_metropolitan_location_city_field_missing"]},
+        "cityCorporation": {"enum": ["Dhaka North City Corporation", "Dhaka South City Corporation", "metropolitan_location_registry_field_missing", "outside_city_corporation_management_included"]},
+        "locationStatus": {"enum": ["official_address_verified", "official_city_corporation_only", "official_metropolitan_location_city_field_missing", "official_dhaka_district_management_included"]},
         "coordinates": {
           "type": "object", "additionalProperties": false,
           "required": ["latitude", "longitude"],
@@ -130,6 +130,10 @@
         "facilityType": {"type": "string", "minLength": 1, "maxLength": 128},
         "ownership": {"enum": ["public_government", "government_autonomous"]},
         "denguePreparednessEligibility": {"enum": ["eligible", "potentially_eligible", "not_eligible", "not_verified"]},
+        "participationStatus": {"enum": ["included", "not_included"]},
+        "managementDecisionStatus": {"enum": ["pending_review", "not_applicable"]},
+        "selectedBedCapacity": {"type": ["integer", "null"], "minimum": 0},
+        "currentAvailableBeds": {"type": "null"},
         "active": {"type": "boolean"},
         "location": {"$ref": "#/$defs/location"},
         "displayArea": {"type": "string", "minLength": 1, "maxLength": 128},

@@ -1,11 +1,27 @@
 {
   "schemaVersion": "1.0",
   "policyId": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION",
-  "policyVersion": "b8.5-v1",
+  "policyVersion": "b8.5-v2",
   "authorityScope": "synthetic_qualification",
   "operationalUseAllowed": false,
   "clinicalUseAllowed": false,
   "hospitalDecisionUseAllowed": false,
+  "participatingHospitalIds": [
+    "mugda-medical-college-hospital",
+    "dhaka-medical-college-hospital",
+    "dncc-dedicated-specialized-hospital",
+    "shaheed-suhrawardy-medical-college-hospital",
+    "bangladesh-medical-university",
+    "sir-salimullah-medical-college-mitford-hospital",
+    "kurmitola-general-hospital",
+    "railway-general-hospital-kamalapur",
+    "lalkuthi-maternal-child-health-institute",
+    "kamrangirchar-31-bed-hospital",
+    "aminbazar-20-bed-government-hospital",
+    "bangladesh-shishu-hospital-institute",
+    "institute-child-mother-health-matuail"
+  ],
+  "participationDecisionStatus": "pending_review",
   "availabilityScenarios": {
     "baseline_availability": "0.300000",
     "constrained_availability": "0.150000",
@@ -27,7 +43,8 @@
     "Availability fractions are deterministic simulation parameters, not medical facts.",
     "Values are not estimated current occupancy or hospital-reported availability.",
     "Values are not dengue-bed allocations or real catchment shares.",
-    "The coefficient exists only to exercise the governed software pipeline."
+    "The coefficient exists only to exercise the governed software pipeline.",
+    "Participating hospitals form one management-directed cohort without operational subgroup classification."
   ],
-  "policySha256": "38fd5ff0eb95df5d69438d26182d666e25476663fe61217d47c1ac1bf444ed8e"
+  "policySha256": "dae554e9a7c831757f6139ecbcb516a24161a8a34fcec4d8dfde23db8b383c81"
 }

@@ -11,9 +11,12 @@ sys.path.insert(0, str(ROOT / "analytics"))
 
 from hospital_capacity_reference import load_capacity_reference  # noqa: E402
 from synthetic_hospital_inventory import (  # noqa: E402
+    canonical_sha256,
     generate_synthetic_inventory,
     load_scenario_policy,
     load_synthetic_inventory,
+    validate_scenario_policy,
+    validate_synthetic_inventory,
 )
 
 
@@ -41,10 +44,31 @@ def test_three_scenarios_are_labelled_synthetic_and_differ() -> None:
     assert totals[0] > totals[1] > totals[2]
 
 
-def test_unknown_capacity_and_noneligible_rows_never_receive_allocation() -> None:
+def test_management_cohort_capacity_controls_allocation() -> None:
     value = load_synthetic_inventory()
+    policy = load_scenario_policy()
     for scenario in value["scenarios"]:
+        assert [row["hospitalId"] for row in scenario["hospitals"]] == policy["participatingHospitalIds"]
         for row in scenario["hospitals"]:
-            if row["officialCapacityReference"]["quantity"] is None or row["eligibility"] not in {"eligible", "potentially_eligible"}:
+            assert row["participationStatus"] == "included"
+            assert row["managementDecisionStatus"] == "pending_review"
+            if row["officialCapacityReference"]["quantity"] is None:
                 assert row["allocationShare"] is None
                 assert row["quantity"] is None
+                assert row["resultStatus"] == "insufficient_capacity_reference"
+            else:
+                assert row["allocationStatus"] == "configured"
+                assert row["allocationShare"] is not None
+
+
+def test_historical_v1_synthetic_contract_remains_verifiable() -> None:
+    policy = copy.deepcopy(load_scenario_policy())
+    policy["policyVersion"] = "b8.5-v1"
+    policy.pop("participatingHospitalIds")
+    policy.pop("participationDecisionStatus")
+    policy["policySha256"] = canonical_sha256(policy, frozenset({"policySha256"}))
+    validate_scenario_policy(policy)
+    legacy = generate_synthetic_inventory(load_capacity_reference(), policy)
+    assert legacy["syntheticInventoryVersion"] == "1.0.0"
+    assert all("participationStatus" not in row for row in legacy["scenarios"][0]["hospitals"])
+    validate_synthetic_inventory(legacy, reference=load_capacity_reference(), policy=policy)

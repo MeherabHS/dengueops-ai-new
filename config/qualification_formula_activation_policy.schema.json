@@ -10,7 +10,7 @@
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "policyId": {"const": "RUNTIME.FORMULA.ACTIVATION.SYNTHETIC_QUALIFICATION"},
-    "policyVersion": {"const": "b8.5-v1"},
+    "policyVersion": {"enum": ["b8.5-v1", "b8.5-v2"]},
     "authorityScope": {"const": "synthetic_qualification"},
     "operationalUseAllowed": {"const": false},
     "formulaBindings": {

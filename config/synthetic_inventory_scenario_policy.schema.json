@@ -11,11 +11,16 @@
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "policyId": {"const": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION"},
-    "policyVersion": {"const": "b8.5-v1"},
+    "policyVersion": {"enum": ["b8.5-v1", "b8.5-v2"]},
     "authorityScope": {"const": "synthetic_qualification"},
     "operationalUseAllowed": {"const": false},
     "clinicalUseAllowed": {"const": false},
     "hospitalDecisionUseAllowed": {"const": false},
+    "participatingHospitalIds": {
+      "type": "array", "minItems": 13, "maxItems": 13, "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,127}$"}
+    },
+    "participationDecisionStatus": {"const": "pending_review"},
     "availabilityScenarios": {
       "type": "object", "additionalProperties": false,
       "required": ["baseline_availability", "constrained_availability", "severe_constraint"],
@@ -43,5 +48,11 @@
     "roundingMethod": {"const": "floor_capacity_fraction_and_largest_remainder_allocation"},
     "limitations": {"type": "array", "minItems": 4, "items": {"type": "string", "minLength": 1}},
     "policySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"policyVersion": {"const": "b8.5-v2"}}},
+      "then": {"required": ["participatingHospitalIds", "participationDecisionStatus"]}
+    }
+  ]
 }

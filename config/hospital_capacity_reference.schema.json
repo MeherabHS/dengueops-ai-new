@@ -56,7 +56,7 @@
           "alternateNames": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
           "ownership": {"enum": ["fully_government_owned", "government_autonomous", "official_government_agency_record"]},
           "facilityType": {"type": "string", "minLength": 1},
-          "cityCorporation": {"enum": ["Dhaka North City Corporation", "Dhaka South City Corporation", "metropolitan_location_registry_field_missing"]},
+          "cityCorporation": {"enum": ["Dhaka North City Corporation", "Dhaka South City Corporation", "metropolitan_location_registry_field_missing", "outside_city_corporation_management_included"]},
           "denguePreparednessEligibility": {"enum": ["eligible", "potentially_eligible", "not_eligible", "not_verified"]},
           "approvedBedCount": {"$ref": "#/$defs/count"},
           "revenueBedCount": {"$ref": "#/$defs/count"},

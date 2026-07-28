@@ -54,11 +54,18 @@ def load_scenario_policy(path: str | Path = POLICY_PATH) -> dict[str, Any]:
     return validate_scenario_policy(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
-def _shares(hospitals: list[dict[str, Any]]) -> dict[str, str]:
+def _shares(
+    hospitals: list[dict[str, Any]],
+    *,
+    require_legacy_eligibility: bool = False,
+) -> dict[str, str]:
     eligible = [
         hospital for hospital in hospitals
-        if hospital["denguePreparednessEligibility"] in {"eligible", "potentially_eligible"}
-        and hospital["selectedBedCapacity"]["quantity"] is not None
+        if hospital["selectedBedCapacity"]["quantity"] is not None
+        and (
+            not require_legacy_eligibility
+            or hospital["denguePreparednessEligibility"] in {"eligible", "potentially_eligible"}
+        )
     ]
     total = sum(hospital["selectedBedCapacity"]["quantity"] for hospital in eligible)
     if total <= 0:
@@ -82,15 +89,27 @@ def generate_synthetic_inventory(
 ) -> dict[str, Any]:
     official = reference or load_capacity_reference()
     scenario_policy = policy or load_scenario_policy()
-    shares = _shares(official["hospitals"])
+    hospital_by_id = {hospital["hospitalId"]: hospital for hospital in official["hospitals"]}
+    current_participation_contract = scenario_policy["policyVersion"] == "b8.5-v2"
+    if current_participation_contract:
+        participating_ids = scenario_policy["participatingHospitalIds"]
+        missing_ids = [hospital_id for hospital_id in participating_ids if hospital_id not in hospital_by_id]
+        if missing_ids:
+            raise SyntheticHospitalInventoryError(
+                f"Participation policy references unknown hospitals: {', '.join(missing_ids)}"
+            )
+        participating = [hospital_by_id[hospital_id] for hospital_id in participating_ids]
+    else:
+        participating = official["hospitals"]
+    shares = _shares(participating, require_legacy_eligibility=not current_participation_contract)
     scenarios = []
     for scenario_id, fraction_text in scenario_policy["availabilityScenarios"].items():
         fraction = Decimal(fraction_text)
         rows = []
-        for hospital in official["hospitals"]:
+        for hospital in participating:
             capacity = hospital["selectedBedCapacity"]["quantity"]
             eligibility = hospital["denguePreparednessEligibility"]
-            if eligibility not in {"eligible", "potentially_eligible"}:
+            if not current_participation_contract and eligibility not in {"eligible", "potentially_eligible"}:
                 status = "not_eligible" if eligibility == "not_eligible" else "eligibility_not_verified"
                 allocation, quantity, result = None, None, status
             elif capacity is None:
@@ -99,7 +118,7 @@ def generate_synthetic_inventory(
                 allocation = shares[hospital["hospitalId"]]
                 quantity = int((Decimal(capacity) * fraction).to_integral_value(rounding=ROUND_FLOOR))
                 status, result = "configured", "synthetic_value_generated"
-            rows.append({
+            row = {
                 "hospitalId": hospital["hospitalId"],
                 "eligibility": eligibility,
                 "allocationShare": allocation,
@@ -116,7 +135,11 @@ def generate_synthetic_inventory(
                 "unit": "bed_units",
                 "resultStatus": result,
                 "limitations": LIMITATIONS,
-            })
+            }
+            if current_participation_contract:
+                row["participationStatus"] = "included"
+                row["managementDecisionStatus"] = scenario_policy["participationDecisionStatus"]
+            rows.append(row)
         scenarios.append({
             "scenarioId": scenario_id,
             "availabilityFraction": fraction_text,
@@ -125,8 +148,12 @@ def generate_synthetic_inventory(
         })
     value = {
         "schemaVersion": "1.0",
-        "syntheticInventoryId": "dhaka-hospital-qualification-20260728-v1",
-        "syntheticInventoryVersion": "1.0.0",
+        "syntheticInventoryId": (
+            "dhaka-hospital-qualification-20260729-v2"
+            if current_participation_contract
+            else "dhaka-hospital-qualification-20260728-v1"
+        ),
+        "syntheticInventoryVersion": "2.0.0" if current_participation_contract else "1.0.0",
         "derivedFromOfficialCapacityReferenceId": official["capacityReferenceId"],
         "derivedFromOfficialCapacityReferenceSha256": official["capacityReferenceCanonicalSha256"],
         "evidenceScope": "synthetic_qualification",

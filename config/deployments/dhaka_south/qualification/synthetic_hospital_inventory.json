@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.0",
-  "syntheticInventoryId": "dhaka-hospital-qualification-20260728-v1",
-  "syntheticInventoryVersion": "1.0.0",
-  "derivedFromOfficialCapacityReferenceId": "dhaka-government-hospital-capacity-20260728-v1",
-  "derivedFromOfficialCapacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1",
+  "syntheticInventoryId": "dhaka-hospital-qualification-20260729-v2",
+  "syntheticInventoryVersion": "2.0.0",
+  "derivedFromOfficialCapacityReferenceId": "dhaka-government-hospital-capacity-20260729-v2",
+  "derivedFromOfficialCapacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4",
   "evidenceScope": "synthetic_qualification",
   "operationalDhakaValidation": false,
   "syntheticData": true,
@@ -11,7 +11,7 @@
   "clinicalUseAllowed": false,
   "hospitalDecisionUseAllowed": false,
   "scenarioPolicyId": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION",
-  "scenarioPolicySha256": "38fd5ff0eb95df5d69438d26182d666e25476663fe61217d47c1ac1bf444ed8e",
+  "scenarioPolicySha256": "dae554e9a7c831757f6139ecbcb516a24161a8a34fcec4d8dfde23db8b383c81",
   "allocationMethod": "synthetic_capacity_proportional_qualification",
   "operationalAllocationApproved": false,
   "scenarios": [
@@ -21,477 +21,19 @@
       "allocationShareTotal": "1.000000",
       "hospitals": [
         {
-          "hospitalId": "national-cancer-research-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-cardiovascular-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 1250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-chest-diseases-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 870,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-kidney-disease-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-mental-health-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 400,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-ophthalmology-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-traumatology-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 180,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-dental-college-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 200,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-leprosy-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 30,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-medical-college-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.377140",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 2600,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 780,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "sarkari-karmachari-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 150,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shaheed-suhrawardy-medical-college-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.195823",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 1350,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 405,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shyamoli-tb-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 150,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "sir-salimullah-medical-college-mitford-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.130548",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 900,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 270,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "tejgaon-health-complex",
-          "eligibility": "potentially_eligible",
-          "allocationShare": null,
-          "allocationStatus": "insufficient_capacity_reference",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "insufficient_capacity_reference",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "tb-control-training-institute",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-infectious-disease-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.014505",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 30,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "institute-child-mother-health-matuail",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "government-unani-ayurvedic-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "bangladesh-medical-university",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
           "hospitalId": "mugda-medical-college-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.065709",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.054651",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
             "quantity": 453,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 135,
           "unit": "bed_units",
@@ -504,21 +46,23 @@
           ]
         },
         {
-          "hospitalId": "dmch-burn-unit",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "hospitalId": "dhaka-medical-college-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.313669",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
-            "quantity": 100,
+            "quantity": 2600,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
-          "quantity": null,
+          "quantity": 780,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "synthetic_value_generated",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -527,21 +71,98 @@
           ]
         },
         {
-          "hospitalId": "national-ent-hospital",
+          "hospitalId": "dncc-dedicated-specialized-hospital",
           "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.127156",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
-            "quantity": 250,
+            "quantity": 1054,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 316,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "shaheed-suhrawardy-medical-college-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.162866",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
+          "officialCapacityReference": {
+            "quantity": 1350,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 405,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "bangladesh-medical-university",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": null,
+          "allocationStatus": "insufficient_capacity_reference",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
+          "officialCapacityReference": {
+            "quantity": null,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "sir-salimullah-medical-college-mitford-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.108578",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
+          "officialCapacityReference": {
+            "quantity": 900,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 270,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -552,15 +173,17 @@
         {
           "hospitalId": "kurmitola-general-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.174064",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.144770",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
             "quantity": 1200,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 360,
           "unit": "bed_units",
@@ -573,113 +196,23 @@
           ]
         },
         {
-          "hospitalId": "national-neurosciences-hospital",
+          "hospitalId": "railway-general-hospital-kamalapur",
           "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
           "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "allocationStatus": "insufficient_capacity_reference",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "government-homeopathic-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shyampur-50-bed-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.007253",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 50,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 15,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "azimpur-maternal-child-health-institute",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "narinda-mother-child-welfare-centre",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -690,88 +223,21 @@
         {
           "hospitalId": "lalkuthi-maternal-child-health-institute",
           "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
           "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "allocationStatus": "insufficient_capacity_reference",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "railway-general-hospital-kamalapur",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "kuwait-bangladesh-friendship-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.030461",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 210,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 63,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "central-police-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -782,15 +248,17 @@
         {
           "hospitalId": "kamrangirchar-31-bed-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.004497",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.003740",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
             "quantity": 31,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 9,
           "unit": "bed_units",
@@ -803,90 +271,73 @@
           ]
         },
         {
-          "hospitalId": "mohammadpur-fertility-services-centre",
+          "hospitalId": "aminbazar-20-bed-government-hospital",
           "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.002413",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
+          "officialCapacityReference": {
+            "quantity": 20,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 6,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "bangladesh-shishu-hospital-institute",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.082157",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
+          "officialCapacityReference": {
+            "quantity": 681,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 204,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "institute-child-mother-health-matuail",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": null,
+          "allocationStatus": "insufficient_capacity_reference",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:baseline_availability",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "central-drug-addiction-treatment-centre",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-burn-plastic-surgery-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 442,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-gastroliver-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:baseline_availability",
-          "officialCapacityReference": {
-            "quantity": 250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -902,477 +353,19 @@
       "allocationShareTotal": "1.000000",
       "hospitals": [
         {
-          "hospitalId": "national-cancer-research-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-cardiovascular-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 1250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-chest-diseases-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 870,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-kidney-disease-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-mental-health-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 400,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-ophthalmology-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-traumatology-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 180,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-dental-college-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 200,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-leprosy-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 30,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-medical-college-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.377140",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 2600,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 390,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "sarkari-karmachari-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 150,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shaheed-suhrawardy-medical-college-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.195823",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 1350,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 202,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shyamoli-tb-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 150,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "sir-salimullah-medical-college-mitford-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.130548",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 900,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 135,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "tejgaon-health-complex",
-          "eligibility": "potentially_eligible",
-          "allocationShare": null,
-          "allocationStatus": "insufficient_capacity_reference",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "insufficient_capacity_reference",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "tb-control-training-institute",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-infectious-disease-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.014505",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 15,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "institute-child-mother-health-matuail",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "government-unani-ayurvedic-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "bangladesh-medical-university",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
           "hospitalId": "mugda-medical-college-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.065709",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.054651",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
             "quantity": 453,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 67,
           "unit": "bed_units",
@@ -1385,21 +378,23 @@
           ]
         },
         {
-          "hospitalId": "dmch-burn-unit",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "hospitalId": "dhaka-medical-college-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.313669",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
-            "quantity": 100,
+            "quantity": 2600,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
-          "quantity": null,
+          "quantity": 390,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "synthetic_value_generated",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -1408,21 +403,98 @@
           ]
         },
         {
-          "hospitalId": "national-ent-hospital",
+          "hospitalId": "dncc-dedicated-specialized-hospital",
           "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.127156",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
-            "quantity": 250,
+            "quantity": 1054,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 158,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "shaheed-suhrawardy-medical-college-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.162866",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
+          "officialCapacityReference": {
+            "quantity": 1350,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 202,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "bangladesh-medical-university",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": null,
+          "allocationStatus": "insufficient_capacity_reference",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
+          "officialCapacityReference": {
+            "quantity": null,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "sir-salimullah-medical-college-mitford-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.108578",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
+          "officialCapacityReference": {
+            "quantity": 900,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 135,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -1433,15 +505,17 @@
         {
           "hospitalId": "kurmitola-general-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.174064",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.144770",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
             "quantity": 1200,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 180,
           "unit": "bed_units",
@@ -1454,113 +528,23 @@
           ]
         },
         {
-          "hospitalId": "national-neurosciences-hospital",
+          "hospitalId": "railway-general-hospital-kamalapur",
           "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
           "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "allocationStatus": "insufficient_capacity_reference",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "government-homeopathic-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shyampur-50-bed-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.007253",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 50,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 7,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "azimpur-maternal-child-health-institute",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "narinda-mother-child-welfare-centre",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -1571,88 +555,21 @@
         {
           "hospitalId": "lalkuthi-maternal-child-health-institute",
           "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
           "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "allocationStatus": "insufficient_capacity_reference",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "railway-general-hospital-kamalapur",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "kuwait-bangladesh-friendship-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.030461",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 210,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 31,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "central-police-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -1663,15 +580,17 @@
         {
           "hospitalId": "kamrangirchar-31-bed-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.004497",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.003740",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
             "quantity": 31,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 4,
           "unit": "bed_units",
@@ -1684,90 +603,73 @@
           ]
         },
         {
-          "hospitalId": "mohammadpur-fertility-services-centre",
+          "hospitalId": "aminbazar-20-bed-government-hospital",
           "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.002413",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
+          "officialCapacityReference": {
+            "quantity": 20,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 3,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "bangladesh-shishu-hospital-institute",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.082157",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
+          "officialCapacityReference": {
+            "quantity": 681,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 102,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "institute-child-mother-health-matuail",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": null,
+          "allocationStatus": "insufficient_capacity_reference",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:constrained_availability",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "central-drug-addiction-treatment-centre",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-burn-plastic-surgery-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 442,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-gastroliver-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:constrained_availability",
-          "officialCapacityReference": {
-            "quantity": 250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -1783,477 +685,19 @@
       "allocationShareTotal": "1.000000",
       "hospitals": [
         {
-          "hospitalId": "national-cancer-research-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-cardiovascular-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 1250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-chest-diseases-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 870,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-kidney-disease-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-mental-health-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 400,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-ophthalmology-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-traumatology-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 180,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-dental-college-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 200,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-leprosy-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 30,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-medical-college-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.377140",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 2600,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 130,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "sarkari-karmachari-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 150,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shaheed-suhrawardy-medical-college-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.195823",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 1350,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 67,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shyamoli-tb-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 150,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "sir-salimullah-medical-college-mitford-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.130548",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 900,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 45,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "tejgaon-health-complex",
-          "eligibility": "potentially_eligible",
-          "allocationShare": null,
-          "allocationStatus": "insufficient_capacity_reference",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "insufficient_capacity_reference",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "tb-control-training-institute",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "dhaka-infectious-disease-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.014505",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 5,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "institute-child-mother-health-matuail",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "government-unani-ayurvedic-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "bangladesh-medical-university",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
           "hospitalId": "mugda-medical-college-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.065709",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.054651",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
             "quantity": 453,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 22,
           "unit": "bed_units",
@@ -2266,21 +710,23 @@
           ]
         },
         {
-          "hospitalId": "dmch-burn-unit",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "hospitalId": "dhaka-medical-college-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.313669",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
-            "quantity": 100,
+            "quantity": 2600,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
-          "quantity": null,
+          "quantity": 130,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "synthetic_value_generated",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -2289,21 +735,98 @@
           ]
         },
         {
-          "hospitalId": "national-ent-hospital",
+          "hospitalId": "dncc-dedicated-specialized-hospital",
           "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.127156",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
-            "quantity": 250,
+            "quantity": 1054,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 52,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "shaheed-suhrawardy-medical-college-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.162866",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
+          "officialCapacityReference": {
+            "quantity": 1350,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 67,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "bangladesh-medical-university",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": null,
+          "allocationStatus": "insufficient_capacity_reference",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
+          "officialCapacityReference": {
+            "quantity": null,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "sir-salimullah-medical-college-mitford-hospital",
+          "eligibility": "potentially_eligible",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.108578",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
+          "officialCapacityReference": {
+            "quantity": 900,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 45,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -2314,15 +837,17 @@
         {
           "hospitalId": "kurmitola-general-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.174064",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.144770",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
             "quantity": 1200,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 60,
           "unit": "bed_units",
@@ -2335,113 +860,23 @@
           ]
         },
         {
-          "hospitalId": "national-neurosciences-hospital",
+          "hospitalId": "railway-general-hospital-kamalapur",
           "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
           "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "allocationStatus": "insufficient_capacity_reference",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 500,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "government-homeopathic-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 100,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "shyampur-50-bed-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.007253",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 50,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 2,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "azimpur-maternal-child-health-institute",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "narinda-mother-child-welfare-centre",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -2452,88 +887,21 @@
         {
           "hospitalId": "lalkuthi-maternal-child-health-institute",
           "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
           "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "allocationStatus": "insufficient_capacity_reference",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "railway-general-hospital-kamalapur",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "kuwait-bangladesh-friendship-hospital",
-          "eligibility": "potentially_eligible",
-          "allocationShare": "0.030461",
-          "allocationStatus": "configured",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 210,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": 10,
-          "unit": "bed_units",
-          "resultStatus": "synthetic_value_generated",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "central-police-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -2544,15 +912,17 @@
         {
           "hospitalId": "kamrangirchar-31-bed-hospital",
           "eligibility": "potentially_eligible",
-          "allocationShare": "0.004497",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.003740",
           "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
             "quantity": 31,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": 1,
           "unit": "bed_units",
@@ -2565,90 +935,73 @@
           ]
         },
         {
-          "hospitalId": "mohammadpur-fertility-services-centre",
+          "hospitalId": "aminbazar-20-bed-government-hospital",
           "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.002413",
+          "allocationStatus": "configured",
           "synthetic": true,
           "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
+          "officialCapacityReference": {
+            "quantity": 20,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 1,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "bangladesh-shishu-hospital-institute",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": "0.082157",
+          "allocationStatus": "configured",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
+          "officialCapacityReference": {
+            "quantity": 681,
+            "unit": "beds",
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
+          },
+          "quantity": 34,
+          "unit": "bed_units",
+          "resultStatus": "synthetic_value_generated",
+          "limitations": [
+            "Not estimated current occupancy.",
+            "Not hospital-reported availability.",
+            "Not a dengue bed allocation.",
+            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
+          ]
+        },
+        {
+          "hospitalId": "institute-child-mother-health-matuail",
+          "eligibility": "not_verified",
+          "participationStatus": "included",
+          "managementDecisionStatus": "pending_review",
+          "allocationShare": null,
+          "allocationStatus": "insufficient_capacity_reference",
+          "synthetic": true,
+          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
+          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v2:severe_constraint",
           "officialCapacityReference": {
             "quantity": null,
             "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
+            "capacityReferenceSha256": "eac6ec909452f4a2967fdb34b882d01c10f7267dda981d32fe75ed55c91338f4"
           },
           "quantity": null,
           "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "central-drug-addiction-treatment-centre",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": null,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-burn-plastic-surgery-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 442,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
-          "limitations": [
-            "Not estimated current occupancy.",
-            "Not hospital-reported availability.",
-            "Not a dengue bed allocation.",
-            "Not validated against live hospital operations; used only to exercise preparedness software behavior."
-          ]
-        },
-        {
-          "hospitalId": "national-gastroliver-hospital",
-          "eligibility": "not_verified",
-          "allocationShare": null,
-          "allocationStatus": "eligibility_not_verified",
-          "synthetic": true,
-          "generationMethod": "floor_selected_bed_capacity_times_governed_fraction",
-          "scenarioParameterIdentity": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION:b8.5-v1:severe_constraint",
-          "officialCapacityReference": {
-            "quantity": 250,
-            "unit": "beds",
-            "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1"
-          },
-          "quantity": null,
-          "unit": "bed_units",
-          "resultStatus": "eligibility_not_verified",
+          "resultStatus": "insufficient_capacity_reference",
           "limitations": [
             "Not estimated current occupancy.",
             "Not hospital-reported availability.",
@@ -2659,5 +1012,5 @@
       ]
     }
   ],
-  "syntheticInventorySha256": "42f4ce645c39d8913f526a89a741c03c83e255cc9ba3d6899903175a9a65e63b"
+  "syntheticInventorySha256": "a7325787c73c1cbcf8215097900408e25c6b3e50294ab5f7119f9a92b2952361"
 }

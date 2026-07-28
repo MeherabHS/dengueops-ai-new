@@ -60,7 +60,20 @@ def validate_inventory(value: Any) -> dict[str, Any]:
     active_names = [_normalized_name(hospital["officialName"]) for hospital in value["hospitals"] if hospital["active"]]
     if len(active_names) != len(set(active_names)):
         raise HospitalInventoryError("Duplicate normalized official name among active hospitals.")
+    current_participation_contract = int(value["inventoryVersion"].split(".", 1)[0]) >= 3
     for hospital in value["hospitals"]:
+        if current_participation_contract and not {
+            "participationStatus", "managementDecisionStatus",
+            "selectedBedCapacity", "currentAvailableBeds",
+        }.issubset(hospital):
+            raise HospitalInventoryError("Current inventory is missing participation authority fields.")
+        if hospital.get("participationStatus") == "included":
+            if not hospital["active"] or hospital["managementDecisionStatus"] != "pending_review":
+                raise HospitalInventoryError("Included participation requires an active pending-review hospital.")
+        elif "managementDecisionStatus" in hospital and hospital["managementDecisionStatus"] != "not_applicable":
+            raise HospitalInventoryError("Non-participating hospitals cannot carry a management decision.")
+        if hospital.get("currentAvailableBeds") is not None:
+            raise HospitalInventoryError("Current available beds must remain unknown.")
         identity_reference = hospital["identityVerification"]["verificationReferenceId"]
         if identity_reference not in known_references:
             raise HospitalInventoryError(f"Hospital {hospital['hospitalId']} uses an unknown identity reference.")

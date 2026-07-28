@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "policyId": "RUNTIME.FORMULA.ACTIVATION.SYNTHETIC_QUALIFICATION",
-  "policyVersion": "b8.5-v1",
+  "policyVersion": "b8.5-v2",
   "authorityScope": "synthetic_qualification",
   "operationalUseAllowed": false,
   "formulaBindings": {
@@ -11,11 +11,11 @@
     }
   },
   "scenarioPolicyId": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION",
-  "scenarioPolicySha256": "38fd5ff0eb95df5d69438d26182d666e25476663fe61217d47c1ac1bf444ed8e",
+  "scenarioPolicySha256": "dae554e9a7c831757f6139ecbcb516a24161a8a34fcec4d8dfde23db8b383c81",
   "qualificationLimitations": [
     "This authority can be resolved only for synthetic_qualification evidence.",
     "It is prohibited for operational, clinical and hospital decision use.",
     "Production inventory.gap authority remains separately unconfigured."
   ],
-  "policySha256": "d48c549f92909858d28ea97d03f33a78cdc6d3666734a444fef43b6818cb897c"
+  "policySha256": "a0be7d770d26f74195a538d1c654f6f89ddb7833e3bb81a530e26a3ed806aa75"
 }

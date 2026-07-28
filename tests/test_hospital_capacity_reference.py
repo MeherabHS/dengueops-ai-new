@@ -47,6 +47,8 @@ def test_registry_parser_filters_active_scope_types_and_duplicate_aliases() -> N
 
 def test_capacity_reference_preserves_approved_latest_conflicts_and_blanks() -> None:
     reference = load_capacity_reference()
+    assert reference["capacityReferenceVersion"] == "2.0.0"
+    assert len(reference["hospitals"]) == 41
     rows = {item["hospitalId"]: item for item in reference["hospitals"]}
     dmch = rows["dhaka-medical-college-hospital"]
     assert dmch["approvedBedCount"] == 2600
@@ -57,6 +59,9 @@ def test_capacity_reference_preserves_approved_latest_conflicts_and_blanks() -> 
     assert (mugda["approvedBedCount"], mugda["latestBedCount"]) == (500, 453)
     assert mugda["selectedBedCapacity"]["basis"] == "latest_official_operational_count"
     assert rows["tejgaon-health-complex"]["selectedBedCapacity"]["quantity"] is None
+    assert rows["aminbazar-20-bed-government-hospital"]["selectedBedCapacity"]["quantity"] == 20
+    assert rows["bangladesh-shishu-hospital-institute"]["selectedBedCapacity"]["quantity"] == 681
+    assert rows["dncc-dedicated-specialized-hospital"]["selectedBedCapacity"]["quantity"] == 1054
 
 
 def test_registry_zero_and_source_tampering_fail_closed() -> None:
