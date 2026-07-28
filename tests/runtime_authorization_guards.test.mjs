@@ -86,6 +86,7 @@ const posts = [
   ["/api/runtime/assessments/00000000-0000-4000-8000-000000000000/decisions", "application/json", "{}"],
   ["/api/runtime/decisions/00000000-0000-4000-8000-000000000000/forecast", "application/json", "{}"],
   ["/api/runtime/runs/quick", "application/json", "{}"],
+  ["/api/runtime/model-assignments", "application/json", "{}"],
 ];
 
 test("all browser mutation routes reject anonymous work before durable activity", { timeout: 90_000 }, async () => {
@@ -125,6 +126,12 @@ test("valid session reaches existing validation boundaries and cross-origin sess
       body: "{}",
     });
     assert.equal(crossOrigin.status, 403);
+    const assignmentCrossOrigin = await fetch(`${instance.url}/api/runtime/model-assignments`, {
+      method: "POST",
+      headers: { cookie, origin: "https://attacker.invalid", "content-type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(assignmentCrossOrigin.status, 403);
   } finally {
     await stopServer(instance);
   }

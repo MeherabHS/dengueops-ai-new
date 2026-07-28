@@ -29,7 +29,7 @@ export interface AssessmentCandidateEligibility {
   eligible: boolean;
   reasonCodes: string[];
   reasons: string[];
-  candidateClass: "naive_baseline" | "learned_model";
+  candidateClass: "naive_baseline" | "comparison_baseline" | "learned_model";
   deployabilityClassification:
     | "baseline_not_runtime_deployable"
     | "deployable_learned_model";
@@ -66,16 +66,7 @@ export interface RuntimeAssessmentEligibility {
     | "complete_candidate_set"
     | "partial_candidate_set"
     | "insufficient_candidate_breadth";
-  candidateEligibility: Record<
-    | "previous_week_naive"
-    | "moving_average_4w"
-    | "seasonal_naive_52w"
-    | "ridge_regression"
-    | "poisson_regression"
-    | "random_forest"
-    | "gradient_boosting",
-    AssessmentCandidateEligibility
-  >;
+  candidateEligibility: Record<CurrentRuntimeCandidateId, AssessmentCandidateEligibility>;
   recommendationEligibility: false;
   recommendationStatus: "evidence_only" | "no_recommendation";
   recommendationStrength: "not_available";
@@ -84,13 +75,13 @@ export interface RuntimeAssessmentEligibility {
   reasonCodes: string[];
   reasons: string[];
   policyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE";
-  policyVersion: "p1.4d-1-v1" | "p2-v1";
+  policyVersion: RuntimeAssessmentPolicyVersion;
   policySha256: string;
   assessmentPolicyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE";
-  assessmentPolicyVersion: "p1.4d-1-v1" | "p2-v1";
+  assessmentPolicyVersion: RuntimeAssessmentPolicyVersion;
   assessmentPolicySha256: string;
   assessmentEligibilityStatus: AssessmentStatus;
-  decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_not_yet_available";
+  decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_available" | "phase2_decision_policy_not_yet_available";
 }
 
 export interface RuntimeEligibility {
@@ -98,7 +89,7 @@ export interface RuntimeEligibility {
     eligible: boolean;
     reasons: string[];
     reasonCodes: string[];
-    approvedModelId: "random_forest";
+    approvedModelId: CurrentSelectableCandidateId;
     uncertaintyStatus:
       | "pending_dataset_specific_calibration"
       | "unavailable_for_uploaded_dataset";
@@ -106,7 +97,7 @@ export interface RuntimeEligibility {
       | "unavailable_missing_planning_policy"
       | "unavailable_for_uploaded_dataset";
     policyId: "RUNTIME.QUICK_FORECAST.COMPATIBILITY";
-    policyVersion: "p1.4f-v1";
+    policyVersion: "p1.4f-v1" | "p2-v1" | "p2-v2";
     policySha256: string;
   };
   assessDataset: RuntimeAssessmentEligibility;
@@ -158,6 +149,27 @@ export interface StartAssessmentRequest {
   deploymentId: string;
   validationRecordSha256: string;
 }
+
+export interface StartModelAssignmentRequest {
+  approvedForecastRunId: string;
+  expectedApprovedForecastCommitSha256: string;
+  expectedAssignmentPointerSha256: string;
+  reason: string;
+  assignmentAcknowledged: true;
+}
+
+export interface ModelAssignmentResultSuccess {
+  ok: true;
+  assignmentId: string;
+  status: "assigned";
+  selectedCandidateId: CurrentRuntimeCandidateId;
+  selectedCandidateLabel: string;
+  sourceApprovedForecastRunId: string;
+  createdAt: string;
+  previousAssignmentPresent: boolean;
+}
+
+export type StartModelAssignmentResponse = ModelAssignmentResultSuccess | RuntimeErrorResponse;
 
 export type RuntimeJobStatus = "queued" | "running" | "committing" | "completed" | "failed" | "timed_out" | "cancelled";
 interface RuntimeJobBase {
@@ -214,7 +226,7 @@ interface GovernedQuickForecastJob extends Omit<RuntimeJobBase,"schemaVersion"> 
   assignmentId:string;
   assignmentCommitSha256:string;
   assignmentAction:"assign_selected_model";
-  resolvedModelId:RuntimeCandidateId;
+  resolvedModelId:CurrentSelectableCandidateId;
   resolvedModelFamily:string;
   resolvedModelParameterSha256:string;
   resolvedPreprocessingIdentity:string;
@@ -249,7 +261,7 @@ export interface DatasetAssessmentJobRecord extends RuntimeJobBase {
   assessmentId: string;
   workflowMode: "assess_dataset";
   assessmentPolicyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE";
-  assessmentPolicyVersion: "p1.4d-1-v1" | "p2-v1";
+  assessmentPolicyVersion: RuntimeAssessmentPolicyVersion;
   assessmentPolicySha256: string;
   candidateRegistrySha256: string;
   committedAssessmentId: string | null;
@@ -263,7 +275,7 @@ export interface ApprovedForecastJobRecord extends RuntimeJobBase {
   authorizationId: string;
   assessmentId: string;
   assessmentCommitSha256: string;
-  selectedModelId: "ridge_regression" | "poisson_regression" | "random_forest" | "gradient_boosting";
+  selectedModelId: CurrentSelectableCandidateId;
   selectedModelParameterSha256: string;
   workflowMode: "approved_assessment_forecast";
   committedRunId: string | null;
@@ -338,7 +350,7 @@ export type ActiveModelAuthority=HistoricalProfileActiveModelAuthority|Committed
 export type CurrentActiveModelAuthority={
   deploymentId:string;
   authoritySource:"committed_assignment";
-  modelId:RuntimeCandidateId;
+  modelId:CurrentSelectableCandidateId;
   modelFamily:string;
   parameterSha256:string;
   preprocessingIdentity:string;
@@ -374,9 +386,16 @@ export type JobStatusResponse =
   | ({ok:true;jobKind:"model_lifecycle";jobId:string;lifecycleDecisionId:string;workflowMode:"model_lifecycle";action:LifecycleAction;status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedLifecycleDecisionId:string|null})
   | RuntimeErrorResponse;
 
-export type RuntimeCandidateId =
-  | "previous_week_naive" | "moving_average_4w" | "seasonal_naive_52w"
-  | "ridge_regression" | "poisson_regression" | "random_forest" | "gradient_boosting";
+export type CurrentRuntimeCandidateId =
+  | "moving_average_4w" | "seasonal_naive_52w"
+  | "ridge_regression" | "poisson_regression" | "random_forest" | "gradient_boosting"
+  | "elastic_net" | "negative_binomial_regression" | "extra_trees"
+  | "hist_gradient_boosting" | "poisson_gam";
+
+export type HistoricalRuntimeCandidateId = "previous_week_naive";
+export type RuntimeCandidateId = CurrentRuntimeCandidateId | HistoricalRuntimeCandidateId;
+export type CurrentSelectableCandidateId = Exclude<CurrentRuntimeCandidateId, "moving_average_4w" | "seasonal_naive_52w">;
+export type RuntimeAssessmentPolicyVersion = "p1.4d-1-v1" | "p2-v1" | "p2-v2" | "p2-v3";
 
 export interface AssessmentCandidateSummary {
   modelId: RuntimeCandidateId;
@@ -466,7 +485,7 @@ export interface DatasetAssessmentResultSuccess {
   recommendationStrength: "not_available";
   approvalRequired: true;
   approvalEnabled: false;
-  decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_not_yet_available";
+  decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_available" | "phase2_decision_policy_not_yet_available";
   limitations: string[];
   evidenceHashes: { rollingValidationSha256: string; candidateComparisonSha256: string; recommendationSha256: string };
   provenance: { validationRecordSha256: string; assessmentPolicySha256: string; candidateRegistrySha256: string; featureOrderSha256: string };

@@ -8,23 +8,14 @@ import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained, jobRecordPath, runtimeCollectionPaths, workspacePaths } from "@/lib/runtime/paths";
 import { createPendingJob, createWorkspaceStartMarker, initializeRuntimeRoot } from "@/lib/runtime/store";
 import { requireSuperUserMutation } from "@/lib/auth/authorization";
+import { validateStrictJsonSchema } from "@/lib/runtime/strict-json-schema";
+import { loadDecisionPolicy } from "@/lib/runtime/decision-policy";
 
 export const runtime = "nodejs";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[a-f0-9]{64}$/;
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
-
-function canonicalPolicySha256(policy: Record<string, unknown>): string {
-  const content = { ...policy };
-  delete content.policy_sha256;
-  const canonical = (value: unknown): string => Array.isArray(value)
-    ? `[${value.map(canonical).join(",")}]`
-    : value && typeof value === "object"
-      ? `{${Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([key, child]) => `${JSON.stringify(key)}:${canonical(child)}`).join(",")}}`
-      : JSON.stringify(value);
-  return sha256(Buffer.from(canonical(content), "utf8"));
-}
 
 function recomputeDatasetId(dengue: Buffer, climate: Buffer, deploymentId: string, featureHash: string): string {
   const digest = createHash("sha256");
@@ -85,42 +76,91 @@ export async function POST(request: Request): Promise<Response> {
 
     const policyPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "deployments", String(body.deploymentId), "assessment_policy.json"));
     const registryPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.json"));
-    const [policyBytes, registryBytes] = await Promise.all([readFile(policyPath), readFile(registryPath)]);
-    const policy = JSON.parse(policyBytes.toString("utf8")) as Record<string, any>;
-    const registry = JSON.parse(registryBytes.toString("utf8")) as Record<string, any>;
-    const policyHash = canonicalPolicySha256(policy);
+    const policySchemaPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "runtime_assessment_policy.schema.json"));
+    const registrySchemaPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.schema.json"));
+    const [policyBytes, registryBytes, policySchemaBytes, registrySchemaBytes] = await Promise.all([
+      readFile(policyPath), readFile(registryPath), readFile(policySchemaPath), readFile(registrySchemaPath),
+    ]);
+    const policyValue = JSON.parse(policyBytes.toString("utf8")) as Record<string, unknown>;
+    const registryValue = JSON.parse(registryBytes.toString("utf8")) as Record<string, unknown>;
+    try {
+      validateStrictJsonSchema(JSON.parse(policySchemaBytes.toString("utf8")), policyValue);
+      validateStrictJsonSchema(JSON.parse(registrySchemaBytes.toString("utf8")), registryValue);
+    } catch {
+      throw new RuntimePublicError("assessment_authority_invalid", "configuration", "The current assessment authority failed schema validation.", 409);
+    }
+    const policy = policyValue as Record<string, any>;
+    const registry = registryValue as Record<string, any>;
+    const policyHash = String(policy.policy_sha256 ?? "");
+    const decisionPolicy = await loadDecisionPolicy(config.repositoryRoot, String(body.deploymentId), {
+      schemaVersion: "2.0",
+      policyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
+      policyVersion: policy.policy_version,
+      policySha256: policyHash,
+    });
     const assess = validation.eligibility?.assessDataset;
-    const governedCandidates = policy.candidate_eligibility_policy?.candidates ?? [];
-    const registryCandidates = registry.candidates ?? [];
-    const candidatesMatch = governedCandidates.length === 7 && registryCandidates.length === 7 && governedCandidates.every((candidate: Record<string, unknown>, index: number) =>
-      candidate.model_id === registryCandidates[index]?.model_id && candidate.parameters_sha256 === registryCandidates[index]?.parameters_sha256);
+    const governedCandidates = policy.candidate_eligibility_policy?.candidates as Array<Record<string, unknown>>;
+    const registryCandidates = registry.candidates as Array<Record<string, unknown>>;
+    const registryById = new Map(registryCandidates.map(candidate => [String(candidate.model_id), candidate]));
+    const governedIds = governedCandidates.map(candidate => String(candidate.model_id));
+    const registryIds = registryCandidates.map(candidate => String(candidate.model_id));
+    const candidateEligibilityIds = Object.keys(assess?.candidateEligibility ?? {});
+    const candidatesMatch = governedCandidates.length > 0
+      && governedCandidates.length === registryCandidates.length
+      && registryById.size === registryCandidates.length
+      && new Set(governedIds).size === governedCandidates.length
+      && governedCandidates.every(candidate => {
+        const registered = registryById.get(String(candidate.model_id));
+        return registered?.parameters_sha256 === candidate.parameters_sha256;
+      })
+      && governedIds.every(candidateId => registryIds.includes(candidateId))
+      && candidateEligibilityIds.length === registryIds.length
+      && candidateEligibilityIds.every(candidateId => registryById.has(candidateId));
     const labelledRows = Number(validation.counts?.labelledRows);
     const availableFoldCount = Number(assess?.availableFoldCount);
     const plannedFoldCount = Number(assess?.plannedFoldCount);
     const selectedStart = Number(assess?.selectedValidationStartIndex);
     const selectedEnd = Number(assess?.selectedValidationEndIndex);
     const foldPolicy = policy.fold_policy ?? {};
-    if (policy.policy_sha256 !== policyHash || policy.policy_status !== "active" || policy.deployment_id !== body.deploymentId
-      || policy.policy_id !== "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" || policy.policy_version !== "p2-v1"
-      || foldPolicy.policy_id !== "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS" || foldPolicy.policy_version !== "p2-v1"
-      || foldPolicy.initial_training_rows !== 104 || foldPolicy.embargo_rows !== 1 || foldPolicy.validation_rows_per_fold !== 1
-      || foldPolicy.step_size_weeks !== 1 || foldPolicy.target_horizon_weeks !== 2 || foldPolicy.minimum_labelled_rows !== 157
-      || foldPolicy.minimum_fold_count !== 52 || foldPolicy.maximum_fold_count !== 68
+    const initialTrainingRows = Number(foldPolicy.initial_training_rows);
+    const embargoRows = Number(foldPolicy.embargo_rows);
+    const minimumLabelledRows = Number(foldPolicy.minimum_labelled_rows);
+    const minimumFoldCount = Number(foldPolicy.minimum_fold_count);
+    const maximumFoldCount = Number(foldPolicy.maximum_fold_count);
+    const firstAvailableValidationIndex = initialTrainingRows + embargoRows;
+    const expectedAvailableFoldCount = Math.max(0, labelledRows - firstAvailableValidationIndex);
+    const expectedPlannedFoldCount = Math.min(expectedAvailableFoldCount, maximumFoldCount);
+    if (!SHA.test(policyHash) || policy.policy_status !== "active" || policy.deployment_id !== body.deploymentId
+      || policy.policy_id !== "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
+      || decisionPolicy.allowedAssessmentPolicyVersion !== policy.policy_version
+      || decisionPolicy.allowedAssessmentPolicySha256 !== policyHash
+      || decisionPolicy.candidateRegistrySha256 !== sha256(registryBytes)
+      || policy.candidate_registry?.path !== "config/candidate_models.json"
+      || foldPolicy.policy_id !== "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS"
+      || !Number.isSafeInteger(initialTrainingRows) || !Number.isSafeInteger(embargoRows)
+      || foldPolicy.validation_rows_per_fold !== 1 || foldPolicy.step_size_weeks !== 1
+      || foldPolicy.target_horizon_weeks !== policy.input_contract?.horizon_weeks
+      || !Number.isSafeInteger(minimumLabelledRows) || !Number.isSafeInteger(minimumFoldCount)
+      || !Number.isSafeInteger(maximumFoldCount) || minimumFoldCount > maximumFoldCount
       || foldPolicy.fold_selection_rule !== "most_recent_contiguous_validation_indexes_up_to_maximum_fold_count"
       || sha256(registryBytes) !== policy.candidate_registry?.sha256 || registry.candidate_registry_version !== policy.candidate_registry?.version
+      || registry.feature_order_sha256 !== policy.feature_contract?.feature_order_sha256
+      || registry.target !== policy.input_contract?.target || registry.horizon_weeks !== policy.input_contract?.horizon_weeks
       || !candidatesMatch || featureHash !== policy.feature_contract?.feature_order_sha256
       || validation.datasetIdentity?.target !== policy.input_contract?.target || validation.datasetIdentity?.horizonWeeks !== policy.input_contract?.horizon_weeks
       || validation.normalization?.canonicalContractVersion !== policy.input_contract?.canonical_contract_version
-      || !Number.isSafeInteger(labelledRows) || labelledRows < 157 || assess?.eligible !== true || assess.assessmentStatus !== "full_assessment_eligible"
-      || !Number.isSafeInteger(availableFoldCount) || availableFoldCount !== Math.max(0, labelledRows - 105) || availableFoldCount < 52
-      || !Number.isSafeInteger(plannedFoldCount) || plannedFoldCount !== Math.min(availableFoldCount, 68) || plannedFoldCount < 52 || plannedFoldCount > 68
-      || assess.minimumFoldCount !== 52 || assess.maximumFoldCount !== 68 || assess.foldCapApplied !== (availableFoldCount > 68)
+      || !Number.isSafeInteger(labelledRows) || labelledRows < minimumLabelledRows || assess?.eligible !== true || assess.assessmentStatus !== "full_assessment_eligible"
+      || !Number.isSafeInteger(availableFoldCount) || availableFoldCount !== expectedAvailableFoldCount || availableFoldCount < minimumFoldCount
+      || !Number.isSafeInteger(plannedFoldCount) || plannedFoldCount !== expectedPlannedFoldCount
+      || plannedFoldCount < minimumFoldCount || plannedFoldCount > maximumFoldCount
+      || assess.minimumFoldCount !== minimumFoldCount || assess.maximumFoldCount !== maximumFoldCount
+      || assess.foldCapApplied !== (availableFoldCount > maximumFoldCount)
       || selectedStart !== labelledRows - plannedFoldCount || selectedEnd !== labelledRows - 1
       || assess.candidateSetStatus !== "complete_candidate_set"
       || assess.policyId !== policy.policy_id || assess.policyVersion !== policy.policy_version || assess.policySha256 !== policyHash
       || assess.recommendationStatus !== "evidence_only" || assess.recommendationStrength !== "not_available"
       || assess.approvalRequired !== true || assess.approvalEnabled !== false
-      || !Object.values(assess.candidateEligibility ?? {}).every((candidate: any) => candidate.eligible === true)) {
+      || registryIds.some(candidateId => assess.candidateEligibility?.[candidateId]?.eligible !== true)) {
       throw new RuntimePublicError("assessment_policy_ineligible", "validation", "The workspace is no longer eligible under the governed dataset-assessment policy.", 409);
     }
 
