@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "deploymentId", "evidenceScope", "preparednessId",
+    "scenarioId", "evidencePath", "evidenceSha256", "commitPath",
+    "commitSha256", "previousPointerSha256", "advancedAt"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "deploymentId": {"const": "dhaka_south"},
+    "evidenceScope": {"const": "synthetic_qualification"},
+    "preparednessId": {"type": "string", "pattern": "^[a-f0-9-]{36}$"},
+    "scenarioId": {"enum": ["baseline_availability", "constrained_availability", "severe_constraint"]},
+    "evidencePath": {"type": "string", "pattern": "^hospital-preparedness-qualification/[a-f0-9-]{36}/artifacts/preparedness_evidence\\.json$"},
+    "evidenceSha256": {"$ref": "#/$defs/sha"},
+    "commitPath": {"type": "string", "pattern": "^hospital-preparedness-qualification/[a-f0-9-]{36}/metadata/commit\\.json$"},
+    "commitSha256": {"$ref": "#/$defs/sha"},
+    "previousPointerSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "advancedAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {"sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

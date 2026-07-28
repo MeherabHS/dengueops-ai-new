@@ -73,8 +73,15 @@ def validate_inventory(value: Any) -> dict[str, Any]:
             resource_types.add(resource["resourceType"])
             if resource["quantity"] is None and resource["dataStatus"] not in {"unknown", "unavailable"}:
                 raise HospitalInventoryError("Null resource quantity must be explicitly unknown or unavailable.")
-            if resource["quantity"] is not None and resource["dataStatus"] not in {"verified", "reported"}:
+            if resource["quantity"] is not None and resource["dataStatus"] not in {"verified", "reported", "verified_capacity_reference"}:
                 raise HospitalInventoryError("Known resource quantity requires verified or reported status.")
+            if resource["resourceType"] == "available_beds" and resource["quantity"] is not None:
+                raise HospitalInventoryError("Official seed cannot assert current available beds.")
+            if resource["resourceType"] == "total_bed_capacity":
+                if resource["quantity"] is not None and resource["dataStatus"] != "verified_capacity_reference":
+                    raise HospitalInventoryError("Official capacity must be labelled as a capacity reference.")
+                if resource["availabilityStatus"] != "not_known":
+                    raise HospitalInventoryError("Official capacity cannot assert current availability.")
     active = [hospital for hospital in value["hospitals"] if hospital["active"]]
     if value["allocationStatus"] == "not_configured":
         if any(hospital["allocationShare"] != {"status": "not_configured", "value": None} for hospital in value["hospitals"]):

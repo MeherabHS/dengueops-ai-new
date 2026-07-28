@@ -14,16 +14,18 @@ from hospital_inventory import HospitalInventoryError, inventory_diff, load_inve
 
 def test_seed_has_official_identities_and_unknown_resources() -> None:
     inventory = load_inventory()
-    assert inventory["inventoryId"] == "dhaka-government-hospitals-20260728-v1"
-    assert inventory["inventoryVersion"] == "1.0.0"
-    assert len(inventory["hospitals"]) == 8
+    assert inventory["inventoryId"] == "dhaka-government-hospitals-20260728-v2"
+    assert inventory["inventoryVersion"] == "2.0.0"
+    assert len(inventory["hospitals"]) == 38
     assert inventory["allocationStatus"] == "not_configured"
     assert inventory["stalenessThresholdStatus"] == "not_governed"
     assert all(reference["sourceUrl"].startswith("https://hris.mohfw.gov.bd/") for reference in inventory["sourceReferences"])
-    assert all(hospital["ownership"] == "public_government" for hospital in inventory["hospitals"])
+    assert all(hospital["ownership"] in {"public_government", "government_autonomous"} for hospital in inventory["hospitals"])
     assert all(hospital["allocationShare"] == {"status": "not_configured", "value": None} for hospital in inventory["hospitals"])
     resources = [resource for hospital in inventory["hospitals"] for resource in hospital["resources"]]
-    assert resources and all(resource["quantity"] is None and resource["dataStatus"] == "unknown" for resource in resources)
+    available = [resource for resource in resources if resource["resourceType"] == "available_beds"]
+    assert available and all(resource["quantity"] is None and resource["dataStatus"] == "unknown" for resource in available)
+    assert all(resource["availabilityStatus"] == "not_known" for resource in resources)
     serialized = str(inventory)
     assert "Synthetic Benchmark Facility" not in serialized
     assert "INV-F" not in serialized
@@ -32,9 +34,9 @@ def test_seed_has_official_identities_and_unknown_resources() -> None:
 def test_zero_is_known_and_null_is_unknown() -> None:
     inventory = load_inventory()
     resource = inventory["hospitals"][0]["resources"][0]
-    resource.update(quantity=0, dataStatus="verified", asOf="2026-07-28T00:00:00Z")
+    resource.update(quantity=0, dataStatus="verified_capacity_reference", asOf="2026-07-28T00:00:00Z")
     assert validate_inventory(inventory)["hospitals"][0]["resources"][0]["quantity"] == 0
-    resource.update(quantity=None, dataStatus="verified")
+    resource.update(quantity=None, dataStatus="verified_capacity_reference")
     with pytest.raises(HospitalInventoryError):
         validate_inventory(inventory)
 
@@ -70,7 +72,7 @@ def test_invalid_resource_coordinates_references_and_allocation_fail() -> None:
     with pytest.raises(HospitalInventoryError):
         validate_inventory(inventory)
     inventory = load_inventory()
-    inventory["hospitals"][0]["location"]["coordinates"]["latitude"] = 91
+    inventory["hospitals"][0]["location"]["coordinates"] = {"latitude": 91, "longitude": 90}
     with pytest.raises(HospitalInventoryError):
         validate_inventory(inventory)
     inventory = load_inventory()

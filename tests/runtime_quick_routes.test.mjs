@@ -78,7 +78,8 @@ for (const modelId of ["random_forest", "ridge_regression"]) {
         assert.equal(job.lifecyclePolicySha256, fixture.authority.lifecyclePolicySha256);
         assert.equal(job.authoritySnapshotSha256, fixture.authority.authoritySnapshotSha256);
         assert.equal(job.resolvedPreprocessingIdentity, fixture.authority.preprocessingIdentity);
-        assert.equal(job.quickPolicySha256, "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e");
+        assert.equal(job.quickPolicyVersion, "p2-v2");
+        assert.equal(job.quickPolicySha256, "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2");
 
         const status = await getRuntimeJob(
           new Request(`http://localhost/api/runtime/jobs/${queued.jobId}`),
@@ -142,6 +143,15 @@ test("client-supplied model and authority overrides are rejected", async () => {
     assert.equal(response.status, 400);
     assert.equal((await response.json()).error.code, "unexpected_quick_forecast_field");
   }
+});
+
+test("route binds current Quick Forecast policy to the trusted lifecycle authority", async () => {
+  const source = await readFile(new URL("../app/api/runtime/runs/quick/route.ts", import.meta.url), "utf8");
+  assert.match(source, /loadCurrentModelLifecyclePolicy/);
+  assert.match(source, /allowedQuickForecastPolicyVersion\s*!==\s*policy\.policyVersion/);
+  assert.match(source, /allowedQuickForecastPolicySha256\s*!==\s*policyHash/);
+  assert.match(source, /policy\.policySha256\s*!==\s*policyHash/);
+  assert.doesNotMatch(source, /policy\.policyVersion\s*!==\s*["']p2-v[0-9]+["']/);
 });
 
 test("frontend refresh is gated on completed committed run identity", async () => {

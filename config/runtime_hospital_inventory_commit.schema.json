@@ -22,7 +22,7 @@
     "sourceReferencesPath": {"type": "string", "pattern": "^hospital-inventories/[a-z0-9][a-z0-9_-]{0,127}/metadata/source_references\\.json$"},
     "operatorIdentifier": {"type": "string", "minLength": 1, "maxLength": 128},
     "changeReason": {"type": "string", "minLength": 1, "maxLength": 1000},
-    "verificationStatus": {"enum": ["identity_verified_resources_unknown", "verified"]},
+    "verificationStatus": {"enum": ["identity_verified_resources_unknown", "identity_and_capacity_reference_verified", "verified"]},
     "publishedAt": {"type": "string", "format": "date-time"}
   },
   "$defs": {

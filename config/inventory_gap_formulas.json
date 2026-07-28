@@ -1,9 +1,32 @@
 {
   "schemaVersion": "1.0",
   "registryVersion": "b8.5-v1",
-  "registrySha256": "8b369771b8be18312f2bf519b007cdbe9f95a6fd746c467ea20a556f73f16d95",
+  "registrySha256": "7bdcf388c0ab81fb177047e27718c49aac47bca4a9b8f33db8fc77282494d148",
   "supportedFormulaSlots": [
     "inventory.gap"
   ],
-  "formulas": []
+  "formulas": [
+    {
+      "formulaId": "inventory.gap.synthetic-qualification.v1",
+      "formulaSlot": "inventory.gap",
+      "formulaVersion": "1.0.0",
+      "expression": "max(0, ceil(allocatedForecastCases * resourcePerCase) - availableResource)",
+      "description": "Qualification-only bed-unit gap expression for deterministic end-to-end software behavior evidence.",
+      "inputs": [
+        {"name": "allocatedForecastCases", "unit": "cases_per_two_week_forecast_horizon", "domain": "nonnegative_decimal"},
+        {"name": "resourcePerCase", "unit": "bed_units_per_case_per_two_week_forecast_horizon", "domain": "nonnegative_decimal"},
+        {"name": "availableResource", "unit": "bed_units", "domain": "nonnegative_integer"}
+      ],
+      "outputUnit": "bed_units",
+      "outputDomain": "nonnegative_integer",
+      "roundingPolicy": "ceiling_to_integer",
+      "status": "approved",
+      "scientificLimitations": [
+        "Activation is valid only under the synthetic_qualification authority scope.",
+        "resourcePerCase is a synthetic pipeline-exercise parameter, not a hospitalization or admission rate.",
+        "Output cannot support operational, clinical or hospital decisions."
+      ],
+      "formulaSha256": "ee446cacbff6ee82b065b01cce1b33aea1d8df214955852639acf998cc7b58c1"
+    }
+  ]
 }

@@ -1,252 +1,2503 @@
 {
   "schemaVersion": "1.0",
-  "inventoryId": "dhaka-government-hospitals-20260728-v1",
-  "inventoryVersion": "1.0.0",
+  "inventoryId": "dhaka-government-hospitals-20260728-v2",
+  "inventoryVersion": "2.0.0",
   "deploymentId": "dhaka_south",
   "deploymentDisplayName": "Dhaka",
-  "changeReason": "Initial reviewed seed of officially identified public/government hospitals across Dhaka; resource quantities and allocation shares remain unconfigured.",
-  "createdAt": "2026-07-28T12:23:04Z",
+  "changeReason": "Expand the official inventory to all verified inpatient candidates in the governed 2026-07-28 capacity reference.",
+  "createdAt": "2026-07-28T16:00:00+06:00",
   "operatorIdentifier": "repository-seed",
-  "verificationStatus": "identity_verified_resources_unknown",
+  "verificationStatus": "identity_and_capacity_reference_verified",
+  "capacityReferenceId": "dhaka-government-hospital-capacity-20260728-v1",
+  "capacityReferenceSha256": "6a09b4d2eba8a708af5858443bab511d2bc59de4469ed57dfba28a3a1b58eef1",
   "stalenessThresholdStatus": "not_governed",
   "allocationStatus": "not_configured",
   "sourceReferences": [
     {
+      "verificationReferenceId": "mohfw-facility-6",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/6/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-7",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/7/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-8",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/8/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-9",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/9/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-10",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/10/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-11",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/11/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-13",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/13/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-26",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/26/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-29",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/29/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
       "verificationReferenceId": "mohfw-facility-31",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
       "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/31/profile?tab=detailed-information",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
-    },
-    {
-      "verificationReferenceId": "mohfw-facility-52",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
-      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/52/profile",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
-    },
-    {
-      "verificationReferenceId": "mohfw-facility-47",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
-      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/47/profile?tab=detailed-information",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
-    },
-    {
-      "verificationReferenceId": "mohfw-facility-13562",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
-      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/13562/profile?tab=detailed-information",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
-    },
-    {
-      "verificationReferenceId": "mohfw-facility-16774",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
-      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/16774/profile",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
-    },
-    {
-      "verificationReferenceId": "mohfw-facility-53",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
-      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/53/profile?tab=detailed-information",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
-    },
-    {
-      "verificationReferenceId": "mohfw-facility-66",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
-      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/66/profile",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
     },
     {
       "verificationReferenceId": "mohfw-facility-32",
-      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
-      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/32/profile",
-      "retrievedAt": "2026-07-28T12:23:04Z",
-      "verifiedAt": "2026-07-28T12:23:04Z",
-      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/32/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-47",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/47/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-50",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/50/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-52",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/52/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-53",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/53/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-54",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/54/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-66",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/66/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-2247",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/2247/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-2249",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/2249/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-13048",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/13048/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-13562",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/13562/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-16772",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/16772/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-16773",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/16773/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-16774",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/16774/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-16775",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/16775/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-18687",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/18687/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-18786",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/18786/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-22869",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/22869/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-22956",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/22956/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-23232",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/23232/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-23233",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/23233/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-23250",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/23250/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-23277",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/23277/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-23886",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/23886/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-24220",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/24220/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-24232",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/24232/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-24589",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/24589/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-24610",
+      "sourceOrganization": "MOHFW/DGHS Facility Registry",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/24610/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T16:00:00+06:00",
+      "verifiedAt": "2026-07-28T16:00:00+06:00",
+      "supportedFields": [
+        "officialName",
+        "ownership",
+        "location",
+        "facilityType",
+        "facilityIdentity",
+        "bedCapacityReference"
+      ]
     }
   ],
   "hospitals": [
     {
-      "hospitalId": "dghs-10000033",
-      "officialName": "Dhaka Medical College Hospital",
-      "shortName": "DMCH",
-      "facilityType": "medical_college_hospital",
+      "hospitalId": "national-cancer-research-hospital",
+      "officialFacilityRegistryId": 6,
+      "officialFacilityCode": "10000006",
+      "officialName": "National Institute Of Cancer Research And Hospital (NICR&H)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
       "ownership": "public_government",
       "active": true,
+      "denguePreparednessEligibility": "not_verified",
       "location": {
-        "address": "Secretariat Road, Shahbag, Dhaka",
-        "administrativeArea": "Shahbag",
-        "cityCorporation": "Dhaka South City Corporation",
-        "coordinates": {"latitude": 23.726939279843, "longitude": 90.397486284658}
-      },
-      "displayArea": "Shahbag",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-31", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
-      "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"}
-      ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
-    },
-    {
-      "hospitalId": "dghs-10000056",
-      "officialName": "Sir Salimullah Medical College Mitford Hospital",
-      "shortName": "SSMCMH",
-      "facilityType": "medical_college_hospital",
-      "ownership": "public_government",
-      "active": true,
-      "location": {"address": "Kotwali, Dhaka", "administrativeArea": "Kotwali", "cityCorporation": "Dhaka South City Corporation"},
-      "displayArea": "Kotwali",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-52", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
-      "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"}
-      ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
-    },
-    {
-      "hospitalId": "dghs-10000051",
-      "officialName": "Shaheed Suhrawardy Medical College Hospital",
-      "shortName": "ShSMCH",
-      "facilityType": "medical_college_hospital",
-      "ownership": "public_government",
-      "active": true,
-      "location": {
-        "address": "Sher-e-Bangla Nagar, Dhaka 1207",
-        "administrativeArea": "Sher-e-Bangla Nagar",
-        "cityCorporation": "Dhaka South City Corporation",
-        "coordinates": {"latitude": 23.769396359999, "longitude": 90.371362378111}
-      },
-      "displayArea": "Sher-e-Bangla Nagar",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-47", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
-      "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"}
-      ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
-    },
-    {
-      "hospitalId": "dghs-10013720",
-      "officialName": "Mugda Medical College Hospital, Dhaka",
-      "shortName": "MuMCH",
-      "facilityType": "medical_college_hospital",
-      "ownership": "public_government",
-      "active": true,
-      "location": {
-        "address": "Mugda, Dhaka 1214",
-        "administrativeArea": "Mugda Para",
-        "cityCorporation": "Dhaka South City Corporation",
-        "coordinates": {"latitude": 23.733092669617, "longitude": 90.430317507395}
-      },
-      "displayArea": "Mugda",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-13562", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
-      "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"}
-      ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
-    },
-    {
-      "hospitalId": "dghs-10017209",
-      "officialName": "Kurmitola Multicare Specialized Hospital",
-      "shortName": "KMSH",
-      "facilityType": "general_hospital",
-      "ownership": "public_government",
-      "active": true,
-      "location": {"address": "Cantonment, Dhaka", "administrativeArea": "Cantonment", "cityCorporation": "Dhaka North City Corporation"},
-      "displayArea": "Cantonment",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-16774", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
-      "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"}
-      ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
-    },
-    {
-      "hospitalId": "dghs-10000057",
-      "officialName": "Tejgaon Health Complex, Dhaka",
-      "facilityType": "health_complex",
-      "ownership": "public_government",
-      "active": true,
-      "location": {
-        "address": "441 Tejgaon, Dhaka 1208",
-        "administrativeArea": "Tejgaon",
+        "address": null,
+        "administrativeArea": "Dhaka",
         "cityCorporation": "Dhaka North City Corporation",
-        "coordinates": {"latitude": 23.765729, "longitude": 90.40545}
+        "locationStatus": "official_city_corporation_only"
       },
-      "displayArea": "Tejgaon",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-53", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-6",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
       "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"}
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 500,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-27T11:48:45+06:00",
+          "verificationReferenceId": "mohfw-facility-6"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-6"
+        }
       ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
     },
     {
-      "hospitalId": "dghs-10000070",
-      "officialName": "Dhaka Infectious Disease Hospital",
-      "shortName": "DIDH",
-      "facilityType": "infectious_disease_hospital",
+      "hospitalId": "national-cardiovascular-hospital",
+      "officialFacilityRegistryId": 7,
+      "officialFacilityCode": "10000007",
+      "officialName": "National Institute Of Cardiovascular Disease (NICVD)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
       "ownership": "public_government",
       "active": true,
-      "location": {"address": "Gulshan, Dhaka", "administrativeArea": "Gulshan", "cityCorporation": "Dhaka North City Corporation"},
-      "displayArea": "Gulshan",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-66", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-7",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
       "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"}
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 1250,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T14:53:44+06:00",
+          "verificationReferenceId": "mohfw-facility-7"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-7"
+        }
       ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
     },
     {
-      "hospitalId": "dghs-10000034",
+      "hospitalId": "national-chest-diseases-hospital",
+      "officialFacilityRegistryId": 8,
+      "officialFacilityCode": "10000008",
+      "officialName": "National Institute of Diseases of the Chest & Hospital (NIDCH)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-8",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 870,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-23T10:56:31+06:00",
+          "verificationReferenceId": "mohfw-facility-8"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-8"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-kidney-disease-hospital",
+      "officialFacilityRegistryId": 9,
+      "officialFacilityCode": "10000009",
+      "officialName": "National Institute of Kidney Disease and Urology (NIKDU)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-9",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 500,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T13:49:25+06:00",
+          "verificationReferenceId": "mohfw-facility-9"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-9"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-mental-health-hospital",
+      "officialFacilityRegistryId": 10,
+      "officialFacilityCode": "10000010",
+      "officialName": "National Institute Of Mental Health (NIMH)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-10",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 400,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T14:23:15+06:00",
+          "verificationReferenceId": "mohfw-facility-10"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-10"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-ophthalmology-hospital",
+      "officialFacilityRegistryId": 11,
+      "officialFacilityCode": "10000011",
+      "officialName": "National Institute Of Ophthalmology (NIO)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-11",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 250,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T12:45:52+06:00",
+          "verificationReferenceId": "mohfw-facility-11"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-11"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-traumatology-hospital",
+      "officialFacilityRegistryId": 13,
+      "officialFacilityCode": "10000013",
+      "officialName": "National Institute of Traumatology and Orthopaedic Rehabilitation (NITOR)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-13",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 180,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-23T13:54:30+06:00",
+          "verificationReferenceId": "mohfw-facility-13"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-13"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "dhaka-dental-college-hospital",
+      "officialFacilityRegistryId": 26,
+      "officialFacilityCode": "10000028",
+      "officialName": "Dhaka Dental College Hospital",
+      "alternateNames": [],
+      "facilityType": "Dental College Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-26",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 200,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-19T09:02:59+06:00",
+          "verificationReferenceId": "mohfw-facility-26"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-26"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "dhaka-leprosy-hospital",
+      "officialFacilityRegistryId": 29,
+      "officialFacilityCode": "10000031",
+      "officialName": "Dhaka Leprosy Hospital",
+      "alternateNames": [],
+      "facilityType": "Leprosy Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "metropolitan_location_registry_field_missing",
+        "locationStatus": "official_metropolitan_location_city_field_missing"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-29",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 30,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T12:07:29+06:00",
+          "verificationReferenceId": "mohfw-facility-29"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-29"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "dhaka-medical-college-hospital",
+      "officialFacilityRegistryId": 31,
+      "officialFacilityCode": "10000033",
+      "officialName": "Dhaka Medical College Hospital",
+      "alternateNames": [],
+      "facilityType": "Medical College Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-31",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 2600,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T11:27:11+06:00",
+          "verificationReferenceId": "mohfw-facility-31"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-31"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "sarkari-karmachari-hospital",
+      "officialFacilityRegistryId": 32,
+      "officialFacilityCode": "10000034",
       "officialName": "Sarkari Karmachari Hospital- Fulbaria, Dhaka-1000",
-      "shortName": "SKH",
-      "facilityType": "special_purpose_hospital",
+      "alternateNames": [
+        "Government Employees Hospital"
+      ],
+      "facilityType": "Special Purpose Hospital",
       "ownership": "public_government",
       "active": true,
-      "location": {"address": "Fulbaria, Ramna, Dhaka 1000", "administrativeArea": "Ramna", "cityCorporation": "Dhaka South City Corporation"},
-      "displayArea": "Fulbaria",
-      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-32", "verifiedAt": "2026-07-28T12:23:04Z"},
-      "allocationShare": {"status": "not_configured", "value": null},
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-32",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
       "resources": [
-        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"},
-        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"},
-        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"},
-        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"}
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 150,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-01-22T18:56:32+06:00",
+          "verificationReferenceId": "mohfw-facility-32"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-32"
+        }
       ],
-      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "shaheed-suhrawardy-medical-college-hospital",
+      "officialFacilityRegistryId": 47,
+      "officialFacilityCode": "10000051",
+      "officialName": "Shaheed Suhrawardy Medical College Hospital",
+      "alternateNames": [],
+      "facilityType": "Medical College Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-47",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 1350,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T13:02:21+06:00",
+          "verificationReferenceId": "mohfw-facility-47"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-47"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "shyamoli-tb-hospital",
+      "officialFacilityRegistryId": 50,
+      "officialFacilityCode": "10000054",
+      "officialName": "Shyamoli 250 bed TB Hospital (National TB Control Project)",
+      "alternateNames": [],
+      "facilityType": "Specialized Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-50",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 150,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-14T17:22:51+06:00",
+          "verificationReferenceId": "mohfw-facility-50"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-50"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "sir-salimullah-medical-college-mitford-hospital",
+      "officialFacilityRegistryId": 52,
+      "officialFacilityCode": "10000056",
+      "officialName": "Sir Salimullah Medical College Mitford Hospital",
+      "alternateNames": [
+        "Mitford Hospital"
+      ],
+      "facilityType": "Medical College Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-52",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 900,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T12:44:27+06:00",
+          "verificationReferenceId": "mohfw-facility-52"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-52"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "tejgaon-health-complex",
+      "officialFacilityRegistryId": 53,
+      "officialFacilityCode": "10000057",
+      "officialName": "Tejgaon Health Complex, Dhaka",
+      "alternateNames": [],
+      "facilityType": "31-bed Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-53",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-53"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-53"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "tb-control-training-institute",
+      "officialFacilityRegistryId": 54,
+      "officialFacilityCode": "10000058",
+      "officialName": "Tb Control And Training Institute",
+      "alternateNames": [],
+      "facilityType": "Chest Disease Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-54",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-54"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-54"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "dhaka-infectious-disease-hospital",
+      "officialFacilityRegistryId": 66,
+      "officialFacilityCode": "10000070",
+      "officialName": "Dhaka Infectious Disease Hospital",
+      "alternateNames": [],
+      "facilityType": "Infectious Disease Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-66",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 100,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-26T13:07:41+06:00",
+          "verificationReferenceId": "mohfw-facility-66"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-66"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "institute-child-mother-health-matuail",
+      "officialFacilityRegistryId": 2247,
+      "officialFacilityCode": "10002303",
+      "officialName": "Institute of Child and Mother Health, Matuail",
+      "alternateNames": [
+        "ICMH Matuail"
+      ],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "metropolitan_location_registry_field_missing",
+        "locationStatus": "official_metropolitan_location_city_field_missing"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-2247",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-2247"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-2247"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "government-unani-ayurvedic-hospital",
+      "officialFacilityRegistryId": 2249,
+      "officialFacilityCode": "10002305",
+      "officialName": "Govt. Unani & Ayurvedic Medical College Hospital",
+      "alternateNames": [],
+      "facilityType": "Hospital of Alternative Medicine",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-2249",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 100,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-26T11:30:37+06:00",
+          "verificationReferenceId": "mohfw-facility-2249"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-2249"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "bangladesh-medical-university",
+      "officialFacilityRegistryId": 13048,
+      "officialFacilityCode": "10013148",
+      "officialName": "Bangladesh Medical University (BMU)",
+      "alternateNames": [
+        "Bangabandhu Sheikh Mujib Medical University"
+      ],
+      "facilityType": "Medical University",
+      "ownership": "government_autonomous",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-13048",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-13048"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-13048"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "mugda-medical-college-hospital",
+      "officialFacilityRegistryId": 13562,
+      "officialFacilityCode": "10013720",
+      "officialName": "Mugda Medical College Hospital, Dhaka",
+      "alternateNames": [],
+      "facilityType": "Medical College Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-13562",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 453,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T11:46:30+06:00",
+          "verificationReferenceId": "mohfw-facility-13562"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-13562"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "dmch-burn-unit",
+      "officialFacilityRegistryId": 16772,
+      "officialFacilityCode": "10017207",
+      "officialName": "100 bed Burn Unit at DMCH",
+      "alternateNames": [],
+      "facilityType": "Specialized Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-16772",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 100,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-14T14:33:08+06:00",
+          "verificationReferenceId": "mohfw-facility-16772"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-16772"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-ent-hospital",
+      "officialFacilityRegistryId": 16773,
+      "officialFacilityCode": "10017208",
+      "officialName": "National Institute of ENT",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "metropolitan_location_registry_field_missing",
+        "locationStatus": "official_metropolitan_location_city_field_missing"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-16773",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 250,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-25T13:08:35+06:00",
+          "verificationReferenceId": "mohfw-facility-16773"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-16773"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "kurmitola-general-hospital",
+      "officialFacilityRegistryId": 16774,
+      "officialFacilityCode": "10017209",
+      "officialName": "Kurmitola Multicare Specialized Hospital",
+      "alternateNames": [
+        "Kurmitola General Hospital"
+      ],
+      "facilityType": "General Hospital (Non District Hospital)",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-16774",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 1200,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-28T12:31:07+06:00",
+          "verificationReferenceId": "mohfw-facility-16774"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-16774"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-neurosciences-hospital",
+      "officialFacilityRegistryId": 16775,
+      "officialFacilityCode": "10017210",
+      "officialName": "National Institute of Neuro Sciences & Hospital (NINS & H)",
+      "alternateNames": [],
+      "facilityType": "Postgraduate Institute & Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "metropolitan_location_registry_field_missing",
+        "locationStatus": "official_metropolitan_location_city_field_missing"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-16775",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 500,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-27T10:55:03+06:00",
+          "verificationReferenceId": "mohfw-facility-16775"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-16775"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "government-homeopathic-hospital",
+      "officialFacilityRegistryId": 18687,
+      "officialFacilityCode": "10019120",
+      "officialName": "Govt. Homeopathic Medical College Hospital",
+      "alternateNames": [],
+      "facilityType": "Hospital of Alternative Medicine",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-18687",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 100,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-27T10:54:19+06:00",
+          "verificationReferenceId": "mohfw-facility-18687"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-18687"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "shyampur-50-bed-hospital",
+      "officialFacilityRegistryId": 18786,
+      "officialFacilityCode": "10019216",
+      "officialName": "Shyampur 50 Bed Hospital",
+      "alternateNames": [],
+      "facilityType": "50-bed Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-18786",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 50,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-01-22T18:57:13+06:00",
+          "verificationReferenceId": "mohfw-facility-18786"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-18786"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "azimpur-maternal-child-health-institute",
+      "officialFacilityRegistryId": 22869,
+      "officialFacilityCode": "10023281",
+      "officialName": "Maternal & Child Health Training Institute, Azimpur",
+      "alternateNames": [],
+      "facilityType": "Specialized Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-22869",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-22869"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-22869"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "narinda-mother-child-welfare-centre",
+      "officialFacilityRegistryId": 22956,
+      "officialFacilityCode": "10023368",
+      "officialName": "Mother & Child Welfare Centre (MCWC), Narinda, Dhaka",
+      "alternateNames": [],
+      "facilityType": "Maternal & Child Welfare Centre (MCWC)",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-22956",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-22956"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-22956"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "lalkuthi-maternal-child-health-institute",
+      "officialFacilityRegistryId": 23232,
+      "officialFacilityCode": "10023644",
+      "officialName": "Maternal & Child Health Training & Research Institute, Lalkuthi, Mirpur",
+      "alternateNames": [],
+      "facilityType": "Special Purpose Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-23232",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23232"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23232"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "railway-general-hospital-kamalapur",
+      "officialFacilityRegistryId": 23233,
+      "officialFacilityCode": "10023645",
+      "officialName": "Railway General Hospital. Komlapur, Dhaka",
+      "alternateNames": [
+        "Railway General Hospital Kamalapur"
+      ],
+      "facilityType": "Other Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-23233",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23233"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23233"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "kuwait-bangladesh-friendship-hospital",
+      "officialFacilityRegistryId": 23250,
+      "officialFacilityCode": "10023662",
+      "officialName": "Kuwait Bangladesh Friendship Govt. Hospital",
+      "alternateNames": [],
+      "facilityType": "General Hospital (Non District Hospital)",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-23250",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 210,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-27T09:55:13+06:00",
+          "verificationReferenceId": "mohfw-facility-23250"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23250"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "central-police-hospital",
+      "officialFacilityRegistryId": 23277,
+      "officialFacilityCode": "10023689",
+      "officialName": "Central Police Hospital",
+      "alternateNames": [],
+      "facilityType": "Other Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-23277",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23277"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23277"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "kamrangirchar-31-bed-hospital",
+      "officialFacilityRegistryId": 23886,
+      "officialFacilityCode": "10024298",
+      "officialName": "Kamrangirchar 31 Bed Hospital",
+      "alternateNames": [],
+      "facilityType": "31-bed Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "potentially_eligible",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-23886",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 31,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-19T11:21:02+06:00",
+          "verificationReferenceId": "mohfw-facility-23886"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-23886"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "mohammadpur-fertility-services-centre",
+      "officialFacilityRegistryId": 24220,
+      "officialFacilityCode": "10024632",
+      "officialName": "Mohammadpur Fertility Services and Training Center (MFSTC)",
+      "alternateNames": [],
+      "facilityType": "Special Purpose Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-24220",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-24220"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-24220"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "central-drug-addiction-treatment-centre",
+      "officialFacilityRegistryId": 24232,
+      "officialFacilityCode": "10024644",
+      "officialName": "Central Drug Addiction Treatment Centre",
+      "alternateNames": [],
+      "facilityType": "Special Purpose Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-24232",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unavailable",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-24232"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-24232"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-burn-plastic-surgery-hospital",
+      "officialFacilityRegistryId": 24589,
+      "officialFacilityCode": "10025001",
+      "officialName": "National Institute of Burn and Plastic Surgery, Dhaka",
+      "alternateNames": [
+        "Sheikh Hasina National Institute of Burn and Plastic Surgery"
+      ],
+      "facilityType": "Specialized Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka South City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-24589",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 442,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-27T10:28:58+06:00",
+          "verificationReferenceId": "mohfw-facility-24589"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-24589"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
+    },
+    {
+      "hospitalId": "national-gastroliver-hospital",
+      "officialFacilityRegistryId": 24610,
+      "officialFacilityCode": "10025022",
+      "officialName": "National Gastroliver Institute and Hospital, Dhaka",
+      "alternateNames": [],
+      "facilityType": "Specialized Hospital",
+      "ownership": "public_government",
+      "active": true,
+      "denguePreparednessEligibility": "not_verified",
+      "location": {
+        "address": null,
+        "administrativeArea": "Dhaka",
+        "cityCorporation": "Dhaka North City Corporation",
+        "locationStatus": "official_city_corporation_only"
+      },
+      "identityVerification": {
+        "status": "verified",
+        "verificationReferenceId": "mohfw-facility-24610",
+        "verifiedAt": "2026-07-28T16:00:00+06:00"
+      },
+      "allocationShare": {
+        "status": "not_configured",
+        "value": null
+      },
+      "resources": [
+        {
+          "resourceType": "total_bed_capacity",
+          "unit": "count",
+          "quantity": 250,
+          "dataStatus": "verified_capacity_reference",
+          "availabilityStatus": "not_known",
+          "asOf": "2026-07-27T10:05:03+06:00",
+          "verificationReferenceId": "mohfw-facility-24610"
+        },
+        {
+          "resourceType": "available_beds",
+          "unit": "count",
+          "quantity": null,
+          "dataStatus": "unknown",
+          "availabilityStatus": "not_known",
+          "asOf": null,
+          "verificationReferenceId": "mohfw-facility-24610"
+        }
+      ],
+      "limitations": [
+        "Official capacity is not current availability.",
+        "Current available beds and dengue-bed allocation are unknown."
+      ]
     }
   ]
 }

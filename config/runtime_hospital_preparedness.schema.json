@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "preparednessId", "scenarioId", "deploymentId",
+    "deploymentDisplayName", "evidenceScope", "operationalDhakaValidation",
+    "officialHospitalIdentities", "officialBedCapacityReferences",
+    "currentHospitalAvailability", "allocationBasis", "resourceCoefficientBasis",
+    "operationalUseAllowed", "clinicalUseAllowed", "hospitalDecisionUseAllowed",
+    "preparednessInterpretation", "forecastSource", "authorityBindings",
+    "hospitals", "generatedAt"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "preparednessId": {"type": "string", "pattern": "^[a-f0-9-]{36}$"},
+    "scenarioId": {"enum": ["baseline_availability", "constrained_availability", "severe_constraint"]},
+    "deploymentId": {"const": "dhaka_south"},
+    "deploymentDisplayName": {"const": "Dhaka"},
+    "evidenceScope": {"const": "synthetic_qualification"},
+    "operationalDhakaValidation": {"const": false},
+    "officialHospitalIdentities": {"const": true},
+    "officialBedCapacityReferences": {"enum": [true, "mixed"]},
+    "currentHospitalAvailability": {"const": "synthetic"},
+    "allocationBasis": {"const": "synthetic_capacity_proportional_qualification"},
+    "resourceCoefficientBasis": {"const": "synthetic_pipeline_exercise"},
+    "operationalUseAllowed": {"const": false},
+    "clinicalUseAllowed": {"const": false},
+    "hospitalDecisionUseAllowed": {"const": false},
+    "preparednessInterpretation": {"const": "system_behavior_qualification_only"},
+    "forecastSource": {"type": "object"},
+    "authorityBindings": {"type": "object"},
+    "hospitals": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": [
+          "hospitalId", "status", "allocationShare", "allocatedForecastCases",
+          "availableResource", "resourcePerCase", "formulaId", "formulaSha256",
+          "syntheticGap", "unit", "limitations"
+        ],
+        "properties": {
+          "hospitalId": {"type": "string", "minLength": 1},
+          "status": {"enum": ["calculated_synthetic_gap_present", "no_calculated_synthetic_gap", "insufficient_capacity_reference", "not_eligible", "eligibility_not_verified"]},
+          "allocationShare": {"type": ["string", "null"]},
+          "allocatedForecastCases": {"type": ["integer", "null"], "minimum": 0},
+          "availableResource": {"type": ["integer", "null"], "minimum": 0},
+          "resourcePerCase": {"type": ["string", "null"]},
+          "formulaId": {"type": ["string", "null"]},
+          "formulaSha256": {"type": ["string", "null"]},
+          "syntheticGap": {"type": ["string", "null"]},
+          "unit": {"const": "bed_units"},
+          "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "generatedAt": {"type": "string", "format": "date-time"}
+  }
+}

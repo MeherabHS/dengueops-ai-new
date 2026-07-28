@@ -13,6 +13,7 @@ import {
   LIFECYCLE_QUICK_POLICY_RAW_SHA,
   LIFECYCLE_RF_PARAMETER_SHA,
   MODEL_LIFECYCLE_POLICY_SHA,
+  loadCurrentModelLifecyclePolicy,
   loadModelLifecyclePolicy,
 } from "./model-lifecycle-policy";
 import { validateStrictJsonSchema } from "./strict-json-schema";
@@ -22,6 +23,7 @@ import type { ActiveModelAuthority, CurrentActiveModelAuthority } from "./contra
 
 export type { ActiveModelAuthority } from "./contracts";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JsonObject = Record<string, any>;
 type JsonFile = { bytes: Buffer; value: JsonObject };
 type Bundle = {
@@ -213,18 +215,17 @@ export async function resolveActiveModelP2V2(params: {
 }): Promise<CurrentActiveModelAuthority> {
   const deploymentId = params.deploymentId || "dhaka_south";
   try {
-    const policy = await loadModelLifecyclePolicy({
-      repositoryRoot: params.repositoryRoot,
+    const policy = await loadCurrentModelLifecyclePolicy(
+      params.repositoryRoot,
       deploymentId,
-      version: "p2-v2"
-    });
+    );
     const pointerPath = path.join(params.runtimeRoot, "deployments", deploymentId, "model-assignment", "latest.json");
     let pointerFile: JsonFile;
     try {
       pointerFile = await safeJson(pointerPath, params.runtimeRoot);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        throw new RuntimePublicError("active_model_not_assigned", "storage", "No active model assigned on p2-v2 deployment.", 404);
+        throw new RuntimePublicError("active_model_not_assigned", "storage", "No active model assigned on the current deployment.", 404);
       }
       throw error;
     }

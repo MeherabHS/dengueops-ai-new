@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "syntheticInventoryId", "syntheticInventoryVersion",
+    "derivedFromOfficialCapacityReferenceId", "derivedFromOfficialCapacityReferenceSha256",
+    "evidenceScope", "operationalDhakaValidation", "syntheticData",
+    "operationalUseAllowed", "clinicalUseAllowed", "hospitalDecisionUseAllowed",
+    "scenarioPolicyId", "scenarioPolicySha256", "allocationMethod",
+    "operationalAllocationApproved", "scenarios", "syntheticInventorySha256"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "syntheticInventoryId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+    "syntheticInventoryVersion": {"const": "1.0.0"},
+    "derivedFromOfficialCapacityReferenceId": {"type": "string", "minLength": 1},
+    "derivedFromOfficialCapacityReferenceSha256": {"$ref": "#/$defs/sha"},
+    "evidenceScope": {"const": "synthetic_qualification"},
+    "operationalDhakaValidation": {"const": false},
+    "syntheticData": {"const": true},
+    "operationalUseAllowed": {"const": false},
+    "clinicalUseAllowed": {"const": false},
+    "hospitalDecisionUseAllowed": {"const": false},
+    "scenarioPolicyId": {"const": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION"},
+    "scenarioPolicySha256": {"$ref": "#/$defs/sha"},
+    "allocationMethod": {"const": "synthetic_capacity_proportional_qualification"},
+    "operationalAllocationApproved": {"const": false},
+    "scenarios": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["scenarioId", "availabilityFraction", "allocationShareTotal", "hospitals"],
+        "properties": {
+          "scenarioId": {"enum": ["baseline_availability", "constrained_availability", "severe_constraint"]},
+          "availabilityFraction": {"type": "string", "pattern": "^0\\.[0-9]{6}$"},
+          "allocationShareTotal": {"const": "1.000000"},
+          "hospitals": {
+            "type": "array",
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": [
+                "hospitalId", "eligibility", "allocationShare", "allocationStatus",
+                "synthetic", "generationMethod", "scenarioParameterIdentity",
+                "officialCapacityReference", "quantity", "unit", "resultStatus", "limitations"
+              ],
+              "properties": {
+                "hospitalId": {"type": "string", "minLength": 1},
+                "eligibility": {"enum": ["eligible", "potentially_eligible", "not_eligible", "not_verified"]},
+                "allocationShare": {"type": ["string", "null"], "pattern": "^(?:0\\.[0-9]{6}|1\\.000000)$"},
+                "allocationStatus": {"enum": ["configured", "not_eligible", "eligibility_not_verified", "insufficient_capacity_reference"]},
+                "synthetic": {"const": true},
+                "generationMethod": {"const": "floor_selected_bed_capacity_times_governed_fraction"},
+                "scenarioParameterIdentity": {"type": "string", "minLength": 1},
+                "officialCapacityReference": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["quantity", "unit", "capacityReferenceSha256"],
+                  "properties": {
+                    "quantity": {"type": ["integer", "null"], "minimum": 0},
+                    "unit": {"const": "beds"},
+                    "capacityReferenceSha256": {"$ref": "#/$defs/sha"}
+                  }
+                },
+                "quantity": {"type": ["integer", "null"], "minimum": 0},
+                "unit": {"const": "bed_units"},
+                "resultStatus": {"enum": ["synthetic_value_generated", "insufficient_capacity_reference", "not_eligible", "eligibility_not_verified"]},
+                "limitations": {"type": "array", "minItems": 4, "items": {"type": "string", "minLength": 1}}
+              }
+            }
+          }
+        }
+      }
+    },
+    "syntheticInventorySha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {"sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

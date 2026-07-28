@@ -7,9 +7,9 @@ INVENTORY_GAP_SLOT = "inventory.gap"
 SUPPORTED_FORMULA_SLOTS = frozenset({INVENTORY_GAP_SLOT})
 VARIABLE_CATALOG: dict[str, tuple[dict[str, str], ...]] = {
     INVENTORY_GAP_SLOT: (
-        {"name": "allocatedForecastCases", "unit": "cases_per_forecast_horizon", "domain": "nonnegative_decimal"},
-        {"name": "resourcePerCase", "unit": "resource_units_per_case", "domain": "nonnegative_decimal"},
-        {"name": "availableResource", "unit": "resource_units", "domain": "nonnegative_integer"},
+        {"name": "allocatedForecastCases", "unit": "cases_per_two_week_forecast_horizon", "domain": "nonnegative_decimal"},
+        {"name": "resourcePerCase", "unit": "bed_units_per_case_per_two_week_forecast_horizon", "domain": "nonnegative_decimal"},
+        {"name": "availableResource", "unit": "bed_units", "domain": "nonnegative_integer"},
     ),
 }
 

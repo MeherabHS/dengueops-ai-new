@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "preparednessId", "scenarioId", "deploymentId",
+    "evidenceScope", "forecastRunId", "forecastCommitSha256",
+    "artifactHashes", "publishedAt"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "preparednessId": {"type": "string", "pattern": "^[a-f0-9-]{36}$"},
+    "scenarioId": {"enum": ["baseline_availability", "constrained_availability", "severe_constraint"]},
+    "deploymentId": {"const": "dhaka_south"},
+    "evidenceScope": {"const": "synthetic_qualification"},
+    "forecastRunId": {"type": "string", "pattern": "^[a-f0-9-]{36}$"},
+    "forecastCommitSha256": {"$ref": "#/$defs/sha"},
+    "artifactHashes": {
+      "type": "object", "minProperties": 12, "maxProperties": 12,
+      "additionalProperties": {"$ref": "#/$defs/sha"}
+    },
+    "publishedAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {"sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

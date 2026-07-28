@@ -7,6 +7,7 @@
     "schemaVersion", "inventoryId", "inventoryVersion", "deploymentId",
     "deploymentDisplayName", "changeReason", "createdAt", "operatorIdentifier",
     "verificationStatus", "stalenessThresholdStatus", "allocationStatus",
+    "capacityReferenceId", "capacityReferenceSha256",
     "sourceReferences", "hospitals"
   ],
   "properties": {
@@ -18,7 +19,9 @@
     "changeReason": {"type": "string", "minLength": 1, "maxLength": 1000},
     "createdAt": {"type": "string", "format": "date-time"},
     "operatorIdentifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._@-]{0,127}$"},
-    "verificationStatus": {"enum": ["identity_verified_resources_unknown", "verified"]},
+    "verificationStatus": {"enum": ["identity_verified_resources_unknown", "identity_and_capacity_reference_verified", "verified"]},
+    "capacityReferenceId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+    "capacityReferenceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "stalenessThresholdStatus": {"const": "not_governed"},
     "allocationStatus": {"enum": ["not_configured", "configured"]},
     "sourceReferences": {
@@ -46,17 +49,18 @@
         "verifiedAt": {"type": "string", "format": "date-time"},
         "supportedFields": {
           "type": "array", "minItems": 1, "uniqueItems": true,
-          "items": {"enum": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]}
+          "items": {"enum": ["officialName", "ownership", "location", "facilityType", "facilityIdentity", "bedCapacityReference"]}
         }
       }
     },
     "location": {
       "type": "object", "additionalProperties": false,
-      "required": ["address", "administrativeArea", "cityCorporation"],
+      "required": ["address", "administrativeArea", "cityCorporation", "locationStatus"],
       "properties": {
-        "address": {"type": "string", "minLength": 1, "maxLength": 500},
+        "address": {"type": ["string", "null"], "minLength": 1, "maxLength": 500},
         "administrativeArea": {"type": "string", "minLength": 1, "maxLength": 128},
-        "cityCorporation": {"enum": ["Dhaka North City Corporation", "Dhaka South City Corporation"]},
+        "cityCorporation": {"enum": ["Dhaka North City Corporation", "Dhaka South City Corporation", "metropolitan_location_registry_field_missing"]},
+        "locationStatus": {"enum": ["official_address_verified", "official_city_corporation_only", "official_metropolitan_location_city_field_missing"]},
         "coordinates": {
           "type": "object", "additionalProperties": false,
           "required": ["latitude", "longitude"],
@@ -93,37 +97,39 @@
     },
     "resource": {
       "type": "object", "additionalProperties": false,
-      "required": ["resourceType", "unit", "quantity", "dataStatus", "asOf", "verificationReferenceId"],
+      "required": ["resourceType", "unit", "quantity", "dataStatus", "availabilityStatus", "asOf", "verificationReferenceId"],
       "properties": {
-        "resourceType": {"enum": ["beds_available", "beds_total", "dengue_beds", "icu_beds", "ns1_kits", "staffing"]},
+        "resourceType": {"enum": ["available_beds", "total_bed_capacity", "beds_available", "beds_total", "dengue_beds", "icu_beds", "ns1_kits", "staffing"]},
         "unit": {"const": "count"},
         "quantity": {"type": ["integer", "null"], "minimum": 0},
-        "dataStatus": {"enum": ["verified", "reported", "unknown", "unavailable"]},
+        "dataStatus": {"enum": ["verified", "reported", "verified_capacity_reference", "unknown", "unavailable"]},
+        "availabilityStatus": {"enum": ["not_known", "not_applicable"]},
         "asOf": {"type": ["string", "null"], "format": "date-time"},
         "verificationReferenceId": {"$ref": "#/$defs/safeId"}
       },
       "allOf": [
         {"if": {"properties": {"dataStatus": {"enum": ["unknown", "unavailable"]}}}, "then": {"properties": {"quantity": {"type": "null"}}}},
-        {"if": {"properties": {"dataStatus": {"enum": ["verified", "reported"]}}}, "then": {"properties": {"quantity": {"type": "integer"}, "asOf": {"type": "string"}}}}
+        {"if": {"properties": {"dataStatus": {"enum": ["verified", "reported", "verified_capacity_reference"]}}}, "then": {"properties": {"quantity": {"type": "integer"}, "asOf": {"type": "string"}}}}
       ]
     },
     "hospital": {
       "type": "object", "additionalProperties": false,
       "required": [
-        "hospitalId", "officialName", "facilityType", "ownership", "active",
+        "hospitalId", "officialFacilityRegistryId", "officialFacilityCode",
+        "officialName", "alternateNames", "facilityType", "ownership", "active",
         "location", "identityVerification", "allocationShare", "resources"
+        ,"denguePreparednessEligibility"
       ],
       "properties": {
         "hospitalId": {"$ref": "#/$defs/safeId"},
+        "officialFacilityRegistryId": {"type": "integer", "minimum": 1},
+        "officialFacilityCode": {"type": "string", "pattern": "^[0-9]+$"},
         "officialName": {"type": "string", "minLength": 1, "maxLength": 256},
+        "alternateNames": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
         "shortName": {"type": "string", "minLength": 1, "maxLength": 128},
-        "facilityType": {
-          "enum": [
-            "medical_college_hospital", "general_hospital", "health_complex",
-            "infectious_disease_hospital", "special_purpose_hospital"
-          ]
-        },
-        "ownership": {"const": "public_government"},
+        "facilityType": {"type": "string", "minLength": 1, "maxLength": 128},
+        "ownership": {"enum": ["public_government", "government_autonomous"]},
+        "denguePreparednessEligibility": {"enum": ["eligible", "potentially_eligible", "not_eligible", "not_verified"]},
         "active": {"type": "boolean"},
         "location": {"$ref": "#/$defs/location"},
         "displayArea": {"type": "string", "minLength": 1, "maxLength": 128},

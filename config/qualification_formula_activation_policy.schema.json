@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "policyId", "policyVersion", "authorityScope",
+    "operationalUseAllowed", "formulaBindings", "scenarioPolicyId",
+    "scenarioPolicySha256", "qualificationLimitations", "policySha256"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "policyId": {"const": "RUNTIME.FORMULA.ACTIVATION.SYNTHETIC_QUALIFICATION"},
+    "policyVersion": {"const": "b8.5-v1"},
+    "authorityScope": {"const": "synthetic_qualification"},
+    "operationalUseAllowed": {"const": false},
+    "formulaBindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["inventory.gap"],
+      "properties": {
+        "inventory.gap": {
+          "type": "object", "additionalProperties": false,
+          "required": ["activeFormulaId", "activeFormulaSha256"],
+          "properties": {
+            "activeFormulaId": {"type": "string", "pattern": "^inventory\\.gap\\.[a-z0-9._-]+$"},
+            "activeFormulaSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }
+        }
+      }
+    },
+    "scenarioPolicyId": {"const": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION"},
+    "scenarioPolicySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "qualificationLimitations": {"type": "array", "minItems": 3, "items": {"type": "string", "minLength": 1}},
+    "policySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

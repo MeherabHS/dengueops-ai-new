@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "coverageId": "dhaka-government-hospital-coverage-20260728-v1",
+  "internalDeploymentId": "dhaka_south",
+  "deploymentDisplayName": "Dhaka",
+  "scopeDefinition": "All officially discoverable and verifiable government inpatient hospitals within Dhaka North City Corporation and Dhaka South City Corporation, plus documented continuous-metropolitan facilities with missing registry city-corporation metadata, as of retrieval.",
+  "sourceQueries": [
+    {
+      "description": "Broad active nominally non-private official registry enumeration for both Dhaka city corporations.",
+      "url": "https://hris.mohfw.gov.bd/public/facility-registry/reports/organization-list?division_id%5B%5D=1&district_id%5B%5D=1&city_corporation_id%5B%5D=1&city_corporation_id%5B%5D=2&is_private=0&is_active=1&submit=Run",
+      "officialRecordCount": 161
+    },
+    {
+      "description": "Active nominally non-private Dhaka District Hospital/Clinic-function cross-check, including missing city-corporation metadata.",
+      "url": "https://hris.mohfw.gov.bd/public/facility-registry/reports/organization-list?division_id%5B%5D=1&district_id%5B%5D=1&facility_function_id%5B%5D=6&is_private=0&is_active=1&submit=Run",
+      "officialRecordCount": 54
+    }
+  ],
+  "researchTimestamp": "2026-07-28T16:00:00+06:00",
+  "totalOfficialRecordsReviewed": 161,
+  "detailedInpatientCandidatesReviewed": 47,
+  "includedHospitals": [6,7,8,9,10,11,13,26,29,31,32,47,50,52,53,54,66,2247,2249,13048,13562,16772,16773,16774,16775,18687,18786,22869,22956,23232,23233,23250,23277,23886,24220,24232,24589,24610],
+  "excludedFacilities": [
+    {"officialFacilityRegistryId":20,"officialName":"Bangladesh Secretariat Clinic","officialFacilityType":"Other Hospital","reason":"Official profile does not establish an inpatient hospital and reports no accepted positive bed capacity.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/20/profile?tab=detailed-information"},
+    {"officialFacilityRegistryId":22,"officialName":"National Asthma Center","officialFacilityType":"Specialized Health Center","reason":"Specialized centre without verified inpatient-hospital capacity in the governed review.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/22/profile?tab=detailed-information"},
+    {"officialFacilityRegistryId":2243,"officialName":"Bangladesh Korea Moitree Hospital","officialFacilityType":"30-bed Hospital","reason":"Registry location is outside the governed Dhaka North/South metropolitan scope.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/2243/profile?tab=detailed-information"},
+    {"officialFacilityRegistryId":22810,"officialName":"National Electro Medical Equipment Maintenance Workshop & Training Center","officialFacilityType":"Other","reason":"Equipment maintenance and training facility, not an inpatient hospital.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/22810/profile?tab=detailed-information"},
+    {"officialFacilityRegistryId":24245,"officialName":"National Institute of Laboratory Medicine and Referral Center","officialFacilityType":"Specialized Hospital","reason":"Official profile did not verify inpatient bed function or positive capacity; retained as a non-inpatient specialized-centre exclusion.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/24245/profile?tab=detailed-information"}
+  ],
+  "unresolvedFacilities": [
+    {"officialFacilityRegistryId":24216,"officialName":"Border Guard Hospital, Pilkhana","reason":"Government ownership and inpatient access/capacity fields are incomplete in the registry profile.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/24216/profile?tab=detailed-information"},
+    {"officialFacilityRegistryId":24645,"officialName":"Combined Military Hospital, Dhaka","reason":"Government ownership is plausible but not sufficiently bound by the registry profile and no official public bed field was available.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/24645/profile?tab=detailed-information"},
+    {"officialFacilityRegistryId":24961,"officialName":"Dhaka North City Corporation Hospital, Dhaka (COVID-19 Dedicated)","reason":"Current active inpatient function and public capacity could not be verified from the official profile.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/24961/profile?tab=detailed-information"},
+    {"officialFacilityRegistryId":25259,"officialName":"DNCC Isolation Center, Mohakhali, Dhaka","reason":"Current active inpatient-hospital status and public capacity could not be verified from the official profile.","sourceReference":"https://hris.mohfw.gov.bd/public/facility-registry/facilities/25259/profile?tab=detailed-information"}
+  ],
+  "duplicateAliasResolutions": [
+    {"hospitalId":"bangladesh-medical-university","officialName":"Bangladesh Medical University (BMU)","aliases":["Bangabandhu Sheikh Mujib Medical University"]},
+    {"hospitalId":"kurmitola-general-hospital","officialName":"Kurmitola Multicare Specialized Hospital","aliases":["Kurmitola General Hospital"]},
+    {"hospitalId":"national-burn-plastic-surgery-hospital","officialName":"National Institute of Burn and Plastic Surgery, Dhaka","aliases":["Sheikh Hasina National Institute of Burn and Plastic Surgery"]}
+  ],
+  "completenessLimitations": [
+    "The Facility Registry contains inconsistent private, function, ownership and city-corporation metadata; detailed profiles were used to fail closed.",
+    "Facilities under defence or city agencies with incomplete official public profiles remain unresolved rather than included.",
+    "The artifact describes all officially discoverable and verifiable records under the documented queries as of retrieval; it does not claim a timeless exhaustive census.",
+    "No current available-bed, dengue-bed, occupancy, NS1-kit or staffing values were researched or inferred."
+  ],
+  "coverageSha256": "fbfd7a3771caecffd69edbd1db84c8870894efa03fefee16ba38770f346fd912"
+}

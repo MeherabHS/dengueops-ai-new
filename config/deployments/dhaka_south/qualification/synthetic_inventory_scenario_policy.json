@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "policyId": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION",
+  "policyVersion": "b8.5-v1",
+  "authorityScope": "synthetic_qualification",
+  "operationalUseAllowed": false,
+  "clinicalUseAllowed": false,
+  "hospitalDecisionUseAllowed": false,
+  "availabilityScenarios": {
+    "baseline_availability": "0.300000",
+    "constrained_availability": "0.150000",
+    "severe_constraint": "0.050000"
+  },
+  "coefficient": {
+    "coefficientType": "synthetic_pipeline_exercise",
+    "resourcePerCase": "0.050000",
+    "unit": "bed_units_per_case_per_two_week_forecast_horizon",
+    "forecastHorizon": "two_weeks",
+    "scientificUseAllowed": false,
+    "clinicalUseAllowed": false,
+    "operationalUseAllowed": false
+  },
+  "allocationMethod": "synthetic_capacity_proportional_qualification",
+  "decimalScale": 6,
+  "roundingMethod": "floor_capacity_fraction_and_largest_remainder_allocation",
+  "limitations": [
+    "Availability fractions are deterministic simulation parameters, not medical facts.",
+    "Values are not estimated current occupancy or hospital-reported availability.",
+    "Values are not dengue-bed allocations or real catchment shares.",
+    "The coefficient exists only to exercise the governed software pipeline."
+  ],
+  "policySha256": "38fd5ff0eb95df5d69438d26182d666e25476663fe61217d47c1ac1bf444ed8e"
+}

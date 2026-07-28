@@ -95,7 +95,9 @@ def approved_policy(formula: dict) -> dict:
 
 def test_production_registry_and_policy_are_unconfigured() -> None:
     registry, policy = load_governed_formula_registry(), load_formula_activation_policy()
-    assert registry["formulas"] == []
+    assert [formula["formulaId"] for formula in registry["formulas"]] == [
+        "inventory.gap.synthetic-qualification.v1"
+    ]
     assert policy["formulaBindings"] == {}
     assert policy["inventoryGapActivationStatus"] == "not_configured"
     assert policy["authorityGate"]["status"] == "not_approved"

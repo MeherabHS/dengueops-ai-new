@@ -37,8 +37,8 @@ def import_seed(runtime: Path) -> dict:
 
 def write_second_seed(path: Path) -> dict:
     inventory = copy.deepcopy(load_inventory())
-    inventory["inventoryId"] = "dhaka-government-hospitals-20260728-v2"
-    inventory["inventoryVersion"] = "1.0.1"
+    inventory["inventoryId"] = "dhaka-government-hospitals-20260728-v3"
+    inventory["inventoryVersion"] = "2.0.1"
     inventory["changeReason"] = "Deactivate one hospital in an immutable test version."
     inventory["operatorIdentifier"] = "test-operator"
     inventory["hospitals"][0]["active"] = False
@@ -162,7 +162,8 @@ def test_governed_add_update_deactivate_workflow_preserves_every_version(tmp_pat
 
     with_update = copy.deepcopy(added_inventory)
     resource = with_update["hospitals"][0]["resources"][0]
-    resource.update(quantity=25, dataStatus="verified", asOf="2026-07-28T00:00:00Z")
+    original_quantity = resource["quantity"]
+    resource.update(quantity=25, dataStatus="verified_capacity_reference", asOf="2026-07-28T00:00:00Z")
     update_path = tmp_path / "update.json"
     update_reason = "Acceptance fixture: update a governed resource value."
     updated_inventory = write_inventory_version(
@@ -211,6 +212,6 @@ def test_governed_add_update_deactivate_workflow_preserves_every_version(tmp_pat
 
     # Publishing later changes cannot rewrite the earlier immutable artifact.
     assert add_artifact.read_bytes() == add_bytes
-    assert verified_add["inventory"]["hospitals"][0]["resources"][0]["quantity"] is None
+    assert verified_add["inventory"]["hospitals"][0]["resources"][0]["quantity"] == original_quantity
     assert verified_add["inventoryArtifactSha256"] != verified_update["inventoryArtifactSha256"]
     assert verified_update["inventoryArtifactSha256"] != verified_deactivate["inventoryArtifactSha256"]

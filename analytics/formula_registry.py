@@ -289,6 +289,15 @@ def validate_governed_formula_registry(registry: Any) -> dict[str, Any]:
             raise FormulaRegistryError("Duplicate governed formula ID.")
         seen_ids.add(formula["formulaId"])
         validate_formula_input_catalog(formula)
+        from safe_formula import SafeFormulaError, evaluate_formula
+        try:
+            evaluate_formula(
+                formula["expression"],
+                {item["name"]: 1 for item in formula["inputs"]},
+                allowed_variables={item["name"] for item in formula["inputs"]},
+            )
+        except SafeFormulaError as exc:
+            raise FormulaRegistryError(f"Governed formula expression is invalid: {formula['formulaId']}.") from exc
         if formula["formulaSha256"] != governed_formula_sha256(formula):
             raise FormulaRegistryError(f"Governed formula hash mismatch: {formula['formulaId']}.")
         prohibited = {"pythonPath", "moduleName", "functionPath", "callable", "implementationReference"}

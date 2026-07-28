@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "policyId", "policyVersion", "authorityScope",
+    "operationalUseAllowed", "clinicalUseAllowed", "hospitalDecisionUseAllowed",
+    "availabilityScenarios", "coefficient", "allocationMethod", "decimalScale",
+    "roundingMethod", "limitations", "policySha256"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "policyId": {"const": "HOSPITAL.INVENTORY.SYNTHETIC.QUALIFICATION"},
+    "policyVersion": {"const": "b8.5-v1"},
+    "authorityScope": {"const": "synthetic_qualification"},
+    "operationalUseAllowed": {"const": false},
+    "clinicalUseAllowed": {"const": false},
+    "hospitalDecisionUseAllowed": {"const": false},
+    "availabilityScenarios": {
+      "type": "object", "additionalProperties": false,
+      "required": ["baseline_availability", "constrained_availability", "severe_constraint"],
+      "properties": {
+        "baseline_availability": {"const": "0.300000"},
+        "constrained_availability": {"const": "0.150000"},
+        "severe_constraint": {"const": "0.050000"}
+      }
+    },
+    "coefficient": {
+      "type": "object", "additionalProperties": false,
+      "required": ["coefficientType", "resourcePerCase", "unit", "forecastHorizon", "scientificUseAllowed", "clinicalUseAllowed", "operationalUseAllowed"],
+      "properties": {
+        "coefficientType": {"const": "synthetic_pipeline_exercise"},
+        "resourcePerCase": {"const": "0.050000"},
+        "unit": {"const": "bed_units_per_case_per_two_week_forecast_horizon"},
+        "forecastHorizon": {"const": "two_weeks"},
+        "scientificUseAllowed": {"const": false},
+        "clinicalUseAllowed": {"const": false},
+        "operationalUseAllowed": {"const": false}
+      }
+    },
+    "allocationMethod": {"const": "synthetic_capacity_proportional_qualification"},
+    "decimalScale": {"const": 6},
+    "roundingMethod": {"const": "floor_capacity_fraction_and_largest_remainder_allocation"},
+    "limitations": {"type": "array", "minItems": 4, "items": {"type": "string", "minLength": 1}},
+    "policySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

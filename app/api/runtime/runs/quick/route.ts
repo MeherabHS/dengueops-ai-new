@@ -7,6 +7,7 @@ import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained, jobRecordPath, runtimeCollectionPaths, workspacePaths } from "@/lib/runtime/paths";
 import { createPendingJob, createWorkspaceStartMarker, initializeRuntimeRoot } from "@/lib/runtime/store";
 import {resolveActiveModel} from "@/lib/runtime/active-model";
+import { loadCurrentModelLifecyclePolicy } from "@/lib/runtime/model-lifecycle-policy";
 
 export const runtime = "nodejs";
 
@@ -60,6 +61,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const validationBytes = await readFile(workspace.validation);
     if (sha256(validationBytes) !== body.validationRecordSha256) throw new RuntimePublicError("validation_record_mismatch", "validation", "The validation record has changed.", 409);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const validation = JSON.parse(validationBytes.toString("utf8")) as Record<string, any>;
     const [dengue, climate] = await Promise.all([readFile(workspace.dengueCanonical), readFile(workspace.climateCanonical)]);
     if (sha256(dengue) !== validation.files?.canonical?.dengueSha256 || sha256(climate) !== validation.files?.canonical?.climateSha256) {
@@ -69,26 +71,29 @@ export async function POST(request: Request): Promise<Response> {
     if (recomputeDatasetId(dengue, climate, String(body.deploymentId), featureHash) !== body.datasetId) throw new RuntimePublicError("dataset_identity_mismatch", "validation", "The uploaded dataset identity could not be verified.", 409);
 
     const policyPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "deployments", String(body.deploymentId), "quick_forecast_policy.json"));
-    const lifecyclePolicyPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "deployments", String(body.deploymentId), "model_lifecycle_policy.json"));
     const registryPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.json"));
-    const [policyBytes, lifecyclePolicyBytes, registryBytes] = await Promise.all([readFile(policyPath), readFile(lifecyclePolicyPath), readFile(registryPath)]);
+    const [policyBytes, lifecyclePolicy, registryBytes] = await Promise.all([
+      readFile(policyPath),
+      loadCurrentModelLifecyclePolicy(config.repositoryRoot, String(body.deploymentId)),
+      readFile(registryPath),
+    ]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const policy = JSON.parse(policyBytes.toString("utf8")) as Record<string, any>;
-    const lifecyclePolicy = JSON.parse(lifecyclePolicyBytes.toString("utf8")) as Record<string, any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const registry = JSON.parse(registryBytes.toString("utf8")) as Record<string, any>;
     const policyHash = canonicalPolicySha256(policy);
-    const lifecyclePolicyHash = canonicalPolicySha256(lifecyclePolicy);
     const quick = validation.eligibility?.quickForecast;
     const candidate = registry.candidates?.find((value: Record<string, unknown>) => value.model_id === authority.modelId);
     if (policy.schemaVersion !== "2.0" || policy.policyId !== "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
-      || policy.policyVersion !== "p2-v1" || policy.policyStatus !== "active" || policy.policySha256 !== policyHash
+      || policy.policyVersion !== lifecyclePolicy.allowedQuickForecastPolicyVersion
+      || policy.policyStatus !== "active" || policy.policySha256 !== policyHash
       || policy.deploymentId !== body.deploymentId || policy.requiresActiveAssignment !== true
       || policy.profileFallbackAllowed !== false || policy.baselineQuickForecastAllowed !== false
       || quick?.eligible !== true || sha256(registryBytes) !== policy.candidateRegistrySha256
       || policy.candidateRegistrySha256 !== authority.candidateRegistrySha256
       || featureHash !== policy.featureOrderSha256 || policy.featureOrderSha256 !== authority.featureOrderSha256
       || !policy.allowedCandidateIds?.includes(authority.modelId)
-      || lifecyclePolicy.policySha256 !== lifecyclePolicyHash
-      || lifecyclePolicyHash !== authority.lifecyclePolicySha256
+      || lifecyclePolicy.policySha256 !== authority.lifecyclePolicySha256
       || lifecyclePolicy.policyId !== authority.lifecyclePolicyId
       || lifecyclePolicy.policyVersion !== authority.lifecyclePolicyVersion
       || lifecyclePolicy.allowedQuickForecastPolicyVersion !== policy.policyVersion
@@ -131,7 +136,7 @@ export async function POST(request: Request): Promise<Response> {
     };
     try {
       await createPendingJob(jobRecordPath(collections.pendingJobs, jobId), job);
-    } catch (error) {
+    } catch {
       await rm(marker, { force: true }).catch(() => undefined);
       throw new RuntimePublicError("job_creation_failed", "storage", "The Quick Forecast job could not be queued.", 500, true);
     }
