@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime portfolio benchmark commit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "benchmarkId", "generatedAt", "evidenceScope",
+    "operationalDhakaValidation", "benchmarkArtifactPath",
+    "benchmarkArtifactSha256", "sourceAssessmentCommitSnapshotPath",
+    "sourceAssessmentCommitSnapshotSha256", "sourceAssessmentId",
+    "sourceAssessmentPath", "sourceAssessmentCommitSha256",
+    "sourceArtifactHashes", "benchmarkPolicy", "candidateRegistryVersion",
+    "candidateRegistrySha256", "assessmentPolicy", "foldPlanSha256",
+    "commonFoldSetSha256", "status", "automaticModelRemovalAllowed"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "benchmarkId": {"$ref": "#/$defs/uuid"},
+    "generatedAt": {"type": "string", "format": "date-time"},
+    "evidenceScope": {
+      "enum": ["synthetic_qualification", "historical_dhaka", "real_dhaka"]
+    },
+    "operationalDhakaValidation": {"type": "boolean"},
+    "benchmarkArtifactPath": {"const": "artifacts/portfolio_benchmark.json"},
+    "benchmarkArtifactSha256": {"$ref": "#/$defs/sha"},
+    "sourceAssessmentCommitSnapshotPath": {"const": "artifacts/source_assessment_commit.json"},
+    "sourceAssessmentCommitSnapshotSha256": {"$ref": "#/$defs/sha"},
+    "sourceAssessmentId": {"$ref": "#/$defs/uuid"},
+    "sourceAssessmentPath": {"type": "string", "minLength": 1},
+    "sourceAssessmentCommitSha256": {"$ref": "#/$defs/sha"},
+    "sourceArtifactHashes": {"$ref": "#/$defs/sourceHashes"},
+    "benchmarkPolicy": {"$ref": "#/$defs/benchmarkPolicy"},
+    "candidateRegistryVersion": {"const": "p2-v2"},
+    "candidateRegistrySha256": {"$ref": "#/$defs/sha"},
+    "assessmentPolicy": {"$ref": "#/$defs/assessmentPolicy"},
+    "foldPlanSha256": {"$ref": "#/$defs/sha"},
+    "commonFoldSetSha256": {"$ref": "#/$defs/sha"},
+    "status": {"const": "committed"},
+    "automaticModelRemovalAllowed": {"const": false}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "sourceHashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_summary.json", "candidate_model_comparison.json",
+        "input_manifest.json", "model_features.csv", "recommendation.json",
+        "rolling_validation.json"
+      ],
+      "properties": {
+        "assessment_summary.json": {"$ref": "#/$defs/sha"},
+        "candidate_model_comparison.json": {"$ref": "#/$defs/sha"},
+        "input_manifest.json": {"$ref": "#/$defs/sha"},
+        "model_features.csv": {"$ref": "#/$defs/sha"},
+        "recommendation.json": {"$ref": "#/$defs/sha"},
+        "rolling_validation.json": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "benchmarkPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policyId", "policyVersion", "policySha256", "policyRawSha256"],
+      "properties": {
+        "policyId": {"const": "RUNTIME.PORTFOLIO_BENCHMARK.EVIDENCE"},
+        "policyVersion": {"const": "p1-v1"},
+        "policySha256": {"$ref": "#/$defs/sha"},
+        "policyRawSha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "assessmentPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policyId", "policyVersion", "policySha256"],
+      "properties": {
+        "policyId": {"const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"},
+        "policyVersion": {"const": "p2-v3"},
+        "policySha256": {"$ref": "#/$defs/sha"}
+      }
+    }
+  }
+}

@@ -1,0 +1,459 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime portfolio benchmark",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "benchmarkId", "generatedAt", "evidenceScope",
+    "operationalDhakaValidation", "datasetSourceClassification", "policy",
+    "sourceAuthority", "candidateOrder", "sourceFoldCounts", "primaryCohort",
+    "candidateSummaries", "baselineRelativeSummaries", "foldWinSummaries",
+    "pairwiseComparisons", "descriptiveObservedCaseTertiles", "rankingStability",
+    "sourceTechnicalWinnerModelId", "rationalization", "limitations"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "benchmarkId": {"$ref": "#/$defs/uuid"},
+    "generatedAt": {"type": "string", "format": "date-time"},
+    "evidenceScope": {"$ref": "#/$defs/evidenceScope"},
+    "operationalDhakaValidation": {"type": "boolean"},
+    "datasetSourceClassification": {"type": "string", "minLength": 1},
+    "policy": {"$ref": "#/$defs/policy"},
+    "sourceAuthority": {"$ref": "#/$defs/sourceAuthority"},
+    "candidateOrder": {"$ref": "#/$defs/modelIds"},
+    "sourceFoldCounts": {"$ref": "#/$defs/sourceFoldCounts"},
+    "primaryCohort": {"$ref": "#/$defs/primaryCohort"},
+    "candidateSummaries": {
+      "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/candidateSummary"}
+    },
+    "baselineRelativeSummaries": {
+      "type": "array", "items": {"$ref": "#/$defs/baselineRelative"}
+    },
+    "foldWinSummaries": {
+      "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/foldWin"}
+    },
+    "pairwiseComparisons": {
+      "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/pairwise"}
+    },
+    "descriptiveObservedCaseTertiles": {
+      "type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/tertile"}
+    },
+    "rankingStability": {"$ref": "#/$defs/rankingStability"},
+    "sourceTechnicalWinnerModelId": {"$ref": "#/$defs/modelId"},
+    "rationalization": {"$ref": "#/$defs/rationalization"},
+    "limitations": {
+      "type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "modelId": {"type": "string", "minLength": 1},
+    "modelIds": {
+      "type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/modelId"}
+    },
+    "foldIds": {
+      "type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}
+    },
+    "nonnegativeInteger": {"type": "integer", "minimum": 0},
+    "finiteNumber": {"type": "number"},
+    "nullableNumber": {"type": ["number", "null"]},
+    "evidenceScope": {
+      "enum": ["synthetic_qualification", "historical_dhaka", "real_dhaka"]
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policyId", "policyVersion", "policySha256", "policyRawSha256"],
+      "properties": {
+        "policyId": {"const": "RUNTIME.PORTFOLIO_BENCHMARK.EVIDENCE"},
+        "policyVersion": {"const": "p1-v1"},
+        "policySha256": {"$ref": "#/$defs/sha"},
+        "policyRawSha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "assessmentPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policyId", "policyVersion", "policySha256"],
+      "properties": {
+        "policyId": {"const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"},
+        "policyVersion": {"const": "p2-v3"},
+        "policySha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "sourceAuthority": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "assessmentId", "assessmentPath", "assessmentCommitSha256", "datasetId",
+        "validationRecordSha256", "assessmentPolicy", "candidateRegistryVersion",
+        "candidateRegistrySha256", "foldPlanSha256", "target", "horizonWeeks"
+      ],
+      "properties": {
+        "assessmentId": {"$ref": "#/$defs/uuid"},
+        "assessmentPath": {"type": "string", "minLength": 1},
+        "assessmentCommitSha256": {"$ref": "#/$defs/sha"},
+        "datasetId": {"$ref": "#/$defs/sha"},
+        "validationRecordSha256": {"$ref": "#/$defs/sha"},
+        "assessmentPolicy": {"$ref": "#/$defs/assessmentPolicy"},
+        "candidateRegistryVersion": {"const": "p2-v2"},
+        "candidateRegistrySha256": {"$ref": "#/$defs/sha"},
+        "foldPlanSha256": {"$ref": "#/$defs/sha"},
+        "target": {"const": "target_cases_next_2w"},
+        "horizonWeeks": {"const": 2}
+      }
+    },
+    "completion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["modelId", "successfulFolds", "failedFolds"],
+      "properties": {
+        "modelId": {"$ref": "#/$defs/modelId"},
+        "successfulFolds": {"$ref": "#/$defs/nonnegativeInteger"},
+        "failedFolds": {"$ref": "#/$defs/nonnegativeInteger"}
+      }
+    },
+    "sourceFoldCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["plannedFolds", "candidateCompletion"],
+      "properties": {
+        "plannedFolds": {"type": "integer", "minimum": 1},
+        "candidateCompletion": {
+          "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/completion"}
+        }
+      }
+    },
+    "excludedReason": {
+      "type": "object", "additionalProperties": false,
+      "required": ["modelId", "foldStatus", "failureReasonCode"],
+      "properties": {
+        "modelId": {"$ref": "#/$defs/modelId"},
+        "foldStatus": {"enum": ["failed"]},
+        "failureReasonCode": {"type": "string", "minLength": 1}
+      }
+    },
+    "excludedFold": {
+      "type": "object", "additionalProperties": false,
+      "required": ["foldId", "reasons"],
+      "properties": {
+        "foldId": {"type": "string", "minLength": 1},
+        "reasons": {
+          "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/excludedReason"}
+        }
+      }
+    },
+    "primaryCohort": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "method", "commonSuccessFoldCount", "orderedCommonFoldIds",
+        "commonFoldSetSha256", "excludedFolds"
+      ],
+      "properties": {
+        "method": {"const": "intersection_of_successful_or_warning_folds_for_every_candidate"},
+        "commonSuccessFoldCount": {"$ref": "#/$defs/nonnegativeInteger"},
+        "orderedCommonFoldIds": {"$ref": "#/$defs/foldIds"},
+        "commonFoldSetSha256": {"$ref": "#/$defs/sha"},
+        "excludedFolds": {"type": "array", "items": {"$ref": "#/$defs/excludedFold"}}
+      }
+    },
+    "reasonFrequency": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reason", "count"],
+      "properties": {
+        "reason": {"type": "string", "minLength": 1},
+        "count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "sourceMetrics": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "mae", "rmse", "mse", "r2", "wape", "medianAbsoluteError",
+        "maximumAbsoluteError", "clippingCount", "warningCount", "runtimeSeconds"
+      ],
+      "properties": {
+        "mae": {"$ref": "#/$defs/finiteNumber"},
+        "rmse": {"$ref": "#/$defs/finiteNumber"},
+        "mse": {"$ref": "#/$defs/finiteNumber"},
+        "r2": {"$ref": "#/$defs/nullableNumber"},
+        "wape": {"$ref": "#/$defs/nullableNumber"},
+        "medianAbsoluteError": {"$ref": "#/$defs/finiteNumber"},
+        "maximumAbsoluteError": {"$ref": "#/$defs/finiteNumber"},
+        "clippingCount": {"$ref": "#/$defs/nonnegativeInteger"},
+        "warningCount": {"$ref": "#/$defs/nonnegativeInteger"},
+        "runtimeSeconds": {"$ref": "#/$defs/finiteNumber"}
+      }
+    },
+    "commonMetrics": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "mae", "rmse", "wape", "medianAbsoluteError", "maximumAbsoluteError",
+        "signedMeanError", "successfulFoldCount", "totalRuntimeSeconds", "medianRuntimeSeconds"
+      ],
+      "properties": {
+        "mae": {"$ref": "#/$defs/finiteNumber"},
+        "rmse": {"$ref": "#/$defs/finiteNumber"},
+        "wape": {"$ref": "#/$defs/nullableNumber"},
+        "medianAbsoluteError": {"$ref": "#/$defs/finiteNumber"},
+        "maximumAbsoluteError": {"$ref": "#/$defs/finiteNumber"},
+        "signedMeanError": {"$ref": "#/$defs/finiteNumber"},
+        "successfulFoldCount": {"type": "integer", "minimum": 1},
+        "totalRuntimeSeconds": {"$ref": "#/$defs/finiteNumber"},
+        "medianRuntimeSeconds": {"$ref": "#/$defs/finiteNumber"}
+      }
+    },
+    "candidateSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "modelId", "candidateClass", "deployabilityClass", "modelFamily",
+        "preprocessingIdentity", "plannedFolds", "successfulFolds", "failedFolds",
+        "completionRate", "failureReasonFrequency", "sourceReportedAssessmentMetrics",
+        "candidateSpecificCohortLabel", "primaryCommonCohortMetrics"
+      ],
+      "properties": {
+        "modelId": {"$ref": "#/$defs/modelId"},
+        "candidateClass": {"enum": ["comparison_baseline", "learned_model"]},
+        "deployabilityClass": {
+          "enum": ["baseline_not_runtime_deployable", "deployable_learned_model"]
+        },
+        "modelFamily": {"type": "string", "minLength": 1},
+        "preprocessingIdentity": {"$ref": "#/$defs/sha"},
+        "plannedFolds": {"type": "integer", "minimum": 1},
+        "successfulFolds": {"$ref": "#/$defs/nonnegativeInteger"},
+        "failedFolds": {"$ref": "#/$defs/nonnegativeInteger"},
+        "completionRate": {"type": "number", "minimum": 0, "maximum": 1},
+        "failureReasonFrequency": {
+          "type": "array", "items": {"$ref": "#/$defs/reasonFrequency"}
+        },
+        "sourceReportedAssessmentMetrics": {"$ref": "#/$defs/sourceMetrics"},
+        "candidateSpecificCohortLabel": {"const": "non_comparable_candidate_specific_cohort"},
+        "primaryCommonCohortMetrics": {"$ref": "#/$defs/commonMetrics"}
+      }
+    },
+    "metricDelta": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mae", "rmse", "wape"],
+      "properties": {
+        "mae": {"$ref": "#/$defs/finiteNumber"},
+        "rmse": {"$ref": "#/$defs/finiteNumber"},
+        "wape": {"$ref": "#/$defs/nullableNumber"}
+      }
+    },
+    "comparisonCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["leftBetter", "tied", "leftWorse"],
+      "properties": {
+        "leftBetter": {"$ref": "#/$defs/nonnegativeInteger"},
+        "tied": {"$ref": "#/$defs/nonnegativeInteger"},
+        "leftWorse": {"$ref": "#/$defs/nonnegativeInteger"}
+      }
+    },
+    "baselineRelative": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "modelId", "baselineModelId", "metricDeltaModelMinusBaseline",
+        "absoluteErrorComparison"
+      ],
+      "properties": {
+        "modelId": {"$ref": "#/$defs/modelId"},
+        "baselineModelId": {"enum": ["moving_average_4w", "seasonal_naive_52w"]},
+        "metricDeltaModelMinusBaseline": {"$ref": "#/$defs/metricDelta"},
+        "absoluteErrorComparison": {"$ref": "#/$defs/comparisonCounts"}
+      }
+    },
+    "foldWin": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "modelId", "outrightWins", "tiedWins", "losses", "availableFolds",
+        "winShare", "tieShare"
+      ],
+      "properties": {
+        "modelId": {"$ref": "#/$defs/modelId"},
+        "outrightWins": {"$ref": "#/$defs/nonnegativeInteger"},
+        "tiedWins": {"$ref": "#/$defs/nonnegativeInteger"},
+        "losses": {"$ref": "#/$defs/nonnegativeInteger"},
+        "availableFolds": {"$ref": "#/$defs/nonnegativeInteger"},
+        "winShare": {"$ref": "#/$defs/nullableNumber"},
+        "tieShare": {"$ref": "#/$defs/nullableNumber"}
+      }
+    },
+    "correlation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "sampleCount", "value"],
+      "properties": {
+        "status": {
+          "enum": ["computable", "insufficient_samples", "constant_series", "non_finite_input"]
+        },
+        "sampleCount": {"$ref": "#/$defs/nonnegativeInteger"},
+        "value": {"type": ["number", "null"], "minimum": -1, "maximum": 1}
+      }
+    },
+    "groupDelta": {
+      "type": "object", "additionalProperties": false,
+      "required": ["label", "foldIds", "metricDelta"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "foldIds": {"$ref": "#/$defs/foldIds"},
+        "metricDelta": {
+          "anyOf": [{"$ref": "#/$defs/metricDelta"}, {"type": "null"}]
+        }
+      }
+    },
+    "failureSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["failedFoldCount", "reasonFrequency", "totalRuntimeSeconds"],
+      "properties": {
+        "failedFoldCount": {"$ref": "#/$defs/nonnegativeInteger"},
+        "reasonFrequency": {
+          "type": "array", "items": {"$ref": "#/$defs/reasonFrequency"}
+        },
+        "totalRuntimeSeconds": {"$ref": "#/$defs/finiteNumber"}
+      }
+    },
+    "pairwise": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "leftModelId", "rightModelId", "prominent", "commonSuccessfulFoldIds",
+        "sampleCount", "leftMetrics", "rightMetrics", "metricDeltaLeftMinusRight",
+        "absoluteErrorComparison", "signedResidualCorrelation",
+        "absoluteErrorCorrelation", "predictionCorrelation", "halfDeltas",
+        "descriptiveTertileDeltas", "leftFailureSummary", "rightFailureSummary",
+        "leftModelFamily", "rightModelFamily", "leftPreprocessingIdentity",
+        "rightPreprocessingIdentity"
+      ],
+      "properties": {
+        "leftModelId": {"$ref": "#/$defs/modelId"},
+        "rightModelId": {"$ref": "#/$defs/modelId"},
+        "prominent": {"type": "boolean"},
+        "commonSuccessfulFoldIds": {"$ref": "#/$defs/foldIds"},
+        "sampleCount": {"$ref": "#/$defs/nonnegativeInteger"},
+        "leftMetrics": {"$ref": "#/$defs/commonMetrics"},
+        "rightMetrics": {"$ref": "#/$defs/commonMetrics"},
+        "metricDeltaLeftMinusRight": {
+          "anyOf": [{"$ref": "#/$defs/metricDelta"}, {"type": "null"}]
+        },
+        "absoluteErrorComparison": {"$ref": "#/$defs/comparisonCounts"},
+        "signedResidualCorrelation": {"$ref": "#/$defs/correlation"},
+        "absoluteErrorCorrelation": {"$ref": "#/$defs/correlation"},
+        "predictionCorrelation": {"$ref": "#/$defs/correlation"},
+        "halfDeltas": {
+          "type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/groupDelta"}
+        },
+        "descriptiveTertileDeltas": {
+          "type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/groupDelta"}
+        },
+        "leftFailureSummary": {"$ref": "#/$defs/failureSummary"},
+        "rightFailureSummary": {"$ref": "#/$defs/failureSummary"},
+        "leftModelFamily": {"type": "string", "minLength": 1},
+        "rightModelFamily": {"type": "string", "minLength": 1},
+        "leftPreprocessingIdentity": {"$ref": "#/$defs/sha"},
+        "rightPreprocessingIdentity": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "tertile": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "label", "foldIds", "foldCount", "minimumActualTarget",
+        "maximumActualTarget", "operationalThreshold"
+      ],
+      "properties": {
+        "label": {
+          "enum": [
+            "lower_observed_case_tertile", "middle_observed_case_tertile",
+            "upper_observed_case_tertile"
+          ]
+        },
+        "foldIds": {"$ref": "#/$defs/foldIds"},
+        "foldCount": {"$ref": "#/$defs/nonnegativeInteger"},
+        "minimumActualTarget": {"$ref": "#/$defs/nullableNumber"},
+        "maximumActualTarget": {"$ref": "#/$defs/nullableNumber"},
+        "operationalThreshold": {"const": false}
+      }
+    },
+    "rankingGroup": {
+      "type": "object", "additionalProperties": false,
+      "required": ["label", "foldIds", "ranking"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "foldIds": {"$ref": "#/$defs/foldIds"},
+        "ranking": {"$ref": "#/$defs/modelIds"}
+      }
+    },
+    "rankCount": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rank", "count"],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1},
+        "count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "rankDistribution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["modelId", "rankCounts"],
+      "properties": {
+        "modelId": {"$ref": "#/$defs/modelId"},
+        "rankCounts": {"type": "array", "items": {"$ref": "#/$defs/rankCount"}}
+      }
+    },
+    "rankingStability": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "firstSecondHalf", "contiguousBlocks", "descriptiveTertiles",
+        "perFoldRankDistributions"
+      ],
+      "properties": {
+        "firstSecondHalf": {
+          "type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/rankingGroup"}
+        },
+        "contiguousBlocks": {
+          "type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/rankingGroup"}
+        },
+        "descriptiveTertiles": {
+          "type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/rankingGroup"}
+        },
+        "perFoldRankDistributions": {
+          "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/rankDistribution"}
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["modelId", "category", "advisory", "reasonCodes"],
+      "properties": {
+        "modelId": {"$ref": "#/$defs/modelId"},
+        "category": {
+          "enum": [
+            "KEEP_CORE", "KEEP_SPECIALIST", "KEEP_PENDING_MORE_DATA",
+            "REDUNDANCY_CANDIDATE", "RETIREMENT_CANDIDATE", "INSUFFICIENT_EVIDENCE"
+          ]
+        },
+        "advisory": {"const": true},
+        "reasonCodes": {
+          "type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "rationalization": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "advisoryOnly", "redundancyClassificationStatus", "retirementThresholdStatus",
+        "recommendations", "automaticCandidateRemovalAllowed",
+        "automaticRegistryMutationAllowed", "automaticAssignmentMutationAllowed",
+        "automaticPolicyMutationAllowed"
+      ],
+      "properties": {
+        "advisoryOnly": {"const": true},
+        "redundancyClassificationStatus": {"const": "not_governed"},
+        "retirementThresholdStatus": {"const": "not_governed"},
+        "recommendations": {
+          "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/recommendation"}
+        },
+        "automaticCandidateRemovalAllowed": {"const": false},
+        "automaticRegistryMutationAllowed": {"const": false},
+        "automaticAssignmentMutationAllowed": {"const": false},
+        "automaticPolicyMutationAllowed": {"const": false}
+      }
+    }
+  }
+}

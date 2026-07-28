@@ -1,0 +1,94 @@
+{
+  "policyId": "RUNTIME.PORTFOLIO_BENCHMARK.EVIDENCE",
+  "policyVersion": "p1-v1",
+  "policyStatus": "active",
+  "policySha256": "3fb088b43836647788183a4b56d32db246eda504a1a84e38ad15022fedb20a6d",
+  "policyHashMethod": "sha256_canonical_json_excluding_policySha256",
+  "acceptedSourceAssessment": {
+    "schemaVersion": "2.0",
+    "policyId": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
+    "policyVersion": "p2-v3",
+    "policySha256": "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7"
+  },
+  "acceptedCandidateRegistry": {
+    "version": "p2-v2",
+    "sha256": "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226"
+  },
+  "target": "target_cases_next_2w",
+  "horizonWeeks": 2,
+  "evidenceScopes": [
+    "synthetic_qualification",
+    "historical_dhaka",
+    "real_dhaka"
+  ],
+  "primaryComparisonCohort": "intersection_of_successful_or_warning_folds_for_every_candidate",
+  "metrics": [
+    "mae",
+    "rmse",
+    "wape",
+    "median_absolute_error",
+    "maximum_absolute_error",
+    "signed_mean_error",
+    "successful_fold_count",
+    "failed_fold_count",
+    "completion_rate",
+    "total_runtime_seconds",
+    "median_runtime_seconds"
+  ],
+  "tieTolerance": 1e-09,
+  "correlationMethod": "pearson_pairwise_common_success",
+  "correlationStatuses": [
+    "computable",
+    "insufficient_samples",
+    "constant_series",
+    "non_finite_input"
+  ],
+  "descriptiveStrata": {
+    "method": "descriptive_observed_case_tertiles",
+    "sort": ["actualTarget_ascending", "fold_sequence_ascending"],
+    "groupCount": 3,
+    "remainderAllocation": "earlier_groups_receive_one_extra_in_order",
+    "operationalThreshold": false
+  },
+  "rankingStability": {
+    "firstSecondHalfRule": "ordered_common_folds_first_half_receives_odd_remainder",
+    "contiguousBlockCount": 3,
+    "blockRemainderAllocation": "earlier_blocks_receive_one_extra_in_order",
+    "perFoldRankingMetric": "absolute_error",
+    "bootstrapAllowed": false,
+    "randomSamplingAllowed": false
+  },
+  "rationalization": {
+    "allowedCategories": [
+      "KEEP_CORE",
+      "KEEP_SPECIALIST",
+      "KEEP_PENDING_MORE_DATA",
+      "REDUNDANCY_CANDIDATE",
+      "RETIREMENT_CANDIDATE",
+      "INSUFFICIENT_EVIDENCE"
+    ],
+    "syntheticQualificationAllowedCategories": [
+      "KEEP_CORE",
+      "KEEP_SPECIALIST",
+      "KEEP_PENDING_MORE_DATA",
+      "INSUFFICIENT_EVIDENCE"
+    ],
+    "retirementThresholdStatus": "not_governed",
+    "redundancyThresholdStatus": "not_governed",
+    "automaticCandidateRemovalAllowed": false,
+    "automaticRegistryMutationAllowed": false,
+    "automaticAssignmentMutationAllowed": false,
+    "automaticPolicyMutationAllowed": false
+  },
+  "prohibitedActions": [
+    "model_fitting",
+    "candidate_removal",
+    "candidate_deactivation",
+    "registry_mutation",
+    "assignment_mutation",
+    "policy_mutation",
+    "technical_winner_reinterpretation",
+    "outbreak_threshold_invention",
+    "mutable_latest_pointer_resolution"
+  ]
+}
