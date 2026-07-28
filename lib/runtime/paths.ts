@@ -174,3 +174,32 @@ export function hospitalInventoryVersionPaths(runtimeRoot: string, inventoryId: 
     sourceReferences: assertContained(root, path.join(root, "metadata", "source_references.json")),
   };
 }
+
+export function preparednessQualificationPaths(runtimeRoot: string, deploymentId: string) {
+  const deployment = deploymentRuntimePaths(runtimeRoot, deploymentId);
+  const authorityRoot = assertContained(
+    deployment.root,
+    path.join(deployment.root, "hospital-preparedness-qualification"),
+  );
+  return {
+    versions: assertContained(
+      runtimeRoot,
+      path.join(runtimeRoot, "hospital-preparedness-qualification"),
+    ),
+    latest: assertContained(authorityRoot, path.join(authorityRoot, "latest.json")),
+  };
+}
+
+export function preparednessQualificationVersionPaths(runtimeRoot: string, preparednessId: string) {
+  const versions = assertContained(
+    runtimeRoot,
+    path.join(runtimeRoot, "hospital-preparedness-qualification"),
+  );
+  const root = uuidPath(versions, preparednessId, "preparedness");
+  return {
+    root,
+    artifacts: assertContained(root, path.join(root, "artifacts")),
+    evidence: assertContained(root, path.join(root, "artifacts", "preparedness_evidence.json")),
+    commit: assertContained(root, path.join(root, "metadata", "commit.json")),
+  };
+}

@@ -10,62 +10,237 @@ const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[a-f0-9]{64}$/;
 
-export async function readLatestDashboard(deploymentId: string): Promise<{ sourceType: "bundled_benchmark" | "uploaded"; runId: string; dashboard: OverviewViewModel }> {
-  const config = loadRuntimeConfig(false);
-  const deployment = deploymentRuntimePaths(config.runtimeRoot, deploymentId);
+type JsonObject = Record<string, unknown>;
+
+export interface VerifiedCurrentForecast {
+  pointer: JsonObject;
+  pointerSha256: string;
+  dashboard: JsonObject;
+  forecast: JsonObject;
+  uncertainty: JsonObject;
+  chart: JsonObject;
+  commit: JsonObject;
+  commitSha256: string;
+  forecastSha256: string;
+}
+
+function object(value: unknown): JsonObject {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("object");
+  return value as JsonObject;
+}
+
+function exactKeys(value: JsonObject, keys: string[]): boolean {
+  return Object.keys(value).sort().join("|") === [...keys].sort().join("|");
+}
+
+function integer(value: unknown): value is number {
+  return Number.isSafeInteger(value) && Number(value) >= 0;
+}
+
+export async function readVerifiedCurrentForecast(
+  runtimeRoot: string,
+  deploymentId: string,
+): Promise<VerifiedCurrentForecast> {
+  const deployment = deploymentRuntimePaths(runtimeRoot, deploymentId);
   let pointerBytes: Buffer;
-  try { pointerBytes = await readFile(deployment.latest); }
-  catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { sourceType: "bundled_benchmark", runId: bundledOverviewViewModel.latestRun.runId, dashboard: bundledOverviewViewModel };
+  try {
+    pointerBytes = await readFile(deployment.latest);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new RuntimePublicError("current_forecast_unavailable", "storage", "The current verified forecast is unavailable.", 503, true);
+    }
     throw error;
   }
   try {
-    const pointer = JSON.parse(pointerBytes.toString("utf8")) as Record<string, any>;
+    const pointer = object(JSON.parse(pointerBytes.toString("utf8")));
     const approved = pointer.workflowMode === "approved_assessment_forecast";
-    const pointerKeys = approved ? ["schemaVersion", "deploymentId", "runId", "datasetId", "workflowMode", "sourceType", "decisionId", "assessmentId", "authorizationId", "selectedModelId", "committedAt", "modelCardSha256", "dashboardSummarySha256", "commitRecordSha256"] : ["schemaVersion", "deploymentId", "runId", "datasetId", "workflowMode", "sourceType", "committedAt", "modelCardSha256", "dashboardSummarySha256", "commitRecordSha256"];
-    if (Object.keys(pointer).sort().join("|") !== [...pointerKeys].sort().join("|") || pointer.schemaVersion !== "1.0" || pointer.deploymentId !== deploymentId || !["quick_forecast","approved_assessment_forecast"].includes(String(pointer.workflowMode)) || pointer.sourceType !== "uploaded" || !UUID.test(String(pointer.runId)) || (approved && (!UUID.test(String(pointer.decisionId)) || !UUID.test(String(pointer.assessmentId)) || !UUID.test(String(pointer.authorizationId)))) || !SHA.test(String(pointer.datasetId)) || !SHA.test(String(pointer.modelCardSha256)) || !SHA.test(String(pointer.dashboardSummarySha256)) || !SHA.test(String(pointer.commitRecordSha256))) throw new Error("identity");
-    const runs = runtimeCollectionPaths(config.runtimeRoot).runs;
+    const pointerKeys = approved
+      ? ["schemaVersion", "deploymentId", "runId", "datasetId", "workflowMode", "sourceType", "decisionId", "assessmentId", "authorizationId", "selectedModelId", "committedAt", "modelCardSha256", "dashboardSummarySha256", "commitRecordSha256"]
+      : ["schemaVersion", "deploymentId", "runId", "datasetId", "workflowMode", "sourceType", "committedAt", "modelCardSha256", "dashboardSummarySha256", "commitRecordSha256"];
+    if (!exactKeys(pointer, pointerKeys)
+      || pointer.schemaVersion !== "1.0"
+      || pointer.deploymentId !== deploymentId
+      || !["quick_forecast", "approved_assessment_forecast"].includes(String(pointer.workflowMode))
+      || pointer.sourceType !== "uploaded"
+      || !UUID.test(String(pointer.runId))
+      || (approved && (!UUID.test(String(pointer.decisionId)) || !UUID.test(String(pointer.assessmentId)) || !UUID.test(String(pointer.authorizationId))))
+      || !SHA.test(String(pointer.datasetId))
+      || !SHA.test(String(pointer.modelCardSha256))
+      || !SHA.test(String(pointer.dashboardSummarySha256))
+      || !SHA.test(String(pointer.commitRecordSha256))) {
+      throw new Error("pointer identity");
+    }
+    const runs = runtimeCollectionPaths(runtimeRoot).runs;
     const runRoot = assertContained(runs, path.join(runs, String(pointer.runId)));
-    const dashboardPath = assertContained(runRoot, path.join(runRoot, "artifacts", "dashboard_summary.json"));
-    const cardPath = assertContained(runRoot, path.join(runRoot, "artifacts", "model_card.json"));
-    const commitPath = assertContained(runRoot, path.join(runRoot, "metadata", "commit.json"));
-    const [dashboardBytes, cardBytes, commitBytes] = await Promise.all([readFile(dashboardPath), readFile(cardPath), readFile(commitPath)]);
-    if (sha256(dashboardBytes) !== pointer.dashboardSummarySha256 || sha256(cardBytes) !== pointer.modelCardSha256 || sha256(commitBytes) !== pointer.commitRecordSha256) throw new Error("hash");
-    const value = JSON.parse(dashboardBytes.toString("utf8")) as Record<string, any>;
-    const commit = JSON.parse(commitBytes.toString("utf8")) as Record<string, any>;
-    if (commit.status !== "committed" || commit.runId !== pointer.runId || commit.datasetId !== pointer.datasetId || commit.deploymentId !== deploymentId || commit.artifactHashes?.["model_card.json"] !== pointer.modelCardSha256 || commit.artifactHashes?.["dashboard_summary.json"] !== pointer.dashboardSummarySha256) throw new Error("commit identity");
-    if (approved && (commit.workflowMode !== "approved_assessment_forecast" || commit.decisionId !== pointer.decisionId || commit.assessmentId !== pointer.assessmentId || commit.authorizationId !== pointer.authorizationId || commit.selectedModelId !== pointer.selectedModelId || commit.decisionScope !== "one_run" || commit.deploymentModelAdopted !== false)) throw new Error("approved commit identity");
-    if (value.run?.runId !== pointer.runId || value.run?.datasetId !== pointer.datasetId || value.run?.sourceType !== "uploaded") throw new Error("dashboard identity");
-    const calibrated = value.forecast.uncertaintyStatus === "available";
-    const dashboard: OverviewViewModel = {
-      sourceType: "uploaded",
-      latestObservedCases: value.forecast.latestObservedCases,
-      forecastCases: value.forecast.forecastReported,
-      forecastRaw: value.forecast.forecastRaw,
-      forecastChangeCases: value.forecast.forecastReported - value.forecast.latestObservedCases,
-      targetPeriod: value.forecast.targetPeriod,
-      forecastDirection: value.forecast.direction,
-      history: value.history,
-      empiricalRange: {
-        availabilityStatus: value.forecast.uncertaintyStatus,
-        lower: calibrated ? value.forecast.empiricalLower : null,
-        upper: calibrated ? value.forecast.empiricalUpper : null,
-        nominalCoverage: calibrated ? value.forecast.nominalCoverage : null,
-        historicalCoverage: calibrated ? value.forecast.historicalCoverage : null,
-        isPredictionInterval: false,
-        reason: calibrated
-          ? "Dataset-specific empirical range from prior-only rolling-origin residual evidence; historical coverage does not guarantee future coverage."
-          : "Dataset-specific temporal calibration has not yet been completed.",
-      },
-      activeModel: { id: value.model.modelId, label: value.model.modelLabel, adoptionStatus: approved ? "Used for this one-run internal decision; deployment model unchanged" : "Approved under Quick Forecast compatibility policy" },
-      modelUse: approved ? { workflowMode: "approved_assessment_forecast", technicalWinnerId: value.model.technicalWinnerModelId, decisionId: value.decision.decisionId, assessmentId: value.decision.assessmentId, decisionOutcome: value.decision.outcome, scope: "one_run", deploymentModelUnchanged: true } : { workflowMode: "quick_forecast", technicalWinnerId: null, decisionId: null, assessmentId: null, decisionOutcome: null, scope: "deployment", deploymentModelUnchanged: false },
-      deployment: { mode: "Synthetic capability demonstration", gate: "Benchmark only" },
-      preparedness: { availabilityStatus: value.preparedness.availabilityStatus, totalFacilities: 0, bedDeficitFacilities: 0, ns1StockHorizonFacilities: 0, ivFluidStockHorizonFacilities: 0, criticalReviewFacilities: 0 },
-      facilitiesRequiringAttention: [], alerts: [],
-      latestRun: { runId: value.run.runId, timestamp: value.run.committedAt, status: "Completed", validationStatus: "Validated", acceptedPeriod: value.evidence.validation.acceptedPeriod, completedSteps: value.run.completedSteps, refreshState: "committed" },
+    const artifactRoot = assertContained(runRoot, path.join(runRoot, "artifacts"));
+    const paths = {
+      dashboard: assertContained(artifactRoot, path.join(artifactRoot, "dashboard_summary.json")),
+      card: assertContained(artifactRoot, path.join(artifactRoot, "model_card.json")),
+      forecast: assertContained(artifactRoot, path.join(artifactRoot, "forecast_output.json")),
+      uncertainty: assertContained(artifactRoot, path.join(artifactRoot, "forecast_uncertainty.json")),
+      chart: assertContained(artifactRoot, path.join(artifactRoot, "chart_data.json")),
+      commit: assertContained(runRoot, path.join(runRoot, "metadata", "commit.json")),
     };
-    return { sourceType: "uploaded", runId: pointer.runId, dashboard };
-  } catch {
-    throw new RuntimePublicError("latest_pointer_integrity_failure", "storage", "The latest committed runtime dashboard failed integrity validation.", 503, true);
+    const [dashboardBytes, cardBytes, forecastBytes, uncertaintyBytes, chartBytes, commitBytes] = await Promise.all([
+      readFile(paths.dashboard),
+      readFile(paths.card),
+      readFile(paths.forecast),
+      readFile(paths.uncertainty),
+      readFile(paths.chart),
+      readFile(paths.commit),
+    ]);
+    if (sha256(dashboardBytes) !== pointer.dashboardSummarySha256
+      || sha256(cardBytes) !== pointer.modelCardSha256
+      || sha256(commitBytes) !== pointer.commitRecordSha256) {
+      throw new Error("pointer hash");
+    }
+    const dashboard = object(JSON.parse(dashboardBytes.toString("utf8")));
+    const forecast = object(JSON.parse(forecastBytes.toString("utf8")));
+    const uncertainty = object(JSON.parse(uncertaintyBytes.toString("utf8")));
+    const chart = object(JSON.parse(chartBytes.toString("utf8")));
+    const commit = object(JSON.parse(commitBytes.toString("utf8")));
+    const artifactHashes = object(commit.artifactHashes);
+    if (commit.status !== "committed"
+      || commit.runId !== pointer.runId
+      || commit.datasetId !== pointer.datasetId
+      || commit.deploymentId !== deploymentId
+      || commit.workflowMode !== pointer.workflowMode
+      || artifactHashes["model_card.json"] !== pointer.modelCardSha256
+      || artifactHashes["dashboard_summary.json"] !== pointer.dashboardSummarySha256
+      || artifactHashes["forecast_output.json"] !== sha256(forecastBytes)
+      || artifactHashes["forecast_uncertainty.json"] !== sha256(uncertaintyBytes)
+      || artifactHashes["chart_data.json"] !== sha256(chartBytes)) {
+      throw new Error("commit identity");
+    }
+    if (approved && (commit.decisionId !== pointer.decisionId
+      || commit.assessmentId !== pointer.assessmentId
+      || commit.authorizationId !== pointer.authorizationId
+      || commit.selectedModelId !== pointer.selectedModelId
+      || commit.decisionScope !== "one_run"
+      || commit.deploymentModelAdopted !== false)) {
+      throw new Error("approved commit identity");
+    }
+    const run = object(dashboard.run);
+    const dashboardForecast = object(dashboard.forecast);
+    const chartForecast = object(chart.forecast);
+    if (run.runId !== pointer.runId
+      || run.datasetId !== pointer.datasetId
+      || run.sourceType !== "uploaded"
+      || forecast.runId !== pointer.runId
+      || forecast.datasetId !== pointer.datasetId
+      || forecast.deploymentId !== deploymentId
+      || forecast.workflowMode !== pointer.workflowMode
+      || uncertainty.runId !== pointer.runId
+      || chart.runId !== pointer.runId
+      || !Array.isArray(chart.history)
+      || !Array.isArray(dashboard.history)
+      || JSON.stringify(chart.history) !== JSON.stringify(dashboard.history)
+      || chartForecast.period !== forecast.targetPeriod
+      || chartForecast.cases !== forecast.forecastReported
+      || dashboardForecast.forecastReported !== forecast.forecastReported
+      || dashboardForecast.latestObservedCases !== forecast.latestObservedCases
+      || dashboardForecast.targetPeriod !== forecast.targetPeriod
+      || dashboardForecast.direction !== forecast.forecastGrowthCategory
+      || object(chart.history.at(-1)).cases !== forecast.latestObservedCases
+      || !integer(forecast.forecastReported)
+      || !integer(forecast.latestObservedCases)) {
+      throw new Error("artifact identity");
+    }
+    return {
+      pointer,
+      pointerSha256: sha256(pointerBytes),
+      dashboard,
+      forecast,
+      uncertainty,
+      chart,
+      commit,
+      commitSha256: sha256(commitBytes),
+      forecastSha256: sha256(forecastBytes),
+    };
+  } catch (error) {
+    if (error instanceof RuntimePublicError) throw error;
+    throw new RuntimePublicError("latest_pointer_integrity_failure", "storage", "The latest committed runtime forecast failed integrity validation.", 503, true);
+  }
+}
+
+function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewModel {
+  const dashboard = verified.dashboard;
+  const forecast = object(dashboard.forecast);
+  const model = object(dashboard.model);
+  const run = object(dashboard.run);
+  const evidence = object(dashboard.evidence);
+  const validation = object(evidence.validation);
+  const preparedness = object(dashboard.preparedness);
+  const approved = verified.pointer.workflowMode === "approved_assessment_forecast";
+  const decision = approved ? object(dashboard.decision) : {};
+  const calibrated = forecast.uncertaintyStatus === "available";
+  const value = {
+    forecast: {
+      uncertaintyStatus: String(forecast.uncertaintyStatus) as OverviewViewModel["empiricalRange"]["availabilityStatus"],
+      empiricalLower: Number(forecast.empiricalLower),
+      empiricalUpper: Number(forecast.empiricalUpper),
+      nominalCoverage: Number(forecast.nominalCoverage),
+      historicalCoverage: Number(forecast.historicalCoverage),
+    },
+    preparedness: {
+      availabilityStatus: String(preparedness.availabilityStatus) as OverviewViewModel["preparedness"]["availabilityStatus"],
+    },
+  };
+  return {
+    sourceType: "uploaded",
+    latestObservedCases: Number(forecast.latestObservedCases),
+    forecastCases: Number(forecast.forecastReported),
+    forecastRaw: Number(forecast.forecastRaw),
+    forecastChangeCases: Number(forecast.forecastReported) - Number(forecast.latestObservedCases),
+    targetPeriod: String(forecast.targetPeriod),
+    forecastDirection: String(forecast.direction),
+    history: dashboard.history as OverviewViewModel["history"],
+    empiricalRange: {
+      availabilityStatus: value.forecast.uncertaintyStatus,
+      lower: calibrated ? value.forecast.empiricalLower : null,
+      upper: calibrated ? value.forecast.empiricalUpper : null,
+      nominalCoverage: calibrated ? value.forecast.nominalCoverage : null,
+      historicalCoverage: calibrated ? value.forecast.historicalCoverage : null,
+      isPredictionInterval: false,
+      reason: calibrated
+        ? "Dataset-specific empirical range from prior-only rolling-origin residual evidence; historical coverage does not guarantee future coverage."
+        : "Dataset-specific temporal calibration has not yet been completed.",
+    },
+    activeModel: {
+      id: String(model.modelId),
+      label: String(model.modelLabel),
+      adoptionStatus: approved ? "Used for this one-run internal decision; deployment model unchanged" : "Approved under Quick Forecast compatibility policy",
+    },
+    modelUse: approved
+      ? { workflowMode: "approved_assessment_forecast", technicalWinnerId: String(model.technicalWinnerModelId), decisionId: String(decision.decisionId), assessmentId: String(decision.assessmentId), decisionOutcome: String(decision.outcome), scope: "one_run", deploymentModelUnchanged: true }
+      : { workflowMode: "quick_forecast", technicalWinnerId: null, decisionId: null, assessmentId: null, decisionOutcome: null, scope: "deployment", deploymentModelUnchanged: false },
+    deployment: { mode: "Synthetic capability demonstration", gate: "Benchmark only" },
+    preparedness: { availabilityStatus: value.preparedness.availabilityStatus, totalFacilities: 0, bedDeficitFacilities: 0, ns1StockHorizonFacilities: 0, ivFluidStockHorizonFacilities: 0, criticalReviewFacilities: 0 },
+    facilitiesRequiringAttention: [],
+    alerts: [],
+    latestRun: {
+      runId: String(run.runId),
+      timestamp: String(run.committedAt),
+      status: "Completed",
+      validationStatus: "Validated",
+      acceptedPeriod: validation.acceptedPeriod as OverviewViewModel["latestRun"]["acceptedPeriod"],
+      completedSteps: Number(run.completedSteps),
+      refreshState: "committed",
+    },
+  };
+}
+
+export async function readLatestDashboard(
+  deploymentId: string,
+): Promise<{ sourceType: "bundled_benchmark" | "uploaded"; runId: string; dashboard: OverviewViewModel }> {
+  const config = loadRuntimeConfig(false);
+  try {
+    const verified = await readVerifiedCurrentForecast(config.runtimeRoot, deploymentId);
+    return { sourceType: "uploaded", runId: String(verified.pointer.runId), dashboard: overviewFromVerified(verified) };
+  } catch (error) {
+    if (error instanceof RuntimePublicError && error.code === "current_forecast_unavailable") {
+      return { sourceType: "bundled_benchmark", runId: bundledOverviewViewModel.latestRun.runId, dashboard: bundledOverviewViewModel };
+    }
+    throw error;
   }
 }
