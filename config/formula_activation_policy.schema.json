@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Formula activation policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "policyId", "policyVersion", "policyStatus", "deploymentId",
+    "supportedFormulaSlots", "formulaBindings", "inventoryGapActivationStatus",
+    "authorityGate", "policySha256"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "policyId": {"const": "RUNTIME.FORMULA.ACTIVATION"},
+    "policyVersion": {"const": "b8.5-v1"},
+    "policyStatus": {"const": "active"},
+    "deploymentId": {"const": "dhaka_south"},
+    "supportedFormulaSlots": {"type": "array", "const": ["inventory.gap"]},
+    "formulaBindings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false,
+        "required": ["activeFormulaId", "activeFormulaSha256"],
+        "properties": {
+          "activeFormulaId": {"type": "string", "minLength": 1},
+          "activeFormulaSha256": {"$ref": "#/$defs/sha"}
+        }
+      },
+      "maxProperties": 1
+    },
+    "inventoryGapActivationStatus": {"enum": ["not_configured", "configured"]},
+    "authorityGate": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "status", "resourceType", "resourceUnit", "resourcePerCase",
+        "coefficientSourceReferenceId", "coefficientHorizon",
+        "allocationPolicyId", "allocationApprovalReferenceId", "roundingRule",
+        "approvedInventoryId", "formulaActivationApprovalReferenceId"
+      ],
+      "properties": {
+        "status": {"enum": ["not_approved", "approved"]},
+        "resourceType": {"type": ["string", "null"], "minLength": 1},
+        "resourceUnit": {"type": ["string", "null"], "minLength": 1},
+        "resourcePerCase": {"type": ["string", "null"], "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,6})?$"},
+        "coefficientSourceReferenceId": {"type": ["string", "null"], "minLength": 1},
+        "coefficientHorizon": {"type": ["string", "null"], "minLength": 1},
+        "allocationPolicyId": {"type": ["string", "null"], "minLength": 1},
+        "allocationApprovalReferenceId": {"type": ["string", "null"], "minLength": 1},
+        "roundingRule": {"type": ["string", "null"], "minLength": 1},
+        "approvedInventoryId": {"type": ["string", "null"], "minLength": 1},
+        "formulaActivationApprovalReferenceId": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "policySha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

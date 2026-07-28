@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Immutable hospital inventory commit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "inventoryId", "inventoryVersion", "deploymentId",
+    "deploymentDisplayName", "inventoryCanonicalSha256", "inventoryRawSha256",
+    "inventoryArtifactPath", "sourceReferencesSha256", "sourceReferencesPath",
+    "operatorIdentifier", "changeReason", "verificationStatus", "publishedAt"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "inventoryId": {"$ref": "#/$defs/safeId"},
+    "inventoryVersion": {"type": "string", "minLength": 1},
+    "deploymentId": {"const": "dhaka_south"},
+    "deploymentDisplayName": {"const": "Dhaka"},
+    "inventoryCanonicalSha256": {"$ref": "#/$defs/sha"},
+    "inventoryRawSha256": {"$ref": "#/$defs/sha"},
+    "inventoryArtifactPath": {"type": "string", "pattern": "^hospital-inventories/[a-z0-9][a-z0-9_-]{0,127}/artifacts/hospital_inventory\\.json$"},
+    "sourceReferencesSha256": {"$ref": "#/$defs/sha"},
+    "sourceReferencesPath": {"type": "string", "pattern": "^hospital-inventories/[a-z0-9][a-z0-9_-]{0,127}/metadata/source_references\\.json$"},
+    "operatorIdentifier": {"type": "string", "minLength": 1, "maxLength": 128},
+    "changeReason": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "verificationStatus": {"enum": ["identity_verified_resources_unknown", "verified"]},
+    "publishedAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "safeId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,127}$"}
+  }
+}

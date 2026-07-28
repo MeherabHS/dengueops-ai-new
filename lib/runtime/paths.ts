@@ -150,3 +150,27 @@ export function deploymentRuntimePaths(runtimeRoot: string, deploymentId: string
   const root = assertContained(collections.deployments, path.join(collections.deployments, deploymentId));
   return { root, latest: assertContained(root, path.join(root, "latest.json")), locks: assertContained(root, path.join(root, "locks")), commitLock: assertContained(root, path.join(root, "locks", "commit.lock")) };
 }
+
+export function hospitalInventoryAuthorityPaths(runtimeRoot: string, deploymentId: string) {
+  const deployment = deploymentRuntimePaths(runtimeRoot, deploymentId);
+  const root = assertContained(deployment.root, path.join(deployment.root, "hospital-inventory"));
+  return {
+    root,
+    latest: assertContained(root, path.join(root, "latest.json")),
+    activations: assertContained(root, path.join(root, "activations")),
+  };
+}
+
+export function hospitalInventoryVersionPaths(runtimeRoot: string, inventoryId: string) {
+  if (!/^[a-z0-9][a-z0-9_-]{0,127}$/.test(inventoryId)) {
+    throw new RuntimePublicError("invalid_inventory_id", "storage", "The inventory identifier is invalid.", 400);
+  }
+  const versions = assertContained(runtimeRoot, path.join(runtimeRoot, "hospital-inventories"));
+  const root = assertContained(versions, path.join(versions, inventoryId));
+  return {
+    root,
+    artifact: assertContained(root, path.join(root, "artifacts", "hospital_inventory.json")),
+    commit: assertContained(root, path.join(root, "metadata", "commit.json")),
+    sourceReferences: assertContained(root, path.join(root, "metadata", "source_references.json")),
+  };
+}

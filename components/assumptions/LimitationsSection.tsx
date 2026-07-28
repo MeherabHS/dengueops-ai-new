@@ -6,7 +6,8 @@ const MODELING_LIMITS = [
   "The model cannot prove causal effects of rainfall or humidity on dengue transmission.",
   "Feature importance, if shown, is interpretability only — not causal attribution.",
   "Real deployment would require external validation on real epidemiological data.",
-  "Lag structure (14d, 28d) is based on biological reasoning; it is not statistically optimised for Dhaka South specifically.",
+  "Product scope is Dhaka, but current evidence covers the synthetic Dhaka South benchmark only; operational Dhaka validation is false.",
+  "Lag structure (14d, 28d) is based on biological reasoning; it is not statistically optimised for operational Dhaka use.",
 ];
 
 const SYSTEM_HELPS = [

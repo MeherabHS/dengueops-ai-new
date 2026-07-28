@@ -509,3 +509,44 @@ export interface RuntimeWorkspaceMetadata {
   };
   datasetId?: string;
 }
+
+export interface GovernedResourceRecord {
+  resourceType: string;
+  unit: string;
+  quantity: number | null;
+  dataStatus: "verified" | "reported" | "unknown" | "unavailable";
+  asOf: string | null;
+  verificationReferenceId: string;
+}
+
+export interface HospitalInventoryReadResponse {
+  ok: true;
+  internalDeploymentId: "dhaka_south";
+  deploymentDisplayName: "Dhaka";
+  forecastDataCoverage: "synthetic_benchmark_dhaka_south_only";
+  evidenceScope: "synthetic_qualification";
+  operationalDhakaValidation: false;
+  activeInventoryStatus: "active" | "not_configured";
+  inventory: Record<string, unknown>;
+  integrity: {
+    inventoryCanonicalSha256: string;
+    inventoryRawSha256: string;
+    inventoryCommitSha256: string | null;
+  };
+}
+
+export interface FormulaGovernanceReadResponse {
+  ok: true;
+  internalDeploymentId: "dhaka_south";
+  deploymentDisplayName: "Dhaka";
+  evidenceScope: "synthetic_qualification";
+  operationalDhakaValidation: false;
+  registryVersion: string;
+  registrySha256: string;
+  registryRawSha256: string;
+  policyId: "RUNTIME.FORMULA.ACTIVATION";
+  policyVersion: string;
+  policySha256: string;
+  policyRawSha256: string;
+  formulaSlots: Array<{ formulaSlot: "inventory.gap"; activationStatus: "not_configured" | "configured" }>;
+}

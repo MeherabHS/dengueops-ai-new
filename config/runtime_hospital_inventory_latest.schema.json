@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Active hospital inventory pointer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "deploymentId", "deploymentDisplayName", "inventoryId",
+    "inventoryArtifactPath", "inventoryArtifactSha256", "inventoryCommitPath",
+    "inventoryCommitSha256", "activationId", "activationRecordPath",
+    "activationRecordSha256", "previousPointerSha256", "previousInventoryId",
+    "activationOperator", "activationReason", "activatedAt"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "deploymentId": {"const": "dhaka_south"},
+    "deploymentDisplayName": {"const": "Dhaka"},
+    "inventoryId": {"$ref": "#/$defs/safeId"},
+    "inventoryArtifactPath": {"type": "string", "pattern": "^hospital-inventories/[a-z0-9][a-z0-9_-]{0,127}/artifacts/hospital_inventory\\.json$"},
+    "inventoryArtifactSha256": {"$ref": "#/$defs/sha"},
+    "inventoryCommitPath": {"type": "string", "pattern": "^hospital-inventories/[a-z0-9][a-z0-9_-]{0,127}/metadata/commit\\.json$"},
+    "inventoryCommitSha256": {"$ref": "#/$defs/sha"},
+    "activationId": {"type": "string", "format": "uuid"},
+    "activationRecordPath": {"type": "string", "pattern": "^deployments/dhaka_south/hospital-inventory/activations/[0-9a-f-]{36}\\.json$"},
+    "activationRecordSha256": {"$ref": "#/$defs/sha"},
+    "previousPointerSha256": {"oneOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]},
+    "previousInventoryId": {"oneOf": [{"$ref": "#/$defs/safeId"}, {"type": "null"}]},
+    "activationOperator": {"type": "string", "minLength": 1, "maxLength": 128},
+    "activationReason": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "activatedAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "safeId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,127}$"}
+  }
+}

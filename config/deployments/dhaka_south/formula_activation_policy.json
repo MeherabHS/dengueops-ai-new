@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "policyId": "RUNTIME.FORMULA.ACTIVATION",
+  "policyVersion": "b8.5-v1",
+  "policyStatus": "active",
+  "deploymentId": "dhaka_south",
+  "supportedFormulaSlots": [
+    "inventory.gap"
+  ],
+  "formulaBindings": {},
+  "inventoryGapActivationStatus": "not_configured",
+  "authorityGate": {
+    "status": "not_approved",
+    "resourceType": null,
+    "resourceUnit": null,
+    "resourcePerCase": null,
+    "coefficientSourceReferenceId": null,
+    "coefficientHorizon": null,
+    "allocationPolicyId": null,
+    "allocationApprovalReferenceId": null,
+    "roundingRule": null,
+    "approvedInventoryId": null,
+    "formulaActivationApprovalReferenceId": null
+  },
+  "policySha256": "61c43aa4aa4d826294a21d8e5cebbccbbb488162a742471b5a2106b56d3babdd"
+}

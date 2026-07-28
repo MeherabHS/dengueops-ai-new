@@ -34,7 +34,7 @@ export default function ProblemSection() {
           Dengue Response Is Often Reactive
         </h2>
         <p className="text-sm text-slate-500 max-w-2xl mb-10 leading-relaxed">
-          In data-scarce urban health settings like Dhaka South, the gap between
+          In data-scarce urban health settings like Dhaka, the gap between
           outbreak signals and operational response can cause preventable
           supply shortfalls and bed capacity crises.
         </p>

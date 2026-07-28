@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Governed formula registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "registryVersion", "registrySha256", "supportedFormulaSlots", "formulas"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "registryVersion": {"type": "string", "pattern": "^b8\\.5-v[1-9][0-9]*$"},
+    "registrySha256": {"$ref": "#/$defs/sha"},
+    "supportedFormulaSlots": {
+      "type": "array", "const": ["inventory.gap"]
+    },
+    "formulas": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/formula"}
+    }
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "formula": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formulaId", "formulaSlot", "formulaVersion", "expression", "description",
+        "inputs", "outputUnit", "outputDomain", "roundingPolicy", "status",
+        "scientificLimitations", "formulaSha256"
+      ],
+      "properties": {
+        "formulaId": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{0,127}$"},
+        "formulaSlot": {"const": "inventory.gap"},
+        "formulaVersion": {"type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$"},
+        "expression": {"type": "string", "minLength": 1, "maxLength": 512},
+        "description": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "inputs": {
+          "type": "array", "minItems": 1, "maxItems": 16,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["name", "unit", "domain"],
+            "properties": {
+              "name": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"},
+              "unit": {"type": "string", "minLength": 1, "maxLength": 128},
+              "domain": {"enum": ["nonnegative_decimal", "nonnegative_integer"]}
+            }
+          }
+        },
+        "outputUnit": {"type": "string", "minLength": 1, "maxLength": 128},
+        "outputDomain": {"enum": ["nonnegative_decimal", "nonnegative_integer"]},
+        "roundingPolicy": {"enum": ["exact_decimal", "ceiling_to_integer"]},
+        "status": {"enum": ["draft", "approved", "retired"]},
+        "scientificLimitations": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 1000}
+        },
+        "formulaSha256": {"$ref": "#/$defs/sha"}
+      }
+    }
+  }
+}

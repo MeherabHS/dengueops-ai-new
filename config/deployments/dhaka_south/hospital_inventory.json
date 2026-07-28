@@ -1,0 +1,252 @@
+{
+  "schemaVersion": "1.0",
+  "inventoryId": "dhaka-government-hospitals-20260728-v1",
+  "inventoryVersion": "1.0.0",
+  "deploymentId": "dhaka_south",
+  "deploymentDisplayName": "Dhaka",
+  "changeReason": "Initial reviewed seed of officially identified public/government hospitals across Dhaka; resource quantities and allocation shares remain unconfigured.",
+  "createdAt": "2026-07-28T12:23:04Z",
+  "operatorIdentifier": "repository-seed",
+  "verificationStatus": "identity_verified_resources_unknown",
+  "stalenessThresholdStatus": "not_governed",
+  "allocationStatus": "not_configured",
+  "sourceReferences": [
+    {
+      "verificationReferenceId": "mohfw-facility-31",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/31/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-52",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/52/profile",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-47",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/47/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-13562",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/13562/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-16774",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/16774/profile",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-53",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/53/profile?tab=detailed-information",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-66",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/66/profile",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    },
+    {
+      "verificationReferenceId": "mohfw-facility-32",
+      "sourceOrganization": "Ministry of Health and Family Welfare Facility Registry (DGHS)",
+      "sourceUrl": "https://hris.mohfw.gov.bd/public/facility-registry/facilities/32/profile",
+      "retrievedAt": "2026-07-28T12:23:04Z",
+      "verifiedAt": "2026-07-28T12:23:04Z",
+      "supportedFields": ["officialName", "ownership", "location", "facilityType", "facilityIdentity"]
+    }
+  ],
+  "hospitals": [
+    {
+      "hospitalId": "dghs-10000033",
+      "officialName": "Dhaka Medical College Hospital",
+      "shortName": "DMCH",
+      "facilityType": "medical_college_hospital",
+      "ownership": "public_government",
+      "active": true,
+      "location": {
+        "address": "Secretariat Road, Shahbag, Dhaka",
+        "administrativeArea": "Shahbag",
+        "cityCorporation": "Dhaka South City Corporation",
+        "coordinates": {"latitude": 23.726939279843, "longitude": 90.397486284658}
+      },
+      "displayArea": "Shahbag",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-31", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-31"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    },
+    {
+      "hospitalId": "dghs-10000056",
+      "officialName": "Sir Salimullah Medical College Mitford Hospital",
+      "shortName": "SSMCMH",
+      "facilityType": "medical_college_hospital",
+      "ownership": "public_government",
+      "active": true,
+      "location": {"address": "Kotwali, Dhaka", "administrativeArea": "Kotwali", "cityCorporation": "Dhaka South City Corporation"},
+      "displayArea": "Kotwali",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-52", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-52"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    },
+    {
+      "hospitalId": "dghs-10000051",
+      "officialName": "Shaheed Suhrawardy Medical College Hospital",
+      "shortName": "ShSMCH",
+      "facilityType": "medical_college_hospital",
+      "ownership": "public_government",
+      "active": true,
+      "location": {
+        "address": "Sher-e-Bangla Nagar, Dhaka 1207",
+        "administrativeArea": "Sher-e-Bangla Nagar",
+        "cityCorporation": "Dhaka South City Corporation",
+        "coordinates": {"latitude": 23.769396359999, "longitude": 90.371362378111}
+      },
+      "displayArea": "Sher-e-Bangla Nagar",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-47", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-47"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    },
+    {
+      "hospitalId": "dghs-10013720",
+      "officialName": "Mugda Medical College Hospital, Dhaka",
+      "shortName": "MuMCH",
+      "facilityType": "medical_college_hospital",
+      "ownership": "public_government",
+      "active": true,
+      "location": {
+        "address": "Mugda, Dhaka 1214",
+        "administrativeArea": "Mugda Para",
+        "cityCorporation": "Dhaka South City Corporation",
+        "coordinates": {"latitude": 23.733092669617, "longitude": 90.430317507395}
+      },
+      "displayArea": "Mugda",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-13562", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-13562"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    },
+    {
+      "hospitalId": "dghs-10017209",
+      "officialName": "Kurmitola Multicare Specialized Hospital",
+      "shortName": "KMSH",
+      "facilityType": "general_hospital",
+      "ownership": "public_government",
+      "active": true,
+      "location": {"address": "Cantonment, Dhaka", "administrativeArea": "Cantonment", "cityCorporation": "Dhaka North City Corporation"},
+      "displayArea": "Cantonment",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-16774", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-16774"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    },
+    {
+      "hospitalId": "dghs-10000057",
+      "officialName": "Tejgaon Health Complex, Dhaka",
+      "facilityType": "health_complex",
+      "ownership": "public_government",
+      "active": true,
+      "location": {
+        "address": "441 Tejgaon, Dhaka 1208",
+        "administrativeArea": "Tejgaon",
+        "cityCorporation": "Dhaka North City Corporation",
+        "coordinates": {"latitude": 23.765729, "longitude": 90.40545}
+      },
+      "displayArea": "Tejgaon",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-53", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-53"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    },
+    {
+      "hospitalId": "dghs-10000070",
+      "officialName": "Dhaka Infectious Disease Hospital",
+      "shortName": "DIDH",
+      "facilityType": "infectious_disease_hospital",
+      "ownership": "public_government",
+      "active": true,
+      "location": {"address": "Gulshan, Dhaka", "administrativeArea": "Gulshan", "cityCorporation": "Dhaka North City Corporation"},
+      "displayArea": "Gulshan",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-66", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-66"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    },
+    {
+      "hospitalId": "dghs-10000034",
+      "officialName": "Sarkari Karmachari Hospital- Fulbaria, Dhaka-1000",
+      "shortName": "SKH",
+      "facilityType": "special_purpose_hospital",
+      "ownership": "public_government",
+      "active": true,
+      "location": {"address": "Fulbaria, Ramna, Dhaka 1000", "administrativeArea": "Ramna", "cityCorporation": "Dhaka South City Corporation"},
+      "displayArea": "Fulbaria",
+      "identityVerification": {"status": "verified", "verificationReferenceId": "mohfw-facility-32", "verifiedAt": "2026-07-28T12:23:04Z"},
+      "allocationShare": {"status": "not_configured", "value": null},
+      "resources": [
+        {"resourceType": "beds_available", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"},
+        {"resourceType": "dengue_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"},
+        {"resourceType": "icu_beds", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"},
+        {"resourceType": "ns1_kits", "unit": "count", "quantity": null, "dataStatus": "unknown", "asOf": null, "verificationReferenceId": "mohfw-facility-32"}
+      ],
+      "limitations": ["Official identity and location are verified; operational resource quantities are not verified."]
+    }
+  ]
+}

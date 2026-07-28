@@ -87,7 +87,7 @@ export default function EthicsPage() {
         {/* Footer spacer */}
         <div className="mt-20 pb-10 flex items-center justify-center">
           <p className="text-[11px] text-slate-400 text-center max-w-lg leading-relaxed">
-            DengueOps AI — Simulation-Based Dengue Surge Preparedness Decision Support for Dhaka South.
+            DengueOps AI — Simulation-Based Dengue Surge Preparedness Decision Support for Dhaka.
             &nbsp;Prototype only. Not for clinical or official public health use.
           </p>
         </div>

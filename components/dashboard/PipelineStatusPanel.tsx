@@ -208,7 +208,7 @@ export default function PipelineStatusPanel() {
       <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
         <Clock className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
         <p>
-          Pipeline Step 1 uses controlled synthetic Dhaka South demonstration data for dengue cases and climate.
+          Product scope is Dhaka. Pipeline Step 1 uses controlled synthetic Dhaka South benchmark data only; operational Dhaka validation is false.
           All facility and spatial layers are also synthetic. Optional experimental data pathways are available via
           <code className="mx-1 font-mono text-sky-700 bg-sky-100 px-0.5 rounded text-[10px]">--use-opendengue</code> /
           <code className="mx-1 font-mono text-sky-700 bg-sky-100 px-0.5 rounded text-[10px]">--use-nasa-power-climate</code> flags.

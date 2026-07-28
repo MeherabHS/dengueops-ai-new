@@ -3,7 +3,7 @@ import { rollingValidation as rv } from "@/lib/demo-data";
 import { candidateModelComparison as comparison } from "@/lib/demo-data";
 
 const LIMITATIONS = [
-  "Trained and evaluated on controlled synthetic weekly Dhaka South demonstration data. Zone-level spatial allocation uses a synthetic heuristic, not official sub-district surveillance.",
+  "Product scope is Dhaka, but training and evaluation use controlled synthetic weekly Dhaka South benchmark data only. Operational Dhaka validation is false, and zone allocation is not official surveillance.",
   "The available synthetic history is insufficient to establish stable generalisation to real outbreak cycles.",
   "No real hospital-level validation — dengue bed capacity, occupancy, and inventory data are illustrative.",
   "No ward-level or sub-zone spatial outcome validation — zone allocation is heuristic, not calibrated.",
@@ -26,7 +26,7 @@ const DOES_NOT_PROVE = [
   "Does not prove official public health deployment readiness.",
   "Does not validate real facility stock levels or bed capacity.",
   "Does not claim algorithmic novelty in the forecasting method.",
-  "Does not demonstrate performance on real Dhaka South outbreak data.",
+  "Does not demonstrate performance on real Dhaka outbreak data.",
 ];
 
 export default function ValidationLimitations() {

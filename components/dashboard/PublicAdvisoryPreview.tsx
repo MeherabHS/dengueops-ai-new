@@ -76,7 +76,7 @@ export default function PublicAdvisoryPreview({ forecast }: Props) {
         <Users className="h-4 w-4 text-slate-500 flex-shrink-0" />
         <p className="text-xs text-slate-600">
           <span className="font-semibold text-slate-700">Intended audience:</span>{" "}
-          Dhaka South residents, community health workers, and local media.
+          Dhaka residents, community health workers, and local media.
           No technical metrics are shown in this view.
         </p>
       </div>

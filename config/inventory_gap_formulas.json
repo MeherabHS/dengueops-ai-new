@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "registryVersion": "b8.5-v1",
+  "registrySha256": "8b369771b8be18312f2bf519b007cdbe9f95a6fd746c467ea20a556f73f16d95",
+  "supportedFormulaSlots": [
+    "inventory.gap"
+  ],
+  "formulas": []
+}

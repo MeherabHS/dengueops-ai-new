@@ -30,7 +30,7 @@ export default function TechnicalValidationView() {
       <div>
         <SectionHeader
           title="Model Validation & Baseline Comparison"
-          subtitle="Chronological time-based backtesting on controlled synthetic Dhaka South demonstration data. Materially different datasets require separate assessment."
+          subtitle="Dhaka product scope with controlled synthetic Dhaka South benchmark evidence only; operational Dhaka validation is false. Materially different datasets require separate assessment."
         />
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <ModelEvaluationPanel showAvpChart={true} />

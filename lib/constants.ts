@@ -2,10 +2,10 @@ import type { NavLink, ScenarioKey } from "./types";
 
 export const PROJECT_TITLE = "DengueOps AI";
 export const PROJECT_SUBTITLE =
-  "Simulation-Based Dengue Surge Preparedness Decision Support for Dhaka South";
+  "Simulation-Based Dengue Surge Preparedness Decision Support for Dhaka";
 export const ICADHI_TRACK = "Track 06: Health Data Analytics & Predictive Systems";
 export const CONFERENCE = "IEEE ICADHI 2026";
-export const TARGET_CITY = "Dhaka South";
+export const TARGET_CITY = "Dhaka";
 
 // ─── Risk level palette ────────────────────────────────────────────────────
 // Tailwind class strings (bg, text, border)

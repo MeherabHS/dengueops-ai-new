@@ -25,7 +25,7 @@ const CRITERIA = [
   {
     criterion: "Impact",
     tag: "Public Health Preparedness",
-    desc: "Supports dengue surge preparedness planning for hospital administrators and public health teams in high-burden urban settings like Dhaka South.",
+    desc: "Supports dengue surge preparedness planning for hospital administrators and public health teams in high-burden urban settings like Dhaka.",
     color: "border-amber-200 bg-amber-50",
     badge: "bg-amber-100 text-amber-700",
   },

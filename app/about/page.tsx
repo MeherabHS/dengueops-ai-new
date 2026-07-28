@@ -29,7 +29,7 @@ export default function AboutPage() {
         <p className="text-sm text-slate-700 leading-relaxed mb-4">
           DengueOps AI is a <strong>simulation-based public health decision-support prototype</strong>{" "}
           that converts lag-aware dengue outbreak forecasts into operational preparedness
-          intelligence for Dhaka South, Bangladesh.
+          intelligence for Dhaka, Bangladesh.
         </p>
         <p className="text-sm text-slate-700 leading-relaxed mb-4">
           It takes a city-level dengue case forecast and produces:

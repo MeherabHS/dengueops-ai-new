@@ -114,7 +114,7 @@ export default function OperationalCommandView({
       <div>
         <SectionHeader
           title="Zone Priority Ranking"
-          subtitle="Aggregated operational priority by Dhaka South zone. Five zones ranked by vulnerability-gated exposure score."
+          subtitle="Dhaka product scope. The five displayed zones are synthetic Dhaka South benchmark zones only; operational Dhaka validation is false."
         />
         <div className="space-y-1.5 mb-4">
           <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">

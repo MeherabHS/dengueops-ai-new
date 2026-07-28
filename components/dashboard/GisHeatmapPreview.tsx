@@ -43,7 +43,7 @@ export default function GisHeatmapPreview({ zones, surgeKey }: Props) {
             Zone Priority Heatmap
           </p>
           <p className="text-xs text-slate-500 mt-0.5 italic leading-snug">
-            &ldquo;Prototype visualization of spatial priority across five Dhaka South operational zones.&rdquo;
+            &ldquo;Dhaka product scope; this prototype visualization uses five synthetic Dhaka South benchmark zones only. Operational Dhaka validation is false.&rdquo;
           </p>
         </div>
         <span className="flex-shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">

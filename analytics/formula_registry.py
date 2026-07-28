@@ -8,6 +8,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+
+from formula_inputs import SUPPORTED_FORMULA_SLOTS, validate_formula_input_catalog
+
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PATH = ROOT / "config" / "formulas.json"
 
@@ -240,3 +244,71 @@ def build_formula_metadata(formula_ids: list[str] | tuple[str, ...], deployment_
             for formula in formulas
         },
     }
+
+
+# B8.5 governed executable-formula registry. The historical descriptive
+# registry above remains unchanged and is not executable.
+GOVERNED_REGISTRY_PATH = ROOT / "config" / "inventory_gap_formulas.json"
+GOVERNED_REGISTRY_SCHEMA_PATH = ROOT / "config" / "formula_registry.schema.json"
+
+
+def canonical_json_sha256(value: Any, excluded_fields: frozenset[str] = frozenset()) -> str:
+    if not isinstance(value, dict):
+        raise FormulaRegistryError("Canonical governed identity requires a JSON object.")
+    content = {key: child for key, child in value.items() if key not in excluded_fields}
+    payload = json.dumps(content, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def governed_formula_sha256(formula: dict[str, Any]) -> str:
+    return canonical_json_sha256(formula, frozenset({"formulaSha256"}))
+
+
+def governed_registry_sha256(registry: dict[str, Any]) -> str:
+    return canonical_json_sha256(registry, frozenset({"registrySha256"}))
+
+
+def governed_registry_raw_sha256(path: str | Path = GOVERNED_REGISTRY_PATH) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def validate_governed_formula_registry(registry: Any) -> dict[str, Any]:
+    if not isinstance(registry, dict):
+        raise FormulaRegistryError("Governed formula registry must be an object.")
+    schema = json.loads(GOVERNED_REGISTRY_SCHEMA_PATH.read_text(encoding="utf-8"))
+    errors = sorted(Draft202012Validator(schema).iter_errors(registry), key=lambda error: list(error.path))
+    if errors:
+        raise FormulaRegistryError(f"Governed formula registry failed schema validation: {errors[0].message}")
+    if registry["supportedFormulaSlots"] != sorted(SUPPORTED_FORMULA_SLOTS):
+        raise FormulaRegistryError("Governed formula registry slot catalog mismatch.")
+    if registry["registrySha256"] != governed_registry_sha256(registry):
+        raise FormulaRegistryError("Governed formula registry hash mismatch.")
+    seen_ids: set[str] = set()
+    for formula in registry["formulas"]:
+        if formula["formulaId"] in seen_ids:
+            raise FormulaRegistryError("Duplicate governed formula ID.")
+        seen_ids.add(formula["formulaId"])
+        validate_formula_input_catalog(formula)
+        if formula["formulaSha256"] != governed_formula_sha256(formula):
+            raise FormulaRegistryError(f"Governed formula hash mismatch: {formula['formulaId']}.")
+        prohibited = {"pythonPath", "moduleName", "functionPath", "callable", "implementationReference"}
+        if prohibited.intersection(formula):
+            raise FormulaRegistryError("Governed formulas cannot register executable Python objects.")
+    return dict(registry)
+
+
+def load_governed_formula_registry(path: str | Path = GOVERNED_REGISTRY_PATH) -> dict[str, Any]:
+    source = Path(path)
+    try:
+        registry = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise FormulaRegistryError("Governed formula registry is unreadable.") from exc
+    return validate_governed_formula_registry(registry)
+
+
+def get_governed_formula(formula_id: str, registry: dict[str, Any] | None = None) -> dict[str, Any]:
+    source = registry or load_governed_formula_registry()
+    for formula in source["formulas"]:
+        if formula["formulaId"] == formula_id:
+            return dict(formula)
+    raise FormulaRegistryError(f"Unknown governed formula ID: {formula_id}.")
