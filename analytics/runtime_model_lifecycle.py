@@ -22,7 +22,7 @@ def _extract_and_validate_policy_version(job: Mapping[str, Any]) -> str:
     policy_version = job.get("policy_version") or job.get("policyVersion")
     if policy_id != "RUNTIME.MODEL_LIFECYCLE.DECISION":
         raise ValueError(f"unsupported_lifecycle_policy_id: {policy_id}")
-    if policy_version not in ("p2-v1", "p2-v2"):
+    if policy_version not in ("p2-v1", "p2-v2", "p2-v3"):
         raise ValueError(f"unsupported_lifecycle_policy_version: {policy_version}")
     return policy_version
 

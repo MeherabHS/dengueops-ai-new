@@ -48,6 +48,8 @@ def load_model_lifecycle_policy_by_identity(
     if policy_version == "p2-v1":
         file_path = repository_root / "config" / "deployments" / deployment_id / "model_lifecycle_policy_p2-v1.json"
     elif policy_version == "p2-v2":
+        file_path = repository_root / "config" / "deployments" / deployment_id / "model_lifecycle_policy_p2-v2.json"
+    elif policy_version == "p2-v3":
         file_path = repository_root / "config" / "deployments" / deployment_id / "model_lifecycle_policy.json"
     else:
         raise ModelLifecyclePolicyError(f"Unknown or unsupported policy version '{policy_version}'.")
@@ -83,7 +85,7 @@ def load_model_lifecycle_policy_by_identity(
     if computed_canonical != expected_canonical_sha256:
         raise ModelLifecyclePolicyError(f"Expected canonical policy hash mismatch: expected {expected_canonical_sha256}, got {computed_canonical}.")
 
-    if policy_version == "p2-v2":
+    if policy_version in {"p2-v2", "p2-v3"}:
         schema_path = repository_root / "config" / "runtime_model_lifecycle_policy.schema.json"
         if schema_path.exists():
             schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -101,13 +103,19 @@ def load_model_lifecycle_policy_by_identity(
 
 def load_model_lifecycle_policy(
     *,
-    policy_version: Literal["p2-v1", "p2-v2"],
+    policy_version: Literal["p2-v1", "p2-v2", "p2-v3"],
     repository_root: Path = ROOT,
     deployment_id: str = "dhaka_south"
 ) -> tuple[dict[str, Any], str]:
     if policy_version == "p2-v1":
         expected_hash = POLICY_SHA256
     elif policy_version == "p2-v2":
+        path = repository_root / "config" / "deployments" / deployment_id / "model_lifecycle_policy_p2-v2.json"
+        if not path.exists():
+            raise ModelLifecyclePolicyError("Model lifecycle policy file not found.")
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        expected_hash = canonical_sha256(raw)
+    elif policy_version == "p2-v3":
         path = repository_root / "config" / "deployments" / deployment_id / "model_lifecycle_policy.json"
         if not path.exists():
             raise ModelLifecyclePolicyError("Model lifecycle policy file not found.")
@@ -130,7 +138,7 @@ def load_current_model_lifecycle_policy(
     deployment_id: str = "dhaka_south"
 ) -> tuple[dict[str, Any], str]:
     return load_model_lifecycle_policy(
-        policy_version="p2-v2",
+        policy_version="p2-v3",
         repository_root=repository_root,
         deployment_id=deployment_id
     )

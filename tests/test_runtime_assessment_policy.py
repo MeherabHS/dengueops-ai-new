@@ -74,7 +74,7 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
         self.assertEqual(self.policy["feature_contract"]["feature_order_sha256"], self.registry["feature_order_sha256"])
         self.assertEqual(self.policy["input_contract"]["target"], self.registry["target"])
         self.assertEqual(self.policy["input_contract"]["horizon_weeks"], 2)
-        self.assertEqual(self.policy["policy_version"], "p2-v2")
+        self.assertEqual(self.policy["policy_version"], "p2-v3")
         self.assertEqual(self.phase_one_policy["policy_version"], "p1.4d-1-v1")
         self.assertEqual(
             self.phase_one_policy_sha,
@@ -170,7 +170,7 @@ class RuntimeAssessmentPolicyTests(unittest.TestCase):
 
     def test_baseline_and_learned_model_breadth_are_required(self):
         baseline_ids = ["moving_average_4w", "seasonal_naive_52w"]
-        learned_ids = ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"]
+        learned_ids = ["ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting", "poisson_gam"]
         for ids, code in ((baseline_ids, "no_eligible_baseline"), (learned_ids, "no_eligible_learned_model")):
             with self.subTest(code=code):
                 context = self.context()

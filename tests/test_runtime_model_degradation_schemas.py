@@ -9,8 +9,12 @@ class ModelDegradationSchemaTests(unittest.TestCase):
         for mutate in mutations:value=copy.deepcopy(policy);mutate(value);self.assertTrue(list(validator.iter_errors(value)))
     def test_job_schema_has_strict_degradation_branch(self):
         schema=json.loads((ROOT/"config/runtime_job.schema.json").read_text())
-        for name,version in (("degradationEvidence","p2-v1"),("degradationEvidenceP2","p2-v2")):
-            branch=schema["$defs"][name];self.assertFalse(branch["additionalProperties"]);self.assertEqual(branch["properties"]["jobKind"]["const"],"degradation_evidence");self.assertEqual(branch["properties"]["policyVersion"]["const"],version);self.assertNotIn("selectedModelId",branch["properties"]);self.assertNotIn("windowOutcomeCount",branch["properties"])
+        historical=schema["$defs"]["degradationEvidence"]
+        current=schema["$defs"]["degradationEvidenceP2"]
+        for branch in (historical,current):
+            self.assertFalse(branch["additionalProperties"]);self.assertEqual(branch["properties"]["jobKind"]["const"],"degradation_evidence");self.assertNotIn("selectedModelId",branch["properties"]);self.assertNotIn("windowOutcomeCount",branch["properties"])
+        self.assertEqual(historical["properties"]["policyVersion"]["const"],"p2-v1")
+        self.assertEqual(current["properties"]["policyVersion"]["enum"],["p2-v2","p2-v3"])
     def test_schema_version_branches_are_strict_and_disjoint(self):
         names=("runtime_model_degradation_evidence.schema.json","runtime_model_degradation_summary.schema.json","runtime_model_degradation_commit.schema.json","runtime_model_degradation_latest.schema.json")
         for name in names:

@@ -78,9 +78,9 @@ class ProductV2ModelDegradationTests(unittest.TestCase):
                     "monitoring_latest_snapshot.json",
                 },
             )
-            self.assertEqual(result["pointer"]["policyVersion"], "p2-v2")
+            self.assertEqual(result["pointer"]["policyVersion"], "p2-v3")
             self.assertTrue(
-                (runtime / "deployments/dhaka_south/degradation/latest_p2-v2.json").is_file()
+                (runtime / "deployments/dhaka_south/degradation/latest_p2-v3.json").is_file()
             )
             self.assertFalse(
                 (runtime / "deployments/dhaka_south/degradation/latest.json").exists()
@@ -91,7 +91,7 @@ class ProductV2ModelDegradationTests(unittest.TestCase):
                 job["expectedMonitoringLatestSha256"],
                 job["expectedMonitoringSummarySha256"],
                 job["expectedIncludedOutcomeSetSha256"],
-                "p2-v2",
+                "p2-v3",
             )
             second = copy.deepcopy(source["outcomes"][0])
             second["outcomeId"] = "00000000-0000-4000-8000-000000000002"
@@ -112,18 +112,18 @@ class ProductV2ModelDegradationTests(unittest.TestCase):
             self.assertEqual(len(merged["cohorts"]), 1)
             self.assertEqual(len(merged["cohorts"][0]["assignmentProvenance"]), 2)
 
-    def test_representative_additional_governed_model_remains_descriptive(self):
+    def test_poisson_gam_remains_point_only_descriptive(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime, _, forecast_job = build_pending_governed_quick_job(
                 Path(directory),
                 "2.1",
-                model_id="gradient_boosting",
+                model_id="poisson_gam",
             )
             self.assertTrue(run_once(runtime, "b8-additional-model"))
             outcome_job, outcome_path = build_outcome_job(
                 runtime,
                 forecast_job,
-                record_id="b8-gradient-boosting",
+                record_id="b8-poisson-gam",
                 schema_version="2.1",
             )
             execute_outcome(
@@ -150,8 +150,16 @@ class ProductV2ModelDegradationTests(unittest.TestCase):
                 ).read_text()
             )
             cohort = evidence["cohorts"][0]
-            self.assertEqual(cohort["identity"]["modelId"], "gradient_boosting")
+            self.assertEqual(cohort["identity"]["modelId"], "poisson_gam")
             self.assertEqual(cohort["identity"]["sourceFamily"], "quick_forecast_p2")
+            self.assertEqual(
+                cohort["identity"]["forecastPresentationMode"], "point_only"
+            )
+            self.assertEqual(cohort["identity"]["calibrationStatus"], "unavailable")
+            self.assertEqual(
+                cohort["actualPopulation"]["empiricalRangeEvaluatedCount"], 0
+            )
+            self.assertIsNone(cohort["actualPopulation"]["empiricalCoverage"])
             self.assertEqual(evidence["evidenceStatus"], "evidence_only")
             self.assertEqual(evidence["materialWorseningStatus"], "not_governed")
 

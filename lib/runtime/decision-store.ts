@@ -184,7 +184,7 @@ export async function readVerifiedAssessment(
     assessmentPolicy?.policySha256 !== commit.assessmentPolicySha256 ||
     assessmentPolicy?.policySha256 !== summary.provenance.assessmentPolicySha256 ||
     (isPhaseTwo
-      ? !["p2-v1", "p2-v2"].includes(assessmentPolicy.policyVersion) ||
+      ? !["p2-v1", "p2-v2", "p2-v3"].includes(assessmentPolicy.policyVersion) ||
         commit.assessmentPolicyId !== assessmentPolicy.policyId ||
         commit.assessmentPolicyVersion !== assessmentPolicy.policyVersion
       : assessmentPolicy.policyVersion !== "p1.4d-1-v1")
@@ -355,7 +355,10 @@ export async function recordDecision(
       );
     const registrySha256 = sha256(
       await readFile(
-        path.join(config.repositoryRoot, "config", policy.policyVersion === "p2-v2" ? "candidate_models.json" : "candidate_models_p1.2a-v1.json"),
+        path.join(config.repositoryRoot, "config",
+          policy.policyVersion === "p2-v3" ? "candidate_models.json" :
+          policy.policyVersion === "p2-v2" ? "candidate_models_p2-v1.json" :
+          "candidate_models_p1.2a-v1.json"),
       ),
     );
     if (registrySha256 !== policy.candidateRegistrySha256)
@@ -416,7 +419,7 @@ export async function recordDecision(
         "The committed Phase 2 technical-winner evidence does not reconcile.",
         409,
       );
-    const isDecisionV2 = policy.policyVersion === "p2-v2";
+    const isDecisionV2 = policy.policyVersion === "p2-v2" || policy.policyVersion === "p2-v3";
     const current = !isDecisionV2 && "currentModelId" in policy
       ? candidates.find((value) => value.modelId === policy.currentModelId) ?? null
       : null;
@@ -432,8 +435,8 @@ export async function recordDecision(
         selected.parametersSha256 !== selectedComparison.parametersSha256 ||
         selected.successfulFolds !== selectedComparison.successfulFolds ||
         selected.failedFolds !== selectedComparison.failedFolds ||
-        (policy.policyVersion === "p2-v2" &&
-          !policy.allowedCandidateIds.includes(selected.modelId)) ||
+        ((policy.policyVersion === "p2-v2" || policy.policyVersion === "p2-v3") &&
+          (!("allowedCandidateIds" in policy) || !policy.allowedCandidateIds.includes(selected.modelId))) ||
         selected.completionStatus !== "complete" ||
         selected.selectionEligible !== true ||
         selected.successfulFolds !== requiredFolds ||
@@ -549,7 +552,7 @@ export async function recordDecision(
         selectedModelFamily: selected?.modelFamily ?? null,
         selectedModelPreprocessingIdentity: selected?.preprocessingIdentity ?? null,
         selectedCandidateStatus: selected?.status ?? null,
-        featureOrderSha256: policy.featureOrderSha256,
+        featureOrderSha256: "featureOrderSha256" in policy ? policy.featureOrderSha256 : null,
         technicalWinnerNotSelectedAcknowledged: choice === "approve_eligible_non_winner" ? true : false,
         uncertaintyLimitationsAcknowledged: true,
         deploymentModelAdopted: false,
@@ -659,7 +662,7 @@ export async function recordDecision(
             selectedModelFamily: selected.modelFamily,
             selectedModelPreprocessingIdentity: selected.preprocessingIdentity,
             candidateRegistrySha256: policy.candidateRegistrySha256,
-            featureOrderSha256: policy.featureOrderSha256,
+            featureOrderSha256: "featureOrderSha256" in policy ? policy.featureOrderSha256 : null,
             selectionType: choice === "approve_technical_winner" ? "technical_winner" : "eligible_non_winner_override",
             technicalWinnerModelId: winner,
             technicalWinnerNotSelectedAcknowledged: choice === "approve_eligible_non_winner",
@@ -746,7 +749,7 @@ export async function readVerifiedDecision(
     decision.deploymentId,
     assessmentIdentity,
   );
-  const policyV2 = policy.policyVersion === "p2-v2" ? policy : null;
+  const policyV2 = policy.policyVersion === "p2-v2" || policy.policyVersion === "p2-v3" ? policy : null;
   if (
     decision.schemaVersion !== policy.schemaVersion ||
     decision.decisionPolicyId !== policy.policyId ||
@@ -771,7 +774,7 @@ export async function readVerifiedDecision(
         commit.assessmentLabelledRows !== decision.assessmentLabelledRows ||
         commit.assessmentPlannedFoldCount !==
           decision.assessmentPlannedFoldCount)) ||
-    (decision.decisionPolicyVersion === "p2-v2" &&
+    (["p2-v2", "p2-v3"].includes(decision.decisionPolicyVersion) &&
       (!policyV2 ||
         decision.featureOrderSha256 !== policyV2.featureOrderSha256 ||
         decision.deploymentModelAdopted !== false ||
@@ -865,7 +868,7 @@ export async function readVerifiedDecision(
           a.value.assessmentPlannedFoldCount !==
             decision.assessmentPlannedFoldCount ||
           a.value.foldPlanSha256 !== decision.foldPlanSha256)) ||
-      (decision.decisionPolicyVersion === "p2-v2" &&
+      (["p2-v2", "p2-v3"].includes(decision.decisionPolicyVersion) &&
         (a.value.selectedModelFamily !== decision.selectedModelFamily ||
           a.value.selectedModelPreprocessingIdentity !== decision.selectedModelPreprocessingIdentity ||
           a.value.candidateRegistrySha256 !== decision.candidateRegistrySha256 ||

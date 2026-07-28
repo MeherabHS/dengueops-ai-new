@@ -11,7 +11,7 @@ class ForecastOutcomePolicyTests(unittest.TestCase):
     def test_policy_identity_and_governed_bindings(self):
         policy,digest=load_and_validate_forecast_outcome_policy("dhaka_south")
         self.assertEqual(policy["policy_id"],"RUNTIME.FORECAST_OUTCOME.MONITORING")
-        self.assertEqual((policy["schema_version"],policy["policy_version"]),("2.1","p2-v2"))
+        self.assertEqual((policy["schema_version"],policy["policy_version"]),("2.1","p2-v3"))
         self.assertEqual(digest,policy["policy_sha256"])
         self.assertEqual(digest,canonical_policy_sha256(policy))
         self.assertEqual(set(policy["source_families"]),{"quick_forecast_p1","quick_forecast_p2","approved_forecast_p1","approved_forecast_p2"})

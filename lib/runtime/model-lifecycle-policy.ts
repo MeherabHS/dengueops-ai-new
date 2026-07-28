@@ -34,6 +34,8 @@ export async function loadModelLifecyclePolicyByIdentity(params: {
   if (params.policyVersion === "p2-v1") {
     filePath = path.join(params.repositoryRoot, "config", "deployments", deploymentId, "model_lifecycle_policy_p2-v1.json");
   } else if (params.policyVersion === "p2-v2") {
+    filePath = path.join(params.repositoryRoot, "config", "deployments", deploymentId, "model_lifecycle_policy_p2-v2.json");
+  } else if (params.policyVersion === "p2-v3") {
     filePath = path.join(params.repositoryRoot, "config", "deployments", deploymentId, "model_lifecycle_policy.json");
   } else {
     throw new RuntimePublicError("model_lifecycle_policy_invalid", "configuration", `Unknown policy version '${params.policyVersion}'`, 503);
@@ -48,7 +50,7 @@ export async function loadModelLifecyclePolicyByIdentity(params: {
       }
     }
 
-    const value = JSON.parse(rawBuffer.toString("utf8")) as Record<string, any>;
+    const value = JSON.parse(rawBuffer.toString("utf8")) as Record<string, unknown>;
     const declId = value.policy_id || value.policyId;
     const declVer = value.policy_version || value.policyVersion;
     const declHash = value.policy_sha256 || value.policySha256;
@@ -70,7 +72,7 @@ export async function loadModelLifecyclePolicyByIdentity(params: {
       throw new Error(`Expected canonical policy hash mismatch: expected ${params.expectedCanonicalSha256}, got ${computedCanonical}`);
     }
 
-    if (params.policyVersion === "p2-v2") {
+    if (params.policyVersion === "p2-v2" || params.policyVersion === "p2-v3") {
       const schema = JSON.parse(await readFile(path.join(params.repositoryRoot, "config", "runtime_model_lifecycle_policy.schema.json"), "utf8"));
       validateStrictJsonSchema(schema, value);
     }
@@ -85,14 +87,15 @@ export async function loadModelLifecyclePolicyByIdentity(params: {
 export async function loadModelLifecyclePolicy(params: {
   repositoryRoot: string;
   deploymentId?: string;
-  version: "p2-v1" | "p2-v2";
+  version: "p2-v1" | "p2-v2" | "p2-v3";
 }) {
   const deploymentId = params.deploymentId || "dhaka_south";
   let expectedCanonicalHash: string;
   if (params.version === "p2-v1") {
     expectedCanonicalHash = MODEL_LIFECYCLE_POLICY_SHA;
   } else {
-    const raw = JSON.parse(await readFile(path.join(params.repositoryRoot, "config", "deployments", deploymentId, "model_lifecycle_policy.json"), "utf8"));
+    const filename = params.version === "p2-v3" ? "model_lifecycle_policy.json" : "model_lifecycle_policy_p2-v2.json";
+    const raw = JSON.parse(await readFile(path.join(params.repositoryRoot, "config", "deployments", deploymentId, filename), "utf8"));
     const content = { ...raw };
     delete content.policy_sha256;
     delete content.policySha256;
@@ -112,6 +115,6 @@ export async function loadCurrentModelLifecyclePolicy(repositoryRoot: string, de
   return loadModelLifecyclePolicy({
     repositoryRoot,
     deploymentId,
-    version: "p2-v2"
+    version: "p2-v3"
   });
 }

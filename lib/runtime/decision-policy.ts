@@ -9,8 +9,10 @@ const DEPLOYMENT_ID = "dhaka_south" as const;
 const PHASE_ONE_ASSESSMENT_SHA = "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af";
 const PHASE_TWO_ASSESSMENT_SHA = "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff";
 const PHASE_TWO_V2_ASSESSMENT_SHA = "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8";
+const PHASE_TWO_V3_ASSESSMENT_SHA = "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7";
 const CANDIDATE_REGISTRY_SHA = "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4";
 const CANDIDATE_REGISTRY_V2_SHA = "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0";
+const CANDIDATE_REGISTRY_V3_SHA = "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226";
 const FEATURE_ORDER_SHA = "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85";
 
 interface RuntimeDecisionPolicyCommon {
@@ -78,15 +80,15 @@ export interface RuntimeDecisionPolicyPhaseTwo extends RuntimeDecisionPolicyComm
 export interface RuntimeDecisionPolicyPhaseTwoV2 {
   schemaVersion: "2.0";
   policyId: typeof POLICY_ID;
-  policyVersion: "p2-v2";
+  policyVersion: "p2-v2" | "p2-v3";
   policyStatus: "active";
   policySha256: string;
   deploymentId: typeof DEPLOYMENT_ID;
   allowedAssessmentSchemaVersion: "2.0";
   allowedAssessmentPolicyId: typeof ASSESSMENT_POLICY_ID;
-  allowedAssessmentPolicyVersion: "p2-v2";
-  allowedAssessmentPolicySha256: typeof PHASE_TWO_V2_ASSESSMENT_SHA;
-  candidateRegistrySha256: typeof CANDIDATE_REGISTRY_V2_SHA;
+  allowedAssessmentPolicyVersion: "p2-v2" | "p2-v3";
+  allowedAssessmentPolicySha256: typeof PHASE_TWO_V2_ASSESSMENT_SHA | typeof PHASE_TWO_V3_ASSESSMENT_SHA;
+  candidateRegistrySha256: typeof CANDIDATE_REGISTRY_V2_SHA | typeof CANDIDATE_REGISTRY_V3_SHA;
   featureOrderSha256: typeof FEATURE_ORDER_SHA;
   decisionScope: "one_run";
   allowedDecisions: ["approve_technical_winner", "approve_eligible_non_winner"];
@@ -111,7 +113,7 @@ export type RuntimeDecisionPolicy = RuntimeDecisionPolicyPhaseOne | RuntimeDecis
 
 export type CommittedAssessmentPolicyIdentity =
   | { schemaVersion: "1.0"; policyId: typeof ASSESSMENT_POLICY_ID; policyVersion: "p1.4d-1-v1"; policySha256: string }
-  | { schemaVersion: "2.0"; policyId: typeof ASSESSMENT_POLICY_ID; policyVersion: "p2-v1" | "p2-v2"; policySha256: string };
+  | { schemaVersion: "2.0"; policyId: typeof ASSESSMENT_POLICY_ID; policyVersion: "p2-v1" | "p2-v2" | "p2-v3"; policySha256: string };
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -159,11 +161,15 @@ function assertCommon(policy: RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPol
 }
 
 function assertPhaseTwoV2(policy: RuntimeDecisionPolicyPhaseTwoV2, learned: string[]): void {
+  const current = policy.policyVersion === "p2-v3";
+  const expectedAssessmentVersion = current ? "p2-v3" : "p2-v2";
+  const expectedAssessmentSha = current ? PHASE_TWO_V3_ASSESSMENT_SHA : PHASE_TWO_V2_ASSESSMENT_SHA;
+  const expectedRegistrySha = current ? CANDIDATE_REGISTRY_V3_SHA : CANDIDATE_REGISTRY_V2_SHA;
   if (
-    policy.policyStatus !== "active" || policy.policyId !== POLICY_ID || policy.policyVersion !== "p2-v2" ||
+    policy.policyStatus !== "active" || policy.policyId !== POLICY_ID || !["p2-v2", "p2-v3"].includes(policy.policyVersion) ||
     policy.deploymentId !== DEPLOYMENT_ID || policy.allowedAssessmentPolicyId !== ASSESSMENT_POLICY_ID ||
-    policy.allowedAssessmentPolicyVersion !== "p2-v2" || policy.allowedAssessmentPolicySha256 !== PHASE_TWO_V2_ASSESSMENT_SHA ||
-    policy.candidateRegistrySha256 !== CANDIDATE_REGISTRY_V2_SHA || policy.featureOrderSha256 !== FEATURE_ORDER_SHA ||
+    policy.allowedAssessmentPolicyVersion !== expectedAssessmentVersion || policy.allowedAssessmentPolicySha256 !== expectedAssessmentSha ||
+    policy.candidateRegistrySha256 !== expectedRegistrySha || policy.featureOrderSha256 !== FEATURE_ORDER_SHA ||
     JSON.stringify(policy.allowedDecisions) !== JSON.stringify(["approve_technical_winner", "approve_eligible_non_winner"]) ||
     JSON.stringify(policy.allowedCandidateStatuses) !== JSON.stringify(["technical_winner", "eligible_non_winner"]) ||
     !Array.isArray(policy.allowedCandidateIds) || policy.allowedCandidateIds.length === 0 ||
@@ -206,6 +212,10 @@ export async function loadDecisionPolicy(
   else if (
     assessment.schemaVersion === "2.0" && assessment.policyVersion === "p2-v2" &&
     assessment.policySha256 === PHASE_TWO_V2_ASSESSMENT_SHA
+  ) filename = "decision_policy_p2-v2.json";
+  else if (
+    assessment.schemaVersion === "2.0" && assessment.policyVersion === "p2-v3" &&
+    assessment.policySha256 === PHASE_TWO_V3_ASSESSMENT_SHA
   ) filename = "decision_policy.json";
   else throw new RuntimePublicError("decision_policy_mismatch", "validation", "The committed assessment is outside the governed decision policies.", 409);
 
@@ -220,11 +230,11 @@ export async function loadDecisionPolicy(
   delete withoutHash.policySha256;
   const digest = createHash("sha256").update(canonical(withoutHash), "utf8").digest("hex");
   if (policy.policySha256 !== digest) throw invalid();
-  if (policy.policyVersion === "p2-v2") {
+  if (policy.policyVersion === "p2-v2" || policy.policyVersion === "p2-v3") {
     let registryBytes: Buffer;
     let registry: { candidates?: Array<Record<string, unknown>> };
     try {
-      registryBytes = await readFile(path.join(repositoryRoot, "config", "candidate_models.json"));
+      registryBytes = await readFile(path.join(repositoryRoot, "config", policy.policyVersion === "p2-v3" ? "candidate_models.json" : "candidate_models_p2-v1.json"));
       registry = JSON.parse(registryBytes.toString("utf8")) as { candidates?: Array<Record<string, unknown>> };
     } catch {
       throw invalid();
@@ -242,9 +252,10 @@ export async function loadDecisionPolicy(
   }
   else assertCommon(policy as RuntimeDecisionPolicyPhaseOne | RuntimeDecisionPolicyPhaseTwo);
 
-  if (policy.policyVersion === "p2-v2") {
+  if (policy.policyVersion === "p2-v2" || policy.policyVersion === "p2-v3") {
     const phaseTwoV2 = policy as RuntimeDecisionPolicyPhaseTwoV2;
-    if (assessment.policyVersion !== "p2-v2" || assessment.policySha256 !== PHASE_TWO_V2_ASSESSMENT_SHA) throw invalid();
+    if (assessment.policyVersion !== phaseTwoV2.allowedAssessmentPolicyVersion ||
+        assessment.policySha256 !== phaseTwoV2.allowedAssessmentPolicySha256) throw invalid();
     return phaseTwoV2;
   }
 

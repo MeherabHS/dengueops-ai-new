@@ -53,7 +53,11 @@ def build_ready_assessment_runtime(
     (workspace / "metadata/workspace.json").write_text(json.dumps(metadata), encoding="utf-8")
     validation_hash = hashlib.sha256((workspace / "metadata/validation.json").read_bytes()).hexdigest()
     policy, policy_hash = load_and_validate_assessment_policy("dhaka_south", assessment_policy_version)
-    registry_name = "candidate_models.json" if policy["policy_version"] == "p2-v2" else "candidate_models_p1.2a-v1.json"
+    registry_name = (
+        "candidate_models.json" if policy["policy_version"] == "p2-v3"
+        else "candidate_models_p2-v1.json" if policy["policy_version"] == "p2-v2"
+        else "candidate_models_p1.2a-v1.json"
+    )
     registry_hash = hashlib.sha256((ROOT / "config" / registry_name).read_bytes()).hexdigest()
     job = {"schemaVersion":"1.0","jobKind":"dataset_assessment","jobId":job_id,"assessmentId":assessment_id,"workspaceId":workspace_id,
         "datasetId":result["datasetId"],"deploymentId":"dhaka_south","workflowMode":"assess_dataset","validationRecordSha256":validation_hash,
@@ -193,18 +197,42 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
                 rolling["foldPlanSha256"],
                 "23894ebae72417819a7010ce6d4aa1c020406880593184947454864eded9292b",
             )
+            existing_prediction_parity = [
+                {
+                    **fold,
+                    "predictions": [
+                        prediction
+                        for prediction in fold["predictions"]
+                        if prediction["modelId"] != "poisson_gam"
+                    ],
+                }
+                for fold in prediction_parity
+            ]
+            existing_metrics_parity = [
+                candidate
+                for candidate in metrics_parity
+                if candidate["modelId"] != "poisson_gam"
+            ]
             self.assertEqual(
-                digest(prediction_parity),
+                digest(existing_prediction_parity),
                 "6ab7a6de8c47a85090f99a2f945a45b8dbb3fd9b3dc343f92c9fc15b54c7c6bd",
             )
             self.assertEqual(
-                digest(metrics_parity),
-                "2234cdb57fd0b7bc8e8ed35b3d319e105a8c9002df8d127de6c1a2e7ed4d61e3",
+                digest(existing_metrics_parity),
+                "99cabc7531d43800b494d2bca8eb7c03b664b97799334753c6b8a794333d79fe",
             )
-            self.assertEqual(comparison["technicalWinnerModelId"], "extra_trees")
-            self.assertEqual(eligible[1]["modelId"], "random_forest")
+            gam = next(
+                candidate
+                for candidate in comparison["candidates"]
+                if candidate["modelId"] == "poisson_gam"
+            )
+            self.assertTrue(gam["selectionEligible"])
+            self.assertEqual(gam["successfulFolds"], 52)
+            self.assertEqual(gam["failedFolds"], 0)
+            self.assertEqual(comparison["technicalWinnerModelId"], "poisson_gam")
+            self.assertEqual(eligible[1]["modelId"], "extra_trees")
 
-    def test_worker_commits_direct_ten_candidate_assessment_without_latest(self):
+    def test_worker_commits_registry_derived_candidate_assessment_without_latest(self):
         before = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (ROOT / "data").glob("*") if path.is_file()}
         with tempfile.TemporaryDirectory() as directory:
             runtime, _workspace, pending, job = build_ready_assessment_runtime(Path(directory))

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 POLICY_SCHEMA_PATH = ROOT / "config" / "runtime_assessment_policy.schema.json"
 CANDIDATE_SCHEMA_PATH = ROOT / "config" / "candidate_models.schema.json"
 CANDIDATE_REGISTRY_PATH = ROOT / "config" / "candidate_models.json"
+PREVIOUS_CANDIDATE_REGISTRY_PATH = ROOT / "config" / "candidate_models_p2-v1.json"
 HISTORICAL_CANDIDATE_REGISTRY_PATH = ROOT / "config" / "candidate_models_p1.2a-v1.json"
 
 REASON_MESSAGES = {
@@ -52,8 +53,10 @@ def policy_path(deployment_id: str, policy_version: str | None = None) -> Path:
     if not deployment_id or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for character in deployment_id):
         raise RuntimeAssessmentPolicyError("Invalid deployment identifier for dataset-assessment policy.")
     parent = (ROOT / "config" / "deployments" / deployment_id).resolve()
-    if policy_version in (None, "p2-v2"):
+    if policy_version in (None, "p2-v3"):
         filename = "assessment_policy.json"
+    elif policy_version == "p2-v2":
+        filename = "assessment_policy_p2-v2.json"
     elif policy_version == "p2-v1":
         filename = "assessment_policy_p2-v1.json"
     elif policy_version == "p1.4d-1-v1":
@@ -74,10 +77,14 @@ def load_and_validate_assessment_policy(
     try:
         policy = json.loads(path.read_text(encoding="utf-8"))
         schema = json.loads(POLICY_SCHEMA_PATH.read_text(encoding="utf-8"))
-        registry_path = CANDIDATE_REGISTRY_PATH if policy_version in (None, "p2-v2") else HISTORICAL_CANDIDATE_REGISTRY_PATH
+        registry_path = (
+            CANDIDATE_REGISTRY_PATH if policy_version in (None, "p2-v3")
+            else PREVIOUS_CANDIDATE_REGISTRY_PATH if policy_version == "p2-v2"
+            else HISTORICAL_CANDIDATE_REGISTRY_PATH
+        )
         registry_bytes = registry_path.read_bytes()
         registry = json.loads(registry_bytes.decode("utf-8"))
-        registry_schema = json.loads(CANDIDATE_SCHEMA_PATH.read_text(encoding="utf-8")) if policy_version in (None, "p2-v2") else None
+        registry_schema = json.loads(CANDIDATE_SCHEMA_PATH.read_text(encoding="utf-8")) if policy_version in (None, "p2-v2", "p2-v3") else None
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise RuntimeAssessmentPolicyError("Dataset-assessment policy dependencies are not valid UTF-8 JSON.") from exc
 
@@ -127,14 +134,14 @@ def load_and_validate_assessment_policy(
             ("model_family", "model_family"),
             ("parameters_sha256", "parameters_sha256"),
             ("minimum_training_rows", "minimum_training_rows"),
-            ("negative_output_policy", "output_domain_rule" if policy_version in (None, "p2-v2") else "negative_prediction_policy"),
+            ("negative_output_policy", "output_domain_rule" if policy_version in (None, "p2-v2", "p2-v3") else "negative_prediction_policy"),
             ("selection_complexity_rank", "selection_complexity_rank"),
         ):
             if governed.get(policy_key) != registered.get(registry_key):
                 errors.append(f"Assessment policy candidate {governed.get('model_id')} {policy_key} mismatch.")
         if governed.get("deterministic_configuration") != registered.get("parameters"):
             errors.append(f"Assessment policy candidate {governed.get('model_id')} parameter configuration mismatch.")
-        if policy_version not in (None, "p2-v2") and registered.get("enabled") is not True:
+        if policy_version not in (None, "p2-v2", "p2-v3") and registered.get("enabled") is not True:
             errors.append(f"Assessment policy candidate {governed.get('model_id')} is disabled in the registry.")
 
     if errors:
@@ -225,7 +232,7 @@ def evaluate_assessment_policy(policy: Mapping[str, Any], context: Mapping[str, 
     fold_policy = policy.get("fold_policy", {})
     labelled_rows = max(0, int(context.get("labelled_rows", 0)))
     available = available_fold_count(labelled_rows, fold_policy)
-    is_phase_two = policy.get("policy_version") in {"p2-v1", "p2-v2"}
+    is_phase_two = policy.get("policy_version") in {"p2-v1", "p2-v2", "p2-v3"}
     minimum_rows = int(fold_policy.get("minimum_labelled_rows",
         fold_policy.get("recommendation_grade_minimum_labelled_rows", 0)))
     minimum_folds = int(fold_policy.get("minimum_fold_count",

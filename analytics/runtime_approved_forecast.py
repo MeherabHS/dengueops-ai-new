@@ -20,7 +20,7 @@ from sklearn.exceptions import ConvergenceWarning
 from feature_engineering import FEATURE_COLUMNS, build_features, build_inference_features
 from model_factory import build_candidate_estimator, canonical_sha256, load_and_validate_candidate_registry, load_historical_candidate_registry
 from runtime_approved_forecast_commit import commit_approved_forecast
-from runtime_assessment_policy import load_and_validate_assessment_policy
+from runtime_assessment_policy import PREVIOUS_CANDIDATE_REGISTRY_PATH, load_and_validate_assessment_policy
 from runtime_commit import atomic_json, patch_running_job, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_validate import HORIZON_WEEKS, TARGET, compute_dataset_id
@@ -30,11 +30,21 @@ from runtime_uncertainty import validate_uncertainty_contract
 P1_ASSESSMENT_SHA = "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af"
 P2_ASSESSMENT_SHA = "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff"
 P2_V2_ASSESSMENT_SHA = "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8"
+P2_V3_ASSESSMENT_SHA = "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7"
 P1_DECISION_SHA = "8fece340b85951d3bee8b037c4ac79ae82636ee371a934e9371bcb4a633491a4"
 P2_DECISION_SHA = "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdcb4a"
 P2_V2_DECISION_SHA = "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d"
+P2_V3_DECISION_SHA = "9ad6570be27c425368ac6650687c9b2f3b4741575e8081e9f86b073613b59dba"
 ASSESSMENT_POLICY_ID = "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
 DECISION_POLICY_ID = "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION"
+
+
+def _load_candidate_registry_for_decision(decision_policy_version: str):
+    if decision_policy_version == "p2-v3":
+        return load_and_validate_candidate_registry()
+    if decision_policy_version == "p2-v2":
+        return load_and_validate_candidate_registry(PREVIOUS_CANDIDATE_REGISTRY_PATH)
+    return load_historical_candidate_registry()
 
 
 def _now() -> str:
@@ -91,11 +101,15 @@ def _load_decision_policy(decision: dict[str, Any]) -> tuple[dict[str, Any], boo
           DECISION_POLICY_ID, "p2-v1", P2_DECISION_SHA)
     p2v2 = ("2.0", ASSESSMENT_POLICY_ID, "p2-v2", P2_V2_ASSESSMENT_SHA,
             DECISION_POLICY_ID, "p2-v2", P2_V2_DECISION_SHA)
+    p2v3 = ("2.0", ASSESSMENT_POLICY_ID, "p2-v3", P2_V3_ASSESSMENT_SHA,
+            DECISION_POLICY_ID, "p2-v3", P2_V3_DECISION_SHA)
     if identity == p1:
         filename, phase_two = "decision_policy_p1.4d-3-e-v1.json", False
     elif identity == p2:
         filename, phase_two = "decision_policy_p2-v1.json", True
     elif identity == p2v2:
+        filename, phase_two = "decision_policy_p2-v2.json", True
+    elif identity == p2v3:
         filename, phase_two = "decision_policy.json", True
     else:
         raise ValueError("The committed decision policy identity is unsupported or hybrid.")
@@ -186,9 +200,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             or rolling.get("foldPlanSha256") != summary.get("foldPlanSha256")):
         raise ValueError("The immutable assessment evidence is invalid.")
 
-    decision_v2 = decision.get("decisionPolicyVersion") == "p2-v2"
-    assessment_version = "p2-v2" if decision_v2 else "p2-v1" if phase_two else "p1.4d-1-v1"
-    assessment_sha = P2_V2_ASSESSMENT_SHA if decision_v2 else P2_ASSESSMENT_SHA if phase_two else P1_ASSESSMENT_SHA
+    decision_v2 = decision.get("decisionPolicyVersion") in {"p2-v2", "p2-v3"}
+    assessment_version = str(decision.get("assessmentPolicyVersion")) if phase_two else "p1.4d-1-v1"
+    assessment_sha = str(decision.get("assessmentPolicySha256")) if phase_two else P1_ASSESSMENT_SHA
     load_and_validate_assessment_policy("dhaka_south", assessment_version, assessment_sha)
     assessment_policy = rolling.get("assessmentPolicy", {})
     if assessment_policy != _policy_evidence(ASSESSMENT_POLICY_ID, assessment_version, assessment_sha):
@@ -200,7 +214,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     compared = next((value for value in comparison_candidates if value.get("modelId") == job["selectedModelId"]), None)
     winner = next((value for value in candidates if value.get("modelId") == summary.get("technicalWinnerModelId")), None)
     compared_winner = next((value for value in comparison_candidates if value.get("modelId") == comparison.get("technicalWinnerModelId")), None)
-    registry, registry_hash = load_and_validate_candidate_registry() if decision_v2 else load_historical_candidate_registry()
+    registry, registry_hash = _load_candidate_registry_for_decision(str(decision.get("decisionPolicyVersion")))
     registry_candidate = next(
         (value for value in registry["candidates"] if value["model_id"] == job["selectedModelId"]),
         None,
@@ -367,8 +381,14 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
            "validationRecordSha256": job["validationRecordSha256"], "canonicalDengueSha256": sha256_file(canonical_case),
            "canonicalClimateSha256": sha256_file(canonical_climate), "featureOrderSha256": feature_hash, "generatedAt": generated})
     _update(job_path, job, progress="generating_point_forecast")
-    uncertainty_fields = ({"forecastPresentationMode": "point_only", "calibrationStatus": "pending",
-                           "uncertaintyReasonCode": "model_specific_calibration_pending"}
+    current_calibration_status = "unavailable" if job["selectedModelId"] == "poisson_gam" else "pending"
+    current_uncertainty_reason = (
+        "model_calibration_unavailable"
+        if job["selectedModelId"] == "poisson_gam"
+        else "model_specific_calibration_pending"
+    )
+    uncertainty_fields = ({"forecastPresentationMode": "point_only", "calibrationStatus": current_calibration_status,
+                           "uncertaintyReasonCode": current_uncertainty_reason}
                           if decision_v2 else {"uncertaintyStatus": "pending_selected_model_calibration"})
     forecast = {"schemaVersion": schema_version, "runId": job["runId"], "jobId": job["jobId"],
                 "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "sourceType": "uploaded",
@@ -399,7 +419,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     uncertainty = {"schemaVersion": "2.0" if decision_v2 else "1.0", "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
                    "deploymentId": job["deploymentId"], "decisionId": job["decisionId"], "assessmentId": job["assessmentId"],
                    "selectedModelId": job["selectedModelId"], "selectedModelParameterSha256": job["selectedModelParameterSha256"],
-                   **({"forecastPresentationMode": "point_only", "calibrationStatus": "pending", "uncertaintyReasonCode": "model_specific_calibration_pending",
+                   **({"forecastPresentationMode": "point_only", "calibrationStatus": current_calibration_status, "uncertaintyReasonCode": current_uncertainty_reason,
                        "calibrationProvenance": None, "modelFamily": registry_candidate["model_family"],
                        "preprocessingIdentity": registry_candidate.get("preprocessing_identity"), "candidateRegistrySha256": registry_hash,
                        "featureOrderSha256": feature_hash, "foldPlanSha256": summary["foldPlanSha256"]}
@@ -414,8 +434,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "parameterSha256": job["selectedModelParameterSha256"], "candidateRegistrySha256": registry_hash,
             "featureOrderSha256": feature_hash, "foldPlanSha256": summary["foldPlanSha256"], "datasetId": job["datasetId"],
             "policyId": DECISION_POLICY_ID, "policyVersion": policy["policyVersion"], "sourceFamily": "approved_forecast_p2",
-            "forecastPresentationMode": "point_only", "calibrationStatus": "pending", "lower": None, "upper": None,
-            "uncertaintyReasonCode": "model_specific_calibration_pending", "calibrationProvenance": None}, ROOT)
+            "forecastPresentationMode": "point_only", "calibrationStatus": current_calibration_status, "lower": None, "upper": None,
+            "uncertaintyReasonCode": current_uncertainty_reason, "calibrationProvenance": None}, ROOT)
     _write(artifacts / "forecast_uncertainty.json", uncertainty)
     cases = pd.read_csv(canonical_case)
     history = [{"period": _period(int(row.epi_year), int(row.epi_week)), "cases": int(row.cases)} for row in cases.tail(52).itertuples()]
@@ -470,8 +490,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         run.update({"selectedModelFamily": registry_candidate["model_family"],
                     "selectedModelPreprocessingIdentity": registry_candidate["preprocessing_identity"],
                     "selectionType": decision["selectionType"], "technicalWinnerModelId": decision["technicalWinnerModelId"],
-                    "forecastPresentationMode": "point_only", "calibrationStatus": "pending",
-                    "uncertaintyReasonCode": "model_specific_calibration_pending"})
+                    "forecastPresentationMode": "point_only", "calibrationStatus": current_calibration_status,
+                    "uncertaintyReasonCode": current_uncertainty_reason})
     _write(staging / "metadata/run.json", run)
     hashes = {name: sha256_file(artifacts / name) for name in sequence if name != "model_card.json"}
     card = {"schemaVersion": schema_version, "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
@@ -508,8 +528,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if decision_v2:
         card["model"]["preprocessingIdentity"] = registry_candidate["preprocessing_identity"]
         card.pop("uncertaintyStatus", None)
-        card.update({"forecastPresentationMode": "point_only", "calibrationStatus": "pending",
-                     "uncertaintyReasonCode": "model_specific_calibration_pending", "calibrationProvenance": None,
+        card.update({"forecastPresentationMode": "point_only", "calibrationStatus": current_calibration_status,
+                     "uncertaintyReasonCode": current_uncertainty_reason, "calibrationProvenance": None,
                      "selectionType": decision["selectionType"]})
     _update(job_path, job, progress="validating_artifacts")
     _write(artifacts / "model_card.json", card)

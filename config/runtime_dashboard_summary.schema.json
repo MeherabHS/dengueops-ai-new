@@ -1,19 +1,562 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "oneOf": [{"$ref": "#/$defs/p1"}, {"$ref": "#/$defs/p2"}, {"$ref": "#/$defs/p21"}],
+  "oneOf": [
+    { "$ref": "#/$defs/p1" },
+    { "$ref": "#/$defs/p2" },
+    { "$ref": "#/$defs/p21" }
+  ],
   "$defs": {
-    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "uuid": {"type": "string", "format": "uuid"}, "dateTime": {"type": "string", "format": "date-time"},
-    "history": {"type": "array", "maxItems": 52, "items": {"type": "object", "additionalProperties": false, "required": ["period", "cases"], "properties": {"period": {"type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$"}, "cases": {"type": "integer", "minimum": 0}}}},
-    "preparedness": {"type": "object", "additionalProperties": false, "required": ["availabilityStatus", "scenarios", "counts", "facilities", "alerts"], "properties": {"availabilityStatus": {"const": "unavailable_missing_planning_policy"}, "scenarios": {"type": "null"}, "counts": {"type": "null"}, "facilities": {"type": "array", "maxItems": 0}, "alerts": {"type": "array", "maxItems": 0}}},
-    "policyP1": {"type": "object", "additionalProperties": false, "required": ["id", "version", "sha256"], "properties": {"id": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"}, "version": {"const": "p1.4f-v1"}, "sha256": {"const": "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a"}}},
-    "policyP2": {"type": "object", "additionalProperties": false, "required": ["id", "version", "sha256"], "properties": {"id": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"}, "version": {"const": "p2-v1"}, "sha256": {"const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"}}},
-    "lifecyclePolicy": {"type": "object", "additionalProperties": false, "required": ["id", "version", "sha256"], "properties": {"id": {"const": "RUNTIME.MODEL_LIFECYCLE.DECISION"}, "version": {"const": "p2-v2"}, "sha256": {"$ref": "#/$defs/sha"}}},
-    "evidenceP1": {"type": "object", "additionalProperties": false, "required": ["validation", "policy", "calibration", "modelCard", "provenance"], "properties": {"validation": {"type": "object", "minProperties": 1}, "policy": {"$ref": "#/$defs/policyP1"}, "calibration": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"const": "artifacts/forecast_calibration.json"}, "sha256": {"$ref": "#/$defs/sha"}}}, "modelCard": {"type": "object", "additionalProperties": false, "required": ["path"], "properties": {"path": {"const": "artifacts/model_card.json"}}}, "provenance": {"type": "object", "minProperties": 2}}},
-    "evidenceP2": {"type": "object", "additionalProperties": false, "required": ["validation", "policy", "calibration", "modelCard", "provenance", "lifecyclePolicy"], "properties": {"validation": {"type": "object", "minProperties": 1}, "policy": {"$ref": "#/$defs/policyP2"}, "calibration": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"const": "artifacts/forecast_calibration.json"}, "sha256": {"$ref": "#/$defs/sha"}}}, "modelCard": {"type": "object", "additionalProperties": false, "required": ["path"], "properties": {"path": {"const": "artifacts/model_card.json"}}}, "provenance": {"type": "object", "minProperties": 2}, "lifecyclePolicy": {"$ref": "#/$defs/lifecyclePolicy"}}},
-    "forecastP1": {"type": "object", "additionalProperties": false, "required": ["latestObservedCases", "forecastRaw", "forecastReported", "targetPeriod", "target", "horizonWeeks", "direction", "uncertaintyStatus", "empiricalLower", "empiricalUpper", "nominalCoverage", "historicalCoverage", "isPredictionInterval"], "properties": {"latestObservedCases": {"type": "integer", "minimum": 0}, "forecastRaw": {"type": "number", "minimum": 0}, "forecastReported": {"type": "integer", "minimum": 0}, "targetPeriod": {"type": "string"}, "target": {"const": "target_cases_next_2w"}, "horizonWeeks": {"const": 2}, "direction": {"enum": ["Increasing", "Stable", "Decreasing"]}, "uncertaintyStatus": {"enum": ["available", "pending_dataset_specific_calibration"]}, "empiricalLower": {"type": ["integer", "null"], "minimum": 0}, "empiricalUpper": {"type": ["integer", "null"], "minimum": 0}, "nominalCoverage": {"type": ["number", "null"]}, "historicalCoverage": {"type": ["number", "null"]}, "isPredictionInterval": {"const": false}}, "allOf": [{"if": {"properties": {"uncertaintyStatus": {"const": "available"}}, "required": ["uncertaintyStatus"]}, "then": {"properties": {"empiricalLower": {"type": "integer", "minimum": 0}, "empiricalUpper": {"type": "integer", "minimum": 0}, "nominalCoverage": {"const": 0.9}, "historicalCoverage": {"type": "number", "minimum": 0, "maximum": 1}}}}, {"if": {"properties": {"uncertaintyStatus": {"const": "pending_dataset_specific_calibration"}}, "required": ["uncertaintyStatus"]}, "then": {"properties": {"empiricalLower": {"type": "null"}, "empiricalUpper": {"type": "null"}, "nominalCoverage": {"type": "null"}, "historicalCoverage": {"type": "null"}}}}]},
-    "forecastP2": {"type": "object", "additionalProperties": false, "required": ["latestObservedCases", "forecastRaw", "forecastReported", "targetPeriod", "target", "horizonWeeks", "direction", "uncertaintyStatus", "forecastPresentationMode", "calibrationStatus", "uncertaintyReasonCode", "empiricalLower", "empiricalUpper", "nominalCoverage", "historicalCoverage", "isPredictionInterval"], "properties": {"latestObservedCases": {"type": "integer", "minimum": 0}, "forecastRaw": {"type": "number", "minimum": 0}, "forecastReported": {"type": "integer", "minimum": 0}, "targetPeriod": {"type": "string"}, "target": {"const": "target_cases_next_2w"}, "horizonWeeks": {"const": 2}, "direction": {"enum": ["Increasing", "Stable", "Decreasing"]}, "uncertaintyStatus": {"enum": ["governed_available", "unavailable"]}, "forecastPresentationMode": {"enum": ["point_and_interval", "point_only"]}, "calibrationStatus": {"enum": ["governed_available", "unavailable"]}, "uncertaintyReasonCode": {"type": ["string", "null"]}, "empiricalLower": {"type": ["integer", "null"], "minimum": 0}, "empiricalUpper": {"type": ["integer", "null"], "minimum": 0}, "nominalCoverage": {"type": ["number", "null"]}, "historicalCoverage": {"type": ["number", "null"]}, "isPredictionInterval": {"const": false}}, "allOf": [{"if": {"properties": {"calibrationStatus": {"const": "governed_available"}}, "required": ["calibrationStatus"]}, "then": {"properties": {"uncertaintyStatus": {"const": "governed_available"}, "forecastPresentationMode": {"const": "point_and_interval"}, "uncertaintyReasonCode": {"type": "null"}, "empiricalLower": {"type": "integer", "minimum": 0}, "empiricalUpper": {"type": "integer", "minimum": 0}, "nominalCoverage": {"const": 0.9}, "historicalCoverage": {"type": "number", "minimum": 0, "maximum": 1}}}}, {"if": {"properties": {"calibrationStatus": {"const": "unavailable"}}, "required": ["calibrationStatus"]}, "then": {"properties": {"uncertaintyStatus": {"const": "unavailable"}, "forecastPresentationMode": {"const": "point_only"}, "uncertaintyReasonCode": {"const": "model_calibration_unavailable"}, "empiricalLower": {"type": "null"}, "empiricalUpper": {"type": "null"}, "nominalCoverage": {"type": "null"}, "historicalCoverage": {"type": "null"}}}}]},
-    "p1": {"type": "object", "additionalProperties": false, "required": ["schemaVersion", "run", "model", "forecast", "history", "preparedness", "evidence", "limitations"], "properties": {"schemaVersion": {"const": "1.0"}, "run": {"type": "object", "additionalProperties": false, "required": ["runId", "jobId", "datasetId", "deploymentId", "workflowMode", "sourceType", "committedAt", "completedSteps"], "properties": {"runId": {"$ref": "#/$defs/uuid"}, "jobId": {"$ref": "#/$defs/uuid"}, "datasetId": {"$ref": "#/$defs/sha"}, "deploymentId": {"const": "dhaka_south"}, "workflowMode": {"const": "quick_forecast"}, "sourceType": {"const": "uploaded"}, "committedAt": {"$ref": "#/$defs/dateTime"}, "completedSteps": {"type": "integer", "minimum": 1}}}, "model": {"type": "object", "additionalProperties": false, "required": ["modelId", "modelLabel", "parameterHash", "policyId", "policyVersion", "suitabilityStatus", "comparisonPerformed"], "properties": {"modelId": {"const": "random_forest"}, "modelLabel": {"const": "Random Forest"}, "parameterHash": {"$ref": "#/$defs/sha"}, "policyId": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"}, "policyVersion": {"const": "p1.4f-v1"}, "suitabilityStatus": {"const": "approved_under_quick_forecast_compatibility_policy"}, "comparisonPerformed": {"const": false}}}, "forecast": {"$ref": "#/$defs/forecastP1"}, "history": {"$ref": "#/$defs/history"}, "preparedness": {"$ref": "#/$defs/preparedness"}, "evidence": {"$ref": "#/$defs/evidenceP1"}, "limitations": {"type": "array", "minItems": 3, "items": {"type": "string"}}}},
-    "p2": {"type": "object", "additionalProperties": false, "required": ["schemaVersion", "run", "model", "forecast", "history", "preparedness", "evidence", "limitations"], "properties": {"schemaVersion": {"const": "2.0"}, "run": {"type": "object", "additionalProperties": false, "required": ["runId", "jobId", "datasetId", "deploymentId", "workflowMode", "sourceType", "sourceFamily", "assignmentId", "assignmentCommitSha256", "committedAt", "completedSteps"], "properties": {"runId": {"$ref": "#/$defs/uuid"}, "jobId": {"$ref": "#/$defs/uuid"}, "datasetId": {"$ref": "#/$defs/sha"}, "deploymentId": {"const": "dhaka_south"}, "workflowMode": {"const": "quick_forecast"}, "sourceType": {"const": "uploaded"}, "sourceFamily": {"const": "quick_forecast_p2"}, "assignmentId": {"$ref": "#/$defs/uuid"}, "assignmentCommitSha256": {"$ref": "#/$defs/sha"}, "committedAt": {"$ref": "#/$defs/dateTime"}, "completedSteps": {"type": "integer", "minimum": 1}}}, "model": {"type": "object", "additionalProperties": false, "required": ["modelId", "modelLabel", "modelFamily", "parameterHash", "preprocessingIdentity", "candidateRegistrySha256", "featureOrderSha256", "policyId", "policyVersion", "suitabilityStatus", "comparisonPerformed"], "properties": {"modelId": {"type": "string", "minLength": 1}, "modelLabel": {"type": "string", "minLength": 1}, "modelFamily": {"type": "string", "minLength": 1}, "parameterHash": {"$ref": "#/$defs/sha"}, "preprocessingIdentity": {"$ref": "#/$defs/sha"}, "candidateRegistrySha256": {"const": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"}, "featureOrderSha256": {"const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"}, "policyId": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"}, "policyVersion": {"const": "p2-v1"}, "suitabilityStatus": {"const": "approved_under_quick_forecast_compatibility_policy"}, "comparisonPerformed": {"const": false}}}, "forecast": {"$ref": "#/$defs/forecastP2"}, "history": {"$ref": "#/$defs/history"}, "preparedness": {"$ref": "#/$defs/preparedness"}, "evidence": {"$ref": "#/$defs/evidenceP2"}, "limitations": {"type": "array", "minItems": 3, "items": {"type": "string"}}}},
-    "p21": {"type": "object", "additionalProperties": false, "required": ["schemaVersion", "run", "model", "forecast", "history", "preparedness", "evidence", "limitations"], "properties": {"schemaVersion": {"const": "2.1"}, "run": {"type": "object", "additionalProperties": false, "required": ["runId", "jobId", "datasetId", "deploymentId", "workflowMode", "sourceType", "sourceFamily", "assignmentId", "assignmentCommitSha256", "committedAt", "completedSteps"], "properties": {"runId": {"$ref": "#/$defs/uuid"}, "jobId": {"$ref": "#/$defs/uuid"}, "datasetId": {"$ref": "#/$defs/sha"}, "deploymentId": {"const": "dhaka_south"}, "workflowMode": {"const": "quick_forecast"}, "sourceType": {"const": "uploaded"}, "sourceFamily": {"const": "quick_forecast_p2"}, "assignmentId": {"$ref": "#/$defs/uuid"}, "assignmentCommitSha256": {"$ref": "#/$defs/sha"}, "committedAt": {"$ref": "#/$defs/dateTime"}, "completedSteps": {"type": "integer", "minimum": 1}}}, "model": {"type": "object", "additionalProperties": false, "required": ["modelId", "modelLabel", "modelFamily", "parameterHash", "preprocessingIdentity", "candidateRegistrySha256", "featureOrderSha256", "policyId", "policyVersion", "suitabilityStatus", "comparisonPerformed"], "properties": {"modelId": {"type": "string", "minLength": 1}, "modelLabel": {"type": "string", "minLength": 1}, "modelFamily": {"type": "string", "minLength": 1}, "parameterHash": {"$ref": "#/$defs/sha"}, "preprocessingIdentity": {"$ref": "#/$defs/sha"}, "candidateRegistrySha256": {"const": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"}, "featureOrderSha256": {"const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"}, "policyId": {"const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"}, "policyVersion": {"const": "p2-v1"}, "suitabilityStatus": {"const": "approved_under_quick_forecast_compatibility_policy"}, "comparisonPerformed": {"const": false}}}, "forecast": {"$ref": "#/$defs/forecastP2"}, "history": {"$ref": "#/$defs/history"}, "preparedness": {"$ref": "#/$defs/preparedness"}, "evidence": {"$ref": "#/$defs/evidenceP2"}, "limitations": {"type": "array", "minItems": 3, "items": {"type": "string"}}}}
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "uuid": { "type": "string", "format": "uuid" },
+    "dateTime": { "type": "string", "format": "date-time" },
+    "history": {
+      "type": "array",
+      "maxItems": 52,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["period", "cases"],
+        "properties": {
+          "period": { "type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$" },
+          "cases": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "preparedness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "availabilityStatus",
+        "scenarios",
+        "counts",
+        "facilities",
+        "alerts"
+      ],
+      "properties": {
+        "availabilityStatus": {
+          "const": "unavailable_missing_planning_policy"
+        },
+        "scenarios": { "type": "null" },
+        "counts": { "type": "null" },
+        "facilities": { "type": "array", "maxItems": 0 },
+        "alerts": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "policyP1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "sha256"],
+      "properties": {
+        "id": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
+        "version": { "const": "p1.4f-v1" },
+        "sha256": {
+          "const": "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a"
+        }
+      }
+    },
+    "policyP2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "sha256"],
+      "properties": {
+        "id": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
+        "version": { "enum": ["p2-v1", "p2-v2"] },
+        "sha256": {
+          "enum": ["4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e", "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2"]
+        }
+      }
+    },
+    "lifecyclePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "sha256"],
+      "properties": {
+        "id": { "const": "RUNTIME.MODEL_LIFECYCLE.DECISION" },
+        "version": { "enum": ["p2-v2", "p2-v3"] },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "evidenceP1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validation",
+        "policy",
+        "calibration",
+        "modelCard",
+        "provenance"
+      ],
+      "properties": {
+        "validation": { "type": "object", "minProperties": 1 },
+        "policy": { "$ref": "#/$defs/policyP1" },
+        "calibration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": { "const": "artifacts/forecast_calibration.json" },
+            "sha256": { "$ref": "#/$defs/sha" }
+          }
+        },
+        "modelCard": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path"],
+          "properties": { "path": { "const": "artifacts/model_card.json" } }
+        },
+        "provenance": { "type": "object", "minProperties": 2 }
+      }
+    },
+    "evidenceP2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validation",
+        "policy",
+        "calibration",
+        "modelCard",
+        "provenance",
+        "lifecyclePolicy"
+      ],
+      "properties": {
+        "validation": { "type": "object", "minProperties": 1 },
+        "policy": { "$ref": "#/$defs/policyP2" },
+        "calibration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": { "const": "artifacts/forecast_calibration.json" },
+            "sha256": { "$ref": "#/$defs/sha" }
+          }
+        },
+        "modelCard": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path"],
+          "properties": { "path": { "const": "artifacts/model_card.json" } }
+        },
+        "provenance": { "type": "object", "minProperties": 2 },
+        "lifecyclePolicy": { "$ref": "#/$defs/lifecyclePolicy" }
+      }
+    },
+    "forecastP1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "latestObservedCases",
+        "forecastRaw",
+        "forecastReported",
+        "targetPeriod",
+        "target",
+        "horizonWeeks",
+        "direction",
+        "uncertaintyStatus",
+        "empiricalLower",
+        "empiricalUpper",
+        "nominalCoverage",
+        "historicalCoverage",
+        "isPredictionInterval"
+      ],
+      "properties": {
+        "latestObservedCases": { "type": "integer", "minimum": 0 },
+        "forecastRaw": { "type": "number", "minimum": 0 },
+        "forecastReported": { "type": "integer", "minimum": 0 },
+        "targetPeriod": { "type": "string" },
+        "target": { "const": "target_cases_next_2w" },
+        "horizonWeeks": { "const": 2 },
+        "direction": { "enum": ["Increasing", "Stable", "Decreasing"] },
+        "uncertaintyStatus": {
+          "enum": ["available", "pending_dataset_specific_calibration"]
+        },
+        "empiricalLower": { "type": ["integer", "null"], "minimum": 0 },
+        "empiricalUpper": { "type": ["integer", "null"], "minimum": 0 },
+        "nominalCoverage": { "type": ["number", "null"] },
+        "historicalCoverage": { "type": ["number", "null"] },
+        "isPredictionInterval": { "const": false }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "uncertaintyStatus": { "const": "available" } },
+            "required": ["uncertaintyStatus"]
+          },
+          "then": {
+            "properties": {
+              "empiricalLower": { "type": "integer", "minimum": 0 },
+              "empiricalUpper": { "type": "integer", "minimum": 0 },
+              "nominalCoverage": { "const": 0.9 },
+              "historicalCoverage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uncertaintyStatus": {
+                "const": "pending_dataset_specific_calibration"
+              }
+            },
+            "required": ["uncertaintyStatus"]
+          },
+          "then": {
+            "properties": {
+              "empiricalLower": { "type": "null" },
+              "empiricalUpper": { "type": "null" },
+              "nominalCoverage": { "type": "null" },
+              "historicalCoverage": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "forecastP2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "latestObservedCases",
+        "forecastRaw",
+        "forecastReported",
+        "targetPeriod",
+        "target",
+        "horizonWeeks",
+        "direction",
+        "uncertaintyStatus",
+        "forecastPresentationMode",
+        "calibrationStatus",
+        "uncertaintyReasonCode",
+        "empiricalLower",
+        "empiricalUpper",
+        "nominalCoverage",
+        "historicalCoverage",
+        "isPredictionInterval"
+      ],
+      "properties": {
+        "latestObservedCases": { "type": "integer", "minimum": 0 },
+        "forecastRaw": { "type": "number", "minimum": 0 },
+        "forecastReported": { "type": "integer", "minimum": 0 },
+        "targetPeriod": { "type": "string" },
+        "target": { "const": "target_cases_next_2w" },
+        "horizonWeeks": { "const": 2 },
+        "direction": { "enum": ["Increasing", "Stable", "Decreasing"] },
+        "uncertaintyStatus": { "enum": ["governed_available", "unavailable"] },
+        "forecastPresentationMode": {
+          "enum": ["point_and_interval", "point_only"]
+        },
+        "calibrationStatus": { "enum": ["governed_available", "unavailable"] },
+        "uncertaintyReasonCode": { "type": ["string", "null"] },
+        "empiricalLower": { "type": ["integer", "null"], "minimum": 0 },
+        "empiricalUpper": { "type": ["integer", "null"], "minimum": 0 },
+        "nominalCoverage": { "type": ["number", "null"] },
+        "historicalCoverage": { "type": ["number", "null"] },
+        "isPredictionInterval": { "const": false }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "calibrationStatus": { "const": "governed_available" }
+            },
+            "required": ["calibrationStatus"]
+          },
+          "then": {
+            "properties": {
+              "uncertaintyStatus": { "const": "governed_available" },
+              "forecastPresentationMode": { "const": "point_and_interval" },
+              "uncertaintyReasonCode": { "type": "null" },
+              "empiricalLower": { "type": "integer", "minimum": 0 },
+              "empiricalUpper": { "type": "integer", "minimum": 0 },
+              "nominalCoverage": { "const": 0.9 },
+              "historicalCoverage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "calibrationStatus": { "const": "unavailable" } },
+            "required": ["calibrationStatus"]
+          },
+          "then": {
+            "properties": {
+              "uncertaintyStatus": { "const": "unavailable" },
+              "forecastPresentationMode": { "const": "point_only" },
+              "uncertaintyReasonCode": {
+                "const": "model_calibration_unavailable"
+              },
+              "empiricalLower": { "type": "null" },
+              "empiricalUpper": { "type": "null" },
+              "nominalCoverage": { "type": "null" },
+              "historicalCoverage": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "p1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "run",
+        "model",
+        "forecast",
+        "history",
+        "preparedness",
+        "evidence",
+        "limitations"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0" },
+        "run": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "runId",
+            "jobId",
+            "datasetId",
+            "deploymentId",
+            "workflowMode",
+            "sourceType",
+            "committedAt",
+            "completedSteps"
+          ],
+          "properties": {
+            "runId": { "$ref": "#/$defs/uuid" },
+            "jobId": { "$ref": "#/$defs/uuid" },
+            "datasetId": { "$ref": "#/$defs/sha" },
+            "deploymentId": { "const": "dhaka_south" },
+            "workflowMode": { "const": "quick_forecast" },
+            "sourceType": { "const": "uploaded" },
+            "committedAt": { "$ref": "#/$defs/dateTime" },
+            "completedSteps": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modelId",
+            "modelLabel",
+            "parameterHash",
+            "policyId",
+            "policyVersion",
+            "suitabilityStatus",
+            "comparisonPerformed"
+          ],
+          "properties": {
+            "modelId": { "const": "random_forest" },
+            "modelLabel": { "const": "Random Forest" },
+            "parameterHash": { "$ref": "#/$defs/sha" },
+            "policyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
+            "policyVersion": { "const": "p1.4f-v1" },
+            "suitabilityStatus": {
+              "const": "approved_under_quick_forecast_compatibility_policy"
+            },
+            "comparisonPerformed": { "const": false }
+          }
+        },
+        "forecast": { "$ref": "#/$defs/forecastP1" },
+        "history": { "$ref": "#/$defs/history" },
+        "preparedness": { "$ref": "#/$defs/preparedness" },
+        "evidence": { "$ref": "#/$defs/evidenceP1" },
+        "limitations": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "p2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "run",
+        "model",
+        "forecast",
+        "history",
+        "preparedness",
+        "evidence",
+        "limitations"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "2.0" },
+        "run": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "runId",
+            "jobId",
+            "datasetId",
+            "deploymentId",
+            "workflowMode",
+            "sourceType",
+            "sourceFamily",
+            "assignmentId",
+            "assignmentCommitSha256",
+            "committedAt",
+            "completedSteps"
+          ],
+          "properties": {
+            "runId": { "$ref": "#/$defs/uuid" },
+            "jobId": { "$ref": "#/$defs/uuid" },
+            "datasetId": { "$ref": "#/$defs/sha" },
+            "deploymentId": { "const": "dhaka_south" },
+            "workflowMode": { "const": "quick_forecast" },
+            "sourceType": { "const": "uploaded" },
+            "sourceFamily": { "const": "quick_forecast_p2" },
+            "assignmentId": { "$ref": "#/$defs/uuid" },
+            "assignmentCommitSha256": { "$ref": "#/$defs/sha" },
+            "committedAt": { "$ref": "#/$defs/dateTime" },
+            "completedSteps": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modelId",
+            "modelLabel",
+            "modelFamily",
+            "parameterHash",
+            "preprocessingIdentity",
+            "candidateRegistrySha256",
+            "featureOrderSha256",
+            "policyId",
+            "policyVersion",
+            "suitabilityStatus",
+            "comparisonPerformed"
+          ],
+          "properties": {
+            "modelId": { "type": "string", "minLength": 1 },
+            "modelLabel": { "type": "string", "minLength": 1 },
+            "modelFamily": { "type": "string", "minLength": 1 },
+            "parameterHash": { "$ref": "#/$defs/sha" },
+            "preprocessingIdentity": { "$ref": "#/$defs/sha" },
+            "candidateRegistrySha256": {
+              "enum": ["74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0", "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226"]
+            },
+            "featureOrderSha256": {
+              "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+            },
+            "policyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
+            "policyVersion": { "enum": ["p2-v1", "p2-v2"] },
+            "suitabilityStatus": {
+              "const": "approved_under_quick_forecast_compatibility_policy"
+            },
+            "comparisonPerformed": { "const": false }
+          }
+        },
+        "forecast": { "$ref": "#/$defs/forecastP2" },
+        "history": { "$ref": "#/$defs/history" },
+        "preparedness": { "$ref": "#/$defs/preparedness" },
+        "evidence": { "$ref": "#/$defs/evidenceP2" },
+        "limitations": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "p21": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "run",
+        "model",
+        "forecast",
+        "history",
+        "preparedness",
+        "evidence",
+        "limitations"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "2.1" },
+        "run": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "runId",
+            "jobId",
+            "datasetId",
+            "deploymentId",
+            "workflowMode",
+            "sourceType",
+            "sourceFamily",
+            "assignmentId",
+            "assignmentCommitSha256",
+            "committedAt",
+            "completedSteps"
+          ],
+          "properties": {
+            "runId": { "$ref": "#/$defs/uuid" },
+            "jobId": { "$ref": "#/$defs/uuid" },
+            "datasetId": { "$ref": "#/$defs/sha" },
+            "deploymentId": { "const": "dhaka_south" },
+            "workflowMode": { "const": "quick_forecast" },
+            "sourceType": { "const": "uploaded" },
+            "sourceFamily": { "const": "quick_forecast_p2" },
+            "assignmentId": { "$ref": "#/$defs/uuid" },
+            "assignmentCommitSha256": { "$ref": "#/$defs/sha" },
+            "committedAt": { "$ref": "#/$defs/dateTime" },
+            "completedSteps": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modelId",
+            "modelLabel",
+            "modelFamily",
+            "parameterHash",
+            "preprocessingIdentity",
+            "candidateRegistrySha256",
+            "featureOrderSha256",
+            "policyId",
+            "policyVersion",
+            "suitabilityStatus",
+            "comparisonPerformed"
+          ],
+          "properties": {
+            "modelId": { "type": "string", "minLength": 1 },
+            "modelLabel": { "type": "string", "minLength": 1 },
+            "modelFamily": { "type": "string", "minLength": 1 },
+            "parameterHash": { "$ref": "#/$defs/sha" },
+            "preprocessingIdentity": { "$ref": "#/$defs/sha" },
+            "candidateRegistrySha256": {
+              "enum": ["74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0", "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226"]
+            },
+            "featureOrderSha256": {
+              "const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
+            },
+            "policyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
+            "policyVersion": { "enum": ["p2-v1", "p2-v2"] },
+            "suitabilityStatus": {
+              "const": "approved_under_quick_forecast_compatibility_policy"
+            },
+            "comparisonPerformed": { "const": false }
+          }
+        },
+        "forecast": { "$ref": "#/$defs/forecastP2" },
+        "history": { "$ref": "#/$defs/history" },
+        "preparedness": { "$ref": "#/$defs/preparedness" },
+        "evidence": { "$ref": "#/$defs/evidenceP2" },
+        "limitations": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "type": "string" }
+        }
+      }
+    }
   }
 }

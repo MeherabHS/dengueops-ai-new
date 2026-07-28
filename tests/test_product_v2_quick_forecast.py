@@ -109,7 +109,7 @@ def _setup_quick_run_job(
                 "candidateRegistrySha256": registry_sha,
                 "featureOrderSha256": registry["feature_order_sha256"],
                 "lifecyclePolicyId": "RUNTIME.MODEL_LIFECYCLE.DECISION",
-                "lifecyclePolicyVersion": "p2-v2",
+                "lifecyclePolicyVersion": "p2-v3",
                 "lifecyclePolicySha256": "0" * 64,
             }
         policy = json.loads((ROOT / "config/deployments/dhaka_south/quick_forecast_policy.json").read_text())
@@ -174,7 +174,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def test_quick_forecast_p2_succeeds_for_all_eight_learned_candidates(self):
+    def test_quick_forecast_p2_succeeds_for_all_current_learned_candidates(self):
         learned_candidates = [
             "random_forest",
             "ridge_regression",
@@ -183,7 +183,8 @@ class ProductV2QuickForecastTests(unittest.TestCase):
             "elastic_net",
             "negative_binomial_regression",
             "extra_trees",
-            "hist_gradient_boosting"
+            "hist_gradient_boosting",
+            "poisson_gam",
         ]
         registry, registry_sha = load_and_validate_candidate_registry()
         registry_by_id = {candidate["model_id"]: candidate for candidate in registry["candidates"]}
@@ -217,12 +218,24 @@ class ProductV2QuickForecastTests(unittest.TestCase):
                 run_record = json.loads((committed_run / "metadata/run.json").read_text(encoding="utf-8"))
                 commit = json.loads((committed_run / "metadata/commit.json").read_text(encoding="utf-8"))
                 candidate = registry_by_id[model_id]
+                quick_policy = json.loads(
+                    (
+                        ROOT
+                        / "config/deployments/dhaka_south/quick_forecast_policy.json"
+                    ).read_text(encoding="utf-8")
+                )
 
                 self.assertEqual(forecast_output["activeModelId"], model_id)
                 self.assertEqual(forecast_output["sourceFamily"], "quick_forecast_p2")
-                self.assertEqual(forecast_output["policy"]["version"], "p2-v1")
+                self.assertEqual(
+                    forecast_output["policy"]["version"],
+                    quick_policy["policyVersion"],
+                )
                 self.assertEqual(forecast_output["policy"]["id"], "RUNTIME.QUICK_FORECAST.COMPATIBILITY")
-                self.assertEqual(forecast_output["policy"]["sha256"], "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e")
+                self.assertEqual(
+                    forecast_output["policy"]["sha256"],
+                    quick_policy["policySha256"],
+                )
                 self.assertEqual(model_card["model"]["id"], model_id)
                 self.assertEqual(model_card["sourceFamily"], "quick_forecast_p2")
                 self.assertEqual(uncertainty["activeModelId"], model_id)

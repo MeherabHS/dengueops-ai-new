@@ -26,11 +26,20 @@ from runtime_assessment_evidence import (
     validate_prediction_record,
 )
 from runtime_assessment_policy import (
+    PREVIOUS_CANDIDATE_REGISTRY_PATH,
     available_fold_count,
     load_and_validate_assessment_policy,
     select_planned_validation_indexes,
 )
 from runtime_validate import TARGET
+
+
+def _load_registry_for_policy(policy_version: str):
+    if policy_version == "p2-v3":
+        return load_and_validate_candidate_registry()
+    if policy_version == "p2-v2":
+        return load_and_validate_candidate_registry(PREVIOUS_CANDIDATE_REGISTRY_PATH)
+    return load_historical_candidate_registry()
 
 
 SCHEMAS = {
@@ -130,8 +139,8 @@ def _reconcile(
     maximum_folds = int(fold_policy.get("maximum_fold_count", fold_policy.get("maximum_fold_behavior", {}).get("currently_governed_maximum_folds", 0)))
     current_registry = None
     output_domain_rules: dict[str, str] = {}
-    if policy["policy_version"] == "p2-v2":
-        current_registry, _ = load_and_validate_candidate_registry()
+    if policy["policy_version"] in {"p2-v2", "p2-v3"}:
+        current_registry, _ = _load_registry_for_policy(policy["policy_version"])
         expected_ids = [candidate["model_id"] for candidate in current_registry["candidates"]]
         if candidate_ids != expected_ids:
             raise RuntimeAssessmentCommitError("Assessment candidate order differs from registry v2.")
@@ -155,7 +164,7 @@ def _reconcile(
     cap_applied = available > maximum_folds
     if rolling["plannedFoldCount"] != planned or len(folds) != planned:
         raise RuntimeAssessmentCommitError("Assessment planned fold count does not match policy selection.")
-    if policy["policy_version"] in {"p2-v1", "p2-v2"}:
+    if policy["policy_version"] in {"p2-v1", "p2-v2", "p2-v3"}:
         expected_dynamic = (labelled_rows, available, planned, cap_applied, selected_indexes[0], selected_indexes[-1])
         for artifact in (rolling, comparison, recommendation):
             actual_dynamic = (artifact["labelledRows"], artifact["availableFoldCount"], artifact["plannedFoldCount"], artifact["foldCapApplied"], artifact["selectedValidationStartIndex"], artifact["selectedValidationEndIndex"])
@@ -202,7 +211,7 @@ def _reconcile(
             raise RuntimeAssessmentCommitError(f"Governed full-assessment candidate was marked preflight-ineligible: {model_id}.")
         try:
             metrics = aggregate_candidate(candidate_records, actuals)
-            if policy["policy_version"] != "p2-v2" and metrics is not None:
+            if policy["policy_version"] not in {"p2-v2", "p2-v3"} and metrics is not None:
                 metrics = {key: value for key, value in metrics.items() if key not in {"mse", "r2"}}
         except AssessmentEvidenceError as exc:
             raise RuntimeAssessmentCommitError(f"Candidate aggregate is invalid: {model_id}: {exc}.") from exc
@@ -246,7 +255,7 @@ def _reconcile(
     winner_candidate = summaries.get(winner) if winner else None
     if comparison["winnerParameterSha256"] != (winner_candidate["parametersSha256"] if winner_candidate else None):
         raise RuntimeAssessmentCommitError("Winner parameter identity does not reconcile.")
-    if policy["policy_version"] == "p2-v2":
+    if policy["policy_version"] in {"p2-v2", "p2-v3"}:
         registry = current_registry
         assert registry is not None
         registered = {candidate["model_id"]: candidate for candidate in registry["candidates"]}
@@ -354,11 +363,7 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
     except Exception as exc:
         raise RuntimeAssessmentCommitError("Assessment policy identity cannot be resolved.") from exc
     try:
-        _, registry_hash = (
-            load_and_validate_candidate_registry()
-            if policy["policy_version"] == "p2-v2"
-            else load_historical_candidate_registry()
-        )
+        _, registry_hash = _load_registry_for_policy(policy["policy_version"])
     except Exception as exc:
         raise RuntimeAssessmentCommitError("Candidate registry identity cannot be resolved.") from exc
     if registry_hash != job["candidateRegistrySha256"] or any(
@@ -381,7 +386,7 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
     except (OSError, UnicodeDecodeError, csv.Error) as exc:
         raise RuntimeAssessmentCommitError("Assessment feature matrix is not valid canonical CSV.") from exc
     _reconcile(rolling, comparison, recommendation, feature_rows, policy)
-    if policy["policy_version"] in {"p2-v1", "p2-v2"}:
+    if policy["policy_version"] in {"p2-v1", "p2-v2", "p2-v3"}:
         dynamic = (summary["labelledRows"], summary["availableFoldCount"], summary["foldPolicy"]["plannedFoldCount"], summary["foldPolicy"]["foldCapApplied"], summary["foldPolicy"]["selectedValidationStartIndex"], summary["foldPolicy"]["selectedValidationEndIndex"])
         expected = (rolling["labelledRows"], rolling["availableFoldCount"], rolling["plannedFoldCount"], rolling["foldCapApplied"], rolling["selectedValidationStartIndex"], rolling["selectedValidationEndIndex"])
         if dynamic != expected or assessment["decisionCompatibilityStatus"] != "phase2_decision_policy_not_yet_available" or summary["decisionCompatibilityStatus"] != "phase2_decision_policy_not_yet_available":
@@ -407,7 +412,7 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
         raise RuntimeAssessmentCommitError("Assessment summary evidence hashes do not reconcile.")
 
     commit = {
-        "schemaVersion": "2.0" if policy["policy_version"] in {"p2-v1", "p2-v2"} else "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"],
+        "schemaVersion": "2.0" if policy["policy_version"] in {"p2-v1", "p2-v2", "p2-v3"} else "1.0", "assessmentId": job["assessmentId"], "jobId": job["jobId"],
         "workspaceId": job["workspaceId"], "datasetId": job["datasetId"], "deploymentId": job["deploymentId"],
         "workflowMode": "assess_dataset", "sourceType": "uploaded", "status": "committed",
         "validationRecordSha256": job["validationRecordSha256"],
@@ -416,7 +421,7 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
         "artifactHashes": hashes, "summaryPublishedLast": True, "prohibitedArtifactsAbsent": True,
         "latestPointerUpdated": False, "committedAt": summary["committedAt"],
     }
-    if policy["policy_version"] in {"p2-v1", "p2-v2"}:
+    if policy["policy_version"] in {"p2-v1", "p2-v2", "p2-v3"}:
         commit.update(assessmentPolicyId=policy["policy_id"], assessmentPolicyVersion=policy["policy_version"])
     schema = _json(ROOT / "config" / "runtime_assessment_commit.schema.json")
     Draft202012Validator(schema, format_checker=FormatChecker()).validate(commit)

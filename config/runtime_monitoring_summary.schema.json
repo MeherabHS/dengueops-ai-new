@@ -344,9 +344,9 @@
         "schemaVersion": { "const": "2.1" },
         "deploymentId": { "const": "dhaka_south" },
         "policyId": { "const": "RUNTIME.FORECAST_OUTCOME.MONITORING" },
-        "policyVersion": { "const": "p2-v2" },
+        "policyVersion": { "enum": ["p2-v2", "p2-v3"] },
         "policySha256": {
-          "const": "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"
+          "enum": ["5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6", "cc3b533b7cfc16b841401b7a60f6308632526f58d5685578d7f368dec96a09d9"]
         },
         "generatedAt": {
           "type": "string",

@@ -15,6 +15,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from feature_engineering import FEATURE_COLUMNS
+from sklearn_poisson_gam import (
+    GOVERNED_PREPROCESSING as POISSON_GAM_PREPROCESSING,
+    SklearnPoissonGAM,
+)
 from statsmodels_negative_binomial import StatsmodelsNegativeBinomialNB2
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -40,6 +44,7 @@ class TrustedModelAdapter:
     output_domain_rule: str
     parameter_names: frozenset[str]
     builder: Callable[[dict[str, Any]], Any] | None
+    preprocessing_contract: dict[str, Any] | None = None
 
 
 def _pipeline(model: Any) -> Pipeline:
@@ -105,6 +110,17 @@ TRUSTED_MODEL_ADAPTERS: dict[str, TrustedModelAdapter] = {
         "preserve_raw_and_clip_published_at_zero",
         frozenset({"loss", "learning_rate", "max_iter", "max_leaf_nodes", "max_depth", "min_samples_leaf", "l2_regularization", "max_bins", "early_stopping", "tol", "random_state"}),
         lambda parameters: HistGradientBoostingRegressor(**parameters),
+    ),
+    "poisson_gam": TrustedModelAdapter(
+        "learned_model", "SplinePoissonRegressor", "scikit-learn", "1.9.0",
+        "SplineColumnTransformer", "negative_or_nonfinite_output_fails_fold",
+        frozenset({
+            "alpha", "fit_intercept", "max_iter", "tol", "spline_degree",
+            "spline_n_knots", "spline_knots", "spline_extrapolation",
+            "spline_include_bias", "linear_scaling", "remainder",
+        }),
+        lambda parameters: SklearnPoissonGAM(**parameters),
+        POISSON_GAM_PREPROCESSING,
     ),
 }
 
@@ -215,6 +231,9 @@ def validate_candidate_configuration(candidate: dict, registry: dict | None = No
     expected_preprocessing = descriptor.preprocessing_type if descriptor is not None else None
     if preprocessing.get("type") != expected_preprocessing:
         errors.append(f"Invalid preprocessing policy for {model_id}.")
+    if descriptor is not None and descriptor.preprocessing_contract is not None \
+            and preprocessing != descriptor.preprocessing_contract:
+        errors.append(f"Preprocessing contract mismatch for {model_id}.")
     if not historical and candidate.get("preprocessing_identity") != canonical_sha256(preprocessing):
         errors.append(f"Preprocessing identity mismatch for {model_id}.")
     if expected_preprocessing == "StandardScaler" and preprocessing.get("fit_scope") != "fold_training_rows_only":

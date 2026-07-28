@@ -23,15 +23,15 @@ def canonical(value: dict) -> str:
 
 
 class PhaseBDecisionPolicyTests(unittest.TestCase):
-    def test_active_decision_policy_is_closed_p2_v2(self):
+    def test_active_decision_policy_is_closed_p2_v3(self):
         policy = json.loads(
             (ROOT / "config/deployments/dhaka_south/decision_policy.json").read_text()
         )
         schema = json.loads((ROOT / "config/runtime_decision_policy.schema.json").read_text())
         errors = list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(policy))
         self.assertEqual(errors, [])
-        self.assertEqual(policy["policyVersion"], "p2-v2")
-        self.assertEqual(policy["allowedAssessmentPolicyVersion"], "p2-v2")
+        self.assertEqual(policy["policyVersion"], "p2-v3")
+        self.assertEqual(policy["allowedAssessmentPolicyVersion"], "p2-v3")
         self.assertEqual(policy["allowedDecisions"], ["approve_technical_winner", "approve_eligible_non_winner"])
         self.assertEqual(policy["allowedCandidateStatuses"], ["technical_winner", "eligible_non_winner"])
         self.assertFalse(policy["deploymentWideAdoptionAllowed"])

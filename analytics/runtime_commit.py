@@ -457,7 +457,9 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
         authority = resolve_active_model_p2_v2(
             repository_root=ROOT, runtime_root=runtime_root, deployment_id=job["deploymentId"]
         )
-        registry, registry_sha = load_and_validate_candidate_registry()
+        quick_policy_version = job.get("policyVersion")
+        registry_name = "candidate_models.json" if quick_policy_version == "p2-v2" else "candidate_models_p2-v1.json"
+        registry, registry_sha = load_and_validate_candidate_registry(ROOT / "config" / registry_name)
         candidate = next((item for item in registry["candidates"] if item["model_id"] == authority["modelId"]), None)
         if candidate is None:
             raise RuntimeCommitError("P2 active model is absent from the candidate registry.")
@@ -491,7 +493,8 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
         ):
             raise RuntimeCommitError("P2 assignment identity does not reconcile with the candidate registry.")
 
-        quick_policy = _load_json(ROOT / "config/deployments" / job["deploymentId"] / "quick_forecast_policy.json")
+        quick_policy_name = "quick_forecast_policy.json" if quick_policy_version == "p2-v2" else "quick_forecast_policy_p2-v1.json"
+        quick_policy = _load_json(ROOT / "config/deployments" / job["deploymentId"] / quick_policy_name)
         quick_policy_sha = canonical_policy_sha256(quick_policy)
         if (run.get("policyId"), run.get("policyVersion"), run.get("policySha256")) != (
             quick_policy.get("policyId"), quick_policy.get("policyVersion"), quick_policy_sha

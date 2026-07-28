@@ -26,7 +26,7 @@ def build_outcome_job(runtime:Path,forecast_job:dict,record_id="observation-1",o
     run=runtime/"runs"/forecast_job["runId"]
     forecast=json.loads((run/"artifacts/forecast_output.json").read_text())
     commit_sha=hashlib.sha256((run/"metadata/commit.json").read_bytes()).hexdigest()
-    policy_version="p1.4g-v1" if schema_version=="1.0" else "p2-v1" if schema_version=="2.0" else "p2-v2"
+    policy_version="p1.4g-v1" if schema_version=="1.0" else "p2-v1" if schema_version=="2.0" else "p2-v3"
     policy,digest=load_and_validate_forecast_outcome_policy("dhaka_south",schema_version,policy_version)
     observation={"deploymentId":"dhaka_south","geography":{"level":"city","id":"BGD-DHAKA-SOUTH","name":"Dhaka South"},"targetColumn":"target_cases_next_2w","forecastHorizonWeeks":2,"forecastTargetPeriod":forecast["targetPeriod"],"observedRaw":observed,"observationSourceType":"synthetic_benchmark","observationSourceId":"dhaka_south_synthetic_benchmark","observationRecordId":record_id,"observationRecordedAt":iso_now(),"limitationsAcknowledged":True}
     job_id=str(uuid.uuid4());outcome_id=outcome_id or str(uuid.uuid4());created=iso_now()
@@ -41,7 +41,7 @@ def build_p2v2_approved_runtime(base:Path):
     comparison_path=assessment/"artifacts/candidate_model_comparison.json";summary=json.loads(summary_path.read_text())
     selected=next(value for value in summary["candidates"] if value["modelId"]==summary["technicalWinnerModelId"])
     if not selected["selectionEligible"]:raise AssertionError("technical winner is not eligible")
-    policy=json.loads((ROOT/"config/deployments/dhaka_south/decision_policy.json").read_text())
+    policy=json.loads((ROOT/"config/deployments/dhaka_south/decision_policy_p2-v2.json").read_text())
     decision_id,authorization_id,job_id,run_id=[str(uuid.uuid4()) for _ in range(4)]
     created=iso_now();assessment_commit_path=assessment/"metadata/commit.json";assessment_commit_sha=sha256_file(assessment_commit_path)
     decision_root=runtime/"decisions"/decision_id;decision_root.mkdir(parents=True)

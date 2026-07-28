@@ -1,9 +1,9 @@
 {
     "schema_version":  "2.0",
     "policy_id":  "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
-    "policy_version":  "p2-v3",
+    "policy_version":  "p2-v2",
     "policy_status":  "active",
-    "policy_sha256":  "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7",
+    "policy_sha256":  "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8",
     "policy_hash_method":  "sha256_canonical_json_excluding_policy_sha256",
     "deployment_id":  "dhaka_south",
     "geography_scope":  {
@@ -47,8 +47,8 @@
                          },
     "candidate_registry":  {
                                "path":  "config/candidate_models.json",
-                               "version":  "p2-v2",
-                               "sha256":  "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226"
+                               "version":  "p2-v1",
+                               "sha256":  "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"
                            },
     "fold_policy":  {
                         "policy_id":  "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS",
@@ -326,41 +326,12 @@
                                                                 "negative_output_policy":  "preserve_raw_and_clip_published_at_zero",
                                                                 "failure_policy":  "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
                                                                 "selection_complexity_rank":  10
-                                                            },
-                                                            {
-                                                                "model_id":  "poisson_gam",
-                                                                "model_family":  "SplinePoissonRegressor",
-                                                                "candidate_class":  "learned_model",
-                                                                "deployability_classification":  "deployable_learned_model",
-                                                                "parameters_sha256":  "30a0591f9f8c15877c0814a99b48ce7ae859acdf7a5a68f0c591351259600911",
-                                                                "minimum_training_rows":  90,
-                                                                "seasonal_history_weeks":  0,
-                                                                "feature_requirements":  [
-                                                                                             "governed_18_feature_order",
-                                                                                             "fold_local_spline_column_transformer"
-                                                                                         ],
-                                                                "deterministic_configuration":  {
-                                                                                                    "alpha":  1.0,
-                                                                                                    "fit_intercept":  true,
-                                                                                                    "max_iter":  1000,
-                                                                                                    "tol":  0.0001,
-                                                                                                    "spline_degree":  2,
-                                                                                                    "spline_n_knots":  4,
-                                                                                                    "spline_knots":  "quantile",
-                                                                                                    "spline_extrapolation":  "constant",
-                                                                                                    "spline_include_bias":  false,
-                                                                                                    "linear_scaling":  "StandardScaler",
-                                                                                                    "remainder":  "drop"
-                                                                                                },
-                                                                "negative_output_policy":  "negative_or_nonfinite_output_fails_fold",
-                                                                "failure_policy":  "failed_fold_excludes_candidate_from_selection_without_changing_fold_plan",
-                                                                "selection_complexity_rank":  11
                                                             }
                                                         ]
                                      },
     "comparison_policy":  {
                               "policy_id":  "RUNTIME.ASSESSMENT.CANDIDATE_COMPARISON",
-                              "policy_version":  "p2-v3",
+                              "policy_version":  "p2-v2",
                               "selection_rule":  "Select the lowest-MAE eligible learned candidate completing every fold in the precommitted common fold plan, applying the declared deterministic tie sequence.",
                               "primary_metric":  "mae",
                               "tie_sequence":  [
@@ -447,7 +418,7 @@
     "limitations":  [
                         "The policy does not clean raw data, fabricate observations, interpolate targets, or correct unknown source defects.",
                         "Recommendation-strength thresholds are not governed, so the technical winner remains evidence only.",
-                        "Phase 2 p2-v3 assessments remain separate from one-run forecast decisions and persistent lifecycle assignment.",
+                        "Phase 2 p2-v2 assessments remain separate from one-run forecast decisions and persistent lifecycle assignment.",
                         "The most recent 68 folds are selected when more than 68 are available, while older rows remain in expanding training.",
                         "The source scope remains synthetic-benchmark compatible and does not establish real-world Dhaka validity."
                     ],

@@ -85,7 +85,7 @@ class ApprovedForecastTests(unittest.TestCase):
     def test_each_deployable_selected_model_completes_one_authorized_point_forecast(self):
         with tempfile.TemporaryDirectory() as directory:
             base_runtime, _workspace, _pending, assessment_job = build_ready_assessment_runtime(
-                Path(directory) / "base", assessment_policy_version="p2-v2"
+                Path(directory) / "base", assessment_policy_version="p2-v3"
             )
             self.assertTrue(run_once(base_runtime, "assessment-worker"))
             base_assessment = base_runtime / "assessments" / assessment_job["assessmentId"]
@@ -259,8 +259,18 @@ class ApprovedForecastTests(unittest.TestCase):
                     self.assertFalse(output["deploymentModelAdopted"])
                     self.assertEqual(card["model"]["candidateRegistrySha256"], base_summary["provenance"]["candidateRegistrySha256"])
                     self.assertEqual(uncertainty["forecastPresentationMode"], "point_only")
-                    self.assertEqual(uncertainty["calibrationStatus"], "pending")
-                    self.assertEqual(uncertainty["uncertaintyReasonCode"], "model_specific_calibration_pending")
+                    expected_calibration = (
+                        "unavailable" if model_id == "poisson_gam" else "pending"
+                    )
+                    expected_reason = (
+                        "model_calibration_unavailable"
+                        if model_id == "poisson_gam"
+                        else "model_specific_calibration_pending"
+                    )
+                    self.assertEqual(uncertainty["calibrationStatus"], expected_calibration)
+                    self.assertEqual(
+                        uncertainty["uncertaintyReasonCode"], expected_reason
+                    )
                     self.assertIsNone(uncertainty["calibrationProvenance"])
                     self.assertIsNone(uncertainty["lowerRaw"])
                     self.assertEqual(dashboard["preparedness"]["availabilityStatus"], "unavailable_missing_planning_policy")

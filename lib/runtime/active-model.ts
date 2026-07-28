@@ -345,9 +345,9 @@ export async function resolveActiveModelP2V2(params: {
       assignmentId,
       assignmentCommitSha256,
       assignmentAction: record.assignmentAction,
-      lifecyclePolicyId: policy.policyId,
-      lifecyclePolicyVersion: policy.policyVersion,
-      lifecyclePolicySha256: policy.policySha256,
+      lifecyclePolicyId: policy.policyId as "RUNTIME.MODEL_LIFECYCLE.DECISION",
+      lifecyclePolicyVersion: policy.policyVersion as "p2-v2" | "p2-v3",
+      lifecyclePolicySha256: String(policy.policySha256),
       authoritySnapshotSha256: sha(pointerFile.bytes),
     };
   } catch (error) {

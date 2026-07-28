@@ -390,7 +390,7 @@ def build_one_run_chain_p2_v2(
                         if it isn't already, while preserving the real winner)
     """
     base_runtime, _workspace, pending, assessment_job = build_ready_assessment_runtime(
-        base / "base", assessment_policy_version="p2-v2"
+        base / "base", assessment_policy_version="p2-v3"
     )
     run_once(base_runtime, "one-run-assessment")
     _require_completed_assessment_job(base_runtime, pending, assessment_job)

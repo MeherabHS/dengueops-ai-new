@@ -50,11 +50,11 @@ class RuntimeModelDegradationSourceTests(unittest.TestCase):
                 hashlib.sha256(raw).hexdigest(),
                 hashlib.sha256(summary_path.read_bytes()).hexdigest(),
                 summary["outcomeSetSha256"],
-                "p2-v2",
+                "p2-v3",
             )
             self.assertEqual(verified["latestBytes"], raw)
             self.assertEqual(verified["latest"]["schemaVersion"], "2.1")
-            self.assertEqual(verified["latest"]["policyVersion"], "p2-v2")
+            self.assertEqual(verified["latest"]["policyVersion"], "p2-v3")
             self.assertEqual(len(verified["outcomes"]), verified["summary"]["evaluatedForecastCount"])
 
             tampered = json.loads(raw)
@@ -63,7 +63,7 @@ class RuntimeModelDegradationSourceTests(unittest.TestCase):
                 verify_model_degradation_snapshot(
                     runtime,
                     json.dumps(tampered).encode(),
-                    monitoring_policy_version="p2-v2",
+                    monitoring_policy_version="p2-v3",
                 )
             with self.assertRaises(ModelDegradationSourceError):
                 verify_model_degradation_snapshot(

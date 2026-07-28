@@ -14,8 +14,9 @@ from runtime_commit import sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_forecast_outcome_source import ForecastSourceError, verify_forecast_source
 
-MONITORING_SHA = "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"
-MONITORING_POLICY = ("RUNTIME.FORECAST_OUTCOME.MONITORING", "p2-v2", MONITORING_SHA)
+MONITORING_SHA = "cc3b533b7cfc16b841401b7a60f6308632526f58d5685578d7f368dec96a09d9"
+MONITORING_POLICY = ("RUNTIME.FORECAST_OUTCOME.MONITORING", "p2-v3", MONITORING_SHA)
+PREVIOUS_MONITORING_POLICY = ("RUNTIME.FORECAST_OUTCOME.MONITORING", "p2-v2", "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6")
 ALLOWED_SOURCE_FAMILIES = {"quick_forecast_p1", "quick_forecast_p2", "approved_forecast_p1", "approved_forecast_p2"}
 HISTORICAL_MONITORING_SHA = "c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab"
 HISTORICAL_MONITORING_POLICY = ("RUNTIME.FORECAST_OUTCOME.MONITORING", "p2-v1", HISTORICAL_MONITORING_SHA)
@@ -90,17 +91,18 @@ def _snapshot_json(raw: bytes) -> dict[str, Any]:
     return value
 
 
-def verify_model_degradation_snapshot(runtime_root: str | Path, latest_bytes: bytes, expected_latest_sha256: str | None = None, expected_summary_sha256: str | None = None, expected_outcome_set_sha256: str | None = None, monitoring_policy_version: str = "p2-v2") -> dict[str, Any]:
+def verify_model_degradation_snapshot(runtime_root: str | Path, latest_bytes: bytes, expected_latest_sha256: str | None = None, expected_summary_sha256: str | None = None, expected_outcome_set_sha256: str | None = None, monitoring_policy_version: str = "p2-v3") -> dict[str, Any]:
     root = require_absolute_directory(runtime_root,"runtime root")
     latest = _snapshot_json(latest_bytes); _schema(latest,"runtime_monitoring_latest.schema.json")
     latest_sha = hashlib.sha256(latest_bytes).hexdigest()
-    current = monitoring_policy_version == "p2-v2"
+    current = monitoring_policy_version == "p2-v3"
+    previous = monitoring_policy_version == "p2-v2"
     historical = monitoring_policy_version == "p2-v1"
-    if not current and not historical:
+    if not current and not previous and not historical:
         raise ModelDegradationSourceError("Unknown monitoring policy version.")
-    expected_schema = "2.1" if current else "2.0"
-    expected_policy = MONITORING_POLICY if current else HISTORICAL_MONITORING_POLICY
-    allowed_families = ALLOWED_SOURCE_FAMILIES if current else HISTORICAL_SOURCE_FAMILIES
+    expected_schema = "2.1" if current or previous else "2.0"
+    expected_policy = MONITORING_POLICY if current else PREVIOUS_MONITORING_POLICY if previous else HISTORICAL_MONITORING_POLICY
+    allowed_families = ALLOWED_SOURCE_FAMILIES if current or previous else HISTORICAL_SOURCE_FAMILIES
     if latest.get("schemaVersion") != expected_schema or (latest.get("policyId"),latest.get("policyVersion"),latest.get("policySha256")) != expected_policy:
         raise ModelDegradationSourceError("Monitoring policy/schema identity is not accepted.")
     if expected_latest_sha256 not in (None, latest_sha): raise ModelDegradationSourceError("Monitoring latest pointer hash mismatch.")

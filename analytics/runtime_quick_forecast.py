@@ -35,6 +35,7 @@ from empirical_range import (
 from model_factory import build_candidate_estimator, load_and_validate_candidate_registry, load_historical_candidate_registry
 from runtime_commit import atomic_json, commit_runtime_run, patch_running_job, sha256_file
 from runtime_active_model import resolve_active_model_p2_v2, resolve_historical_active_model_p2_v1
+from runtime_assessment_policy import PREVIOUS_CANDIDATE_REGISTRY_PATH
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_policy import canonical_policy_sha256, evaluate_quick_forecast_policy, load_and_validate_quick_forecast_policy
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
@@ -82,12 +83,17 @@ def _write_json_artifact(path: Path, value: Any) -> None:
     atomic_json(path, value)
 
 
-def _load_quick_forecast_policy(deployment_id: str) -> tuple[dict[str, Any], str, bool]:
-    p2_policy_path = ROOT / "config" / "deployments" / deployment_id / "quick_forecast_policy.json"
-    if p2_policy_path.exists():
+def _load_quick_forecast_policy(deployment_id: str, policy_version: str | None) -> tuple[dict[str, Any], str, bool]:
+    p2_filename = {
+        "p2-v1": "quick_forecast_policy_p2-v1.json",
+        "p2-v2": "quick_forecast_policy.json",
+    }.get(policy_version)
+    if p2_filename is not None:
+        p2_policy_path = ROOT / "config" / "deployments" / deployment_id / p2_filename
         p2_policy = json.loads(p2_policy_path.read_text(encoding="utf-8"))
-        if p2_policy.get("schemaVersion") == "2.0":
+        if p2_policy.get("schemaVersion") == "2.0" and p2_policy.get("policyVersion") == policy_version:
             return p2_policy, canonical_policy_sha256(p2_policy), True
+        raise ValueError("Quick Forecast policy archive identity mismatch.")
     policy, policy_hash = load_and_validate_quick_forecast_policy(deployment_id)
     return policy, policy_hash, False
 
@@ -105,7 +111,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if staging.name != job["runId"] or workspace.name != job["workspaceId"]:
         raise ValueError("Job paths do not match job identities.")
 
-    policy, policy_hash, is_p2 = _load_quick_forecast_policy(job["deploymentId"])
+    policy, policy_hash, is_p2 = _load_quick_forecast_policy(job["deploymentId"], job.get("policyVersion"))
     policy_id = policy.get("policyId") if is_p2 else policy.get("policy_id")
     policy_version = policy.get("policyVersion") if is_p2 else policy.get("policy_version")
     contract_version = job.get("schemaVersion")
@@ -217,7 +223,11 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         lifecycle_policy_version = active_authority["lifecyclePolicyVersion"]
         lifecycle_policy_sha = active_authority["lifecyclePolicySha256"]
 
-        registry, registry_hash = load_and_validate_candidate_registry()
+        registry, registry_hash = (
+            load_and_validate_candidate_registry()
+            if policy_version == "p2-v2"
+            else load_and_validate_candidate_registry(PREVIOUS_CANDIDATE_REGISTRY_PATH)
+        )
         if registry_hash != candidate_registry_sha:
             raise ValueError("Candidate registry hash mismatch against active authority.")
         if feature_hash != authority_feature_hash:

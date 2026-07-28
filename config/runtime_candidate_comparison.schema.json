@@ -270,7 +270,8 @@
             "policyVersion": {
               "enum": [
                 "p1.4d-1-v1",
-                "p2-v2"
+                "p2-v2",
+                "p2-v3"
               ]
             },
             "primaryMetric": {

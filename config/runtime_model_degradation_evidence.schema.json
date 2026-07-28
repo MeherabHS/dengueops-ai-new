@@ -281,7 +281,17 @@
         "includedCohortSetSha256": {"$ref": "#/$defs/sha"},
         "generatedAt": {"type": "string", "format": "date-time", "pattern": "Z$"},
         "limitations": {"type": "array", "minItems": 4, "items": {"type": "string", "minLength": 1}}
-      }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"degradationPolicy": {"properties": {"policyVersion": {"const": "p2-v2"}}}}},
+          "then": {"properties": {"monitoringPolicy": {"properties": {"policyVersion": {"const": "p2-v2"}}}}}
+        },
+        {
+          "if": {"properties": {"degradationPolicy": {"properties": {"policyVersion": {"const": "p2-v3"}}}}},
+          "then": {"properties": {"monitoringPolicy": {"properties": {"policyVersion": {"const": "p2-v3"}}}}}
+        }
+      ]
     },
     "p2": {
       "type": "object",
@@ -293,8 +303,18 @@
         "jobId": {"format": "uuid"},
         "deploymentId": {"const": "dhaka_south"},
         "geography": {"const": {"level": "city", "id": "BGD-DHAKA-SOUTH", "name": "Dhaka South"}},
-        "degradationPolicy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"}, "policyVersion": {"const": "p2-v2"}, "policySha256": {"const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"}}},
-        "monitoringPolicy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256", "schemaVersion"], "properties": {"policyId": {"const": "RUNTIME.FORECAST_OUTCOME.MONITORING"}, "policyVersion": {"const": "p2-v2"}, "policySha256": {"const": "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"}, "schemaVersion": {"const": "2.1"}}},
+        "degradationPolicy": {
+          "oneOf": [
+            {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"}, "policyVersion": {"const": "p2-v2"}, "policySha256": {"const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"}}},
+            {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"}, "policyVersion": {"const": "p2-v3"}, "policySha256": {"const": "2c132daecd0a0f8579de101a540be52bff063da9cd96600419bd55331f30b9a7"}}}
+          ]
+        },
+        "monitoringPolicy": {
+          "oneOf": [
+            {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256", "schemaVersion"], "properties": {"policyId": {"const": "RUNTIME.FORECAST_OUTCOME.MONITORING"}, "policyVersion": {"const": "p2-v2"}, "policySha256": {"const": "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"}, "schemaVersion": {"const": "2.1"}}},
+            {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256", "schemaVersion"], "properties": {"policyId": {"const": "RUNTIME.FORECAST_OUTCOME.MONITORING"}, "policyVersion": {"const": "p2-v3"}, "policySha256": {"const": "cc3b533b7cfc16b841401b7a60f6308632526f58d5685578d7f368dec96a09d9"}, "schemaVersion": {"const": "2.1"}}}
+          ]
+        },
         "monitoringInput": {
           "type": "object",
           "additionalProperties": false,

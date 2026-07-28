@@ -64,7 +64,7 @@ class CandidateRegistrationGeneralizationTests(unittest.TestCase):
         )
         projection = [
             [candidate[key] for key in keys]
-            for candidate in self.authoritative["candidates"]
+            for candidate in self.authoritative["candidates"][:10]
         ]
         digest = hashlib.sha256(
             json.dumps(
@@ -73,11 +73,30 @@ class CandidateRegistrationGeneralizationTests(unittest.TestCase):
         ).hexdigest()
         self.assertEqual(
             self.authoritative_sha,
-            "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
+            "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226",
         )
         self.assertEqual(
             digest,
             "1027072d35f376186dde7a2c517db08a376b191f2e2bfe61cf563dca8c820ac6",
+        )
+        archived = ROOT / "config/candidate_models_p2-v1.json"
+        self.assertEqual(
+            hashlib.sha256(archived.read_bytes()).hexdigest(),
+            "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
+        )
+        gam = self.authoritative["candidates"][-1]
+        self.assertEqual(
+            (
+                gam["model_id"], gam["model_family"], gam["parameters_sha256"],
+                gam["preprocessing_identity"], gam["minimum_training_rows"],
+                gam["output_domain_rule"],
+            ),
+            (
+                "poisson_gam", "SplinePoissonRegressor",
+                "30a0591f9f8c15877c0814a99b48ce7ae859acdf7a5a68f0c591351259600911",
+                "19aa8ed7749046b27b4d5488bd9098f489ff67fae75e4216d043d2de49d3d236",
+                90, "negative_or_nonfinite_output_fails_fold",
+            ),
         )
 
     def test_registry_candidate_without_trusted_adapter_fails_closed(self):

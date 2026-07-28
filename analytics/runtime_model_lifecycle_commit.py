@@ -381,7 +381,7 @@ def verify_p2_v2_evidence_chain(
         raise ValueError("forecast_output_tampered")
 
     policy, policy_sha = load_model_lifecycle_policy(
-        policy_version="p2-v2",
+        policy_version="p2-v3",
         repository_root=repository_root,
         deployment_id="dhaka_south"
     )
@@ -439,7 +439,7 @@ def _pointer_p2_v2(
         "featureOrderSha256": record["featureOrderSha256"],
         "candidateRegistrySha256": record["candidateRegistrySha256"],
         "policyId": policy.get("policyId", "RUNTIME.MODEL_LIFECYCLE.DECISION"),
-        "policyVersion": policy.get("policyVersion", "p2-v2"),
+        "policyVersion": policy.get("policyVersion", "p2-v3"),
         "policySha256": policy_sha,
         "sourceDecisionId": record["sourceDecisionId"],
         "sourceDecisionCommitSha256": decision_commit_sha,

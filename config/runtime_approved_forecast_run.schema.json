@@ -142,7 +142,7 @@
           "if": {
             "properties": {
               "decisionPolicy": {
-                "properties": { "policyVersion": { "const": "p2-v2" } },
+                "properties": { "policyVersion": { "enum": ["p2-v2", "p2-v3"] } },
                 "required": ["policyVersion"]
               }
             },
@@ -199,11 +199,12 @@
       "required": ["policyId", "policyVersion", "policySha256"],
       "properties": {
         "policyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
-        "policyVersion": { "enum": ["p2-v1", "p2-v2"] },
+        "policyVersion": { "enum": ["p2-v1", "p2-v2", "p2-v3"] },
         "policySha256": {
           "enum": [
             "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff",
-            "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8"
+            "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8",
+            "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7"
           ]
         }
       }
@@ -214,7 +215,7 @@
       "required": ["policyId", "policyVersion", "policySha256"],
       "properties": {
         "policyId": { "const": "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION" },
-        "policyVersion": { "enum": ["p2-v1", "p2-v2"] },
+        "policyVersion": { "enum": ["p2-v1", "p2-v2", "p2-v3"] },
         "policySha256": { "$ref": "#/$defs/sha" }
       }
     }

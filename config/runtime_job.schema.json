@@ -2192,7 +2192,7 @@
           "const": "p2-v1"
         },
         "policySha256": {
-          "const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"
+          "enum": ["4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e", "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2"]
         },
         "status": {
           "$ref": "#/$defs/status"
@@ -2283,7 +2283,7 @@
           "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
         },
         "lifecyclePolicyVersion": {
-          "const": "p2-v2"
+          "enum": ["p2-v2", "p2-v3"]
         },
         "lifecyclePolicySha256": {
           "$ref": "#/$defs/sha"
@@ -2295,7 +2295,7 @@
           "const": "p2-v1"
         },
         "quickPolicySha256": {
-          "const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"
+          "enum": ["4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e", "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2"]
         }
       }
     },
@@ -2379,10 +2379,10 @@
           "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
         },
         "policyVersion": {
-          "const": "p2-v1"
+          "const": "p2-v2"
         },
         "policySha256": {
-          "const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"
+          "enum": ["4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e", "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2"]
         },
         "status": {
           "$ref": "#/$defs/status"
@@ -2473,7 +2473,7 @@
           "const": "RUNTIME.MODEL_LIFECYCLE.DECISION"
         },
         "lifecyclePolicyVersion": {
-          "const": "p2-v2"
+          "enum": ["p2-v2", "p2-v3"]
         },
         "lifecyclePolicySha256": {
           "$ref": "#/$defs/sha"
@@ -2482,10 +2482,10 @@
           "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
         },
         "quickPolicyVersion": {
-          "const": "p2-v1"
+          "const": "p2-v2"
         },
         "quickPolicySha256": {
-          "const": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e"
+          "enum": ["4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e", "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2"]
         }
       }
     },
@@ -3235,9 +3235,9 @@
         "deploymentId": { "const": "dhaka_south" },
         "workflowMode": { "const": "forecast_outcome_monitoring" },
         "policyId": { "const": "RUNTIME.FORECAST_OUTCOME.MONITORING" },
-        "policyVersion": { "const": "p2-v2" },
+        "policyVersion": { "enum": ["p2-v2", "p2-v3"] },
         "policySha256": {
-          "const": "5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6"
+          "enum": ["5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6", "cc3b533b7cfc16b841401b7a60f6308632526f58d5685578d7f368dec96a09d9"]
         },
         "status": { "$ref": "#/$defs/status" },
         "progress": { "type": "string" },
@@ -3318,7 +3318,7 @@
         "assessmentPolicyId": {
           "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
         },
-        "assessmentPolicyVersion": { "enum": ["p2-v1", "p2-v2"] },
+        "assessmentPolicyVersion": { "enum": ["p2-v1", "p2-v2", "p2-v3"] },
         "assessmentPolicySha256": {
           "$ref": "#/$defs/sha"
         },
@@ -3556,9 +3556,9 @@
         },
         "workflowMode": { "const": "degradation_evidence" },
         "policyId": { "const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE" },
-        "policyVersion": { "const": "p2-v2" },
+        "policyVersion": { "enum": ["p2-v2", "p2-v3"] },
         "policySha256": {
-          "const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"
+          "enum": ["69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98", "2c132daecd0a0f8579de101a540be52bff063da9cd96600419bd55331f30b9a7"]
         },
         "expectedMonitoringLatestSha256": { "$ref": "#/$defs/sha" },
         "expectedMonitoringSummarySha256": { "$ref": "#/$defs/sha" },

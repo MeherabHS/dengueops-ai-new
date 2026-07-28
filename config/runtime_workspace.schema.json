@@ -302,13 +302,13 @@
               "minItems": 1
             },
             "policyId": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
-            "policyVersion": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"] },
+            "policyVersion": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2", "p2-v3"] },
             "policySha256": { "$ref": "#/$defs/sha256" },
             "assessmentPolicyId": {
               "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
             },
             "assessmentPolicyVersion": {
-              "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"]
+              "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2", "p2-v3"]
             },
             "assessmentPolicySha256": { "$ref": "#/$defs/sha256" },
             "decisionCompatibilityStatus": {

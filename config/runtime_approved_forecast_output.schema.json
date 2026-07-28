@@ -207,7 +207,7 @@
               "governanceEvidence": {
                 "properties": {
                   "decisionPolicy": {
-                    "properties": { "policyVersion": { "const": "p2-v2" } },
+                    "properties": { "policyVersion": { "enum": ["p2-v2", "p2-v3"] } },
                     "required": ["policyVersion"]
                   }
                 },
@@ -272,7 +272,7 @@
       "required": ["policyId", "policyVersion", "policySha256"],
       "properties": {
         "policyId": { "type": "string", "minLength": 1 },
-        "policyVersion": { "enum": ["p2-v1", "p2-v2"] },
+        "policyVersion": { "enum": ["p2-v1", "p2-v2", "p2-v3"] },
         "policySha256": { "$ref": "#/$defs/sha" }
       }
     },

@@ -14,17 +14,22 @@ from runtime_commit import sha256_file
 from runtime_context import ROOT
 
 QUICK_POLICY = ("RUNTIME.QUICK_FORECAST.COMPATIBILITY", "p1.4f-v1", "5e6bcb68e5f29a50f8d377892d7786cc1932b3435e8a0b709a363d6c2e42bb9a")
-QUICK_P2_POLICY = ("RUNTIME.QUICK_FORECAST.COMPATIBILITY", "p2-v1", "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e")
+QUICK_P2_POLICY_OLD = ("RUNTIME.QUICK_FORECAST.COMPATIBILITY", "p2-v1", "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e")
+QUICK_P2_POLICY = ("RUNTIME.QUICK_FORECAST.COMPATIBILITY", "p2-v2", "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2")
 LIFECYCLE_P2_V2 = ("RUNTIME.MODEL_LIFECYCLE.DECISION", "p2-v2", "294b7949adecc39b284adaa198db47109ee4b1cc39259e87bc9073e1bff93b64")
+LIFECYCLE_P2_V3 = ("RUNTIME.MODEL_LIFECYCLE.DECISION", "p2-v3", "ae50f6e29ab0caba16401b5314c7d26c75658887d78a36c0b0d7c029a5b6a86a")
 ASSESSMENT_P1 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p1.4d-1-v1", "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af")
 ASSESSMENT_P2 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p2-v1", "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff")
 ASSESSMENT_P2_V2 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p2-v2", "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8")
+ASSESSMENT_P2_V3 = ("RUNTIME.DATASET_ASSESSMENT.GOVERNANCE", "p2-v3", "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7")
 DECISION_P1 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p1.4d-3-e-v1", "8fece340b85951d3bee8b037c4ac79ae82636ee371a934e9371bcb4a633491a4")
 DECISION_P2 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p2-v1", "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdcb4a")
 DECISION_P2_V2 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p2-v2", "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d")
+DECISION_P2_V3 = ("RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION", "p2-v3", "9ad6570be27c425368ac6650687c9b2f3b4741575e8081e9f86b073613b59dba")
 REGISTRY_SHA = "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4"
 FEATURE_SHA = "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"
 CURRENT_REGISTRY_SHA = "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"
+CURRENT_REGISTRY_V2_SHA = "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226"
 MODEL_FAMILIES = {"ridge_regression":"Ridge", "poisson_regression":"PoissonRegressor", "random_forest":"RandomForestRegressor", "gradient_boosting":"GradientBoostingRegressor"}
 
 
@@ -60,6 +65,8 @@ def _approved_p2_contract(commit: Mapping[str, Any]) -> tuple[str, tuple[str, st
         return "p2-v1", ASSESSMENT_P2, DECISION_P2
     if policies == (ASSESSMENT_P2_V2, DECISION_P2_V2):
         return "p2-v2", ASSESSMENT_P2_V2, DECISION_P2_V2
+    if policies == (ASSESSMENT_P2_V3, DECISION_P2_V3):
+        return "p2-v3", ASSESSMENT_P2_V3, DECISION_P2_V3
     raise ForecastSourceError("Approved Phase 2 policy identity is unknown or mixed.", "forecast_not_eligible")
 
 
@@ -190,14 +197,16 @@ def _quick_p2(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commi
         {"assignmentId":forecast.get("assignmentId"),"assignmentCommitSha256":forecast.get("assignmentCommitSha256"),"assignmentAction":forecast.get("assignmentAction"),"authoritySnapshotSha256":forecast.get("authoritySnapshotSha256"),"modelId":forecast.get("activeModelId"),"modelFamily":forecast.get("modelFamily"),"parameterSha256":forecast.get("parameterHash"),"preprocessingIdentity":forecast.get("preprocessingIdentity"),"candidateRegistrySha256":forecast.get("candidateRegistrySha256"),"featureOrderSha256":forecast.get("trainingDataIdentity",{}).get("featureOrderSha256"),"lifecyclePolicyId":forecast.get("lifecyclePolicyId"),"lifecyclePolicyVersion":forecast.get("lifecyclePolicyVersion"),"lifecyclePolicySha256":forecast.get("lifecyclePolicySha256")},
         {"assignmentId":card.get("assignmentId"),"assignmentCommitSha256":card.get("assignmentCommitSha256"),"assignmentAction":card.get("assignmentAction"),"authoritySnapshotSha256":card.get("authoritySnapshotSha256"),"modelId":card.get("model",{}).get("id"),"modelFamily":card.get("model",{}).get("family"),"parameterSha256":card.get("model",{}).get("parameterHash"),"preprocessingIdentity":card.get("model",{}).get("preprocessingIdentity"),"candidateRegistrySha256":card.get("model",{}).get("candidateRegistrySha256"),"featureOrderSha256":card.get("features",{}).get("orderSha256"),"lifecyclePolicyId":card.get("lifecyclePolicy",{}).get("id"),"lifecyclePolicyVersion":card.get("lifecyclePolicy",{}).get("version"),"lifecyclePolicySha256":card.get("lifecyclePolicy",{}).get("sha256")},
     ]
-    if any(row != authority for row in authority_rows) or (authority["assignmentAction"],authority["candidateRegistrySha256"],authority["featureOrderSha256"]) != ("assign_selected_model",CURRENT_REGISTRY_SHA,FEATURE_SHA):
+    if any(row != authority for row in authority_rows) or authority["assignmentAction"] != "assign_selected_model" or authority["candidateRegistrySha256"] not in {CURRENT_REGISTRY_SHA, CURRENT_REGISTRY_V2_SHA} or authority["featureOrderSha256"] != FEATURE_SHA:
         raise ForecastSourceError("Quick p2 committed authority is inconsistent.")
-    if (authority["lifecyclePolicyId"],authority["lifecyclePolicyVersion"],authority["lifecyclePolicySha256"]) != LIFECYCLE_P2_V2:
+    expected_lifecycle = LIFECYCLE_P2_V3 if authority["candidateRegistrySha256"] == CURRENT_REGISTRY_V2_SHA else LIFECYCLE_P2_V2
+    expected_quick = QUICK_P2_POLICY if authority["candidateRegistrySha256"] == CURRENT_REGISTRY_V2_SHA else QUICK_P2_POLICY_OLD
+    if (authority["lifecyclePolicyId"],authority["lifecyclePolicyVersion"],authority["lifecyclePolicySha256"]) != expected_lifecycle:
         raise ForecastSourceError("Quick p2 lifecycle policy mismatch.")
     _verify_assignment_archive(root, authority)
-    if _policy_tuple(forecast.get("policy",{})) != QUICK_P2_POLICY or _policy_tuple(card.get("policy",{})) != QUICK_P2_POLICY:
+    if _policy_tuple(forecast.get("policy",{})) != expected_quick or _policy_tuple(card.get("policy",{})) != expected_quick:
         raise ForecastSourceError("Quick p2 policy mismatch.", "forecast_not_eligible")
-    if (run_record.get("policyId"),run_record.get("policyVersion"),run_record.get("policySha256")) != QUICK_P2_POLICY:
+    if (run_record.get("policyId"),run_record.get("policyVersion"),run_record.get("policySha256")) != expected_quick:
         raise ForecastSourceError("Quick p2 run policy mismatch.", "forecast_not_eligible")
     if any(value is not False for value in (forecast.get("deploymentModelAdopted"),card.get("deploymentModelAdopted"))):
         raise ForecastSourceError("Quick p2 forecast cannot adopt the deployment model.")
@@ -220,7 +229,7 @@ def _quick_p2(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commi
         raise ForecastSourceError("Quick p2 forecast target contract mismatch.", "target_period_mismatch")
     if forecast.get("forecastReported") != int(round(max(0.0,float(forecast.get("forecastRaw"))))):
         raise ForecastSourceError("Quick p2 reported forecast changed.")
-    return {"sourceFamily":"quick_forecast_p2","sourceContractVersion":"p2-v2","commit":commit,"runRecord":run_record,"forecast":forecast,"uncertainty":uncertainty,"calibration":calibration,"card":card,"snapshot":snapshot,"origin":origin,"modelId":authority["modelId"],"modelFamily":authority["modelFamily"],"parameterHash":authority["parameterSha256"],"preprocessingIdentity":authority["preprocessingIdentity"],"candidateRegistrySha256":authority["candidateRegistrySha256"],"featureOrderSha256":authority["featureOrderSha256"],"sourcePolicy":{"policyId":QUICK_P2_POLICY[0],"policyVersion":QUICK_P2_POLICY[1],"policySha256":QUICK_P2_POLICY[2]},"assignment":authority,"lifecycle":{}}
+    return {"sourceFamily":"quick_forecast_p2","sourceContractVersion":"p2-v3" if authority["candidateRegistrySha256"]==CURRENT_REGISTRY_V2_SHA else "p2-v2","commit":commit,"runRecord":run_record,"forecast":forecast,"uncertainty":uncertainty,"calibration":calibration,"card":card,"snapshot":snapshot,"origin":origin,"modelId":authority["modelId"],"modelFamily":authority["modelFamily"],"parameterHash":authority["parameterSha256"],"preprocessingIdentity":authority["preprocessingIdentity"],"candidateRegistrySha256":authority["candidateRegistrySha256"],"featureOrderSha256":authority["featureOrderSha256"],"sourcePolicy":{"policyId":expected_quick[0],"policyVersion":expected_quick[1],"policySha256":expected_quick[2]},"assignment":authority,"lifecycle":{}}
 
 
 def _quick(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commit: dict[str,Any]) -> dict[str,Any]:
@@ -305,12 +314,16 @@ def _approved(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commi
         if (_policy_tuple(card.get("assessment",{}).get("policy",{}),True),_policy_tuple(card.get("decision",{}).get("policy",{}),True))!=(assessment_policy,decision_policy):
             raise ForecastSourceError("Phase 2 model-card policy mismatch.")
         registry=None;registry_sha=REGISTRY_SHA
-        if contract_version=="p2-v2":
-            registry,registry_sha=load_and_validate_candidate_registry()
+        if contract_version in {"p2-v2","p2-v3"}:
+            registry,registry_sha=(
+                load_and_validate_candidate_registry()
+                if contract_version=="p2-v3"
+                else load_and_validate_candidate_registry(ROOT/"config/candidate_models_p2-v1.json")
+            )
         expected={**lifecycle_hashes,"candidateRegistrySha256":registry_sha,"foldPlanSha256":fold_plan}
         if any(governance.get(k)!=v for k,v in expected.items()) or commit.get("authorizationCommitSha256")!=lifecycle_hashes["authorizationCommitSha256"]: raise ForecastSourceError("Phase 2 governance hash mismatch.")
         if commit.get("technicalWinnerModelId")!=forecast.get("technicalWinnerModelId") or commit.get("technicalWinnerParameterSha256")!=forecast.get("technicalWinnerParameterSha256"): raise ForecastSourceError("Technical-winner evidence mismatch.")
-    if contract_version=="p2-v2":
+    if contract_version in {"p2-v2","p2-v3"}:
         assert registry is not None
         candidates={candidate["model_id"]:candidate for candidate in registry["candidates"] if candidate.get("selectable") is True and candidate.get("selection_role")=="learned_selectable"}
         candidate=candidates.get(model_id)
@@ -344,7 +357,12 @@ def _approved(root: Path, run: Path, run_id: str, snapshot: dict[str,str], commi
         if any(value is not False for value in (commit.get("deploymentModelAdopted"),forecast.get("deploymentModelAdopted"),card.get("deploymentModelAdopted"),decision.get("deploymentModelAdopted"),authorization.get("deploymentModelAdopted"))):
             raise ForecastSourceError("Approved one-run forecast cannot adopt a deployment model.")
         uncertainty_contract=(uncertainty.get("forecastPresentationMode"),uncertainty.get("calibrationStatus"),uncertainty.get("uncertaintyReasonCode"),uncertainty.get("calibrationProvenance"))
-        if uncertainty_contract!=("point_only","pending","model_specific_calibration_pending",None) or any(uncertainty.get(k) is not None for k in ("lowerRaw","upperRaw")):
+        expected_uncertainty_contract = (
+            ("point_only", "unavailable", "model_calibration_unavailable", None)
+            if model_id == "poisson_gam"
+            else ("point_only", "pending", "model_specific_calibration_pending", None)
+        )
+        if uncertainty_contract!=expected_uncertainty_contract or any(uncertainty.get(k) is not None for k in ("lowerRaw","upperRaw")):
             raise ForecastSourceError("Approved p2-v2 uncertainty contract mismatch.")
     else:
         if MODEL_FAMILIES.get(model_id)!=family:

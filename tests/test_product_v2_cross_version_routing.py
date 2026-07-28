@@ -41,7 +41,7 @@ class CrossVersionRoutingTests(unittest.TestCase):
             self.assertEqual(authority["authoritySource"], "committed_assignment")
             self.assertEqual(authority["lifecyclePolicyVersion"], "p2-v1")
 
-    def test_p2_v2_assignment_resolves_through_current_policy(self):
+    def test_current_assignment_resolves_through_current_policy(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
             chain = build_one_run_chain_p2_v2(target, ROOT, model_id="poisson_regression", override=True)
@@ -57,7 +57,7 @@ class CrossVersionRoutingTests(unittest.TestCase):
             authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime)
             self.assertEqual(authority["authoritySource"], "committed_assignment")
             self.assertEqual(authority["modelId"], "poisson_regression")
-            self.assertEqual(authority["lifecyclePolicyVersion"], "p2-v2")
+            self.assertEqual(authority["lifecyclePolicyVersion"], "p2-v3")
 
     def test_p2_v2_unassigned_with_valid_p2_v1_assignment_present(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -84,7 +84,7 @@ class CrossVersionRoutingTests(unittest.TestCase):
             commit_res = commit_lifecycle_action(
                 runtime,
                 one_run_forecast_run_id=chain_v2["runId"],
-                reason="Assign RF p2-v2",
+                reason="Assign RF current",
                 operator_identifier="test-op",
                 acknowledgement=True
             )
@@ -95,9 +95,9 @@ class CrossVersionRoutingTests(unittest.TestCase):
 
             authority_v2 = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime)
             self.assertEqual(authority_v2["authoritySource"], "committed_assignment")
-            self.assertEqual(authority_v2["lifecyclePolicyVersion"], "p2-v2")
+            self.assertEqual(authority_v2["lifecyclePolicyVersion"], "p2-v3")
 
-            # Historical resolver rejects p2-v2 pointer
+            # Historical resolver rejects a current pointer.
             with self.assertRaises(ActiveModelError) as ctx:
                 resolve_historical_active_model_p2_v1(repository_root=ROOT, runtime_root=runtime)
 

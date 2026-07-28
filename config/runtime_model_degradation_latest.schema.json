@@ -44,8 +44,8 @@
         "deploymentId": {"const": "dhaka_south"},
         "evidenceId": {"format": "uuid"},
         "policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"},
-        "policyVersion": {"const": "p2-v2"},
-        "policySha256": {"const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"},
+        "policyVersion": {"enum": ["p2-v2", "p2-v3"]},
+        "policySha256": {"enum": ["69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98", "2c132daecd0a0f8579de101a540be52bff063da9cd96600419bd55331f30b9a7"]},
         "commitPath": {"type": "string", "pattern": "^degradation-evidence/[0-9a-f-]+/metadata/commit\\.json$"},
         "commitSha256": {"$ref": "#/$defs/sha"},
         "evidencePath": {"type": "string", "pattern": "^degradation-evidence/[0-9a-f-]+/artifacts/degradation_evidence\\.json$"},
@@ -57,7 +57,17 @@
         "monitoringSummarySha256": {"$ref": "#/$defs/sha"},
         "includedOutcomeSetSha256": {"$ref": "#/$defs/sha"},
         "publishedAt": {"type": "string", "format": "date-time", "pattern": "Z$"}
-      }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"policyVersion": {"const": "p2-v2"}}},
+          "then": {"properties": {"policySha256": {"const": "69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98"}}}
+        },
+        {
+          "if": {"properties": {"policyVersion": {"const": "p2-v3"}}},
+          "then": {"properties": {"policySha256": {"const": "2c132daecd0a0f8579de101a540be52bff063da9cd96600419bd55331f30b9a7"}}}
+        }
+      ]
     }
   }
 }

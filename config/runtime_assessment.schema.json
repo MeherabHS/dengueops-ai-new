@@ -257,7 +257,8 @@
             "policyVersion": {
               "enum": [
                 "p2-v1",
-                "p2-v2"
+                "p2-v2",
+                "p2-v3"
               ]
             },
             "policySha256": {

@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "analytics"))
 from runtime_worker import claim_one, ensure_structure, load_job, run_once
 from tests.test_runtime_forecast_outcome import build_outcome_job
 from runtime_forecast_outcome import execute as execute_outcome
+from runtime_commit import atomic_json, sha256_file
 from tests.test_runtime_model_degradation_evidence import degradation_job
 from tests.test_runtime_quick_forecast import build_ready_runtime, execute_historical_quick_forecast
 from tests.test_product_v2_quick_forecast import (
@@ -43,6 +44,54 @@ def build_pending_governed_quick_job(base: Path, schema_version: str = "2.1", mo
         error=None,
         committedRunId=None,
     )
+    if schema_version == "2.0":
+        archived_policy = json.loads(
+            (
+                ROOT
+                / "config/deployments/dhaka_south/quick_forecast_policy_p2-v1.json"
+            ).read_text(encoding="utf-8")
+        )
+        job.update(
+            policyId=archived_policy["policyId"],
+            policyVersion=archived_policy["policyVersion"],
+            policySha256=archived_policy["policySha256"],
+            quickPolicyId=archived_policy["policyId"],
+            quickPolicyVersion=archived_policy["policyVersion"],
+            quickPolicySha256=archived_policy["policySha256"],
+        )
+        lifecycle_policy = json.loads(
+            (
+                ROOT
+                / "config/deployments/dhaka_south/model_lifecycle_policy_p2-v2.json"
+            ).read_text(encoding="utf-8")
+        )
+        pointer_path = root / "deployments/dhaka_south/model-assignment/latest.json"
+        pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+        assignment_root = root / "model-assignments" / pointer["assignmentId"]
+        record_path = assignment_root / "artifacts/assignment_record.json"
+        commit_path = assignment_root / "metadata/commit.json"
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+        record["candidateRegistrySha256"] = lifecycle_policy["candidateRegistrySha256"]
+        atomic_json(record_path, record)
+        commit = json.loads(commit_path.read_text(encoding="utf-8"))
+        commit["assignmentRecordSha256"] = sha256_file(record_path)
+        atomic_json(commit_path, commit)
+        pointer.update(
+            candidateRegistrySha256=lifecycle_policy["candidateRegistrySha256"],
+            policyId=lifecycle_policy["policyId"],
+            policyVersion=lifecycle_policy["policyVersion"],
+            policySha256=lifecycle_policy["policySha256"],
+            assignmentCommitSha256=sha256_file(commit_path),
+        )
+        atomic_json(pointer_path, pointer)
+        job.update(
+            authoritySnapshotSha256=sha256_file(pointer_path),
+            assignmentCommitSha256=sha256_file(commit_path),
+            resolvedCandidateRegistrySha256=lifecycle_policy["candidateRegistrySha256"],
+            lifecyclePolicyId=lifecycle_policy["policyId"],
+            lifecyclePolicyVersion=lifecycle_policy["policyVersion"],
+            lifecyclePolicySha256=lifecycle_policy["policySha256"],
+        )
     staging.rmdir()
     pending = root / "jobs/pending" / running_path.name
     pending.parent.mkdir(parents=True, exist_ok=True)
@@ -58,7 +107,7 @@ class RuntimeJobRunnerTests(unittest.TestCase):
         self.assertIn('"degradation-staging"',source)
         self.assertIn('"degradation-evidence"',source)
         self.assertIn('"degradation/latest.json"',source)
-        self.assertIn('"degradation/latest_p2-v2.json"',source)
+        self.assertIn('"degradation/latest_{job.get(\'policyVersion\')}.json"',source)
     def test_worker_has_isolated_model_lifecycle_dispatch(self):
         source=(ROOT/"analytics/runtime_worker.py").read_text()
         self.assertIn('"model_lifecycle"',source)
@@ -99,9 +148,13 @@ class RuntimeJobRunnerTests(unittest.TestCase):
             self.assertTrue(run_once(root, "archived-quick-worker"))
             completed = root / "jobs/completed" / pending.name
             failed = root / "jobs/failed" / pending.name
+            diagnostics = failed.read_text() if failed.exists() else "missing job record"
+            stderr_candidates = list((root / "staging").glob("*/logs/stderr.log"))
+            if stderr_candidates:
+                diagnostics += "\n" + stderr_candidates[0].read_text(errors="replace")
             self.assertTrue(
                 completed.exists(),
-                failed.read_text() if failed.exists() else "missing job record",
+                diagnostics,
             )
             value = json.loads(completed.read_text())
             self.assertEqual(value["status"], "completed")
@@ -158,14 +211,14 @@ class RuntimeJobRunnerTests(unittest.TestCase):
             value=json.loads(completed.read_text());self.assertEqual(value["committedOutcomeId"],outcome_job["outcomeId"])
             self.assertTrue((root/"deployments/dhaka_south/monitoring/latest.json").exists())
 
-    def test_worker_executes_p2_v2_degradation_and_requires_versioned_pointer(self):
+    def test_worker_executes_current_degradation_and_requires_versioned_pointer(self):
         with tempfile.TemporaryDirectory() as directory:
             root, _, forecast_job = build_pending_governed_quick_job(Path(directory), "2.1")
             self.assertTrue(run_once(root, "degradation-source-worker"))
             outcome_job, running = build_outcome_job(
                 root,
                 forecast_job,
-                record_id="worker-degradation-p2-v2",
+                record_id="worker-degradation-current",
                 schema_version="2.1",
             )
             execute_outcome(
@@ -187,7 +240,7 @@ class RuntimeJobRunnerTests(unittest.TestCase):
             pending = root / "jobs/pending" / running.name
             pending.write_text(json.dumps(job), encoding="utf-8")
             running.unlink()
-            self.assertTrue(run_once(root, "degradation-p2-v2-worker"))
+            self.assertTrue(run_once(root, "degradation-current-worker"))
             completed = root / "jobs/completed" / pending.name
             failed = root / "jobs/failed" / pending.name
             self.assertTrue(
@@ -197,7 +250,7 @@ class RuntimeJobRunnerTests(unittest.TestCase):
             value = json.loads(completed.read_text())
             self.assertEqual(value["committedEvidenceId"], job["evidenceId"])
             self.assertTrue(
-                (root / "deployments/dhaka_south/degradation/latest_p2-v2.json").is_file()
+                (root / "deployments/dhaka_south/degradation/latest_p2-v3.json").is_file()
             )
             self.assertFalse(
                 (root / "deployments/dhaka_south/degradation/latest.json").exists()

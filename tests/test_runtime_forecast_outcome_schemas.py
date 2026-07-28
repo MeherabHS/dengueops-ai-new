@@ -4,7 +4,7 @@ from jsonschema import Draft202012Validator
 
 ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT/"analytics"))
-from runtime_forecast_outcome_policy import P1_SHA,P2_SHA,P21_SHA,canonical_policy_sha256
+from runtime_forecast_outcome_policy import P1_SHA,P2_SHA,P22_SHA,canonical_policy_sha256
 
 class ForecastOutcomeSchemaTests(unittest.TestCase):
     def test_policy_archive_and_active_hashes(self):
@@ -14,7 +14,7 @@ class ForecastOutcomeSchemaTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256((ROOT/"config/deployments/dhaka_south/forecast_outcome_policy_p1.4g-v1.json").read_bytes()).hexdigest(),"3c9c1ec14ecefcff0fc6310fd449e9846089593912b5a09885647fe3449660e6")
         archived_p2=ROOT/"config/deployments/dhaka_south/forecast_outcome_policy_p2-v1.json"
         self.assertEqual(hashlib.sha256(archived_p2.read_bytes()).hexdigest(),"5ea1b4c280363566ece446a50657339b55ed865b4550774d677b4291c34c84c0")
-        self.assertEqual((canonical_policy_sha256(active),active["policy_sha256"]),(P21_SHA,P21_SHA))
+        self.assertEqual((canonical_policy_sha256(active),active["policy_sha256"]),(P22_SHA,P22_SHA))
         self.assertEqual(set(active["source_families"]),{"quick_forecast_p1","quick_forecast_p2","approved_forecast_p1","approved_forecast_p2"})
 
     def test_policy_schema_rejects_hybrid_and_extra_keys(self):
@@ -29,10 +29,14 @@ class ForecastOutcomeSchemaTests(unittest.TestCase):
         phase2=schema["$defs"]["phase2"]
         self.assertEqual(set(phase2["properties"]["sourceFamily"]["enum"]),{"quick_forecast_p1","approved_forecast_p1","approved_forecast_p2"})
         self.assertNotIn("quick_forecast_p2",phase2["properties"]["sourceFamily"]["enum"])
-        self.assertIn("extra_trees",phase2["properties"]["modelId"]["enum"])
+        self.assertNotIn("enum",phase2["properties"]["modelId"])
+        self.assertEqual(
+            phase2["properties"]["modelId"]["pattern"], "^[a-z][a-z0-9_]*$"
+        )
         self.assertEqual(set(phase2["properties"]["candidateRegistrySha256"]["enum"]),{
             "2e627f8a368a7e92cebd4ad62139b1050c7614559affd620e9a41738fd6a25d4",
-            "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0"})
+            "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
+            "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226"})
         self.assertIn("forecastCalibrationPath",schema["$defs"]["quickEvidence"]["required"])
         self.assertNotIn("forecastCalibrationPath",schema["$defs"]["approvedEvidence"]["properties"])
         self.assertIn("authorizationCommitSha256",schema["$defs"]["approvedEvidence"]["required"])

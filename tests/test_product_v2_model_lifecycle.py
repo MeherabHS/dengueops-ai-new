@@ -26,17 +26,17 @@ class ProductV2ModelLifecycleTests(unittest.TestCase):
         policy_path = ROOT / "config/deployments/dhaka_south/model_lifecycle_policy.json"
         policy = json.loads(policy_path.read_text())
         self.assertEqual(policy["schemaVersion"], "2.0")
-        self.assertEqual(policy["policyVersion"], "p2-v2")
+        self.assertEqual(policy["policyVersion"], "p2-v3")
         self.assertEqual(policy["policyId"], "RUNTIME.MODEL_LIFECYCLE.DECISION")
         self.assertEqual(policy["allowedActions"], ["assign_selected_model"])
-        self.assertEqual(len(policy["allowedCandidateIds"]), 8)
+        self.assertEqual(len(policy["allowedCandidateIds"]), 9)
         expected_sha = policy.pop("policySha256")
 
         digest = hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
         self.assertEqual(digest, expected_sha)
 
-    def test_initial_p2_v2_assignment_for_all_eight_learned_candidates(self):
-        """All eight learned candidates must be assignable as technical winner (override=False).
+    def test_initial_current_assignment_for_all_learned_candidates(self):
+        """All current learned candidates must be assignable as technical winner (override=False).
 
         Each model is built as the technical winner via a fully internally consistent
         synthetic p2-v2 evidence chain.  Extra Trees being the real assessment winner
@@ -45,7 +45,8 @@ class ProductV2ModelLifecycleTests(unittest.TestCase):
         """
         learned_candidates = (
             "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting",
-            "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting"
+            "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting",
+            "poisson_gam",
         )
         registry, registry_sha = load_and_validate_candidate_registry(ROOT / "config/candidate_models.json")
         registry_by_id = {candidate["model_id"]: candidate for candidate in registry["candidates"]}

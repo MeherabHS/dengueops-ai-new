@@ -52,7 +52,7 @@ class ProductV2QuickForecastMonitoringTests(unittest.TestCase):
         cls.base = Path(cls.temp.name)
         cls.templates = {
             model_id: _quick_runtime(cls.base / "templates" / model_id, model_id)
-            for model_id in ("random_forest", "ridge_regression")
+            for model_id in ("random_forest", "ridge_regression", "poisson_gam")
         }
 
     @classmethod
@@ -67,11 +67,11 @@ class ProductV2QuickForecastMonitoringTests(unittest.TestCase):
         return runtime, copy.deepcopy(job)
 
     def test_rf_interval_and_non_rf_point_only_monitoring(self):
-        for model_id in ("random_forest", "ridge_regression"):
+        for model_id in ("random_forest", "ridge_regression", "poisson_gam"):
             with self.subTest(model_id=model_id):
                 runtime, job = self.cloned_runtime(f"monitoring-{model_id}", model_id)
                 outcome_job, result, outcome, summary = _outcome(runtime, job)
-                self.assertEqual((result["commit"]["schemaVersion"], result["commit"]["policyVersion"]), ("2.1", "p2-v2"))
+                self.assertEqual((result["commit"]["schemaVersion"], result["commit"]["policyVersion"]), ("2.1", "p2-v3"))
                 self.assertEqual(outcome["sourceFamily"], "quick_forecast_p2")
                 self.assertEqual(outcome["sourceEvidence"]["runRecordSha256"], sha256_file(runtime / "runs" / job["runId"] / "metadata/run.json"))
                 self.assertEqual(outcome["sourceEvidence"]["assessmentReferenceStatus"], "not_applicable_no_assessment_reference")

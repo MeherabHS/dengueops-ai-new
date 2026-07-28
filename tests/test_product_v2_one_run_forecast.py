@@ -57,8 +57,8 @@ def prepare(runtime: Path, assessment_id: str, model_id: str) -> tuple[str, str]
         "recommendationSha256":summary["evidenceHashes"]["recommendationSha256"],"foldPlanSha256":summary["foldPlanSha256"],
         "assessmentLabelledRows":summary["labelledRows"],"assessmentPlannedFoldCount":planned,"selectedEvaluationPeriod":summary["foldPolicy"]["selectedEvaluationPeriod"],
         "datasetId":summary["datasetId"],"deploymentId":"dhaka_south","validationRecordSha256":summary["provenance"]["validationRecordSha256"],
-        "assessmentPolicyId":"RUNTIME.DATASET_ASSESSMENT.GOVERNANCE","assessmentPolicyVersion":"p2-v2","assessmentPolicySha256":policy["allowedAssessmentPolicySha256"],
-        "decisionPolicyId":policy["policyId"],"decisionPolicyVersion":"p2-v2","decisionPolicySha256":policy["policySha256"],
+        "assessmentPolicyId":"RUNTIME.DATASET_ASSESSMENT.GOVERNANCE","assessmentPolicyVersion":policy["allowedAssessmentPolicyVersion"],"assessmentPolicySha256":policy["allowedAssessmentPolicySha256"],
+        "decisionPolicyId":policy["policyId"],"decisionPolicyVersion":policy["policyVersion"],"decisionPolicySha256":policy["policySha256"],
         "candidateRegistrySha256":policy["candidateRegistrySha256"],"featureOrderSha256":policy["featureOrderSha256"],
         "technicalWinnerModelId":winner["modelId"],"technicalWinnerParameterSha256":winner["parametersSha256"],
         "decision":"approve_eligible_non_winner" if override else "approve_technical_winner",
@@ -76,22 +76,22 @@ def prepare(runtime: Path, assessment_id: str, model_id: str) -> tuple[str, str]
     decision_root=runtime/"decisions"/decision_id;decision_root.mkdir(parents=True);atomic_json(decision_root/"decision.json",decision)
     decision_commit={"schemaVersion":"2.0","decisionId":decision_id,"assessmentId":assessment_id,"decisionSha256":sha256_file(decision_root/"decision.json"),
         "assessmentCommitSha256":assessment_commit,"assessmentSchemaVersion":"2.0","assessmentSummarySha256":sha256_file(summary_path),
-        "assessmentPolicyId":decision["assessmentPolicyId"],"assessmentPolicyVersion":"p2-v2","assessmentPolicySha256":decision["assessmentPolicySha256"],
-        "decisionPolicyId":policy["policyId"],"decisionPolicyVersion":"p2-v2","decisionPolicySha256":policy["policySha256"],
+        "assessmentPolicyId":decision["assessmentPolicyId"],"assessmentPolicyVersion":policy["allowedAssessmentPolicyVersion"],"assessmentPolicySha256":decision["assessmentPolicySha256"],
+        "decisionPolicyId":policy["policyId"],"decisionPolicyVersion":policy["policyVersion"],"decisionPolicySha256":policy["policySha256"],
         "foldPlanSha256":summary["foldPlanSha256"],"assessmentLabelledRows":summary["labelledRows"],"assessmentPlannedFoldCount":planned,
         "status":"committed","committedAt":created,"latestPointerUpdated":False,"deploymentProfileModified":False}
     atomic_json(decision_root/"commit.json",decision_commit);decision_commit_sha=sha256_file(decision_root/"commit.json")
     authorization={"schemaVersion":"2.0","authorizationId":authorization_id,"decisionId":decision_id,"decisionCommitSha256":decision_commit_sha,
         "assessmentId":assessment_id,"assessmentCommitSha256":assessment_commit,"assessmentPolicyId":decision["assessmentPolicyId"],
-        "assessmentPolicyVersion":"p2-v2","assessmentPolicySha256":decision["assessmentPolicySha256"],"decisionPolicyId":policy["policyId"],
-        "decisionPolicyVersion":"p2-v2","decisionPolicySha256":policy["policySha256"],"datasetId":summary["datasetId"],"deploymentId":"dhaka_south",
+        "assessmentPolicyVersion":policy["allowedAssessmentPolicyVersion"],"assessmentPolicySha256":decision["assessmentPolicySha256"],"decisionPolicyId":policy["policyId"],
+        "decisionPolicyVersion":policy["policyVersion"],"decisionPolicySha256":policy["policySha256"],"datasetId":summary["datasetId"],"deploymentId":"dhaka_south",
         "selectedModelId":model_id,"selectedModelFamily":selected["modelFamily"],"selectedModelParameterSha256":selected["parametersSha256"],
         "selectedModelPreprocessingIdentity":selected["preprocessingIdentity"],"candidateRegistrySha256":policy["candidateRegistrySha256"],
         "featureOrderSha256":policy["featureOrderSha256"],"selectionType":decision["selectionType"],"technicalWinnerModelId":winner["modelId"],
         "technicalWinnerNotSelectedAcknowledged":override,"uncertaintyLimitationsAcknowledged":True,"deploymentModelAdopted":False,
         "assessmentLabelledRows":summary["labelledRows"],"assessmentPlannedFoldCount":planned,"foldPlanSha256":summary["foldPlanSha256"],
         "workflowMode":"approved_assessment_forecast","scope":"one_run","initialStatus":"available","createdAt":created,"expiresAt":expires,
-        "policyId":policy["policyId"],"policyVersion":"p2-v2","policySha256":policy["policySha256"]}
+        "policyId":policy["policyId"],"policyVersion":policy["policyVersion"],"policySha256":policy["policySha256"]}
     auth_root=runtime/"authorizations"/authorization_id;auth_root.mkdir(parents=True);atomic_json(auth_root/"authorization.json",authorization)
     atomic_json(auth_root/"commit.json",{"schemaVersion":"1.0","authorizationId":authorization_id,"decisionId":decision_id,
         "authorizationSha256":sha256_file(auth_root/"authorization.json"),"decisionCommitSha256":decision_commit_sha,"status":"committed","committedAt":created})

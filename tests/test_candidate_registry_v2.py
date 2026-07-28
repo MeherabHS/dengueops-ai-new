@@ -18,6 +18,7 @@ REGISTRY = ROOT / "config/candidate_models.json"
 LEARNED = {
     "random_forest", "ridge_regression", "poisson_regression", "gradient_boosting",
     "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting",
+    "poisson_gam",
 }
 BASELINES = {"moving_average_4w", "seasonal_naive_52w"}
 
@@ -38,9 +39,9 @@ class CandidateRegistryV2Tests(unittest.TestCase):
     def test_active_registry_is_exact_closed_v2_set(self):
         registry, _ = load_and_validate_candidate_registry()
         self.assertEqual(registry["candidate_registry_schema_version"], "2.0")
-        self.assertEqual(registry["candidate_registry_version"], "p2-v1")
+        self.assertEqual(registry["candidate_registry_version"], "p2-v2")
         candidates = registry["candidates"]
-        self.assertEqual(len(candidates), 10)
+        self.assertEqual(len(candidates), 11)
         self.assertEqual({c["model_id"] for c in candidates if c["candidate_class"] == "learned_model"}, LEARNED)
         self.assertEqual({c["model_id"] for c in candidates if c["candidate_class"] == "comparison_baseline"}, BASELINES)
         self.assertNotIn("previous_week_naive", {c["model_id"] for c in candidates})

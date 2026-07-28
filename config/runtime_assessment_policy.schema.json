@@ -29,7 +29,7 @@
   "properties": {
     "schema_version": { "enum": ["1.0", "2.0"] },
     "policy_id": { "const": "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE" },
-    "policy_version": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2"] },
+    "policy_version": { "enum": ["p1.4d-1-v1", "p2-v1", "p2-v2", "p2-v3"] },
     "policy_status": { "enum": ["active", "inactive", "suspended"] },
     "policy_sha256": { "$ref": "#/$defs/sha256" },
     "policy_hash_method": {
@@ -86,7 +86,7 @@
       "required": ["path", "version", "sha256"],
       "properties": {
         "path": { "const": "config/candidate_models.json" },
-        "version": { "enum": ["p1.2a-v1", "p2-v1"] },
+        "version": { "enum": ["p1.2a-v1", "p2-v1", "p2-v2"] },
         "sha256": { "$ref": "#/$defs/sha256" }
       }
     },
@@ -202,7 +202,7 @@
       }
     },
     {
-      "if": { "properties": { "policy_version": { "const": "p2-v2" } } },
+      "if": { "properties": { "policy_version": { "enum": ["p2-v2", "p2-v3"] } } },
       "then": {
         "properties": { "schema_version": { "const": "2.0" } },
         "required": ["decision_compatibility", "prohibited_actions"]
@@ -365,7 +365,7 @@
             "policy_id": {
               "const": "RUNTIME.ASSESSMENT.DYNAMIC_EXPANDING_FOLDS"
             },
-            "policy_version": { "enum": ["p2-v1", "p2-v2"] },
+            "policy_version": { "enum": ["p2-v1", "p2-v2", "p2-v3"] },
             "training_window": { "const": "expanding" },
             "initial_training_rows": { "const": 104 },
             "embargo_rows": { "const": 1 },
@@ -516,7 +516,7 @@
       ],
       "properties": {
         "policy_id": { "const": "RUNTIME.ASSESSMENT.CANDIDATE_COMPARISON" },
-        "policy_version": { "enum": ["p1.4d-1-v1", "p2-v2"] },
+        "policy_version": { "enum": ["p1.4d-1-v1", "p2-v2", "p2-v3"] },
         "selection_rule": { "$ref": "#/$defs/nonEmpty" },
         "primary_metric": { "const": "mae" },
         "tie_sequence": {

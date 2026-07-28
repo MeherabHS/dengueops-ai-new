@@ -107,7 +107,7 @@ class RuntimeModelDegradationCrossVersionTests(unittest.TestCase):
             self.assertNotEqual(d1["commit"]["evidenceId"], d2["commit"]["evidenceId"])
             self.assertEqual(historical_pointer.read_bytes(), historical_bytes)
             current = json.loads(
-                (runtime / "deployments/dhaka_south/degradation/latest_p2-v2.json").read_text()
+                (runtime / "deployments/dhaka_south/degradation/latest_p2-v3.json").read_text()
             )
             self.assertEqual(current["evidenceId"], d2["commit"]["evidenceId"])
             self.assertEqual(d1["pointer"]["commitSha256"], d1_commit_sha)
@@ -119,7 +119,7 @@ class RuntimeModelDegradationCrossVersionTests(unittest.TestCase):
                 committed["monitoringLatestSnapshotSha256"],
                 committed["monitoringSummarySha256"],
                 committed["includedOutcomeSetSha256"],
-                "p2-v2",
+                "p2-v3",
             )
             self.assertEqual(historical_source["summarySha256"], committed["monitoringSummarySha256"])
             self.assertEqual(

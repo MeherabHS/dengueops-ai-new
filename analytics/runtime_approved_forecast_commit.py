@@ -22,9 +22,11 @@ from runtime_uncertainty import validate_uncertainty_contract, UncertaintyContra
 P1_ASSESSMENT_SHA = "dbf9d4cc4713bbb9d114b2dab916d0f20b3004ac14b37ca663c3caecefcea0af"
 P2_ASSESSMENT_SHA = "04c620ebe42526a74f1fe7054e3281df36bb587b363c027a3a675a86ee70efff"
 P2_V2_ASSESSMENT_SHA = "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8"
+P2_V3_ASSESSMENT_SHA = "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7"
 P1_DECISION_SHA = "8fece340b85951d3bee8b037c4ac79ae82636ee371a934e9371bcb4a633491a4"
 P2_DECISION_SHA = "aaef2ed2afd3afe03a0aec91889f144a3274cad21aa8cef8ef772bb90cfdcb4a"
 P2_V2_DECISION_SHA = "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d"
+P2_V3_DECISION_SHA = "9ad6570be27c425368ac6650687c9b2f3b4741575e8081e9f86b073613b59dba"
 ASSESSMENT_POLICY_ID = "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
 DECISION_POLICY_ID = "RUNTIME.INTERNAL_ONE_RUN_MODEL_DECISION"
 
@@ -113,11 +115,15 @@ def _verify_policy(decision: dict[str, Any]) -> tuple[dict[str, Any], bool]:
           DECISION_POLICY_ID, "p2-v1", P2_DECISION_SHA)
     p2v2 = ("2.0", ASSESSMENT_POLICY_ID, "p2-v2", P2_V2_ASSESSMENT_SHA,
             DECISION_POLICY_ID, "p2-v2", P2_V2_DECISION_SHA)
+    p2v3 = ("2.0", ASSESSMENT_POLICY_ID, "p2-v3", P2_V3_ASSESSMENT_SHA,
+            DECISION_POLICY_ID, "p2-v3", P2_V3_DECISION_SHA)
     if identity == p1:
         filename, phase_two = "decision_policy_p1.4d-3-e-v1.json", False
     elif identity == p2:
         filename, phase_two = "decision_policy_p2-v1.json", True
     elif identity == p2v2:
+        filename, phase_two = "decision_policy_p2-v2.json", True
+    elif identity == p2v3:
         filename, phase_two = "decision_policy.json", True
     else:
         raise ApprovedForecastCommitError("The approved forecast has an unsupported or hybrid policy identity.")
@@ -182,9 +188,9 @@ def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[
     labelled_rows = summary.get("labelledRows")
     planned_folds = summary.get("foldPolicy", {}).get("plannedFoldCount")
     evaluation_period = summary.get("foldPolicy", {}).get("selectedEvaluationPeriod")
-    decision_v2 = decision.get("decisionPolicyVersion") == "p2-v2"
-    assessment_version = "p2-v2" if decision_v2 else "p2-v1"
-    assessment_sha = P2_V2_ASSESSMENT_SHA if decision_v2 else P2_ASSESSMENT_SHA
+    decision_v2 = decision.get("decisionPolicyVersion") in {"p2-v2", "p2-v3"}
+    assessment_version = str(decision.get("assessmentPolicyVersion"))
+    assessment_sha = str(decision.get("assessmentPolicySha256"))
     assessment_policy = {"policyId": ASSESSMENT_POLICY_ID, "policyVersion": assessment_version, "policySha256": assessment_sha}
     decision_policy = {"policyId": DECISION_POLICY_ID, "policyVersion": decision.get("decisionPolicyVersion"), "policySha256": policy["policySha256"]}
 
@@ -284,6 +290,12 @@ def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[
     _same(forecast.get("horizonWeeks"), 2, "Forecast horizon changed.")
     _same(forecast.get("target"), "target_cases_next_2w", "Forecast target changed.")
     if decision_v2:
+        expected_calibration_status = "unavailable" if job["selectedModelId"] == "poisson_gam" else "pending"
+        expected_uncertainty_reason = (
+            "model_calibration_unavailable"
+            if job["selectedModelId"] == "poisson_gam"
+            else "model_specific_calibration_pending"
+        )
         try:
             validate_uncertainty_contract({"selectedModelId": job["selectedModelId"], "modelFamily": decision["selectedModelFamily"],
                 "parameterSha256": job["selectedModelParameterSha256"], "candidateRegistrySha256": decision["candidateRegistrySha256"],
@@ -296,8 +308,8 @@ def _verify_phase_two(root: Path, staging: Path, job: dict[str, Any], run: dict[
             raise ApprovedForecastCommitError("The model-specific uncertainty contract is invalid.") from exc
         for value in (forecast, uncertainty, run, card):
             _same(value.get("forecastPresentationMode"), "point_only", "Forecast presentation mode changed.")
-            _same(value.get("calibrationStatus"), "pending", "Calibration status changed.")
-            _same(value.get("uncertaintyReasonCode"), "model_specific_calibration_pending", "Uncertainty reason changed.")
+            _same(value.get("calibrationStatus"), expected_calibration_status, "Calibration status changed.")
+            _same(value.get("uncertaintyReasonCode"), expected_uncertainty_reason, "Uncertainty reason changed.")
         _same(uncertainty.get("lowerRaw"), None, "Point-only lower bound must be null.")
         _same(uncertainty.get("upperRaw"), None, "Point-only upper bound must be null.")
         _same(uncertainty.get("calibrationProvenance"), None, "Point-only calibration provenance must be null.")
@@ -466,7 +478,7 @@ def commit_approved_forecast(runtime_root: Path, staging_path: Path, job: dict[s
                        "forecastReported": forecast["forecastReported"],
                        "forecastOutputSha256": hashes["forecast_output.json"], "modelCardSha256": hashes["model_card.json"],
                        "runRecordSha256": sha256_file(staging / "metadata/run.json"), "completeReconciliation": True})
-        if reconciliation["decisionPolicy"]["policyVersion"] == "p2-v2":
+        if reconciliation["decisionPolicy"]["policyVersion"] in {"p2-v2", "p2-v3"}:
             commit.update({"selectedModelFamily": forecast["selectedModelFamily"],
                            "selectedModelPreprocessingIdentity": forecast["selectedModelPreprocessingIdentity"],
                            "selectionType": forecast["selectionType"],

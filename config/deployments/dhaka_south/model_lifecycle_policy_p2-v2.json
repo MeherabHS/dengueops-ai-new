@@ -1,17 +1,17 @@
 {
   "schemaVersion": "2.0",
   "policyId": "RUNTIME.MODEL_LIFECYCLE.DECISION",
-  "policyVersion": "p2-v3",
+  "policyVersion": "p2-v2",
   "policyStatus": "active",
-  "policySha256": "ae50f6e29ab0caba16401b5314c7d26c75658887d78a36c0b0d7c029a5b6a86a",
+  "policySha256": "294b7949adecc39b284adaa198db47109ee4b1cc39259e87bc9073e1bff93b64",
   "deploymentId": "dhaka_south",
-  "allowedAssessmentPolicyVersion": "p2-v3",
-  "allowedAssessmentPolicySha256": "16856b96ea22f378fd619e0485ce3448c7d676250b9025625d2551724f05f1e7",
-  "allowedDecisionPolicyVersion": "p2-v3",
-  "allowedDecisionPolicySha256": "9ad6570be27c425368ac6650687c9b2f3b4741575e8081e9f86b073613b59dba",
-  "allowedQuickForecastPolicyVersion": "p2-v2",
-  "allowedQuickForecastPolicySha256": "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2",
-  "candidateRegistrySha256": "e6fd8aff5d092f7a9e112647515349d7aed43b21f5d78d97b8f988d492ab0226",
+  "allowedAssessmentPolicyVersion": "p2-v2",
+  "allowedAssessmentPolicySha256": "569faeca27a4715e72085ac97c78b00f83351bd7783fc156f5bd8f626cab28b8",
+  "allowedDecisionPolicyVersion": "p2-v2",
+  "allowedDecisionPolicySha256": "6f643f01e7e01353986af52f395b2c71cb05dc162ba7f71127c1397ce2adcf1d",
+  "allowedQuickForecastPolicyVersion": "p2-v1",
+  "allowedQuickForecastPolicySha256": "4a6f166d037ab4c69df980549626d993db473bcec325fa2a68dbe5f8485a757e",
+  "candidateRegistrySha256": "74cb3635c5e211874ee5ad23196fc95bfdfbdb5c6438cc3d060f0b9ff49acfa0",
   "featureOrderSha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
   "allowedCandidateIds": [
     "ridge_regression",
@@ -21,8 +21,7 @@
     "elastic_net",
     "negative_binomial_regression",
     "extra_trees",
-    "hist_gradient_boosting",
-    "poisson_gam"
+    "hist_gradient_boosting"
   ],
   "allowedActions": [
     "assign_selected_model"

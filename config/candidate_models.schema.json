@@ -4,7 +4,7 @@
   "type":"object","additionalProperties":false,
   "required":["candidate_registry_schema_version","candidate_registry_version","feature_order_sha256","target","horizon_weeks","output_domain_policy","candidates"],
   "properties":{
-    "candidate_registry_schema_version":{"const":"2.0"},"candidate_registry_version":{"const":"p2-v1"},
+    "candidate_registry_schema_version":{"const":"2.0"},"candidate_registry_version":{"enum":["p2-v1","p2-v2"]},
     "feature_order_sha256":{"const":"aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"},
     "target":{"const":"target_cases_next_2w"},"horizon_weeks":{"const":2},
     "output_domain_policy":{"const":"preserve_raw_and_publish_maximum_of_zero_and_raw_prediction"},
@@ -19,7 +19,10 @@
         "candidate_class":{"enum":["learned_model","comparison_baseline"]},"selection_role":{"enum":["learned_selectable","baseline_only"]},
         "model_family":{"$ref":"#/$defs/text"},"estimator_library":{"$ref":"#/$defs/text"},"estimator_library_version":{"$ref":"#/$defs/text"},
         "parameters":{"type":"object","additionalProperties":{"type":["string","number","integer","boolean","null"]}},"parameters_sha256":{"$ref":"#/$defs/sha"},
-        "preprocessing":{"type":"object","additionalProperties":false,"required":["type","fit_scope"],"properties":{"type":{"enum":["none","StandardScaler"]},"fit_scope":{"enum":["not_applicable","fold_training_rows_only"]}}},
+        "preprocessing":{"oneOf":[
+          {"type":"object","additionalProperties":false,"required":["type","fit_scope"],"properties":{"type":{"enum":["none","StandardScaler"]},"fit_scope":{"enum":["not_applicable","fold_training_rows_only"]}}},
+          {"$ref":"#/$defs/splinePreprocessing"}
+        ]},
         "preprocessing_identity":{"$ref":"#/$defs/sha"},
         "deterministic_controls":{"type":"object","additionalProperties":false,"required":["runtime_hyperparameter_search","browser_parameters_allowed","random_seed"],"properties":{"runtime_hyperparameter_search":{"const":false},"browser_parameters_allowed":{"const":false},"random_seed":{"type":["integer","null"]}}},
         "minimum_training_rows":{"type":"integer","minimum":0},"target":{"const":"target_cases_next_2w"},"horizon_weeks":{"const":2},"feature_order_sha256":{"const":"aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"},
@@ -31,6 +34,19 @@
         {"if":{"properties":{"candidate_class":{"const":"comparison_baseline"}}},"then":{"properties":{"selection_role":{"const":"baseline_only"},"selectable":{"const":false}}}},
         {"if":{"properties":{"candidate_class":{"const":"learned_model"}}},"then":{"properties":{"selection_role":{"const":"learned_selectable"},"selectable":{"const":true}}}}
       ]
+    },
+    "splinePreprocessing":{"type":"object","additionalProperties":false,
+      "required":["type","fit_scope","input_feature_order_sha256","nonlinear_columns","linear_columns","spline_degree","spline_n_knots","spline_knots","spline_extrapolation","spline_include_bias","linear_scaling","remainder","transformed_column_order"],
+      "properties":{
+        "type":{"const":"SplineColumnTransformer"},"fit_scope":{"const":"fold_training_rows_only"},
+        "input_feature_order_sha256":{"const":"aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"},
+        "nonlinear_columns":{"const":["rainfall_lag_2w","rainfall_lag_4w","temp_lag_2w","temp_lag_4w","humidity_lag_2w","humidity_lag_4w"]},
+        "linear_columns":{"const":["cases_lag_1w","cases_lag_2w","cases_lag_4w","epi_week_sin","epi_week_cos"]},
+        "spline_degree":{"const":2},"spline_n_knots":{"const":4},"spline_knots":{"const":"quantile"},
+        "spline_extrapolation":{"const":"constant"},"spline_include_bias":{"const":false},
+        "linear_scaling":{"const":"StandardScaler"},"remainder":{"const":"drop"},
+        "transformed_column_order":{"const":"spline_basis_then_scaled_linear"}
+      }
     }
   }
 }

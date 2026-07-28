@@ -31,6 +31,7 @@ from runtime_assessment_evidence import (
     select_technical_winner,
 )
 from runtime_assessment_policy import (
+    PREVIOUS_CANDIDATE_REGISTRY_PATH,
     evaluate_assessment_policy,
     load_and_validate_assessment_policy,
     select_planned_validation_indexes,
@@ -43,6 +44,14 @@ from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_da
 HISTORICAL_LEARNED_IDS = {
     "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting",
 }
+
+
+def _load_registry_for_policy(policy_version: str):
+    if policy_version == "p2-v3":
+        return load_and_validate_candidate_registry()
+    if policy_version == "p2-v2":
+        return load_and_validate_candidate_registry(PREVIOUS_CANDIDATE_REGISTRY_PATH)
+    return load_historical_candidate_registry()
 SCHEMAS = {
     "rolling_validation.json": "runtime_rolling_validation.schema.json",
     "candidate_model_comparison.json": "runtime_candidate_comparison.schema.json",
@@ -201,11 +210,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     policy, policy_hash = load_and_validate_assessment_policy(
         job["deploymentId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"]
     )
-    registry, registry_hash = (
-        load_and_validate_candidate_registry()
-        if policy["policy_version"] == "p2-v2"
-        else load_historical_candidate_registry()
-    )
+    registry, registry_hash = _load_registry_for_policy(policy["policy_version"])
     if (policy["policy_id"], policy["policy_version"], policy_hash, registry_hash) != (
         job["assessmentPolicyId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"], job["candidateRegistrySha256"],
     ):
@@ -330,7 +335,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("Candidate execution changed the common fold plan.")
 
     _update_job(job_path, job, progress="aggregating_metrics")
-    is_phase_two = policy["policy_version"] in {"p2-v1", "p2-v2"}
+    is_phase_two = policy["policy_version"] in {"p2-v1", "p2-v2", "p2-v3"}
     artifact_schema_version = "2.0" if is_phase_two else "1.0"
     available_fold_count = int(assessment_policy_result["availableFoldCount"])
     fold_cap_applied = bool(assessment_policy_result["foldCapApplied"])
@@ -348,7 +353,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         successful = sum(record["foldStatus"] in {"success", "warning"} for record in records)
         failed = len(records) - successful
         metrics = _aggregate(records, actuals)
-        if policy["policy_version"] != "p2-v2" and metrics is not None:
+        if policy["policy_version"] not in {"p2-v2", "p2-v3"} and metrics is not None:
             metrics = {key: value for key, value in metrics.items() if key not in {"mse", "r2"}}
         preflight = eligibility[model_id]
         candidate = registry_by_id[model_id]
@@ -363,7 +368,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
                 "plannedFolds": planned_fold_count,
                 "comparisonRole": "baseline_only" if model_id in baseline_ids else "learned_candidate",
                 "limitations": list(candidate["limitations"]),
-            } if policy["policy_version"] == "p2-v2" else {}),
+            } if policy["policy_version"] in {"p2-v2", "p2-v3"} else {}),
             "completionStatus": "complete" if successful == planned_fold_count and failed == 0 else "ineligible" if not preflight["eligible"] else "incomplete",
             "reasonCodes": preflight["reasonCodes"] if not preflight["eligible"] else sorted({record["failureReasonCode"] for record in records if record["failureReasonCode"]}) or ["candidate_completed_all_folds"],
             "reasons": preflight["reasons"] if not preflight["eligible"] else (["Candidate completed every fold in the immutable common plan."] if failed == 0 else ["Candidate did not complete every fold and is not selection eligible."]),
@@ -389,7 +394,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     _update_job(job_path, job, progress="selecting_technical_winner")
     winner, tie_stage, tie_steps, selection_ids = select_technical_winner(candidate_results) if baseline_ok and learned_ok else (None, None, [], [])
     winner_candidate = next((candidate for candidate in candidate_results if candidate["modelId"] == winner), None)
-    if policy["policy_version"] == "p2-v2":
+    if policy["policy_version"] in {"p2-v2", "p2-v3"}:
         for candidate in candidate_results:
             if candidate["modelId"] in baseline_ids:
                 candidate["status"] = "baseline_only"
@@ -401,7 +406,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
                 candidate["status"] = "technical_winner"
             else:
                 candidate["status"] = "eligible_non_winner"
-    runner_pool = complete if policy["policy_version"] != "p2-v2" else [candidate for candidate in complete if candidate["modelId"] in learned_ids]
+    runner_pool = complete if policy["policy_version"] not in {"p2-v2", "p2-v3"} else [candidate for candidate in complete if candidate["modelId"] in learned_ids]
     runner_up = sorted((candidate for candidate in runner_pool if candidate["modelId"] != winner), key=lambda item: item["metrics"]["mae"])[0] if winner and len(runner_pool) > 1 else None
     if winner:
         winner_records = {descriptor["foldId"]: predictions[winner][index] for index, descriptor in enumerate(plan)}
@@ -449,7 +454,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     rolling_hash = sha256_file(rolling_path)
     selection_reason = (
         f"{winner} was the best-performing eligible learned model within this governed assessment, using the governed metric sequence across all {planned_fold_count} folds."
-        if winner and policy["policy_version"] == "p2-v2"
+        if winner and policy["policy_version"] in {"p2-v2", "p2-v3"}
         else f"{winner} had the lowest governed metric sequence among candidates completing all {planned_fold_count} folds."
         if winner
         else "No technical winner satisfied the governed completeness and breadth requirements."

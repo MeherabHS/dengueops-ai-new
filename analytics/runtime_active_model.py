@@ -157,12 +157,6 @@ def resolve_active_model_p2_v2(
     runtime_root: Path,
     deployment_id: str = "dhaka_south"
 ) -> dict[str, Any]:
-    policy, policy_sha = load_model_lifecycle_policy(
-        policy_version="p2-v2",
-        repository_root=repository_root,
-        deployment_id=deployment_id
-    )
-
     pointer_path = runtime_root / "deployments" / deployment_id / "model-assignment/latest.json"
     if not pointer_path.exists():
         raise ActiveModelError("active_model_not_assigned")
@@ -175,6 +169,14 @@ def resolve_active_model_p2_v2(
     # 2. Schema, deployment, and lifecycle-policy identity checks
     if pointer.get("schemaVersion") != "2.0":
         raise ActiveModelError("Invalid pointer schema version for p2-v2 lifecycle.")
+    policy_version = pointer.get("policyVersion")
+    if policy_version not in {"p2-v2", "p2-v3"}:
+        raise ActiveModelError("Unsupported current lifecycle policy version.")
+    policy, policy_sha = load_model_lifecycle_policy(
+        policy_version=policy_version,
+        repository_root=repository_root,
+        deployment_id=deployment_id
+    )
     if (
         pointer.get("deploymentId"),
         pointer.get("policyId"),
@@ -258,11 +260,12 @@ def resolve_active_model_p2_v2(
             )
 
     try:
+        registry_name = "candidate_models.json" if policy_version == "p2-v3" else "candidate_models_p2-v1.json"
         registry, registry_sha = load_and_validate_candidate_registry(
-            repository_root / "config/candidate_models.json"
+            repository_root / "config" / registry_name
         )
     except Exception as exc:
-        raise ActiveModelError("Current candidate registry is invalid.") from exc
+        raise ActiveModelError("Versioned candidate registry is invalid.") from exc
     if (
         registry_sha != policy.get("candidateRegistrySha256")
         or registry_sha != pointer.get("candidateRegistrySha256")
@@ -482,7 +485,7 @@ def resolve_active_model(
     runtime_root: Path = None, # type: ignore
     deployment_id: str = "dhaka_south"
 ) -> dict[str, Any]:
-    """Resolve strict current p2-v2 authority. Historical resolution is explicit."""
+    """Resolve strict current authority. Historical resolution is explicit."""
     if runtime_root is None:
         raise ValueError("runtime_root is required.")
     return resolve_active_model_p2_v2(
