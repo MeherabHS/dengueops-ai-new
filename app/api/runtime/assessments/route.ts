@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { loadRuntimeConfig } from "@/lib/runtime/config";
@@ -6,6 +7,7 @@ import type { DatasetAssessmentJobRecord, RuntimeWorkspaceMetadata, StartAssessm
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained, jobRecordPath, runtimeCollectionPaths, workspacePaths } from "@/lib/runtime/paths";
 import { createPendingJob, createWorkspaceStartMarker, initializeRuntimeRoot } from "@/lib/runtime/store";
+import { requireSuperUserMutation } from "@/lib/auth/authorization";
 
 export const runtime = "nodejs";
 
@@ -14,7 +16,8 @@ const SHA = /^[a-f0-9]{64}$/;
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
 
 function canonicalPolicySha256(policy: Record<string, unknown>): string {
-  const { policy_sha256: _ignored, ...content } = policy;
+  const content = { ...policy };
+  delete content.policy_sha256;
   const canonical = (value: unknown): string => Array.isArray(value)
     ? `[${value.map(canonical).join(",")}]`
     : value && typeof value === "object"
@@ -54,6 +57,7 @@ async function existingMarker(marker: string, workspaceId: string, datasetId: st
 export async function POST(request: Request): Promise<Response> {
   const correlationId = randomUUID();
   try {
+    await requireSuperUserMutation(request);
     const body = await request.json() as Partial<StartAssessmentRequest> & Record<string, unknown>;
     const allowed = new Set(["workspaceId", "datasetId", "deploymentId", "validationRecordSha256"]);
     if (Object.keys(body).some(key => !allowed.has(key))) throw new RuntimePublicError("unexpected_assessment_field", "validation", "The assessment request contains an unsupported field.", 400);

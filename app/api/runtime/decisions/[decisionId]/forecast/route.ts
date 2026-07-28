@@ -1,4 +1,5 @@
-import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
+import { authorizeSuperUserOrService } from "@/lib/auth/authorization";
 import { mkdir, open, rm } from "node:fs/promises";
 import path from "node:path";
 import { loadRuntimeConfig } from "@/lib/runtime/config";
@@ -19,17 +20,6 @@ import {
   writeExclusive,
 } from "@/lib/runtime/store";
 export const runtime = "nodejs";
-function authorized(request: Request, configured: string) {
-  const provided =
-    request.headers.get("x-dengueops-internal-decision-secret") ?? "";
-  return (
-    configured.length >= 16 &&
-    timingSafeEqual(
-      createHash("sha256").update(configured).digest(),
-      createHash("sha256").update(provided).digest(),
-    )
-  );
-}
 export async function POST(
   request: Request,
   context: { params: Promise<{ decisionId: string }> },
@@ -39,24 +29,18 @@ export async function POST(
     lockPath = "";
   try {
     const config = loadRuntimeConfig(false);
-    if (
-      !config.internalDecisionEnabled ||
-      !config.internalDecisionSecret ||
-      !config.internalOperatorId
-    ) {
+    const authority = await authorizeSuperUserOrService(
+      request,
+      config.internalDecisionEnabled,
+      request.headers.get("x-dengueops-internal-decision-secret") ?? "",
+      config.internalDecisionSecret,
+    );
+    if (authority.authority === "trusted_service" && !config.internalOperatorId) {
       throw new RuntimePublicError(
         "internal_decision_disabled",
         "configuration",
         "Trusted internal model decisions are disabled.",
         503,
-      );
-    }
-    if (!authorized(request, config.internalDecisionSecret)) {
-      throw new RuntimePublicError(
-        "internal_decision_forbidden",
-        "validation",
-        "The trusted internal decision credential is invalid.",
-        403,
       );
     }
     const { decisionId } = await context.params;

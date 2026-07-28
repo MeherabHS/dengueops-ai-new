@@ -3,14 +3,32 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Activity, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { clsx } from "clsx";
-import { NAV_LINKS, PROJECT_TITLE } from "@/lib/constants";
+import { NAV_LINKS, PROJECT_TITLE, PUBLIC_NAV_LINKS } from "@/lib/constants";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/sign-in", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((value: { authenticated?: boolean }) => {
+        if (active) setAuthenticated(value.authenticated === true);
+      })
+      .catch(() => {
+        if (active) setAuthenticated(false);
+      });
+    return () => { active = false; };
+  }, [pathname]);
+  const links = authenticated ? NAV_LINKS : PUBLIC_NAV_LINKS;
+  async function signOut() {
+    await fetch("/api/auth/sign-out", { method: "POST" });
+    window.location.assign("/dashboard");
+  }
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-surface/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
@@ -19,10 +37,11 @@ export default function Navbar() {
           <span className="text-lg font-bold tracking-tight text-primary">{PROJECT_TITLE}</span>
         </Link>
         <nav aria-label="Primary navigation" className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map((link) => {
+          {links.map((link) => {
             const active = pathname === link.href;
             return <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined} className={clsx("rounded-md px-3 py-2 text-sm font-medium transition-colors", active ? "bg-accent-soft text-accent" : "text-secondary hover:bg-muted hover:text-primary")}>{link.label}</Link>;
           })}
+          {authenticated ? <button type="button" onClick={signOut} className="rounded-md px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-muted hover:text-primary">Sign out</button> : null}
         </nav>
         <div className="hidden items-center gap-2 xl:flex" aria-label="Deployment status">
           <StatusBadge variant="info">Synthetic Capability Demonstration</StatusBadge>
@@ -34,10 +53,11 @@ export default function Navbar() {
       </div>
       {mobileOpen && <div id="mobile-primary-navigation" className="border-t border-border bg-surface px-4 pb-4 md:hidden">
         <nav aria-label="Mobile primary navigation" className="flex flex-col gap-1 pt-3">
-          {NAV_LINKS.map((link) => {
+          {links.map((link) => {
             const active = pathname === link.href;
             return <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined} onClick={() => setMobileOpen(false)} className={clsx("rounded-md px-3 py-2 text-sm font-medium", active ? "bg-accent-soft text-accent" : "text-secondary hover:bg-muted")}>{link.label}</Link>;
           })}
+          {authenticated ? <button type="button" onClick={signOut} className="rounded-md px-3 py-2 text-left text-sm font-medium text-secondary hover:bg-muted">Sign out</button> : null}
         </nav>
         <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
           <StatusBadge variant="info">Synthetic Capability Demonstration</StatusBadge>

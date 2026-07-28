@@ -30,6 +30,12 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/validation", label: "Evidence" },
 ];
 
+export const PUBLIC_NAV_LINKS: NavLink[] = [
+  { href: "/dashboard", label: "Overview" },
+  { href: "/preparedness", label: "Preparedness" },
+  { href: "/sign-in", label: "Sign in" },
+];
+
 export const SECONDARY_NAV_LINKS: NavLink[] = [
   { href: "/methodology", label: "Methodology" },
   { href: "/assumptions", label: "Assumptions" },

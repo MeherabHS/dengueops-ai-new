@@ -19,6 +19,7 @@ import {
 } from "@/lib/runtime/store";
 import {resolveActiveModel} from "@/lib/runtime/active-model";
 import { inspectCsvUpload } from "@/lib/runtime/uploads";
+import { requireSuperUserMutation } from "@/lib/auth/authorization";
 
 export const runtime = "nodejs";
 
@@ -108,6 +109,7 @@ export async function POST(request: Request): Promise<Response> {
   let paths: WorkspacePaths | undefined;
   let metadata: RuntimeWorkspaceMetadata | undefined;
   try {
+    await requireSuperUserMutation(request);
     const config = loadRuntimeConfig();
     const contentLength = Number(request.headers.get("content-length") ?? 0);
     if (contentLength > config.maxUploadBytes * 2 + 1_048_576) {

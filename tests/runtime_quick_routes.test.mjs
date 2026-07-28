@@ -1,14 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import quickRouteModule from "../app/api/runtime/runs/quick/route.ts";
 import jobRouteModule from "../app/api/runtime/jobs/[jobId]/route.ts";
 import validateRouteModule from "../app/api/runtime/validate/route.ts";
+import sessionModule from "../lib/auth/session.ts";
 import { findPython, spawnPythonSync } from "./node_python_runner.mjs";
 
+const sessionSecret = "quick-route-test-session-secret-value-1234567890";
+process.env.DENGUEOPS_SESSION_SECRET = sessionSecret;
+const { createSessionToken, sessionCookieName } = sessionModule;
+const sessionToken = await createSessionToken("quick-route-test-super-user");
 const { POST: queueQuickForecast } = quickRouteModule;
 const { GET: getRuntimeJob } = jobRouteModule;
 const { POST: validateRuntime } = validateRouteModule;
@@ -21,10 +26,18 @@ function createFixture(base, modelId) {
   return JSON.parse(built.stdout.trim().split(/\r?\n/).at(-1));
 }
 
-function requestFor(fixture, extra = {}) {
+function requestFor(fixture, extra = {}, authority = "super_user") {
+  const headers = {
+    "content-type": "application/json",
+    ...(authority === "anonymous" ? {} : {
+      cookie: `${sessionCookieName()}=${sessionToken}`,
+      origin: authority === "cross_origin" ? "https://attacker.invalid" : "http://localhost",
+      host: "localhost",
+    }),
+  };
   return new Request("http://localhost/api/runtime/runs/quick", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify({
       workspaceId: fixture.workspaceId,
       datasetId: fixture.datasetId,
@@ -62,7 +75,15 @@ for (const modelId of ["random_forest", "ridge_regression"]) {
           form.append("workflowMode", "quick_forecast");
           form.append("dengueFile", new Blob([await readFile(path.join(process.cwd(), "data", "dengue_cases.csv"))], { type: "text/csv" }), "dengue_cases.csv");
           form.append("climateFile", new Blob([await readFile(path.join(process.cwd(), "data", "climate_data.csv"))], { type: "text/csv" }), "climate_data.csv");
-          const validationResponse = await validateRuntime(new Request("http://localhost/api/runtime/validate", { method: "POST", body: form }));
+          const validationResponse = await validateRuntime(new Request("http://localhost/api/runtime/validate", {
+            method: "POST",
+            headers: {
+              cookie: `${sessionCookieName()}=${sessionToken}`,
+              origin: "http://localhost",
+              host: "localhost",
+            },
+            body: form,
+          }));
           assert.equal(validationResponse.status, 200, await validationResponse.clone().text());
           assert.deepEqual((await validationResponse.json()).activeModelAuthority, fixture.authority);
         }
@@ -142,6 +163,26 @@ test("client-supplied model and authority overrides are rejected", async () => {
     const response = await queueQuickForecast(requestFor(fixture, extra));
     assert.equal(response.status, 400);
     assert.equal((await response.json()).error.code, "unexpected_quick_forecast_field");
+  }
+});
+
+test("anonymous and cross-origin requests fail before runtime initialization", async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "b9-quick-auth-"));
+  try {
+    const fixture = {
+      workspaceId: "00000000-0000-4000-8000-000000000000",
+      datasetId: "0".repeat(64),
+      validationRecordSha256: "0".repeat(64),
+    };
+    await withRuntime(temporary, async () => {
+      const anonymous = await queueQuickForecast(requestFor(fixture, {}, "anonymous"));
+      assert.equal(anonymous.status, 401);
+      const crossOrigin = await queueQuickForecast(requestFor(fixture, {}, "cross_origin"));
+      assert.equal(crossOrigin.status, 403);
+      assert.deepEqual(await readdir(temporary), []);
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
   }
 });
 
