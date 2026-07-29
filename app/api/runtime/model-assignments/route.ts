@@ -3,16 +3,20 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { requireSuperUserMutation } from "@/lib/auth/authorization";
+import { requireSuperUser, requireSuperUserMutation } from "@/lib/auth/authorization";
 import { resolveActiveModelP2V2 } from "@/lib/runtime/active-model";
 import { loadRuntimeConfig } from "@/lib/runtime/config";
 import type {
+  CurrentModelAssignmentResponse,
+  CurrentModelAssignmentResultSuccess,
   CurrentRuntimeCandidateId,
   StartModelAssignmentRequest,
   StartModelAssignmentResponse,
 } from "@/lib/runtime/contracts";
+import { readVerifiedDecision } from "@/lib/runtime/decision-store";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained } from "@/lib/runtime/paths";
+import { validateStrictJsonSchema } from "@/lib/runtime/strict-json-schema";
 
 export const runtime = "nodejs";
 
@@ -32,6 +36,11 @@ type CliResult = {
   ok: boolean;
   assignmentId?: string;
   selectedCandidateId?: string;
+};
+
+type VerifiedCurrentAssignment = {
+  response: CurrentModelAssignmentResultSuccess;
+  record: Record<string, unknown>;
 };
 
 function exactRequest(body: Record<string, unknown>): body is Record<keyof StartModelAssignmentRequest, unknown> {
@@ -57,6 +66,202 @@ async function verifiedPointer(config: ReturnType<typeof loadRuntimeConfig>, exp
     );
   }
   return authority;
+}
+
+async function readStrictJson(
+  filePath: string,
+  schemaPath: string,
+): Promise<{ bytes: Buffer; value: Record<string, unknown> }> {
+  const [bytes, schemaBytes] = await Promise.all([
+    readFile(filePath),
+    readFile(schemaPath),
+  ]);
+  const value = JSON.parse(bytes.toString("utf8")) as Record<string, unknown>;
+  validateStrictJsonSchema(JSON.parse(schemaBytes.toString("utf8")), value);
+  return { bytes, value };
+}
+
+async function verifiedCurrentAssignment(
+  config: ReturnType<typeof loadRuntimeConfig>,
+): Promise<VerifiedCurrentAssignment> {
+  const active = await resolveActiveModelP2V2({
+    repositoryRoot: config.repositoryRoot,
+    runtimeRoot: config.runtimeRoot,
+    deploymentId: config.defaultDeploymentId,
+  });
+  if (
+    active.deploymentId !== config.defaultDeploymentId
+    || active.authoritySource !== "committed_assignment"
+    || active.assignmentAction !== "assign_selected_model"
+    || active.lifecyclePolicyVersion !== "p2-v3"
+    || !UUID.test(active.assignmentId)
+    || !SHA.test(active.assignmentCommitSha256)
+    || !SHA.test(active.authoritySnapshotSha256)
+  ) {
+    throw new RuntimePublicError(
+      "current_assignment_integrity_error",
+      "storage",
+      "The current assignment authority failed integrity verification.",
+      409,
+    );
+  }
+
+  const assignmentRoot = assertContained(
+    config.runtimeRoot,
+    path.join(config.runtimeRoot, "model-assignments", active.assignmentId),
+  );
+  const recordPath = assertContained(
+    config.runtimeRoot,
+    path.join(assignmentRoot, "artifacts", "assignment_record.json"),
+  );
+  const commitPath = assertContained(
+    config.runtimeRoot,
+    path.join(assignmentRoot, "metadata", "commit.json"),
+  );
+  const assignmentSchemaPath = assertContained(
+    config.repositoryRoot,
+    path.join(config.repositoryRoot, "config", "runtime_model_assignment.schema.json"),
+  );
+  const commitSchemaPath = assertContained(
+    config.repositoryRoot,
+    path.join(config.repositoryRoot, "config", "runtime_model_assignment_commit.schema.json"),
+  );
+
+  let recordFile: Awaited<ReturnType<typeof readStrictJson>>;
+  let commitFile: Awaited<ReturnType<typeof readStrictJson>>;
+  try {
+    [recordFile, commitFile] = await Promise.all([
+      readStrictJson(recordPath, assignmentSchemaPath),
+      readStrictJson(commitPath, commitSchemaPath),
+    ]);
+  } catch {
+    throw new RuntimePublicError(
+      "current_assignment_integrity_error",
+      "storage",
+      "The current assignment evidence failed integrity verification.",
+      409,
+    );
+  }
+  const record = recordFile.value;
+  const commit = commitFile.value;
+  const sourceApprovedForecastRunId = String(record.sourceApprovedForecastRunId ?? "");
+  const sourceDecisionId = String(record.sourceDecisionId ?? "");
+  const sourceAssessmentId = String(record.sourceAssessmentId ?? "");
+  const sourceAuthorizationId = String(record.sourceAuthorizationId ?? "");
+  const createdAt = String(record.assignedAt ?? "");
+  if (
+    record.schemaVersion !== "2.0"
+    || record.assignmentId !== active.assignmentId
+    || record.deploymentId !== active.deploymentId
+    || record.assignmentAction !== active.assignmentAction
+    || record.modelId !== active.modelId
+    || record.modelFamily !== active.modelFamily
+    || commit.schemaVersion !== "2.0"
+    || commit.assignmentId !== active.assignmentId
+    || commit.assignmentRecordSha256 !== sha256(recordFile.bytes)
+    || sha256(commitFile.bytes) !== active.assignmentCommitSha256
+    || !UUID.test(sourceApprovedForecastRunId)
+    || !UUID.test(sourceDecisionId)
+    || !UUID.test(sourceAssessmentId)
+    || !UUID.test(sourceAuthorizationId)
+    || !createdAt
+    || !Number.isFinite(Date.parse(createdAt))
+  ) {
+    throw new RuntimePublicError(
+      "current_assignment_integrity_error",
+      "storage",
+      "The current assignment evidence does not reconcile.",
+      409,
+    );
+  }
+
+  let decision: Awaited<ReturnType<typeof readVerifiedDecision>>;
+  try {
+    decision = await readVerifiedDecision(config, sourceDecisionId);
+  } catch {
+    throw new RuntimePublicError(
+      "current_assignment_integrity_error",
+      "storage",
+      "The current assignment source decision failed integrity verification.",
+      409,
+    );
+  }
+  const approvedCommitPath = assertContained(
+    config.runtimeRoot,
+    path.join(config.runtimeRoot, "runs", sourceApprovedForecastRunId, "metadata", "commit.json"),
+  );
+  const approvedSchemaPath = assertContained(
+    config.repositoryRoot,
+    path.join(config.repositoryRoot, "config", "runtime_approved_forecast_commit.schema.json"),
+  );
+  let approvedCommit: Record<string, unknown>;
+  try {
+    approvedCommit = (await readStrictJson(approvedCommitPath, approvedSchemaPath)).value;
+  } catch {
+    throw new RuntimePublicError(
+      "current_assignment_integrity_error",
+      "storage",
+      "The current assignment source forecast could not be verified.",
+      409,
+    );
+  }
+  if (
+    decision.committedRunId !== sourceApprovedForecastRunId
+    || decision.decision.decisionId !== sourceDecisionId
+    || decision.decision.assessmentId !== sourceAssessmentId
+    || decision.decision.authorizationId !== sourceAuthorizationId
+    || decision.decision.selectedModelId !== active.modelId
+    || approvedCommit.status !== "committed"
+    || approvedCommit.runId !== sourceApprovedForecastRunId
+    || approvedCommit.deploymentId !== active.deploymentId
+    || approvedCommit.workflowMode !== "approved_assessment_forecast"
+    || approvedCommit.decisionId !== sourceDecisionId
+    || approvedCommit.decisionCommitSha256 !== decision.decisionCommitSha256
+    || approvedCommit.assessmentId !== sourceAssessmentId
+    || approvedCommit.authorizationId !== sourceAuthorizationId
+    || approvedCommit.selectedModelId !== active.modelId
+    || approvedCommit.selectedModelParameterSha256 !== active.parameterSha256
+    || approvedCommit.completeReconciliation !== true
+  ) {
+    throw new RuntimePublicError(
+      "current_assignment_integrity_error",
+      "storage",
+      "The current assignment source forecast does not reconcile.",
+      409,
+    );
+  }
+
+  return {
+    record,
+    response: {
+      ok: true,
+      assignmentId: active.assignmentId,
+      status: "assigned",
+      selectedCandidateId: active.modelId,
+      selectedCandidateLabel: candidateLabel(active.modelId),
+      assignmentCommitSha256: active.assignmentCommitSha256,
+      assignmentPointerSha256: active.authoritySnapshotSha256,
+      sourceApprovedForecastRunId,
+      createdAt,
+    },
+  };
+}
+
+export async function GET(request: Request): Promise<Response> {
+  const correlationId = randomUUID();
+  try {
+    await requireSuperUser(request);
+    const config = loadRuntimeConfig();
+    if (config.defaultDeploymentId !== "dhaka_south") {
+      throw new RuntimePublicError("assignment_deployment_unavailable", "configuration", "Model assignment is unavailable for this deployment.", 503);
+    }
+    const current = await verifiedCurrentAssignment(config);
+    const response: CurrentModelAssignmentResponse = current.response;
+    return Response.json(response, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    const failure = errorResponse(error, correlationId);
+    return Response.json(failure.body, { status: failure.status, headers: { "Cache-Control": "no-store" } });
+  }
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -157,27 +362,20 @@ export async function POST(request: Request): Promise<Response> {
       throw new RuntimePublicError("assignment_publication_failed", "storage", "The governed assignment could not be verified.", 409);
     }
 
-    const active = await resolveActiveModelP2V2({
-      repositoryRoot: config.repositoryRoot,
-      runtimeRoot: config.runtimeRoot,
-      deploymentId: config.defaultDeploymentId,
-    });
+    const current = await verifiedCurrentAssignment(config);
+    const active = current.response;
     if (
       active.assignmentId !== cli.assignmentId
-      || active.modelId !== cli.selectedCandidateId
+      || active.selectedCandidateId !== cli.selectedCandidateId
       || active.assignmentId === priorAuthority.assignmentId
     ) {
       throw new RuntimePublicError("assignment_publication_failed", "storage", "The governed assignment failed post-publication verification.", 409);
     }
-    const recordPath = assertContained(
-      config.runtimeRoot,
-      path.join(config.runtimeRoot, "model-assignments", active.assignmentId, "artifacts", "assignment_record.json"),
-    );
-    const record = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, unknown>;
+    const record = current.record;
     if (
       record.sourceApprovedForecastRunId !== approvedForecastRunId
       || record.operatorIdentifier !== session.sub
-      || record.modelId !== active.modelId
+      || record.modelId !== active.selectedCandidateId
       || record.priorAssignmentId !== priorAuthority.assignmentId
     ) {
       throw new RuntimePublicError("assignment_publication_failed", "storage", "The governed assignment failed evidence verification.", 409);
@@ -187,8 +385,8 @@ export async function POST(request: Request): Promise<Response> {
       ok: true,
       assignmentId: active.assignmentId,
       status: "assigned",
-      selectedCandidateId: active.modelId as CurrentRuntimeCandidateId,
-      selectedCandidateLabel: candidateLabel(active.modelId),
+      selectedCandidateId: active.selectedCandidateId as CurrentRuntimeCandidateId,
+      selectedCandidateLabel: active.selectedCandidateLabel,
       sourceApprovedForecastRunId: approvedForecastRunId,
       createdAt: String(record.assignedAt),
       previousAssignmentPresent: record.priorAssignmentId !== null,

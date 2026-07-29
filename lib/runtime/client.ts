@@ -1,4 +1,4 @@
-import type { DatasetAssessmentResponse, DecisionChoice, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, ModelLifecycleResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
+import type { CurrentModelAssignmentResponse, DatasetAssessmentResponse, DecisionChoice, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, ModelLifecycleResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartModelAssignmentRequest, StartModelAssignmentResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
 
 export async function validateRuntimeDatasets(input: {
   dengueFile: File;
@@ -37,6 +37,20 @@ export async function recordAssessmentDecision(assessmentId:string,input:{decisi
 export async function recordAssessmentDecision(assessmentId:string,input:RecordDecisionRequest|{decision:DecisionChoice;reason:string;expectedAssessmentSummarySha256:string}):Promise<DecisionResponse>{const response=await fetch(`/api/runtime/assessments/${encodeURIComponent(assessmentId)}/decisions`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(input)});return await response.json() as DecisionResponse;}
 export async function getDecision(decisionId:string):Promise<DecisionResponse>{const response=await fetch(`/api/runtime/decisions/${encodeURIComponent(decisionId)}`,{cache:"no-store"});return await response.json() as DecisionResponse;}
 export async function startApprovedForecast(decisionId:string,input:StartApprovedForecastRequest):Promise<StartApprovedForecastResponse>{const response=await fetch(`/api/runtime/decisions/${encodeURIComponent(decisionId)}/forecast`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(input)});return await response.json() as StartApprovedForecastResponse;}
+
+export async function getCurrentModelAssignment(): Promise<CurrentModelAssignmentResponse> {
+  const response = await fetch("/api/runtime/model-assignments", { cache: "no-store" });
+  return await response.json() as CurrentModelAssignmentResponse;
+}
+
+export async function startModelAssignment(input: StartModelAssignmentRequest): Promise<StartModelAssignmentResponse> {
+  const response = await fetch("/api/runtime/model-assignments", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return await response.json() as StartModelAssignmentResponse;
+}
 
 export async function getRuntimeJob(jobId: string): Promise<JobStatusResponse> {
   const response = await fetch(`/api/runtime/jobs/${encodeURIComponent(jobId)}`, { cache: "no-store" });

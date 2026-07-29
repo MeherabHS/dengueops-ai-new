@@ -1,5 +1,6 @@
 import type { ArtifactProvenance, CandidateComparisonSummary, DashboardSummaryUncertainty, DeploymentGate, Directive, FeatureDiagnostics, ForecastOutput, PipelineRunSummary } from "./types";
 import type {
+  CurrentModelAssignmentResultSuccess,
   DatasetAssessmentResultSuccess,
   DecisionResultSuccess,
   JobStatusResponse,
@@ -86,6 +87,23 @@ export interface ApprovedForecastWorkflowState {
   progress: string | null;
   error: string | null;
 }
+export type ModelAssignmentPanelStatus =
+  | "loading_current_assignment"
+  | "ready"
+  | "publishing"
+  | "assigned_verified"
+  | "pointer_conflict"
+  | "publication_in_progress"
+  | "failed_uncertain"
+  | "authentication_required";
+export interface ModelAssignmentWorkflowState {
+  status: ModelAssignmentPanelStatus;
+  current: CurrentModelAssignmentResultSuccess | null;
+  approvedJobVerified: boolean;
+  expectedAssignmentPointerSha256: string | null;
+  errorCode: string | null;
+  error: string | null;
+}
 export interface ForecastWorkflowState {
   step: WorkflowStep;
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
@@ -102,6 +120,7 @@ export interface ForecastWorkflowState {
   assessment: ModelSuitabilityAssessment | null;
   approval: ModelApprovalDecision | null;
   approvedForecast: ApprovedForecastWorkflowState;
+  assignment: ModelAssignmentWorkflowState;
   result: ForecastRunResult | null;
   error: string | null;
 }

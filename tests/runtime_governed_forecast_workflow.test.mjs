@@ -79,7 +79,8 @@ test("decision reason and acknowledgements are bounded and duplicate publication
 test("ranking renders every returned candidate without hardcoded candidate count", () => {
   assert.match(leaderboard, /assessment\.workflow\.candidates/);
   assert.match(leaderboard, /candidates\.map/);
-  assert.match(leaderboard, /Folds completed \/ required/);
+  assert.match(leaderboard, /candidate\.successfulFolds\} completed \/ \{requiredFolds\} required/);
+  assert.match(leaderboard, /candidate\.failedFolds\} failed/);
   for (const marker of ["displayRank", "modelLabel", "modelFamily", "successfulFolds", "plannedFoldCount", "mae", "rmse", "wape", "candidateClass", "Technical winner", "Eligible override", "candidate.reasons"]) {
     assert.match(leaderboard, new RegExp(marker.replace(".", "\\.")));
   }
@@ -89,6 +90,24 @@ test("ranking renders every returned candidate without hardcoded candidate count
     assert.match(contracts, new RegExp(candidate));
   }
   assert.match(labels, /return statusLabel\(value\)/);
+});
+
+test("existing server-generated MSE and R-squared render only as secondary diagnostics", () => {
+  assert.match(contracts, /mse\?: number \| null/);
+  assert.match(contracts, /r2\?: number \| null/);
+  assert.match(leaderboard, /Core ranking metrics/);
+  assert.match(leaderboard, /Secondary diagnostics/);
+  for (const metricName of ["mae", "mse", "rmse", "wape", "r2"]) {
+    assert.match(leaderboard, new RegExp(`candidate\\.metrics\\?\\.${metricName}`));
+  }
+  assert.match(leaderboard, /\["MAE", "RMSE", "WAPE", "MSE", "R²"\]/);
+  assert.match(leaderboard, /value == null \? "Not available" : `\$\{value\.toFixed\(2\)\}\$\{suffix\}`/);
+  assert.doesNotMatch(leaderboard, /metrics\?\.rmse\s*\*\s*candidate\.metrics\?\.rmse|Math\.pow\([^)]*rmse|Math\.(?:max|min)\([^)]*r2/);
+  assert.doesNotMatch(leaderboard, /\bMAPE\b/i);
+  const serverDiagnosticFixture = { mse: 4.25, r2: -0.375 };
+  assert.equal(serverDiagnosticFixture.mse.toFixed(2), "4.25");
+  assert.equal(serverDiagnosticFixture.r2.toFixed(2), "-0.38");
+  assert.equal((null ?? "Not available"), "Not available");
 });
 
 test("approved forecast sends no model identity, polls the returned job URL, and cannot start twice", () => {

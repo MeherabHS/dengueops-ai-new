@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -34,7 +34,7 @@ published=commit_lifecycle_action(prior["runtime"],prior["runId"],"Prior isolate
 assert published["success"],published
 target=build_one_run_chain_p2_v2(base/"target",root,model_id=model_id,override=override)
 runtime=target["runtime"]
-shutil.copytree(prior["runtime"]/"model-assignments",runtime/"model-assignments",dirs_exist_ok=True)
+shutil.copytree(prior["runtime"],runtime,dirs_exist_ok=True)
 source_pointer=prior["runtime"]/"deployments/dhaka_south/model-assignment/latest.json"
 target_pointer=runtime/"deployments/dhaka_south/model-assignment/latest.json"
 target_pointer.parent.mkdir(parents=True,exist_ok=True)
@@ -56,17 +56,18 @@ async function invokeRoute(runtime, body, options = {}) {
 const sessionModule=await import("./lib/auth/session.ts");
 const routeModule=await import("./app/api/runtime/model-assignments/route.ts");
 const {createSessionToken,sessionCookieName}=sessionModule.default||sessionModule;
-const {POST}=routeModule.default||routeModule;
+const {GET,POST}=routeModule.default||routeModule;
+const method=process.env.TEST_METHOD||"POST";
 const headers=new Headers({"content-type":"application/json","host":"localhost:3000"});
 if(process.env.TEST_AUTH==="true"){
   const token=await createSessionToken("isolated-super-user");
   headers.set("cookie",sessionCookieName()+"="+token);
-  headers.set("origin",process.env.TEST_ORIGIN||"http://localhost:3000");
+  if(method==="POST")headers.set("origin",process.env.TEST_ORIGIN||"http://localhost:3000");
 }
-const request=new Request("http://localhost:3000/api/runtime/model-assignments",{
-  method:"POST",headers,body:process.env.TEST_BODY
-});
-const response=await POST(request);
+const init={method,headers};
+if(method==="POST")init.body=process.env.TEST_BODY;
+const request=new Request("http://localhost:3000/api/runtime/model-assignments",init);
+const response=await (method==="GET"?GET(request):POST(request));
 console.log(JSON.stringify({status:response.status,body:await response.json()}));
 `;
   const { stdout } = await runFile(process.execPath, [
@@ -82,6 +83,7 @@ console.log(JSON.stringify({status:response.status,body:await response.json()}))
       DENGUEOPS_SESSION_SECRET: sessionSecret,
       TEST_AUTH: String(options.auth === true),
       TEST_ORIGIN: options.origin || "",
+      TEST_METHOD: options.method || "POST",
       TEST_BODY: typeof body === "string" ? body : JSON.stringify(body),
     },
     timeout: 180_000,
@@ -90,6 +92,8 @@ console.log(JSON.stringify({status:response.status,body:await response.json()}))
   });
   return JSON.parse(stdout.trim().split(/\r?\n/).at(-1));
 }
+
+const invokeGet = (runtime, options = {}) => invokeRoute(runtime, null, { ...options, method: "GET" });
 
 function requestBody(fixture, overrides = {}) {
   return {
@@ -104,14 +108,28 @@ function requestBody(fixture, overrides = {}) {
 
 test("assignment route is bounded, server-derived, locked, and post-verifies publication", async () => {
   const source = await readFile(path.join(root, "app/api/runtime/model-assignments/route.ts"), "utf8");
+  assert.match(source, /export async function GET\(request: Request\)[\s\S]*await requireSuperUser\(request\)[\s\S]*verifiedCurrentAssignment/);
   assert.match(source, /await requireSuperUserMutation\(request\)[\s\S]*await request\.json\(\)/);
   assert.match(source, /assignment_pointer_conflict/);
   assert.match(source, /\.publication-lock/);
   assert.match(source, /await verifiedPointer\(config, expectedAssignmentPointerSha256\)[\s\S]*runFile/);
   assert.match(source, /resolveActiveModelP2V2/);
+  assert.match(source, /active\.lifecyclePolicyVersion !== "p2-v3"/);
+  assert.match(source, /assignmentPointerSha256: active\.authoritySnapshotSha256/);
+  assert.match(source, /readVerifiedDecision/);
   assert.match(source, /sourceApprovedForecastRunId/);
-  assert.doesNotMatch(source, /authorizeSuperUserOrService|model-lifecycle/);
+  assert.doesNotMatch(source, /authorizeSuperUserOrService|resolveHistoricalActiveModelP2V1/);
   assert.doesNotMatch(source, /body\.(candidateId|modelId|assessmentId|decisionId|authorizationId)/);
+});
+
+test("anonymous current-assignment reads are rejected without touching runtime", async () => {
+  const runtime = await mkdtemp(path.join(tmpdir(), "dengueops-b94c1-route-empty-"));
+  try {
+    assert.equal((await invokeGet(runtime)).status, 401);
+    assert.deepEqual(await readFile(path.join(runtime, "missing"), "utf8").catch(() => null), null);
+  } finally {
+    await rm(runtime, { recursive: true, force: true });
+  }
 });
 
 test("anonymous, cross-origin, malformed, and client-selected model requests fail before publication", { timeout: 90_000 }, async () => {
@@ -154,6 +172,43 @@ test("winner publication enforces pointer concurrency and returns a sanitized ve
   try {
     const pointerPath = path.join(fixture.runtime, "deployments/dhaka_south/model-assignment/latest.json");
     const before = await readFile(pointerPath);
+    const pointer = JSON.parse(before);
+    const priorRecordPath = path.join(fixture.runtime, "model-assignments", fixture.priorAssignmentId, "artifacts/assignment_record.json");
+    const priorRecordBefore = await readFile(priorRecordPath);
+
+    const current = await invokeGet(fixture.runtime, { auth: true });
+    assert.equal(current.status, 200);
+    assert.deepEqual(Object.keys(current.body).sort(), [
+      "assignmentCommitSha256", "assignmentId", "assignmentPointerSha256", "createdAt", "ok",
+      "selectedCandidateId", "selectedCandidateLabel", "sourceApprovedForecastRunId", "status",
+    ]);
+    assert.equal(current.body.assignmentId, fixture.priorAssignmentId);
+    assert.equal(current.body.assignmentPointerSha256, fixture.pointerSha);
+    assert.match(current.body.assignmentCommitSha256, /^[a-f0-9]{64}$/);
+    assert.match(current.body.sourceApprovedForecastRunId, /^[0-9a-f-]{36}$/i);
+    assert.equal(JSON.stringify(current.body).includes(fixture.runtime), false);
+    assert.equal("pointer" in current.body, false);
+    assert.equal("assignmentPath" in current.body, false);
+
+    await writeFile(pointerPath, JSON.stringify({ ...pointer, assignedModelId: "poisson_gam" }));
+    const tamperedPointer = await invokeGet(fixture.runtime, { auth: true });
+    assert.equal(tamperedPointer.status, 409);
+    assert.equal(tamperedPointer.body.ok, false);
+    await writeFile(pointerPath, before);
+
+    const priorRecord = JSON.parse(priorRecordBefore);
+    await writeFile(priorRecordPath, JSON.stringify({ ...priorRecord, reason: "Tampered isolated record." }));
+    const tamperedRecord = await invokeGet(fixture.runtime, { auth: true });
+    assert.equal(tamperedRecord.status, 409);
+    assert.equal(tamperedRecord.body.ok, false);
+    await writeFile(priorRecordPath, priorRecordBefore);
+
+    await writeFile(pointerPath, JSON.stringify({ ...pointer, schemaVersion: "1.0", policyVersion: "p2-v1" }));
+    const historical = await invokeGet(fixture.runtime, { auth: true });
+    assert.equal(historical.status, 409);
+    assert.equal(historical.body.ok, false);
+    await writeFile(pointerPath, before);
+
     const stale = await invokeRoute(
       fixture.runtime,
       requestBody(fixture, { expectedAssignmentPointerSha256: "0".repeat(64) }),
@@ -183,6 +238,13 @@ test("winner publication enforces pointer concurrency and returns a sanitized ve
     assert.equal(value.previousAssignmentPresent, true);
     assert.equal(value.status, "assigned");
     assert.notEqual(sha(await readFile(pointerPath)), fixture.pointerSha);
+
+    const verified = await invokeGet(fixture.runtime, { auth: true });
+    assert.equal(verified.status, 200);
+    assert.equal(verified.body.assignmentId, value.assignmentId);
+    assert.equal(verified.body.sourceApprovedForecastRunId, fixture.runId);
+    assert.equal(verified.body.selectedCandidateId, value.selectedCandidateId);
+    assert.notEqual(verified.body.assignmentPointerSha256, fixture.pointerSha);
   } finally {
     await rm(fixture.base, { recursive: true, force: true });
   }

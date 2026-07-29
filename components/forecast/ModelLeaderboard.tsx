@@ -2,16 +2,23 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import { modelLabel, statusLabel } from "@/lib/status-labels";
 import type { ModelSuitabilityAssessment } from "@/lib/forecast-workflow-types";
 
-const metric = (value: number | null | undefined, suffix = "") => value == null ? "—" : `${value.toFixed(2)}${suffix}`;
+const metric = (value: number | null | undefined, suffix = "") => value == null ? "Not available" : `${value.toFixed(2)}${suffix}`;
 
 export default function ModelLeaderboard({ assessment }: { assessment: ModelSuitabilityAssessment }) {
   const candidates = assessment.workflow.candidates;
   const requiredFolds = assessment.foldPolicy.plannedFoldCount;
   return <div className="overflow-x-auto rounded-xl border border-border-subtle">
-    <table className="w-full min-w-[1180px] text-left text-sm">
+    <table className="w-full min-w-[1380px] text-left text-sm">
       <caption className="sr-only">Candidate ranking derived from this assessment. All returned candidates remain visible, including ineligible candidates.</caption>
       <thead className="bg-surface-muted text-xs uppercase tracking-wide text-ink-muted">
-        <tr>{["Rank", "Candidate", "Eligibility", "Folds completed / required", "MAE", "RMSE", "WAPE", "Candidate type", "Governed evidence"].map((value) => <th key={value} className="px-4 py-3">{value}</th>)}</tr>
+        <tr>
+          {["Rank", "Candidate", "Eligibility", "Folds", "Candidate type", "Governed evidence"].map((value) => <th key={value} rowSpan={2} className="px-4 py-3 align-bottom">{value}</th>)}
+          <th colSpan={3} className="px-4 py-3 text-center">Core ranking metrics</th>
+          <th colSpan={2} className="px-4 py-3 text-center">Secondary diagnostics</th>
+        </tr>
+        <tr>
+          {["MAE", "RMSE", "WAPE", "MSE", "R²"].map((value) => <th key={value} className="px-4 py-3">{value}</th>)}
+        </tr>
       </thead>
       <tbody className="divide-y divide-border-subtle">
         {candidates.map((candidate) => {
@@ -38,10 +45,10 @@ export default function ModelLeaderboard({ assessment }: { assessment: ModelSuit
                 variant={candidate.status === "ineligible" ? "warning" : "success"}
               />
             </td>
-            <td className="px-4 py-3 text-ink-muted">{candidate.successfulFolds} / {requiredFolds}</td>
-            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.mae)}</td>
-            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.rmse)}</td>
-            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.wape, "%")}</td>
+            <td className="px-4 py-3 text-ink-muted">
+              <span className="block">{candidate.successfulFolds} completed / {requiredFolds} required</span>
+              <span className="mt-1 block">{candidate.failedFolds} failed</span>
+            </td>
             <td className="px-4 py-3 text-ink-muted">{candidate.candidateClass === "learned_model" ? "Learned model" : "Baseline"}</td>
             <td className="px-4 py-3">
               <p className="text-xs font-medium text-ink">{candidate.status === "technical_winner" ? "Technical winner for this dataset" : eligibleOverride ? "May be selected only by governed override" : "Not selectable"}</p>
@@ -49,6 +56,11 @@ export default function ModelLeaderboard({ assessment }: { assessment: ModelSuit
                 {candidate.reasons.length ? candidate.reasons.map((reason, index) => <li key={`${candidate.modelId}-${index}`}>• {reason}</li>) : <li>No rejection reason recorded.</li>}
               </ul>
             </td>
+            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.mae)}</td>
+            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.rmse)}</td>
+            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.wape, "%")}</td>
+            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.mse)}</td>
+            <td className="px-4 py-3 text-ink">{metric(candidate.metrics?.r2)}</td>
           </tr>;
         })}
       </tbody>

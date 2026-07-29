@@ -169,7 +169,28 @@ export interface ModelAssignmentResultSuccess {
   previousAssignmentPresent: boolean;
 }
 
+export interface CurrentModelAssignmentResultSuccess {
+  ok: true;
+  assignmentId: string;
+  status: "assigned";
+  selectedCandidateId: CurrentRuntimeCandidateId;
+  selectedCandidateLabel: string;
+  assignmentCommitSha256: string;
+  assignmentPointerSha256: string;
+  sourceApprovedForecastRunId: string;
+  createdAt: string;
+}
+
+export type ModelAssignmentErrorCode =
+  | "assignment_pointer_conflict"
+  | "assignment_publication_in_progress"
+  | "approved_forecast_commit_mismatch"
+  | "approved_forecast_unavailable"
+  | "assignment_publication_failed"
+  | "authentication_required";
+
 export type StartModelAssignmentResponse = ModelAssignmentResultSuccess | RuntimeErrorResponse;
+export type CurrentModelAssignmentResponse = CurrentModelAssignmentResultSuccess | RuntimeErrorResponse;
 
 export type RuntimeJobStatus = "queued" | "running" | "committing" | "completed" | "failed" | "timed_out" | "cancelled";
 interface RuntimeJobBase {
@@ -431,7 +452,18 @@ export interface AssessmentCandidateSummary {
   failedFolds: number;
   selectionEligible: boolean;
   selectionComplexityRank: number;
-  metrics: null | { mae: number; rmse: number; wape: number | null; medianAbsoluteError: number; maximumAbsoluteError: number; clippingCount: number; warningCount: number; runtimeSeconds: number };
+  metrics: null | {
+    mae: number;
+    rmse: number;
+    mse?: number | null;
+    r2?: number | null;
+    wape: number | null;
+    medianAbsoluteError: number;
+    maximumAbsoluteError: number;
+    clippingCount: number;
+    warningCount: number;
+    runtimeSeconds: number;
+  };
   executionMode: "fitted_per_fold" | "deterministic_baseline_per_fold";
   historicalPredictionsReused: false;
   foldWinsTiesLosses: null | { better: number; tied: number; worse: number };

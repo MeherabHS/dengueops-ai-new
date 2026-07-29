@@ -7,12 +7,14 @@ import ApprovalPanel from "./ApprovalPanel";
 import DatasetUploadPanel from "./DatasetUploadPanel";
 import DatasetValidationSummary from "./DatasetValidationSummary";
 import ForecastRunStepper from "./ForecastRunStepper";
+import ModelAssignmentPanel from "./ModelAssignmentPanel";
 import ModelSuitabilitySummary from "./ModelSuitabilitySummary";
 import ProcessingState from "./ProcessingState";
 import type {
   ApprovedForecastWorkflowState,
   ForecastWorkflowState,
   LocalFilePreview,
+  ModelAssignmentWorkflowState,
   WorkflowStep,
 } from "@/lib/forecast-workflow-types";
 import {
@@ -61,6 +63,15 @@ const emptyApprovedForecast: ApprovedForecastWorkflowState = {
   error: null,
 };
 
+const emptyAssignment: ModelAssignmentWorkflowState = {
+  status: "loading_current_assignment",
+  current: null,
+  approvedJobVerified: false,
+  expectedAssignmentPointerSha256: null,
+  errorCode: null,
+  error: null,
+};
+
 const initial: ForecastWorkflowState = {
   step: "upload",
   files: {},
@@ -77,6 +88,7 @@ const initial: ForecastWorkflowState = {
   assessment: null,
   approval: null,
   approvedForecast: emptyApprovedForecast,
+  assignment: emptyAssignment,
   result: null,
   error: null,
 };
@@ -86,9 +98,11 @@ interface RetainedWorkflow {
   assessmentJobId?: string;
   decisionId?: string;
   approvedForecast?: Partial<ApprovedForecastWorkflowState>;
+  assignment?: Partial<ModelAssignmentWorkflowState>;
 }
 
 const completedThrough = (state: ForecastWorkflowState): WorkflowStep | null => {
+  if (state.assignment.status === "assigned_verified") return "assignment";
   if (state.approvedForecast.status === "completed") return "approved_forecast";
   if (state.approval || state.assessment?.workflow.decision) return "decision";
   if (state.step === "decision") return "ranking";
@@ -122,6 +136,36 @@ function boundedRetainedForecast(value: unknown): ApprovedForecastWorkflowState 
   };
 }
 
+function boundedRetainedAssignment(value: unknown): ModelAssignmentWorkflowState {
+  if (!value || typeof value !== "object") return emptyAssignment;
+  const candidate = value as Partial<ModelAssignmentWorkflowState>;
+  const current = candidate.current;
+  const validCandidateId = (modelId: unknown): modelId is RuntimeCandidateId =>
+    typeof modelId === "string" && RUNTIME_CANDIDATE_IDS.has(modelId as RuntimeCandidateId);
+  const boundedCurrent = current
+    && current.ok === true
+    && current.status === "assigned"
+    && typeof current.assignmentId === "string"
+    && UUID.test(current.assignmentId)
+    && validCandidateId(current.selectedCandidateId)
+    && typeof current.selectedCandidateLabel === "string"
+    && current.selectedCandidateLabel.length <= 160
+    && SHA.test(current.assignmentCommitSha256)
+    && SHA.test(current.assignmentPointerSha256)
+    && UUID.test(current.sourceApprovedForecastRunId)
+    && typeof current.createdAt === "string"
+    ? current
+    : null;
+  return {
+    status: "loading_current_assignment",
+    current: boundedCurrent,
+    approvedJobVerified: false,
+    expectedAssignmentPointerSha256: boundedCurrent?.assignmentPointerSha256 ?? null,
+    errorCode: null,
+    error: null,
+  };
+}
+
 export default function ForecastRunWorkflow() {
   const [state, setState] = useState<ForecastWorkflowState>(initial);
   const mounted = useRef(true);
@@ -139,6 +183,7 @@ export default function ForecastRunWorkflow() {
       assessmentJobId: next.assessmentJobId ?? undefined,
       decisionId: (next.approval ?? next.assessment?.workflow.decision)?.decisionId,
       approvedForecast: next.approvedForecast,
+      assignment: next.assignment,
     };
     if (retained.assessmentId || retained.assessmentJobId || retained.decisionId || retained.approvedForecast?.jobId) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(retained));
@@ -206,8 +251,9 @@ export default function ForecastRunWorkflow() {
     const assessmentId = typeof retained.assessmentId === "string" && UUID.test(retained.assessmentId) ? retained.assessmentId : null;
     const assessmentJobId = typeof retained.assessmentJobId === "string" && UUID.test(retained.assessmentJobId) ? retained.assessmentJobId : null;
     const approvedForecast = boundedRetainedForecast(retained.approvedForecast);
+    const assignment = boundedRetainedAssignment(retained.assignment);
     if (!assessmentId) return;
-    update((current) => ({ ...current, retainedAssessmentId: assessmentId, assessmentJobId, approvedForecast, step: "assessment", processingStatus: assessmentJobId ? "queued" : "idle" }));
+    update((current) => ({ ...current, retainedAssessmentId: assessmentId, assessmentJobId, approvedForecast, assignment, step: "assessment", processingStatus: assessmentJobId ? "queued" : "idle" }));
     void loadCommittedAssessment(assessmentId).catch(() => {
       if (assessmentJobId) void pollAssessment(assessmentJobId, assessmentId);
       else if (mounted.current) update((current) => ({ ...current, error: "The retained assessment could not be verified. No decision or forecast was restarted." }));
@@ -293,6 +339,29 @@ export default function ForecastRunWorkflow() {
     && state.validatedWorkflowMode === "assess_dataset"
     && state.serverValidation.response.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible";
   const approvedState = useMemo(() => state.approvedForecast, [state.approvedForecast]);
+  const approvedEvidenceReady = Boolean(
+    recordedDecision
+    && approvedState.status === "completed"
+    && approvedState.jobId
+    && approvedState.runId
+    && approvedState.committedRunId
+    && approvedState.runId === approvedState.committedRunId
+    && approvedState.approvedForecastCommitSha256
+    && approvedState.sourceDecisionId === recordedDecision.decisionId
+    && approvedState.selectedModelId
+    && approvedState.selectedModelId === recordedDecision.selectedModelId,
+  );
+  const selectedCandidateLabel = recordedDecision && "selectedModelLabel" in recordedDecision && recordedDecision.selectedModelLabel
+    ? recordedDecision.selectedModelLabel
+    : state.assessment?.workflow.candidates.find((candidate) => candidate.modelId === recordedDecision?.selectedModelId)?.modelLabel
+      ?? "Server-resolved candidate";
+
+  useEffect(() => {
+    if (!approvedEvidenceReady || state.step !== "approved_forecast") return;
+    update((current) => ({ ...current, step: "assignment", processingStatus: "completed", error: null }));
+    // Transition only after retained approved-run identities reconcile.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [approvedEvidenceReady, state.step]);
 
   return <div className="space-y-6">
     <ForecastRunStepper current={state.step} completedThrough={completedThrough(state)} />
@@ -330,7 +399,17 @@ export default function ForecastRunWorkflow() {
       {state.step === "approved_forecast" && state.assessment && recordedDecision ? <div className="space-y-5">
         <ModelSuitabilitySummary assessment={state.assessment} />
         <ApprovalPanel assessment={state.assessment} decision={recordedDecision} busy error={null} />
-        <ApprovedForecastPanel decision={recordedDecision} state={approvedState} onStateChange={(approvedForecast) => update((current) => ({ ...current, approvedForecast, processingStatus: approvedForecast.status === "idle" ? current.processingStatus : approvedForecast.status }))} />
+        <ApprovedForecastPanel decision={recordedDecision} state={approvedState} onStateChange={(approvedForecast) => update((current) => ({ ...current, approvedForecast, step: approvedForecast.status === "completed" ? "assignment" : current.step, processingStatus: approvedForecast.status === "idle" ? current.processingStatus : approvedForecast.status }))} />
+      </div> : null}
+
+      {state.step === "assignment" && approvedEvidenceReady ? <div className="space-y-5">
+        <ModelSuitabilitySummary assessment={state.assessment} />
+        <ModelAssignmentPanel
+          approvedForecast={approvedState}
+          selectedCandidateLabel={selectedCandidateLabel}
+          state={state.assignment}
+          onStateChange={(assignment) => update((current) => ({ ...current, assignment, processingStatus: assignment.status === "assigned_verified" ? "completed" : current.processingStatus }))}
+        />
       </div> : null}
     </div>
   </div>;

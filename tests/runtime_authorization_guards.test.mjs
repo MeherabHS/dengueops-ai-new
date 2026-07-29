@@ -93,6 +93,8 @@ test("all browser mutation routes reject anonymous work before durable activity"
   const instance = await startServer();
   try {
     assert.deepEqual(await readdir(instance.runtime), []);
+    const assignmentRead = await fetch(`${instance.url}/api/runtime/model-assignments`);
+    assert.equal(assignmentRead.status, 401);
     for (const [route, contentType, body] of posts) {
       const response = await fetch(`${instance.url}${route}`, {
         method: "POST",
@@ -111,6 +113,12 @@ test("valid session reaches existing validation boundaries and cross-origin sess
   const instance = await startServer();
   try {
     const cookie = await cookieFor(instance);
+    const assignmentRead = await fetch(`${instance.url}/api/runtime/model-assignments`, {
+      headers: { cookie, origin: "https://attacker.invalid" },
+    });
+    assert.notEqual(assignmentRead.status, 401);
+    assert.notEqual(assignmentRead.status, 403);
+    assert.deepEqual(await readdir(instance.runtime), []);
     for (const [route, contentType, body] of posts) {
       const response = await fetch(`${instance.url}${route}`, {
         method: "POST",
