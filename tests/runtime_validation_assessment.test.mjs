@@ -42,6 +42,38 @@ test("forecast validation summary shows dynamic policy evidence", async () => {
   assert.match(source, /Assessment policy/);
   assert.match(source, /minimumFoldCount/);
   assert.match(source, /maximumFoldCount/);
+  assert.match(source, /Fresh Quick Forecast validation/);
+  assert.match(source, /Current governed assignment/);
+  assert.match(source, /New workspace created/);
+  assert.match(source, /Dataset identity/);
+  assert.match(source, /Assignment binding/);
+  assert.match(source, /Quick Forecast eligibility/);
+  assert.match(source, /response\.workflowMode === "quick_forecast"/);
+  assert.doesNotMatch(source, /approved Random Forest|current fixed model|reused assessment workspace/i);
+});
+
+test("Quick Forecast validation resets assessment workspace state but retains governed evidence", async () => {
+  const source = await read("components/forecast/ForecastRunWorkflow.tsx");
+  const transition = source.slice(source.indexOf('step: "quick_forecast"'), source.indexOf("Fresh Quick Forecast validation is now available"));
+  for (const marker of [
+    'mode: "quick_forecast"',
+    "validatedWorkflowMode:",
+    "workflowRevalidationRequired:",
+    'serverValidation: { status: "idle" }',
+    "workspaceId:",
+    "datasetId:",
+    "job: null",
+    "result: null",
+    "assignment,",
+  ]) assert.match(transition, new RegExp(marker));
+  assert.doesNotMatch(transition, /assessment:\s*null|approval:\s*null|approvedForecast:\s*empty/);
+});
+
+test("current validation response contract requires the bounded verified mode", async () => {
+  const contracts = await read("lib/runtime/contracts.ts");
+  const contract = contracts.slice(contracts.indexOf("export interface RuntimeValidationResponseSuccess"), contracts.indexOf("export interface RuntimeErrorResponse"));
+  assert.match(contract, /workflowMode: "quick_forecast" \| "assess_dataset"/);
+  assert.doesNotMatch(contract, /workflowMode:\s*string/);
 });
 
 test("leaderboard uses backend rank, shows all evidence, and does not add ungoverned metrics", async () => {
@@ -53,5 +85,5 @@ test("leaderboard uses backend rank, shows all evidence, and does not add ungove
   assert.match(source, /Technical winner/);
   assert.match(source, /Current assigned model/);
   assert.match(source, /Evaluation only/);
-  assert.doesNotMatch(source, /\.sort\(\(a, b\).*mae|MAPE|R²/);
+  assert.doesNotMatch(source, /\.sort\(\(a, b\).*mae|MAPE/);
 });

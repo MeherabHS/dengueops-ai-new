@@ -3,12 +3,14 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [panel, workflow, client, contracts, route] = await Promise.all([
+const [panel, workflow, validationSummary, client, contracts, route, validationRoute] = await Promise.all([
   read("components/forecast/ModelAssignmentPanel.tsx"),
   read("components/forecast/ForecastRunWorkflow.tsx"),
+  read("components/forecast/DatasetValidationSummary.tsx"),
   read("lib/runtime/client.ts"),
   read("lib/runtime/contracts.ts"),
   read("app/api/runtime/model-assignments/route.ts"),
+  read("app/api/runtime/validate/route.ts"),
 ]);
 
 test("approved forecast terminal evidence is reverified before assignment authority is read", () => {
@@ -100,11 +102,116 @@ test("refresh recovery retains local evidence but rechecks both server authoriti
   assert.doesNotMatch(recovery, /startModelAssignment|startQuickForecast|validateRuntimeDatasets/);
 });
 
-test("C1 stops with verified assignment and leaves Quick Forecast and dashboard pending", () => {
+test("verified assignment enables fresh validation while Quick Forecast execution remains pending", () => {
   assert.match(panel, /Governed assignment verified\. Quick Forecast validation is the next step\./);
-  assert.match(panel, /Quick Forecast remains pending and has not started/);
-  assert.doesNotMatch([panel, workflow].join("\n"), /startQuickForecast|workflowMode:\s*"quick_forecast"|router\.(?:push|replace)|location\.(?:assign|replace)|\/dashboard/);
-  assert.doesNotMatch(workflow, /step:\s*"quick_forecast"/);
+  assert.match(workflow, /assignment\.status !== "assigned_verified" \|\| !assignment\.current/);
+  assert.match(workflow, /step: "quick_forecast"/);
+  assert.match(workflow, /Quick Forecast validation ready\. Forecast execution is the next step\./);
+  assert.doesNotMatch([panel, workflow].join("\n"), /startQuickForecast|router\.(?:push|replace)|location\.(?:assign|replace)|\/dashboard/);
+});
+
+test("assessment workspace and validation evidence are reset without erasing governed evidence", () => {
+  const transition = workflow.slice(workflow.indexOf('step: "quick_forecast"'), workflow.indexOf("Fresh Quick Forecast validation is now available"));
+  for (const marker of [
+    'mode: "quick_forecast"',
+    'serverValidation: { status: "idle" }',
+    "workspaceId:",
+    "datasetId:",
+    "job: null",
+    "result: null",
+    "assignment,",
+  ]) assert.match(transition, new RegExp(marker));
+  assert.doesNotMatch(transition, /assessment:\s*null|approval:\s*null|approvedForecast:\s*empty/);
+});
+
+test("same-page files are reused only after a deliberate guarded action", () => {
+  assert.match(workflow, /fileSource: retainedFilesAvailable \? "retained" : null/);
+  assert.match(workflow, /Reuse uploaded files and validate for Quick Forecast/);
+  assert.match(workflow, /quickValidationAction\.current/);
+  assert.match(workflow, /quickValidationAction\.current = true/);
+  assert.equal((workflow.match(/validateRuntimeDatasets\(\{/g) ?? []).length, 2);
+  assert.doesNotMatch(workflow.slice(workflow.indexOf("onStateChange={(assignment)"), workflow.indexOf("Fresh Quick Forecast validation is now available")), /validateRuntimeDatasets/);
+});
+
+test("missing retained files require both datasets to be selected again", () => {
+  assert.match(workflow, /files: retainedFilesAvailable \? current\.files : \{\}/);
+  assert.match(workflow, /status: retainedFilesAvailable \? "quick_files_reuse_available" : "quick_files_required"/);
+  assert.match(workflow, /The original files are no longer available in this browser session/);
+  assert.match(workflow, /Select both datasets again/);
+  assert.match(workflow, /kind="dengue"[\s\S]*kind="climate"/);
+  assert.doesNotMatch(workflow, /new File\(|demo|bundled data/i);
+});
+
+test("fresh validation multipart request contains only governed validation inputs", () => {
+  const quickValidation = workflow.slice(workflow.indexOf("const validateQuickForecast"), workflow.indexOf("const runAssessment"));
+  for (const marker of [
+    "dengueFile:",
+    "climateFile:",
+    'deploymentId: "dhaka_south"',
+    'workflowMode: "quick_forecast"',
+  ]) assert.match(quickValidation, new RegExp(marker));
+  assert.doesNotMatch(quickValidation.slice(quickValidation.indexOf("validateRuntimeDatasets"), quickValidation.indexOf("if (!response.ok)")), /modelId:|candidateId:|assignmentId:|assessmentWorkspaceId|pointerContents|approvedForecastRunId/);
+  assert.match(client, /form\.append\("dengueFile"/);
+  assert.match(client, /form\.append\("climateFile"/);
+  assert.match(client, /form\.append\("deploymentId"/);
+  assert.match(client, /form\.append\("workflowMode"/);
+});
+
+test("fresh validation requires ready quick mode, eligibility, and exact assignment binding", () => {
+  const quickValidation = workflow.slice(workflow.indexOf("const validateQuickForecast"), workflow.indexOf("const runAssessment"));
+  for (const marker of [
+    'response.status === "ready"',
+    'response.workflowMode === "quick_forecast"',
+    'response.deploymentId === "dhaka_south"',
+    "response.eligibility.quickForecast.eligible",
+    "authority.assignmentId === verifiedAssignment.assignmentId",
+    "authority.authoritySnapshotSha256 === verifiedAssignment.assignmentPointerSha256",
+    "authority.modelId === verifiedAssignment.selectedCandidateId",
+  ]) assert.match(quickValidation, new RegExp(marker.replaceAll(".", "\\.")));
+  assert.match(quickValidation, /validationRecordSha256: response\.validationRecordSha256/);
+  assert.match(quickValidation, /status: "quick_validation_ready"/);
+});
+
+test("assignment mismatch fails closed, refreshes current authority, and never retries validation", () => {
+  const quickValidation = workflow.slice(workflow.indexOf("const validateQuickForecast"), workflow.indexOf("const runAssessment"));
+  assert.match(quickValidation, /const refreshed = await getCurrentModelAssignment\(\)/);
+  assert.match(quickValidation, /status: "quick_assignment_conflict"/);
+  assert.match(quickValidation, /errorCode: "assignment_pointer_conflict"/);
+  assert.match(workflow, /Validation was not retried and no Quick Forecast job was created/);
+  assert.equal((quickValidation.match(/validateRuntimeDatasets\(\{/g) ?? []).length, 1);
+});
+
+test("validation route verifies artifact mode instead of echoing the form field", () => {
+  assert.match(validationRoute, /const verifiedWorkflowMode = validation\.workflowMode/);
+  assert.match(validationRoute, /verifiedWorkflowMode !== workflowMode/);
+  assert.match(validationRoute, /workflowMode: verifiedWorkflowMode/);
+  assert.doesNotMatch(validationRoute, /workflowMode:\s*workflowMode,/);
+});
+
+test("all explicit Quick validation states and dynamic summary evidence are present", () => {
+  for (const state of [
+    "quick_validation_pending",
+    "quick_files_reuse_available",
+    "quick_files_required",
+    "quick_validation_running",
+    "quick_validation_ready",
+    "quick_validation_failed",
+    "quick_assignment_conflict",
+  ]) assert.match(contracts + workflow, new RegExp(state));
+  for (const label of [
+    "Fresh Quick Forecast validation",
+    "New workspace created",
+    "Dataset identity",
+    "Current governed assignment",
+    "Assignment binding",
+    "Quick Forecast eligibility",
+  ]) assert.match(validationSummary, new RegExp(label));
+});
+
+test("successful validation does not start a job, redirect, or publish forecast authority", () => {
+  assert.doesNotMatch(workflow, /startQuickForecast|\/api\/runtime\/runs\/quick|router\.(?:push|replace)|location\.(?:assign|replace)|\/dashboard/);
+  assert.doesNotMatch(validationRoute, /forecast\/latest|write.*pointer|startQuickForecast/);
+  assert.match(workflow, /Quick Forecast remains pending\. No job was created and no forecast pointer changed\./);
 });
 
 test("focused handoff test and browser implementation do not write accepted runtime", () => {

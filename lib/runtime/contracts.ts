@@ -106,6 +106,7 @@ export interface RuntimeEligibility {
 export interface RuntimeValidationResponseSuccess {
   ok: true;
   status: "ready" | "invalid";
+  workflowMode: "quick_forecast" | "assess_dataset";
   workspaceId: string;
   datasetId: string;
   deploymentId: string;

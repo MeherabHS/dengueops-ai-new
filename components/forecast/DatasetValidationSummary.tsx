@@ -3,17 +3,21 @@ import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type { LocalFilePreview, ServerValidationState, WorkflowMode } from "@/lib/forecast-workflow-types";
+import type { CurrentModelAssignmentResultSuccess } from "@/lib/runtime/contracts";
 
-export default function DatasetValidationSummary({ files, mode, serverValidation, onMode, onValidate, revalidationRequired }: {
+export default function DatasetValidationSummary({ files, mode, serverValidation, onMode, onValidate, revalidationRequired, currentAssignment = null, validationActionLabel }: {
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
   mode: WorkflowMode | null;
   serverValidation: ServerValidationState;
   onMode: (mode: WorkflowMode) => void;
   onValidate: () => void;
   revalidationRequired: boolean;
+  currentAssignment?: CurrentModelAssignmentResultSuccess | null;
+  validationActionLabel?: string;
 }) {
   if (!files.dengue || !files.climate) return <EmptyState title="Waiting for both files" description="Choose dengue and climate CSV files to complete the local header preview." />;
   const headerWarnings = [...files.dengue.missingColumns, ...files.climate.missingColumns];
+  const isQuickForecast = mode === "quick_forecast";
   return <div className="space-y-4">
     <div className={`rounded-xl border p-5 ${headerWarnings.length ? "border-warning/25 bg-warning/10" : "border-success/25 bg-success/10"}`} role="status">
       <div className="flex gap-3">{headerWarnings.length ? <ShieldAlert className="h-5 w-5 text-warning" /> : <CheckCircle2 className="h-5 w-5 text-success" />}<div><h2 className="font-semibold text-ink">Local preview complete</h2><p className="mt-1 text-sm text-ink-muted">{headerWarnings.length ? "Expected headers are missing. Correct the files before authoritative runtime validation." : "Expected headers were detected. Row content has not been governed or accepted."}</p></div></div>
@@ -21,25 +25,55 @@ export default function DatasetValidationSummary({ files, mode, serverValidation
     {revalidationRequired ? <div className="rounded-xl border border-warning/25 bg-warning/10 p-5" role="status"><h3 className="font-semibold text-ink">Workflow revalidation required</h3><p className="mt-1 text-sm text-ink-muted">Runtime workspaces are workflow-specific. Your selected files are retained, but submit them again to validate the newly selected workflow.</p></div> : null}
     <div className="rounded-xl border border-border-subtle bg-surface-muted p-5">
       <h3 className="font-semibold text-ink">Authoritative validation intent</h3>
-      <p className="mt-1 text-sm text-ink-muted">B9.4B validates this workspace only for governed dataset assessment. Quick Forecast remains pending.</p>
+      <p className="mt-1 text-sm text-ink-muted">{isQuickForecast
+        ? "Fresh Quick Forecast validation creates a new governed workspace from the selected local files and binds it to the Current governed assignment."
+        : "This workspace is created only for governed dataset assessment. Quick Forecast remains pending."}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="primary" onClick={() => onMode("assess_dataset")}>Assess Dataset</Button>
-        <Button variant="secondary" disabled>Quick Forecast pending</Button>
+        {isQuickForecast
+          ? <Button variant="primary" disabled>Fresh Quick Forecast validation</Button>
+          : <><Button variant="primary" onClick={() => onMode("assess_dataset")}>Assess Dataset</Button><Button variant="secondary" disabled>Quick Forecast pending</Button></>}
       </div>
       <Button className="mt-4" disabled={!mode || serverValidation.status === "submitting"} onClick={onValidate}>
-        {serverValidation.status === "submitting" ? "Validating datasets…" : "Validate datasets"}
+        {serverValidation.status === "submitting" ? "Validating datasets…" : validationActionLabel ?? "Validate datasets"}
       </Button>
     </div>
     {serverValidation.status === "idle" ? <div className="rounded-xl border border-informational/25 bg-informational/10 p-5"><div className="flex gap-3"><CircleDashed className="h-5 w-5 text-informational" /><div><h3 className="font-semibold text-ink">Server validation not submitted</h3><p className="mt-1 text-sm text-ink-muted">Local preview is not authoritative. Submit both files to check schema, chronology, alignment, and current analytical eligibility.</p></div></div></div> : null}
     {serverValidation.status === "submitting" ? <div className="rounded-xl border border-informational/25 bg-informational/10 p-5" role="status"><div className="flex gap-3"><CircleDashed className="h-5 w-5 text-informational" /><div><h3 className="font-semibold text-ink">Authoritative validation in progress</h3><p className="mt-1 text-sm text-ink-muted">The files are being checked in an isolated server workspace. No forecast is running.</p></div></div></div> : null}
     {serverValidation.status === "failed" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-5" role="alert"><h3 className="font-semibold text-ink">Validation service failed</h3><p className="mt-1 text-sm text-ink-muted">{serverValidation.error.message}</p><p className="mt-2 text-xs text-ink-muted">Reference: {serverValidation.error.correlationId}</p></div> : null}
-    {(serverValidation.status === "ready" || serverValidation.status === "invalid") ? <AuthoritativeResult response={serverValidation.response} /> : null}
+    {(serverValidation.status === "ready" || serverValidation.status === "invalid") ? <AuthoritativeResult response={serverValidation.response} currentAssignment={currentAssignment} /> : null}
   </div>;
 }
 
-function AuthoritativeResult({ response }: { response: Extract<ServerValidationState, { status: "ready" | "invalid" }>["response"] }) {
+function AuthoritativeResult({ response, currentAssignment }: {
+  response: Extract<ServerValidationState, { status: "ready" | "invalid" }>["response"];
+  currentAssignment: CurrentModelAssignmentResultSuccess | null;
+}) {
   const quick = response.eligibility.quickForecast;
   const assess = response.eligibility.assessDataset;
+  if (response.workflowMode === "quick_forecast") {
+    const authority = response.activeModelAuthority;
+    return <div className={`rounded-xl border p-5 ${response.status === "ready" && quick.eligible ? "border-success/25 bg-success/10" : "border-destructive/25 bg-destructive/10"}`} role="status">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold text-ink">Fresh Quick Forecast validation: {response.status === "ready" ? "passed" : "invalid"}</h3>
+          <p className="mt-1 text-sm text-ink-muted">A new workflow-specific workspace was created. The assessment workspace was not reused.</p>
+        </div>
+        <StatusBadge label={response.status === "ready" && quick.eligible ? "Quick Forecast eligible" : "Quick Forecast blocked"} variant={response.status === "ready" && quick.eligible ? "success" : "destructive"} />
+      </div>
+      <dl className="mt-4 grid gap-2 text-sm text-ink-muted sm:grid-cols-2">
+        <div><dt className="font-medium text-ink">New workspace created</dt><dd>{response.workspaceId}</dd></div>
+        <div><dt className="font-medium text-ink">Dataset identity</dt><dd>{response.datasetId}</dd></div>
+        <div><dt className="font-medium text-ink">Validation status</dt><dd>{response.status}</dd></div>
+        <div><dt className="font-medium text-ink">Verified workflow mode</dt><dd>Quick Forecast</dd></div>
+        <div><dt className="font-medium text-ink">Current governed assignment</dt><dd>{authority?.assignmentId ?? "Not available"}</dd></div>
+        <div><dt className="font-medium text-ink">Selected assigned candidate</dt><dd>{currentAssignment?.selectedCandidateLabel ?? "Not available"}</dd></div>
+        <div><dt className="font-medium text-ink">Assignment binding</dt><dd>{authority && currentAssignment && authority.assignmentId === currentAssignment.assignmentId && authority.authoritySnapshotSha256 === currentAssignment.assignmentPointerSha256 ? "Verified" : "Not verified"}</dd></div>
+        <div><dt className="font-medium text-ink">Quick Forecast eligibility</dt><dd>{quick.eligible ? "Eligible" : "Blocked"}</dd></div>
+      </dl>
+      {response.issues.length ? <div className="mt-4"><p className="text-sm font-semibold text-ink">Validation warnings or failures</p><ul className="mt-2 space-y-1 text-sm text-ink-muted">{response.issues.map((value, index) => <li key={`${value.code}-${index}`}><span className="font-medium text-ink">{value.severity === "error" ? "Error" : "Warning"}:</span> {value.message}</li>)}</ul></div> : <p className="mt-4 text-sm text-success">No authoritative file, schema, temporal, or alignment errors were found.</p>}
+      <p className="mt-4 text-xs text-ink-muted">No Quick Forecast job was created by validation.</p>
+    </div>;
+  }
   const compatibility = String(assess.decisionCompatibilityStatus);
   const decisionAvailability = compatibility === "phase1_decision_policy_available"
     ? "Compatible governed one-run decision available after immutable assessment commit"

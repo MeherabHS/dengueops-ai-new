@@ -104,6 +104,31 @@ export interface ModelAssignmentWorkflowState {
   errorCode: string | null;
   error: string | null;
 }
+export type QuickValidationStatus =
+  | "quick_validation_pending"
+  | "quick_files_reuse_available"
+  | "quick_files_required"
+  | "quick_validation_running"
+  | "quick_validation_ready"
+  | "quick_validation_failed"
+  | "quick_assignment_conflict";
+export type QuickValidationFileSource = "retained" | "reselected" | null;
+export interface QuickValidationReadyEvidence {
+  workspaceId: string;
+  datasetId: string;
+  validationRecordSha256: string;
+  workflowMode: "quick_forecast";
+  assignmentId: string;
+  assignmentPointerSha256: string;
+  selectedCandidateId: RuntimeCandidateId;
+}
+export interface QuickValidationWorkflowState {
+  status: QuickValidationStatus;
+  fileSource: QuickValidationFileSource;
+  evidence: QuickValidationReadyEvidence | null;
+  errorCode: string | null;
+  error: string | null;
+}
 export interface ForecastWorkflowState {
   step: WorkflowStep;
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
@@ -121,6 +146,7 @@ export interface ForecastWorkflowState {
   approval: ModelApprovalDecision | null;
   approvedForecast: ApprovedForecastWorkflowState;
   assignment: ModelAssignmentWorkflowState;
+  quickValidation: QuickValidationWorkflowState;
   result: ForecastRunResult | null;
   error: string | null;
 }

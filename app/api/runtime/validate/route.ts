@@ -183,10 +183,20 @@ export async function POST(request: Request): Promise<Response> {
       deploymentId,
       workflowMode,
     });
-    const validation = JSON.parse(await readFile(paths.validation, "utf8")) as Omit<RuntimeValidationResponseSuccess, "ok"> & { schemaVersion: string };
+    const validation = JSON.parse(await readFile(paths.validation, "utf8")) as Omit<RuntimeValidationResponseSuccess, "ok" | "workflowMode"> & {
+      schemaVersion: string;
+      workflowMode?: unknown;
+    };
     const validationRecordSha256 = createHash("sha256").update(await readFile(paths.validation)).digest("hex");
     if (validation.status !== "ready" && validation.status !== "invalid") {
       throw new RuntimePublicError("invalid_validation_output", "validation", "Authoritative validation returned an invalid status.", 500, true);
+    }
+    const verifiedWorkflowMode = validation.workflowMode;
+    if (verifiedWorkflowMode !== "quick_forecast" && verifiedWorkflowMode !== "assess_dataset") {
+      throw new RuntimePublicError("invalid_validation_output", "validation", "Authoritative validation returned an invalid workflow mode.", 500, true);
+    }
+    if (verifiedWorkflowMode !== workflowMode) {
+      throw new RuntimePublicError("invalid_validation_output", "validation", "Authoritative validation did not match the requested workflow mode.", 500, true);
     }
     metadata = {
       ...metadata,
@@ -211,6 +221,7 @@ export async function POST(request: Request): Promise<Response> {
     const response: RuntimeValidationResponseSuccess = {
       ok: true,
       status: validation.status,
+      workflowMode: verifiedWorkflowMode,
       workspaceId: validation.workspaceId,
       datasetId: validation.datasetId,
       deploymentId: validation.deploymentId,
