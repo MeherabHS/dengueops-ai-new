@@ -220,7 +220,11 @@ test("successful validation does not start a job, redirect, or publish forecast 
 });
 
 test("Quick Forecast request uses only validated identities and the verified assignment pointer", () => {
-  const request = quickPanel.slice(quickPanel.indexOf("const request:"), quickPanel.indexOf("useEffect(() => () =>"));
+  const requestStart = quickPanel.indexOf("const request: StartQuickForecastRequest = {");
+  const requestEnd = quickPanel.indexOf("  };", requestStart);
+  assert.notEqual(requestStart, -1);
+  assert.notEqual(requestEnd, -1);
+  const request = quickPanel.slice(requestStart, requestEnd + "  };".length);
   for (const marker of [
     "workspaceId: validation.workspaceId",
     "datasetId: validation.datasetId",
