@@ -1,5 +1,13 @@
 import type { ArtifactProvenance, CandidateComparisonSummary, DashboardSummaryUncertainty, DeploymentGate, Directive, FeatureDiagnostics, ForecastOutput, PipelineRunSummary } from "./types";
-import type { DatasetAssessmentResultSuccess, DecisionResultSuccess, JobStatusResponse, RuntimeErrorResponse, RuntimeValidationResponseSuccess, WorkflowMode } from "./runtime/contracts";
+import type {
+  DatasetAssessmentResultSuccess,
+  DecisionResultSuccess,
+  JobStatusResponse,
+  RuntimeErrorResponse,
+  RuntimeCandidateId,
+  RuntimeValidationResponseSuccess,
+  WorkflowMode,
+} from "./runtime/contracts";
 
 export interface OverviewViewModel {
   latestObservedCases: number;
@@ -48,7 +56,16 @@ export interface ForecastRunResult {
 
 export type { WorkflowMode } from "./runtime/contracts";
 export type ProcessingStatus = "idle" | "validating" | "blocked" | "ready" | "queued" | "running" | "committing" | "completed" | "failed" | "timed_out" | "cancelled";
-export type WorkflowStep = "upload" | "validate" | "choose" | "review" | "results";
+export type WorkflowStep =
+  | "upload"
+  | "validation"
+  | "assessment"
+  | "ranking"
+  | "decision"
+  | "approved_forecast"
+  | "assignment"
+  | "quick_forecast"
+  | "complete";
 export interface LocalFilePreview { key: "dengue" | "climate"; file: File; detectedColumns: string[]; missingColumns: string[]; approximateRowCount: number; headerPreviewComplete: boolean; }
 export type ServerValidationState =
   | { status: "idle" }
@@ -56,6 +73,19 @@ export type ServerValidationState =
   | { status: "ready"; response: RuntimeValidationResponseSuccess }
   | { status: "invalid"; response: RuntimeValidationResponseSuccess }
   | { status: "failed"; error: RuntimeErrorResponse["error"] };
+export type ApprovedForecastStatus = "idle" | "queued" | "running" | "committing" | "completed" | "failed" | "timed_out" | "cancelled";
+export interface ApprovedForecastWorkflowState {
+  status: ApprovedForecastStatus;
+  jobId: string | null;
+  statusUrl: string | null;
+  runId: string | null;
+  committedRunId: string | null;
+  approvedForecastCommitSha256: string | null;
+  sourceDecisionId: string | null;
+  selectedModelId: RuntimeCandidateId | null;
+  progress: string | null;
+  error: string | null;
+}
 export interface ForecastWorkflowState {
   step: WorkflowStep;
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
@@ -66,8 +96,12 @@ export interface ForecastWorkflowState {
   serverValidation: ServerValidationState;
   workspaceId: string | null;
   datasetId: string | null;
+  retainedAssessmentId: string | null;
+  assessmentJobId: string | null;
   job: JobStatusResponse | null;
   assessment: ModelSuitabilityAssessment | null;
   approval: ModelApprovalDecision | null;
+  approvedForecast: ApprovedForecastWorkflowState;
   result: ForecastRunResult | null;
+  error: string | null;
 }

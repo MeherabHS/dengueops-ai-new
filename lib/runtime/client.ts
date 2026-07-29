@@ -1,4 +1,4 @@
-import type { DatasetAssessmentResponse, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, ModelLifecycleResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
+import type { DatasetAssessmentResponse, DecisionChoice, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, ModelLifecycleResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
 
 export async function validateRuntimeDatasets(input: {
   dengueFile: File;
@@ -32,12 +32,20 @@ export async function getDatasetAssessment(assessmentId: string): Promise<Datase
   return await response.json() as DatasetAssessmentResponse;
 }
 
-export async function recordAssessmentDecision(assessmentId:string,input:RecordDecisionRequest):Promise<DecisionResponse>{const response=await fetch(`/api/runtime/assessments/${encodeURIComponent(assessmentId)}/decisions`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(input)});return await response.json() as DecisionResponse;}
+export async function recordAssessmentDecision(assessmentId:string,input:RecordDecisionRequest):Promise<DecisionResponse>;
+export async function recordAssessmentDecision(assessmentId:string,input:{decision:DecisionChoice;reason:string;expectedAssessmentSummarySha256:string}):Promise<DecisionResponse>;
+export async function recordAssessmentDecision(assessmentId:string,input:RecordDecisionRequest|{decision:DecisionChoice;reason:string;expectedAssessmentSummarySha256:string}):Promise<DecisionResponse>{const response=await fetch(`/api/runtime/assessments/${encodeURIComponent(assessmentId)}/decisions`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(input)});return await response.json() as DecisionResponse;}
 export async function getDecision(decisionId:string):Promise<DecisionResponse>{const response=await fetch(`/api/runtime/decisions/${encodeURIComponent(decisionId)}`,{cache:"no-store"});return await response.json() as DecisionResponse;}
 export async function startApprovedForecast(decisionId:string,input:StartApprovedForecastRequest):Promise<StartApprovedForecastResponse>{const response=await fetch(`/api/runtime/decisions/${encodeURIComponent(decisionId)}/forecast`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(input)});return await response.json() as StartApprovedForecastResponse;}
 
 export async function getRuntimeJob(jobId: string): Promise<JobStatusResponse> {
   const response = await fetch(`/api/runtime/jobs/${encodeURIComponent(jobId)}`, { cache: "no-store" });
+  return await response.json() as JobStatusResponse;
+}
+
+export async function getRuntimeJobByStatusUrl(statusUrl: string): Promise<JobStatusResponse> {
+  if (!/^\/api\/runtime\/jobs\/[0-9a-f-]+$/i.test(statusUrl)) throw new Error("The returned job status URL is invalid.");
+  const response = await fetch(statusUrl, { cache: "no-store" });
   return await response.json() as JobStatusResponse;
 }
 

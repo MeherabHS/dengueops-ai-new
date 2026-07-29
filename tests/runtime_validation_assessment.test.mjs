@@ -51,7 +51,7 @@ test("leaderboard uses backend rank, shows all evidence, and does not add ungove
   assert.match(source, /modelFamily/);
   assert.match(source, /candidate\.reasons\.map/);
   assert.match(source, /Technical winner/);
-  assert.match(source, /Current deployment model/);
+  assert.match(source, /Current assigned model/);
   assert.match(source, /Evaluation only/);
   assert.doesNotMatch(source, /\.sort\(\(a, b\).*mae|MAPE|R²/);
 });

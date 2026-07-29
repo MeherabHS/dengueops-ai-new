@@ -21,10 +21,10 @@ export default function DatasetValidationSummary({ files, mode, serverValidation
     {revalidationRequired ? <div className="rounded-xl border border-warning/25 bg-warning/10 p-5" role="status"><h3 className="font-semibold text-ink">Workflow revalidation required</h3><p className="mt-1 text-sm text-ink-muted">Runtime workspaces are workflow-specific. Your selected files are retained, but submit them again to validate the newly selected workflow.</p></div> : null}
     <div className="rounded-xl border border-border-subtle bg-surface-muted p-5">
       <h3 className="font-semibold text-ink">Authoritative validation intent</h3>
-      <p className="mt-1 text-sm text-ink-muted">Choose the intended workflow for this validation workspace. The response reports eligibility for both paths.</p>
+      <p className="mt-1 text-sm text-ink-muted">B9.4B validates this workspace only for governed dataset assessment. Quick Forecast remains pending.</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant={mode === "quick_forecast" ? "primary" : "secondary"} onClick={() => onMode("quick_forecast")}>Quick Forecast</Button>
-        <Button variant={mode === "assess_dataset" ? "primary" : "secondary"} onClick={() => onMode("assess_dataset")}>Assess Dataset</Button>
+        <Button variant="primary" onClick={() => onMode("assess_dataset")}>Assess Dataset</Button>
+        <Button variant="secondary" disabled>Quick Forecast pending</Button>
       </div>
       <Button className="mt-4" disabled={!mode || serverValidation.status === "submitting"} onClick={onValidate}>
         {serverValidation.status === "submitting" ? "Validating datasets…" : "Validate datasets"}
@@ -42,9 +42,9 @@ function AuthoritativeResult({ response }: { response: Extract<ServerValidationS
   const assess = response.eligibility.assessDataset;
   const compatibility = String(assess.decisionCompatibilityStatus);
   const decisionAvailability = compatibility === "phase1_decision_policy_available"
-    ? "Phase 1 trusted-internal one-run decision available after immutable assessment commit"
+    ? "Compatible governed one-run decision available after immutable assessment commit"
     : compatibility === "phase2_decision_policy_available"
-      ? "Phase 2 p2-v1 trusted-internal one-run decision available after immutable assessment commit"
+      ? "Current governed one-run decision available after immutable assessment commit"
       : compatibility === "phase2_decision_policy_not_yet_available"
         ? "Decision policy availability will be resolved from committed assessment evidence"
         : "Decision policy identity unavailable; operator actions fail closed";
@@ -52,7 +52,7 @@ function AuthoritativeResult({ response }: { response: Extract<ServerValidationS
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-ink">Authoritative server validation: {response.status === "ready" ? "passed" : "invalid"}</h3><p className="mt-1 text-sm text-ink-muted">{response.counts.overlapWeeks} overlapping weeks · {response.counts.labelledRows} labelled rows</p></div><StatusBadge label={response.status === "ready" ? "Validated" : "Invalid"} variant={response.status === "ready" ? "success" : "destructive"} /></div>
     {response.acceptedPeriod ? <p className="mt-3 text-sm text-ink-muted">Accepted period: {response.acceptedPeriod.start} to {response.acceptedPeriod.end}</p> : null}
     <div className="mt-4 grid gap-3 md:grid-cols-2">
-      <div className="rounded-lg border border-border-subtle bg-surface p-4"><p className="font-semibold text-ink">Quick Forecast</p><p className="mt-1 text-sm text-ink-muted">{quick.eligible ? "Quick Forecast eligible" : "Not eligible."}</p>{quick.eligible ? <p className="mt-2 text-xs leading-relaxed text-ink-muted">The uploaded dataset matches the current governed deployment contract. Quick Forecast may use the approved Random Forest configuration for a point forecast.</p> : null}<ul className="mt-2 space-y-1 text-xs text-ink-muted">{quick.reasons.map(reason => <li key={reason}>• {reason}</li>)}</ul><dl className="mt-3 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Empirical range: </dt><dd className="inline">{quick.uncertaintyStatus === "pending_dataset_specific_calibration" ? "pending dataset-specific calibration" : "unavailable for this uploaded dataset"}</dd></div><div><dt className="inline font-medium text-ink">Preparedness: </dt><dd className="inline">{quick.preparednessStatus === "unavailable_missing_planning_policy" ? "unavailable until a planning-scenario policy is approved" : "unavailable for this uploaded dataset"}</dd></div></dl></div>
+      <div className="rounded-lg border border-border-subtle bg-surface p-4"><p className="font-semibold text-ink">Quick Forecast</p><p className="mt-1 text-sm text-ink-muted">Pending for B9.4B; no Quick Forecast action is exposed.</p>{quick.eligible ? <p className="mt-2 text-xs leading-relaxed text-ink-muted">Compatibility was reported for the current assigned model, which is resolved dynamically by server authority.</p> : null}<ul className="mt-2 space-y-1 text-xs text-ink-muted">{quick.reasons.map(reason => <li key={reason}>• {reason}</li>)}</ul><dl className="mt-3 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Empirical range: </dt><dd className="inline">{quick.uncertaintyStatus === "pending_dataset_specific_calibration" ? "pending dataset-specific calibration" : "unavailable for this uploaded dataset"}</dd></div><div><dt className="inline font-medium text-ink">Preparedness: </dt><dd className="inline">{quick.preparednessStatus === "unavailable_missing_planning_policy" ? "unavailable until a planning-scenario policy is approved" : "unavailable for this uploaded dataset"}</dd></div></dl></div>
       <div className="rounded-lg border border-border-subtle bg-surface p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="font-semibold text-ink">Assess Dataset</p>
@@ -65,7 +65,7 @@ function AuthoritativeResult({ response }: { response: Extract<ServerValidationS
           <div><dt className="inline font-medium text-ink">Governed range: </dt><dd className="inline">{assess.minimumFoldCount} minimum / {assess.maximumFoldCount} maximum</dd></div>
           <div><dt className="inline font-medium text-ink">Recent-fold cap: </dt><dd className="inline">{assess.foldCapApplied ? "applied; older rows remain in expanding training" : "not applied"}</dd></div>
           <div><dt className="inline font-medium text-ink">Assessment policy: </dt><dd className="inline">{assess.assessmentPolicyVersion}</dd></div>
-          <div><dt className="inline font-medium text-ink">Candidate set: </dt><dd className="inline">{assess.candidateSetStatus === "complete_candidate_set" ? "all seven governed candidates expected" : assess.candidateSetStatus === "partial_candidate_set" ? "partial candidate set" : "insufficient candidate breadth"}</dd></div>
+          <div><dt className="inline font-medium text-ink">Candidate set: </dt><dd className="inline">{assess.candidateSetStatus === "complete_candidate_set" ? `${Object.keys(assess.candidateEligibility).length} governed candidates expected from the current registry` : assess.candidateSetStatus === "partial_candidate_set" ? "partial candidate set" : "insufficient candidate breadth"}</dd></div>
           <div><dt className="inline font-medium text-ink">Recommendation governance: </dt><dd className="inline">{assess.recommendationStatus === "evidence_only" ? "technical evidence only; strength not available" : "no recommendation"}</dd></div>
           <div><dt className="inline font-medium text-ink">Assessment decision: </dt><dd className="inline">{decisionAvailability}</dd></div>
         </dl>

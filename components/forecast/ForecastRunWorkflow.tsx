@@ -1,281 +1,337 @@
 "use client";
 
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
-import ForecastRunStepper from "./ForecastRunStepper";
+import ApprovedForecastPanel from "./ApprovedForecastPanel";
+import ApprovalPanel from "./ApprovalPanel";
 import DatasetUploadPanel from "./DatasetUploadPanel";
 import DatasetValidationSummary from "./DatasetValidationSummary";
-import WorkflowChoice from "./WorkflowChoice";
-import ApprovalPanel from "./ApprovalPanel";
-import ProcessingState from "./ProcessingState";
-import ForecastResultSummary from "./ForecastResultSummary";
+import ForecastRunStepper from "./ForecastRunStepper";
 import ModelSuitabilitySummary from "./ModelSuitabilitySummary";
-import type { ForecastWorkflowState, LocalFilePreview, WorkflowMode, WorkflowStep } from "@/lib/forecast-workflow-types";
-import { getDatasetAssessment, getLatestDashboard, getRuntimeJob, recordAssessmentDecision, startApprovedForecast, startDatasetAssessment, startQuickForecast, validateRuntimeDatasets } from "@/lib/runtime/client";
-import type { DatasetAssessmentResultSuccess, DecisionChoice, DecisionResultSuccess, JobStatusResponse, RuntimeErrorResponse, RuntimeValidationResponseSuccess } from "@/lib/runtime/contracts";
+import ProcessingState from "./ProcessingState";
+import type {
+  ApprovedForecastWorkflowState,
+  ForecastWorkflowState,
+  LocalFilePreview,
+  WorkflowStep,
+} from "@/lib/forecast-workflow-types";
+import {
+  getDatasetAssessment,
+  getRuntimeJob,
+  getRuntimeJobByStatusUrl,
+  recordAssessmentDecision,
+  startDatasetAssessment,
+  validateRuntimeDatasets,
+} from "@/lib/runtime/client";
+import type {
+  GovernedDecisionRequest,
+  JobStatusResponse,
+  RuntimeCandidateId,
+} from "@/lib/runtime/contracts";
 
-type Action =
-  | { type: "file"; preview: LocalFilePreview }
-  | { type: "remove"; key: "dengue" | "climate" }
-  | { type: "mode"; mode: WorkflowMode }
-  | { type: "step"; step: WorkflowStep }
-  | { type: "validation_submitting" }
-  | { type: "validation_response"; response: RuntimeValidationResponseSuccess }
-  | { type: "validation_failed"; error: RuntimeErrorResponse["error"] }
-  | { type: "job_queued" }
-  | { type: "job_status"; response: JobStatusResponse }
-  | { type: "job_failed"; message: string; status?: "failed" | "timed_out" | "cancelled" }
-  | { type: "job_completed"; runId: string; point: number; targetPeriod: string; approved?: boolean }
-  | { type: "assessment_completed"; assessment: DatasetAssessmentResultSuccess }
-  | { type: "decision_recorded"; decision: DecisionResultSuccess };
+const STORAGE_KEY = "dengueops-b9-4b-governed-forecast";
+const ASSESSMENT_COMPLETED = "assessment_completed";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SHA = /^[a-f0-9]{64}$/;
+const RUNTIME_CANDIDATE_IDS = new Set<RuntimeCandidateId>([
+  "moving_average_4w",
+  "seasonal_naive_52w",
+  "ridge_regression",
+  "poisson_regression",
+  "random_forest",
+  "gradient_boosting",
+  "elastic_net",
+  "negative_binomial_regression",
+  "extra_trees",
+  "hist_gradient_boosting",
+  "poisson_gam",
+  "previous_week_naive",
+]);
+
+const emptyApprovedForecast: ApprovedForecastWorkflowState = {
+  status: "idle",
+  jobId: null,
+  statusUrl: null,
+  runId: null,
+  committedRunId: null,
+  approvedForecastCommitSha256: null,
+  sourceDecisionId: null,
+  selectedModelId: null,
+  progress: null,
+  error: null,
+};
 
 const initial: ForecastWorkflowState = {
   step: "upload",
   files: {},
-  mode: null,
+  mode: "assess_dataset",
   validatedWorkflowMode: null,
   workflowRevalidationRequired: false,
   processingStatus: "idle",
   serverValidation: { status: "idle" },
   workspaceId: null,
   datasetId: null,
+  retainedAssessmentId: null,
+  assessmentJobId: null,
   job: null,
   assessment: null,
   approval: null,
+  approvedForecast: emptyApprovedForecast,
   result: null,
+  error: null,
 };
 
-function resetValidation(state: ForecastWorkflowState): ForecastWorkflowState {
-  return { ...state, validatedWorkflowMode: null, workflowRevalidationRequired: false, serverValidation: { status: "idle" }, workspaceId: null, datasetId: null, job: null, result: null, assessment: null, approval: null, processingStatus: "idle" };
+interface RetainedWorkflow {
+  assessmentId?: string;
+  assessmentJobId?: string;
+  decisionId?: string;
+  approvedForecast?: Partial<ApprovedForecastWorkflowState>;
 }
 
-function reducer(state: ForecastWorkflowState, action: Action): ForecastWorkflowState {
-  switch (action.type) {
-    case "file":
-      return resetValidation({ ...state, files: { ...state.files, [action.preview.key]: action.preview } });
-    case "remove": {
-      const files = { ...state.files };
-      delete files[action.key];
-      return resetValidation({ ...state, files });
-    }
-    case "mode":
-      if (state.mode === action.mode) return state;
-      if (state.validatedWorkflowMode && state.validatedWorkflowMode !== action.mode) {
-        return { ...resetValidation({ ...state, mode: action.mode }), step: "validate", workflowRevalidationRequired: true };
-      }
-      return resetValidation({ ...state, mode: action.mode });
-    case "step":
-      return { ...state, step: action.step };
-    case "validation_submitting":
-      return { ...state, workflowRevalidationRequired: false, processingStatus: "validating", serverValidation: { status: "submitting" } };
-    case "validation_response":
-      return {
-        ...state,
-        processingStatus: action.response.status === "ready" ? "ready" : "blocked",
-        serverValidation: { status: action.response.status, response: action.response },
-        validatedWorkflowMode: action.response.status === "ready" ? state.mode : null,
-        workflowRevalidationRequired: false,
-        workspaceId: action.response.workspaceId,
-        datasetId: action.response.datasetId,
-      };
-    case "validation_failed":
-      return { ...state, validatedWorkflowMode: null, workflowRevalidationRequired: false, processingStatus: "failed", serverValidation: { status: "failed", error: action.error }, workspaceId: null, datasetId: null };
-    case "job_queued":
-      return { ...state, processingStatus: "queued" };
-    case "job_status":
-      return action.response.ok ? { ...state, job: action.response, processingStatus: action.response.status } : state;
-    case "job_failed":
-      return { ...state, processingStatus: action.status ?? "failed", result: state.mode === "quick_forecast" ? { runId: state.job?.ok && state.job.jobKind === "quick_forecast" ? state.job.runId : "not-committed", status: "failed", error: action.message } : null };
-    case "job_completed":
-      return { ...state, step: "results", processingStatus: "completed", result: { runId: action.runId, status: "completed", forecast: { point: action.point, lower: null, upper: null, targetPeriod: action.targetPeriod }, uncertaintyStatus: action.approved ? "pending_selected_model_calibration" : "pending_dataset_specific_calibration", preparednessStatus: "unavailable_missing_planning_policy" } };
-    case "assessment_completed":
-      return { ...state, step: "results", processingStatus: "completed", assessment: action.assessment, result: null };
-    case "decision_recorded":
-      return { ...state, processingStatus: "completed", approval: action.decision };
-  }
-}
+const completedThrough = (state: ForecastWorkflowState): WorkflowStep | null => {
+  if (state.approvedForecast.status === "completed") return "approved_forecast";
+  if (state.approval || state.assessment?.workflow.decision) return "decision";
+  if (state.step === "decision") return "ranking";
+  if (state.assessment) return "assessment";
+  if (state.step === "assessment") return "validation";
+  if (state.serverValidation.status === "ready") return "validation";
+  if (state.step === "validation") return "upload";
+  return null;
+};
 
-const order: WorkflowStep[] = ["upload", "validate", "choose", "review", "results"];
+function boundedRetainedForecast(value: unknown): ApprovedForecastWorkflowState {
+  if (!value || typeof value !== "object") return emptyApprovedForecast;
+  const candidate = value as Partial<ApprovedForecastWorkflowState>;
+  const status = candidate.status;
+  if (!status || !["idle", "queued", "running", "committing", "completed", "failed", "timed_out", "cancelled"].includes(status)) return emptyApprovedForecast;
+  const validId = (id: unknown) => typeof id === "string" && UUID.test(id);
+  const validSha = (hash: unknown) => typeof hash === "string" && SHA.test(hash);
+  const validCandidateId = (modelId: unknown): modelId is RuntimeCandidateId =>
+    typeof modelId === "string" && RUNTIME_CANDIDATE_IDS.has(modelId as RuntimeCandidateId);
+  return {
+    status,
+    jobId: validId(candidate.jobId) ? candidate.jobId! : null,
+    statusUrl: validId(candidate.jobId) ? `/api/runtime/jobs/${candidate.jobId}` : null,
+    runId: validId(candidate.runId) ? candidate.runId! : null,
+    committedRunId: validId(candidate.committedRunId) ? candidate.committedRunId! : null,
+    approvedForecastCommitSha256: validSha(candidate.approvedForecastCommitSha256) ? candidate.approvedForecastCommitSha256! : null,
+    sourceDecisionId: validId(candidate.sourceDecisionId) ? candidate.sourceDecisionId! : null,
+    selectedModelId: validCandidateId(candidate.selectedModelId) ? candidate.selectedModelId : null,
+    progress: typeof candidate.progress === "string" ? candidate.progress.slice(0, 160) : null,
+    error: typeof candidate.error === "string" ? candidate.error.slice(0, 500) : null,
+  };
+}
 
 export default function ForecastRunWorkflow() {
-  const [state, dispatch] = useReducer(reducer, initial);
+  const [state, setState] = useState<ForecastWorkflowState>(initial);
   const mounted = useRef(true);
-  useEffect(() => () => { mounted.current = false; }, []);
-  const index = order.indexOf(state.step);
-  const both = Boolean(state.files.dengue && state.files.climate);
-  const response = state.serverValidation.status === "ready" || state.serverValidation.status === "invalid"
-    ? state.serverValidation.response
-    : null;
-  const selectedEligible = state.mode === "quick_forecast"
-    ? response?.eligibility.quickForecast.eligible
-    : state.mode === "assess_dataset"
-      ? response?.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible"
-      : false;
-  const selectedWorkspaceReady = Boolean(
-    state.mode
-      && response?.status === "ready"
-      && selectedEligible
-      && state.mode === state.validatedWorkflowMode
-      && state.workspaceId
-      && state.datasetId
-      && response.validationRecordSha256,
-  );
-  const decisionPolicyAvailable = state.assessment
-    ? ["phase1_decision_policy_available", "phase2_decision_policy_available"].includes(String(state.assessment.workflow.decisionCompatibilityStatus))
-    : false;
-  const canNext = state.step === "upload"
-    ? both
-    : state.step === "validate"
-      ? Boolean(response?.status === "ready")
-      : state.step === "choose"
-        ? selectedWorkspaceReady
-        : state.step !== "review";
+  const assessmentAction = useRef(false);
+  const decisionAction = useRef(false);
+  const recoveryStarted = useRef(false);
+  const recordedDecision = state.approval ?? state.assessment?.workflow.decision ?? null;
+  const decisionPolicyAvailable = Boolean(state.assessment && ["phase1_decision_policy_available", "phase2_decision_policy_available"].includes(String(state.assessment.workflow.decisionCompatibilityStatus)));
 
-  const validate = async () => {
-    if (!state.files.dengue || !state.files.climate || !state.mode) return;
-    dispatch({ type: "validation_submitting" });
-    try {
-      const result = await validateRuntimeDatasets({
-        dengueFile: state.files.dengue.file,
-        climateFile: state.files.climate.file,
-        deploymentId: "dhaka_south",
-        workflowMode: state.mode,
-      });
-      if (result.ok) dispatch({ type: "validation_response", response: result });
-      else dispatch({ type: "validation_failed", error: result.error });
-    } catch {
-      dispatch({
-        type: "validation_failed",
-        error: {
-          code: "validation_request_failed",
-          category: "internal",
-          message: "The validation service could not be reached.",
-          retryable: true,
-          correlationId: "not-available",
-        },
-      });
+  useEffect(() => () => { mounted.current = false; }, []);
+
+  const persist = (next: ForecastWorkflowState) => {
+    const retained: RetainedWorkflow = {
+      assessmentId: next.retainedAssessmentId ?? undefined,
+      assessmentJobId: next.assessmentJobId ?? undefined,
+      decisionId: (next.approval ?? next.assessment?.workflow.decision)?.decisionId,
+      approvedForecast: next.approvedForecast,
+    };
+    if (retained.assessmentId || retained.assessmentJobId || retained.decisionId || retained.approvedForecast?.jobId) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(retained));
     }
   };
 
-  const runQuickForecast = async () => {
-    if (!response || !state.workspaceId || !state.datasetId || state.mode !== "quick_forecast" || state.validatedWorkflowMode !== "quick_forecast" || !response.eligibility.quickForecast.eligible) return;
-    let started;
-    try { started = await startQuickForecast({ workspaceId: state.workspaceId, datasetId: state.datasetId, deploymentId: response.deploymentId, validationRecordSha256: response.validationRecordSha256 }); }
-    catch { dispatch({ type: "job_failed", message: "The Quick Forecast job could not be queued." }); return; }
-    if (!started.ok) { dispatch({ type: "job_failed", message: started.error.message }); return; }
-    dispatch({ type: "job_queued" });
-    let delay = 2000;
-    while (mounted.current) {
-      let job;
-      try { job = await getRuntimeJob(started.jobId); }
-      catch { dispatch({ type: "job_failed", message: "Runtime job status could not be refreshed." }); return; }
-      if (!mounted.current) return;
-      if (!job.ok) { dispatch({ type: "job_failed", message: job.error.message }); return; }
-      dispatch({ type: "job_status", response: job });
-      if (job.status === "completed") {
-        if (job.jobKind !== "quick_forecast" || !job.committedRunId) { dispatch({ type: "job_failed", message: "The worker completed without a committed run identity." }); return; }
-        let latest;
-        try { latest = await getLatestDashboard(response.deploymentId); }
-        catch { dispatch({ type: "job_failed", message: "The committed dashboard could not be refreshed; the previous Overview remains available." }); return; }
-        if (!latest.ok || latest.runId !== job.committedRunId || latest.dashboard.latestRun.runId !== job.committedRunId) {
-          dispatch({ type: "job_failed", message: latest.ok ? "The committed dashboard identity did not match the completed job." : latest.error.message }); return;
+  const update = (updater: (current: ForecastWorkflowState) => ForecastWorkflowState) => {
+    setState((current) => {
+      const next = updater(current);
+      persist(next);
+      return next;
+    });
+  };
+
+  const loadCommittedAssessment = async (assessmentId: string) => {
+    const assessment = await getDatasetAssessment(assessmentId);
+    if (!assessment.ok) throw new Error(assessment.error.message);
+    if (!mounted.current) return;
+    update((current) => ({
+      ...current,
+      retainedAssessmentId: assessment.assessmentId,
+      assessment,
+      processingStatus: "completed",
+      job: current.job?.ok ? { ...current.job, progress: ASSESSMENT_COMPLETED } as JobStatusResponse : current.job,
+      step: assessment.workflow.decision ? "approved_forecast" : "ranking",
+      error: null,
+    }));
+  };
+
+  const pollAssessment = async (jobId: string, assessmentId: string, statusUrl?: string) => {
+    if (assessmentAction.current) return;
+    assessmentAction.current = true;
+    let delay = 1500;
+    try {
+      while (mounted.current) {
+        const job = statusUrl ? await getRuntimeJobByStatusUrl(statusUrl) : await getRuntimeJob(jobId);
+        if (!job.ok) throw new Error(job.error.message);
+        if (job.jobKind !== "dataset_assessment" || job.jobId !== jobId || job.assessmentId !== assessmentId) throw new Error("The assessment job did not match the retained workspace evidence.");
+        update((current) => ({ ...current, job, processingStatus: job.status, error: null }));
+        if (job.status === "completed") {
+          if (job.committedAssessmentId !== assessmentId) throw new Error("The assessment completed without the expected committed identity.");
+          await loadCommittedAssessment(assessmentId);
+          return;
         }
-        sessionStorage.setItem("dengueops-latest-dashboard", JSON.stringify({ runId: latest.runId, dashboard: latest.dashboard }));
-        dispatch({ type: "job_completed", runId: latest.runId, point: latest.dashboard.forecastCases, targetPeriod: latest.dashboard.targetPeriod });
-        window.location.assign("/dashboard");
-        return;
+        if (job.status === "failed" || job.status === "timed_out" || job.status === "cancelled") throw new Error(job.error?.message ?? `The assessment ended with ${job.status}.`);
+        await new Promise((resolve) => window.setTimeout(resolve, delay));
+        delay = Math.min(8000, Math.round(delay * 1.35));
       }
-      if (job.status === "failed" || job.status === "timed_out" || job.status === "cancelled") {
-        dispatch({ type: "job_failed", status: job.status, message: job.error?.message ?? `The runtime job ended with status ${job.status}.` }); return;
-      }
-      await new Promise(resolve => window.setTimeout(resolve, delay));
-      delay = Math.min(10000, Math.round(delay * 1.35));
+    } catch (reason) {
+      if (mounted.current) update((current) => ({ ...current, processingStatus: "failed", error: reason instanceof Error ? reason.message.slice(0, 500) : "Assessment verification failed." }));
+    } finally {
+      assessmentAction.current = false;
+    }
+  };
+
+  useEffect(() => {
+    if (recoveryStarted.current) return;
+    recoveryStarted.current = true;
+    let retained: RetainedWorkflow = {};
+    try {
+      retained = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as RetainedWorkflow;
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    const assessmentId = typeof retained.assessmentId === "string" && UUID.test(retained.assessmentId) ? retained.assessmentId : null;
+    const assessmentJobId = typeof retained.assessmentJobId === "string" && UUID.test(retained.assessmentJobId) ? retained.assessmentJobId : null;
+    const approvedForecast = boundedRetainedForecast(retained.approvedForecast);
+    if (!assessmentId) return;
+    update((current) => ({ ...current, retainedAssessmentId: assessmentId, assessmentJobId, approvedForecast, step: "assessment", processingStatus: assessmentJobId ? "queued" : "idle" }));
+    void loadCommittedAssessment(assessmentId).catch(() => {
+      if (assessmentJobId) void pollAssessment(assessmentJobId, assessmentId);
+      else if (mounted.current) update((current) => ({ ...current, error: "The retained assessment could not be verified. No decision or forecast was restarted." }));
+    });
+    // Recovery runs once and never publishes or consumes an append-only action.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const setFile = (preview: LocalFilePreview) => update((current) => ({
+    ...current,
+    files: { ...current.files, [preview.key]: preview },
+    serverValidation: { status: "idle" },
+    validatedWorkflowMode: null,
+    workspaceId: null,
+    datasetId: null,
+    error: null,
+  }));
+
+  const removeFile = (key: "dengue" | "climate") => update((current) => {
+    const files = { ...current.files };
+    delete files[key];
+    return { ...current, files, serverValidation: { status: "idle" }, validatedWorkflowMode: null, workspaceId: null, datasetId: null, error: null };
+  });
+
+  const validate = async () => {
+    if (!state.files.dengue || !state.files.climate || state.processingStatus === "validating") return;
+    update((current) => ({ ...current, processingStatus: "validating", serverValidation: { status: "submitting" }, error: null }));
+    try {
+      const response = await validateRuntimeDatasets({
+        dengueFile: state.files.dengue.file,
+        climateFile: state.files.climate.file,
+        deploymentId: "dhaka_south",
+        workflowMode: "assess_dataset",
+      });
+      if (!response.ok) throw new Error(response.error.message);
+      update((current) => ({
+        ...current,
+        serverValidation: { status: response.status, response },
+        validatedWorkflowMode: response.status === "ready" ? "assess_dataset" : null,
+        workspaceId: response.workspaceId,
+        datasetId: response.datasetId,
+        processingStatus: response.status === "ready" ? "ready" : "blocked",
+        error: null,
+      }));
+    } catch (reason) {
+      update((current) => ({ ...current, processingStatus: "failed", serverValidation: { status: "failed", error: { code: "validation_request_failed", category: "internal", message: reason instanceof Error ? reason.message.slice(0, 500) : "Validation failed.", retryable: true, correlationId: "not-available" } } }));
     }
   };
 
   const runAssessment = async () => {
-    if (!response || !state.workspaceId || !state.datasetId || state.mode !== "assess_dataset" || state.validatedWorkflowMode !== "assess_dataset" || response.eligibility.assessDataset.assessmentStatus !== "full_assessment_eligible") return;
-    let started;
-    try { started = await startDatasetAssessment({ workspaceId: state.workspaceId, datasetId: state.datasetId, deploymentId: response.deploymentId, validationRecordSha256: response.validationRecordSha256 }); }
-    catch { dispatch({ type: "job_failed", message: "The dataset-assessment job could not be queued." }); return; }
-    if (!started.ok) { dispatch({ type: "job_failed", message: started.error.message }); return; }
-    dispatch({ type: "job_queued" });
-    let delay = 2000;
-    while (mounted.current) {
-      let job;
-      try { job = await getRuntimeJob(started.jobId); }
-      catch { dispatch({ type: "job_failed", message: "Assessment job status could not be refreshed." }); return; }
-      if (!mounted.current) return;
-      if (!job.ok) { dispatch({ type: "job_failed", message: job.error.message }); return; }
-      dispatch({ type: "job_status", response: job });
-      if (job.status === "completed") {
-        if (job.jobKind !== "dataset_assessment" || job.assessmentId !== started.assessmentId || job.committedAssessmentId !== started.assessmentId) { dispatch({ type: "job_failed", message: "The worker completed without the expected committed assessment identity." }); return; }
-        let assessment;
-        try { assessment = await getDatasetAssessment(started.assessmentId); }
-        catch { dispatch({ type: "job_failed", message: "The committed assessment could not be loaded." }); return; }
-        if (!assessment.ok || assessment.assessmentId !== job.committedAssessmentId) { dispatch({ type: "job_failed", message: assessment.ok ? "The assessment result identity did not match the completed job." : assessment.error.message }); return; }
-        dispatch({ type: "assessment_completed", assessment });
-        return;
-      }
-      if (job.status === "failed" || job.status === "timed_out" || job.status === "cancelled") { dispatch({ type: "job_failed", status: job.status, message: job.error?.message ?? `The assessment job ended with status ${job.status}.` }); return; }
-      await new Promise(resolve => window.setTimeout(resolve, delay));
-      delay = Math.min(10000, Math.round(delay * 1.35));
+    const validation = state.serverValidation.status === "ready" ? state.serverValidation.response : null;
+    if (assessmentAction.current || !validation || !state.workspaceId || !state.datasetId || validation.eligibility.assessDataset.assessmentStatus !== "full_assessment_eligible") return;
+    assessmentAction.current = true;
+    update((current) => ({ ...current, processingStatus: "queued", error: null }));
+    try {
+      const started = await startDatasetAssessment({ workspaceId: state.workspaceId, datasetId: state.datasetId, deploymentId: validation.deploymentId, validationRecordSha256: validation.validationRecordSha256 });
+      if (!started.ok) throw new Error(started.error.message);
+      update((current) => ({ ...current, retainedAssessmentId: started.assessmentId, assessmentJobId: started.jobId, processingStatus: "queued" }));
+      assessmentAction.current = false;
+      await pollAssessment(started.jobId, started.assessmentId, started.statusUrl);
+    } catch (reason) {
+      assessmentAction.current = false;
+      update((current) => ({ ...current, processingStatus: "failed", error: reason instanceof Error ? reason.message.slice(0, 500) : "The assessment could not be started." }));
     }
   };
 
-  const recordDecision = async (choice: DecisionChoice, reason: string) => {
-    if (!state.assessment) return;
-    dispatch({ type: "job_queued" });
-    let result;
-    try { result = await recordAssessmentDecision(state.assessment.assessmentId, { decision: choice, reason, expectedAssessmentSummarySha256: state.assessment.integrity.assessmentSummarySha256 }); }
-    catch { dispatch({ type: "job_failed", message: "The trusted internal decision could not be recorded." }); return; }
-    if (!result.ok) { dispatch({ type: "job_failed", message: result.error.message }); return; }
-    dispatch({ type: "decision_recorded", decision: result });
+  const recordDecision = async (request: GovernedDecisionRequest) => {
+    if (!state.assessment || recordedDecision || decisionAction.current) return;
+    decisionAction.current = true;
+    update((current) => ({ ...current, processingStatus: "queued", error: null }));
+    try {
+      const response = await recordAssessmentDecision(state.assessment.assessmentId, request);
+      if (!response.ok) throw new Error(response.error.message);
+      update((current) => ({ ...current, approval: response, processingStatus: "completed", step: "approved_forecast", error: null }));
+    } catch (reason) {
+      update((current) => ({ ...current, processingStatus: "failed", error: reason instanceof Error ? reason.message.slice(0, 500) : "The governed model decision could not be recorded." }));
+    } finally {
+      decisionAction.current = false;
+    }
   };
 
-  const runApprovedForecast = async () => {
-    if (!state.approval?.forecastAuthorized || state.approval.authorizationStatus !== "available") return;
-    let started;
-    try { started = await startApprovedForecast(state.approval.decisionId, { expectedDecisionCommitSha256: state.approval.decisionCommitSha256 }); }
-    catch { dispatch({ type: "job_failed", message: "The approved forecast could not be queued." }); return; }
-    if (!started.ok) { dispatch({ type: "job_failed", message: started.error.message }); return; }
-    dispatch({ type: "job_queued" }); let delay=2000;
-    while(mounted.current){let job;try{job=await getRuntimeJob(started.jobId);}catch{dispatch({type:"job_failed",message:"Approved forecast status could not be refreshed."});return;}if(!job.ok){dispatch({type:"job_failed",message:job.error.message});return;}dispatch({type:"job_status",response:job});if(job.status==="completed"){if(job.jobKind!=="approved_forecast"||job.decisionId!==state.approval.decisionId||job.committedRunId!==started.runId){dispatch({type:"job_failed",message:"The approved worker completed without the expected immutable run."});return;}let latest;try{latest=await getLatestDashboard("dhaka_south");}catch{dispatch({type:"job_failed",message:"The approved run committed, but Overview refresh failed."});return;}if(!latest.ok||latest.runId!==job.committedRunId||latest.dashboard.latestRun.runId!==job.committedRunId){dispatch({type:"job_failed",message:latest.ok?"The latest dashboard did not match the approved run.":latest.error.message});return;}sessionStorage.setItem("dengueops-latest-dashboard",JSON.stringify({runId:latest.runId,dashboard:latest.dashboard}));dispatch({type:"job_completed",runId:latest.runId,point:latest.dashboard.forecastCases,targetPeriod:latest.dashboard.targetPeriod,approved:true});window.location.assign("/dashboard");return;}if(["failed","timed_out","cancelled"].includes(job.status)){dispatch({type:"job_failed",status:job.status as "failed"|"timed_out"|"cancelled",message:job.error?.message??"The approved forecast failed; the previous Overview remains unchanged."});return;}await new Promise(resolve=>window.setTimeout(resolve,delay));delay=Math.min(10000,Math.round(delay*1.35));}
-  };
+  const assessmentReady = state.serverValidation.status === "ready"
+    && state.validatedWorkflowMode === "assess_dataset"
+    && state.serverValidation.response.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible";
+  const approvedState = useMemo(() => state.approvedForecast, [state.approvedForecast]);
 
   return <div className="space-y-6">
-    <ForecastRunStepper current={state.step} />
+    <ForecastRunStepper current={state.step} completedThrough={completedThrough(state)} />
+    {state.error && state.step !== "decision" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive" role="alert">{state.error}</div> : null}
     <div className="rounded-2xl border border-border-subtle bg-surface p-5 shadow-sm sm:p-7">
-      {state.step === "upload" && <div className="grid gap-5 lg:grid-cols-2">
-        <DatasetUploadPanel kind="dengue" preview={state.files.dengue} onChange={preview => dispatch({ type: "file", preview })} onRemove={() => dispatch({ type: "remove", key: "dengue" })} />
-        <DatasetUploadPanel kind="climate" preview={state.files.climate} onChange={preview => dispatch({ type: "file", preview })} onRemove={() => dispatch({ type: "remove", key: "climate" })} />
-      </div>}
-      {state.step === "validate" && <DatasetValidationSummary
-        files={state.files}
-        mode={state.mode}
-        serverValidation={state.serverValidation}
-        onMode={mode => dispatch({ type: "mode", mode })}
-        onValidate={() => void validate()}
-        revalidationRequired={state.workflowRevalidationRequired}
-      />}
-      {state.step === "choose" && <WorkflowChoice value={state.mode} response={response} validatedWorkflowMode={state.validatedWorkflowMode} onChange={mode => dispatch({ type: "mode", mode })} />}
-      {state.step === "review" && <div className="space-y-4">
-        <div className="rounded-xl border border-border-subtle bg-surface-muted p-5">
-          <h2 className="font-semibold text-ink">Review and execute</h2>
-          <p className="mt-2 text-sm text-ink-muted">Files: {state.files.dengue?.file.name ?? "missing"} · {state.files.climate?.file.name ?? "missing"}</p>
-          <p className="mt-1 text-sm text-ink-muted">Workflow: {state.mode === "quick_forecast" ? "Quick Forecast · deployment compatibility required · 2-week horizon" : "Assess Dataset · governed candidate assessment · one-run decision required"}</p>
-          <p className="mt-2 text-xs text-ink-muted">Validated workspace: {state.workspaceId?.slice(0, 8)}… · Dataset: {state.datasetId?.slice(0, 8)}…</p>
+      {state.step === "upload" ? <div className="space-y-5">
+        <div className="grid gap-5 lg:grid-cols-2">
+          <DatasetUploadPanel kind="dengue" preview={state.files.dengue} onChange={setFile} onRemove={() => removeFile("dengue")} />
+          <DatasetUploadPanel kind="climate" preview={state.files.climate} onChange={setFile} onRemove={() => removeFile("climate")} />
         </div>
-        <ProcessingState status={state.processingStatus} stage={state.job?.ok ? state.job.progress : undefined} workflow={state.mode} />
-        {state.mode === "quick_forecast" ? <Button disabled={!selectedWorkspaceReady || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runQuickForecast()}>Start Quick Forecast</Button> : <Button disabled={!selectedWorkspaceReady || ["queued", "running", "committing"].includes(state.processingStatus)} onClick={() => void runAssessment()}>Start Dataset Assessment</Button>}
-      </div>}
-      {state.step === "results" && (state.mode === "assess_dataset" ? <div className="space-y-5"><ModelSuitabilitySummary assessment={state.assessment} />{state.assessment?<><Button href={`/validation?assessmentId=${encodeURIComponent(state.assessment.assessmentId)}`}>Open uploaded assessment in Validation</Button>{decisionPolicyAvailable ? <ApprovalPanel assessment={state.assessment} decision={state.approval} workflowDecision={state.assessment.workflow.decision} busy={["queued","running","committing"].includes(state.processingStatus)} onDecision={(choice,reason)=>void recordDecision(choice,reason)} onForecast={()=>void runApprovedForecast()}/> : <div className="rounded-xl border border-warning/25 bg-warning/10 p-5 text-sm text-ink-muted">No governed decision policy is available for this committed assessment identity. Decision, authorization, and selected-model forecast controls fail closed.</div>}</>:null}{state.approval?.forecastAuthorized?<ProcessingState status={state.processingStatus} stage={state.job?.ok?state.job.progress:undefined} workflow="assess_dataset"/>:null}</div> : <ForecastResultSummary result={state.result} />)}
-    </div>
-    <div className="flex justify-between gap-3">
-      <Button variant="secondary" disabled={index === 0} onClick={() => dispatch({ type: "step", step: order[index - 1] })}>Back</Button>
-      {state.step !== "review" && state.step !== "results"
-        ? <Button disabled={!canNext} onClick={() => dispatch({ type: "step", step: order[index + 1] })}>Continue</Button>
-        : null}
+        <div className="flex justify-end"><Button disabled={!state.files.dengue || !state.files.climate} onClick={() => update((current) => ({ ...current, step: "validation" }))}>Continue to validation</Button></div>
+      </div> : null}
+
+      {state.step === "validation" ? <div className="space-y-5">
+        <DatasetValidationSummary files={state.files} mode="assess_dataset" serverValidation={state.serverValidation} onMode={() => undefined} onValidate={() => void validate()} revalidationRequired={false} />
+        <div className="flex justify-between gap-3"><Button variant="secondary" onClick={() => update((current) => ({ ...current, step: "upload" }))}>Back</Button><Button disabled={!assessmentReady} onClick={() => update((current) => ({ ...current, step: "assessment" }))}>Continue to assessment</Button></div>
+      </div> : null}
+
+      {state.step === "assessment" ? <div className="space-y-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-muted p-5"><h2 className="font-semibold text-ink">Governed assessment</h2><p className="mt-2 text-sm text-ink-muted">The validated workspace will evaluate the complete candidate set under its immutable common fold plan. No forecast or assignment starts here.</p></div>
+        {["queued", "running", "committing"].includes(state.processingStatus) ? <ProcessingState status={state.processingStatus} stage={state.job?.ok ? state.job.progress : undefined} workflow="assess_dataset" /> : null}
+        {!state.retainedAssessmentId ? <Button disabled={!assessmentReady || assessmentAction.current} onClick={() => void runAssessment()}>Start governed assessment</Button> : null}
+      </div> : null}
+
+      {state.step === "ranking" ? <div className="space-y-5">
+        <ModelSuitabilitySummary assessment={state.assessment} />
+        <div className="flex justify-end"><Button disabled={!state.assessment?.technicalWinnerModelId || !decisionPolicyAvailable} onClick={() => update((current) => ({ ...current, step: "decision" }))}>Review governed decision</Button></div>
+      </div> : null}
+
+      {state.step === "decision" && state.assessment ? <div className="space-y-5">
+        <ModelSuitabilitySummary assessment={state.assessment} />
+        <ApprovalPanel assessment={state.assessment} decision={recordedDecision} busy={decisionAction.current || state.processingStatus === "queued"} error={state.error} onGovernedDecision={(request) => void recordDecision(request)} />
+      </div> : null}
+
+      {state.step === "approved_forecast" && state.assessment && recordedDecision ? <div className="space-y-5">
+        <ModelSuitabilitySummary assessment={state.assessment} />
+        <ApprovalPanel assessment={state.assessment} decision={recordedDecision} busy error={null} />
+        <ApprovedForecastPanel decision={recordedDecision} state={approvedState} onStateChange={(approvedForecast) => update((current) => ({ ...current, approvedForecast, processingStatus: approvedForecast.status === "idle" ? current.processingStatus : approvedForecast.status }))} />
+      </div> : null}
     </div>
   </div>;
 }

@@ -18,7 +18,10 @@ import {
   type CommittedAssessmentPolicyIdentity,
 } from "@/lib/runtime/decision-policy";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
-import {resolveActiveModel,resolveHistoricalActiveModelP2V1} from "@/lib/runtime/active-model";
+import {
+  resolveActiveModel,
+  resolveHistoricalActiveModelP2V1,
+} from "@/lib/runtime/active-model";
 
 export const runtime = "nodejs";
 
@@ -48,15 +51,41 @@ export async function GET(
         409,
       );
 
-    const assessmentPolicy = evidence.rolling.assessmentPolicy as {policyId:string;policyVersion:string;policySha256:string};
-    const isPhaseTwo = assessmentPolicy.policyVersion === "p2-v1" || assessmentPolicy.policyVersion === "p2-v2";
-    const activeModel=assessmentPolicy.policyVersion==="p2-v2"
-      ? await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,summary.deploymentId)
-      : await resolveHistoricalActiveModelP2V1({
-          repositoryRoot:config.repositoryRoot,
-          runtimeRoot:config.runtimeRoot,
-          deploymentId:summary.deploymentId,
+    const assessmentPolicy = evidence.rolling.assessmentPolicy as {
+      policyId: string;
+      policyVersion: string;
+      policySha256: string;
+    };
+    const isPhaseTwo =
+      assessmentPolicy.policyVersion === "p2-v1" ||
+      assessmentPolicy.policyVersion === "p2-v2" ||
+      assessmentPolicy.policyVersion === "p2-v3";
+    let activeModel;
+    switch (assessmentPolicy.policyVersion) {
+      case "p2-v2":
+      case "p2-v3":
+        activeModel = await resolveActiveModel(
+          config.repositoryRoot,
+          config.runtimeRoot,
+          summary.deploymentId,
+        );
+        break;
+      case "p1.4d-1-v1":
+      case "p2-v1":
+        activeModel = await resolveHistoricalActiveModelP2V1({
+          repositoryRoot: config.repositoryRoot,
+          runtimeRoot: config.runtimeRoot,
+          deploymentId: summary.deploymentId,
         });
+        break;
+      default:
+        throw new RuntimePublicError(
+          "unsupported_assessment_policy_identity",
+          "storage",
+          "The assessment policy identity is unsupported.",
+          409,
+        );
+    }
     const policyIdentity = {
       schemaVersion: isPhaseTwo ? "2.0" : "1.0",
       policyId: assessmentPolicy.policyId,

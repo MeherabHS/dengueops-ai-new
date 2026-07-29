@@ -377,10 +377,30 @@ export type StartAssessmentResponse =
   | { ok: true; assessmentId: string; jobId: string; status: "queued"; statusUrl: string; assessmentUrl: string }
   | RuntimeErrorResponse;
 
+interface ApprovedForecastJobStatusBase {
+  ok: true;
+  jobKind: "approved_forecast";
+  jobId: string;
+  runId: string;
+  decisionId: string;
+  assessmentId: string;
+  authorizationId: string;
+  progress: string;
+  createdAt: string;
+  startedAt: string | null;
+  updatedAt: string;
+  completedAt: string | null;
+  retryable: false;
+  error: RuntimeJobRecord["error"];
+}
+export type ApprovedForecastJobStatusResponse =
+  | (ApprovedForecastJobStatusBase & {status:"completed";committedRunId:string;approvedForecastCommitSha256:string})
+  | (ApprovedForecastJobStatusBase & {status:Exclude<RuntimeJobStatus,"completed">;committedRunId:null;approvedForecastCommitSha256?:never});
+
 export type JobStatusResponse =
   | ({ ok: true; jobKind: "quick_forecast"; jobId: string; runId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null; activeModelAuthority?:CurrentActiveModelAuthority })
   | ({ ok: true; jobKind: "dataset_assessment"; jobId: string; assessmentId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedAssessmentId: string | null })
-  | ({ ok: true; jobKind: "approved_forecast"; jobId: string; runId: string; decisionId: string; assessmentId: string; authorizationId: string; status: RuntimeJobStatus; progress: string; createdAt: string; startedAt: string | null; updatedAt: string; completedAt: string | null; retryable: boolean; error: RuntimeJobRecord["error"]; committedRunId: string | null })
+  | ApprovedForecastJobStatusResponse
   | ({ ok:true; jobKind:"forecast_outcome"; jobId:string; outcomeId:string; workflowMode:"forecast_outcome_monitoring"; status:RuntimeJobStatus; progress:string; createdAt:string; startedAt:string|null; updatedAt:string; completedAt:string|null; retryable:boolean; error:RuntimeJobRecord["error"]; committedOutcomeId:string|null })
   | ({ok:true;jobKind:"degradation_evidence";jobId:string;evidenceId:string;workflowMode:"degradation_evidence";status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedEvidenceId:string|null})
   | ({ok:true;jobKind:"model_lifecycle";jobId:string;lifecycleDecisionId:string;workflowMode:"model_lifecycle";action:LifecycleAction;status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedLifecycleDecisionId:string|null})
@@ -400,7 +420,7 @@ export type RuntimeAssessmentPolicyVersion = "p1.4d-1-v1" | "p2-v1" | "p2-v2" | 
 export interface AssessmentCandidateSummary {
   modelId: RuntimeCandidateId;
   modelLabel: string;
-  candidateClass: "naive_baseline" | "learned_model";
+  candidateClass: "naive_baseline" | "comparison_baseline" | "learned_model";
   deployabilityClass: "baseline_not_runtime_deployable" | "deployable_learned_model";
   parametersSha256: string;
   eligible: boolean;
@@ -415,6 +435,12 @@ export interface AssessmentCandidateSummary {
   executionMode: "fitted_per_fold" | "deterministic_baseline_per_fold";
   historicalPredictionsReused: false;
   foldWinsTiesLosses: null | { better: number; tied: number; worse: number };
+  status:
+    | "technical_winner"
+    | "eligible_non_winner"
+    | "baseline_only"
+    | "failed"
+    | "ineligible";
 }
 
 export interface AssessmentCandidateProjection extends AssessmentCandidateSummary {
@@ -496,7 +522,11 @@ export interface DatasetAssessmentResultSuccess {
 export type DatasetAssessmentResponse = DatasetAssessmentResultSuccess | RuntimeErrorResponse;
 
 export type DecisionChoice = "approve_technical_winner" | "approve_eligible_non_winner" | "keep_current_model" | "defer" | "reject_assessment";
-export interface RecordDecisionRequest {decision:DecisionChoice;reason:string;expectedAssessmentSummarySha256:string;selectedModelId?:string;technicalWinnerNotSelectedAcknowledged?:true;uncertaintyLimitationsAcknowledged?:true}
+export type GovernedDecisionChoice = Extract<DecisionChoice, "approve_technical_winner" | "approve_eligible_non_winner">;
+export interface ApproveTechnicalWinnerRequest {decision:"approve_technical_winner";expectedAssessmentSummarySha256:string;reason:string;uncertaintyLimitationsAcknowledged:true}
+export interface ApproveEligibleNonWinnerRequest {decision:"approve_eligible_non_winner";expectedAssessmentSummarySha256:string;selectedModelId:CurrentSelectableCandidateId;reason:string;technicalWinnerNotSelectedAcknowledged:true;uncertaintyLimitationsAcknowledged:true}
+export type GovernedDecisionRequest = ApproveTechnicalWinnerRequest | ApproveEligibleNonWinnerRequest;
+export type RecordDecisionRequest = GovernedDecisionRequest | {decision:Exclude<DecisionChoice,GovernedDecisionChoice>;reason:string;expectedAssessmentSummarySha256:string};
 export interface DecisionResultSuccess { ok:true; decisionId:string; assessmentId:string; decision:DecisionChoice; selectedModelId:RuntimeCandidateId|null; selectedModelLabel:string|null; decisionScope:"one_run"; operatorType:"trusted_internal_unverified"; institutionalApproval:false; reason:string; decisionStatus:string; forecastAuthorized:boolean; authorizationId:string|null; authorizationStatus:"not_authorized"|"authorization_incomplete"|"available"|"reserved"|"consumed"; createdAt:string; limitations:string[]; decisionCommitSha256:string }
 export type DecisionResponse = DecisionResultSuccess | RuntimeErrorResponse;
 export interface StartApprovedForecastRequest { expectedDecisionCommitSha256: string }
