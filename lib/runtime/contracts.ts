@@ -142,6 +142,7 @@ export interface StartQuickForecastRequest {
   datasetId: string;
   deploymentId: string;
   validationRecordSha256: string;
+  expectedAssignmentPointerSha256: string;
 }
 
 export interface StartAssessmentRequest {
@@ -392,7 +393,7 @@ export type ModelLifecycleResponse={ok:true;authority:ActiveModelAuthority;histo
 export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord | ForecastOutcomeJobRecord | DegradationEvidenceJobRecord | ModelLifecycleJobRecord;
 
 export type StartQuickForecastResponse =
-  | { ok: true; jobId: string; runId: string; status: "queued"; statusUrl: string; activeModelAuthority:CurrentActiveModelAuthority }
+  | { ok: true; jobId: string; runId: string; status: RuntimeJobStatus; statusUrl: string; deploymentId: "dhaka_south"; recovered: boolean; activeModelAuthority:CurrentActiveModelAuthority }
   | RuntimeErrorResponse;
 
 export type StartAssessmentResponse =

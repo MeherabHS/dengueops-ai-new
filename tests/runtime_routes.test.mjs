@@ -6,6 +6,8 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const route = await read("app/api/runtime/validate/route.ts");
 const uploads = await read("lib/runtime/uploads.ts");
 const workflow = await read("components/forecast/ForecastRunWorkflow.tsx");
+const quickPanel = await read("components/forecast/QuickForecastRunPanel.tsx");
+const quickRoute = await read("app/api/runtime/runs/quick/route.ts");
 const contracts = await read("lib/runtime/contracts.ts");
 const assessmentOption = await read("components/forecast/DatasetAssessmentOption.tsx");
 const forecastPage = await read("app/forecast/page.tsx");
@@ -25,13 +27,32 @@ test("CSV upload inspection rejects unsafe input classes", () => {
   assert.match(uploads, /safeOriginalName/);
 });
 
-test("B9.4C2 supports fresh Quick Forecast validation without starting Quick Forecast", () => {
+test("B9.4C3 starts Quick Forecast only from the deliberate validated handoff", () => {
   assert.match(workflow, /workflowMode: "assess_dataset"/);
   assert.match(workflow, /workflowMode: "quick_forecast"/);
   assert.match(workflow, /startDatasetAssessment/);
-  assert.doesNotMatch(workflow, /startQuickForecast|location\.assign|getLatestDashboard/);
+  assert.match(workflow, /<QuickForecastRunPanel/);
+  assert.match(quickPanel, /startQuickForecast\(request\)/);
+  assert.doesNotMatch(workflow, /location\.assign|getLatestDashboard/);
   assert.match(assessmentOption, /current governed temporal assessment/);
   assert.match(forecastPage, /explicit governed expert override/);
+});
+
+test("Quick Forecast mutation authenticates before parsing and rejects unbounded fields", () => {
+  assert.ok(quickRoute.indexOf("await requireSuperUserMutation(request)") < quickRoute.indexOf("await request.json()"));
+  assert.match(quickRoute, /expectedAssignmentPointerSha256/);
+  assert.match(quickRoute, /unexpected_quick_forecast_field/);
+  assert.match(quickRoute, /quick_forecast_assignment_conflict/);
+  assert.doesNotMatch(quickPanel, /modelId:|candidateId:|selectedCandidateId:/);
+});
+
+test("Quick Forecast start and recovery expose one sanitized response contract", () => {
+  const response = quickRoute.slice(quickRoute.indexOf("function successResponse"), quickRoute.indexOf("function canonicalPolicySha256"));
+  for (const marker of ["jobId", "runId", "status", "statusUrl", "deploymentId", "recovered", "activeModelAuthority"]) assert.match(response, new RegExp(marker));
+  assert.doesNotMatch(response, /path|command|markerContents|policyContents|environment/i);
+  assert.match(quickRoute, /status: 202/);
+  assert.match(quickRoute, /status: 200/);
+  assert.match(quickRoute, /quick_forecast_publication_in_progress/);
 });
 
 test("validation success returns only a server-verified bounded workflow mode", () => {

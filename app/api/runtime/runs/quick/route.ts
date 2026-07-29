@@ -1,8 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
-import { readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { loadRuntimeConfig } from "@/lib/runtime/config";
-import type { RuntimeJobRecord, RuntimeWorkspaceMetadata, StartQuickForecastRequest, StartQuickForecastResponse } from "@/lib/runtime/contracts";
+import type { CurrentActiveModelAuthority, RuntimeJobRecord, RuntimeJobStatus, RuntimeWorkspaceMetadata, StartQuickForecastRequest, StartQuickForecastResponse } from "@/lib/runtime/contracts";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained, jobRecordPath, runtimeCollectionPaths, workspacePaths } from "@/lib/runtime/paths";
 import { createPendingJob, createWorkspaceStartMarker, initializeRuntimeRoot } from "@/lib/runtime/store";
@@ -14,7 +14,138 @@ export const runtime = "nodejs";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[a-f0-9]{64}$/;
+const JOB_STATUSES = new Set<RuntimeJobStatus>(["queued", "running", "committing", "completed", "failed", "timed_out", "cancelled"]);
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
+
+interface QuickForecastStartMarker {
+  schemaVersion: "2.0";
+  workflowType: "quick_forecast";
+  workspaceId: string;
+  datasetId: string;
+  deploymentId: "dhaka_south";
+  validationRecordSha256: string;
+  expectedAssignmentPointerSha256: string;
+  assignmentId: string;
+  authoritySnapshotSha256: string;
+  jobId: string;
+  runId: string;
+  statusUrl: string;
+  createdAt: string;
+}
+
+const MARKER_KEYS = new Set([
+  "schemaVersion", "workflowType", "workspaceId", "datasetId", "deploymentId",
+  "validationRecordSha256", "expectedAssignmentPointerSha256", "assignmentId",
+  "authoritySnapshotSha256", "jobId", "runId", "statusUrl", "createdAt",
+]);
+
+function markerIntegrityError(): RuntimePublicError {
+  return new RuntimePublicError("quick_forecast_start_integrity_error", "storage", "The existing Quick Forecast start evidence could not be verified.", 409);
+}
+
+function parseStartMarker(bytes: Buffer): QuickForecastStartMarker {
+  let value: Record<string, unknown>;
+  try {
+    value = JSON.parse(bytes.toString("utf8")) as Record<string, unknown>;
+  } catch {
+    throw markerIntegrityError();
+  }
+  if (
+    Object.keys(value).length !== MARKER_KEYS.size
+    || Object.keys(value).some((key) => !MARKER_KEYS.has(key))
+    || value.schemaVersion !== "2.0"
+    || value.workflowType !== "quick_forecast"
+    || !UUID.test(String(value.workspaceId ?? ""))
+    || !SHA.test(String(value.datasetId ?? ""))
+    || value.deploymentId !== "dhaka_south"
+    || !SHA.test(String(value.validationRecordSha256 ?? ""))
+    || !SHA.test(String(value.expectedAssignmentPointerSha256 ?? ""))
+    || !UUID.test(String(value.assignmentId ?? ""))
+    || !SHA.test(String(value.authoritySnapshotSha256 ?? ""))
+    || !UUID.test(String(value.jobId ?? ""))
+    || !UUID.test(String(value.runId ?? ""))
+    || value.statusUrl !== `/api/runtime/jobs/${value.jobId}`
+    || typeof value.createdAt !== "string"
+    || !Number.isFinite(Date.parse(value.createdAt))
+  ) throw markerIntegrityError();
+  return value as unknown as QuickForecastStartMarker;
+}
+
+async function readStartMarker(markerPath: string): Promise<QuickForecastStartMarker | null> {
+  try {
+    return parseStartMarker(await readFile(markerPath));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function verifyMarkerBindings(
+  marker: QuickForecastStartMarker,
+  body: StartQuickForecastRequest,
+  authority: CurrentActiveModelAuthority,
+): void {
+  if (
+    marker.workspaceId !== body.workspaceId
+    || marker.datasetId !== body.datasetId
+    || marker.deploymentId !== body.deploymentId
+    || marker.validationRecordSha256 !== body.validationRecordSha256
+    || marker.expectedAssignmentPointerSha256 !== body.expectedAssignmentPointerSha256
+    || marker.assignmentId !== authority.assignmentId
+    || marker.authoritySnapshotSha256 !== authority.authoritySnapshotSha256
+  ) throw markerIntegrityError();
+}
+
+async function readVisibleQuickJob(runtimeRoot: string, marker: QuickForecastStartMarker): Promise<RuntimeJobRecord | null> {
+  const collections = runtimeCollectionPaths(runtimeRoot);
+  for (const directory of [collections.pendingJobs, collections.runningJobs, collections.completedJobs, collections.failedJobs]) {
+    try {
+      const job = JSON.parse(await readFile(jobRecordPath(directory, marker.jobId), "utf8")) as RuntimeJobRecord;
+      return job;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw markerIntegrityError();
+    }
+  }
+  return null;
+}
+
+function verifyRecoveredJob(job: RuntimeJobRecord, marker: QuickForecastStartMarker, authority: CurrentActiveModelAuthority): RuntimeJobStatus {
+  if (
+    job.jobKind !== "quick_forecast"
+    || job.schemaVersion !== "2.1"
+    || job.jobId !== marker.jobId
+    || job.runId !== marker.runId
+    || job.workspaceId !== marker.workspaceId
+    || job.datasetId !== marker.datasetId
+    || job.deploymentId !== marker.deploymentId
+    || job.workflowMode !== marker.workflowType
+    || job.validationRecordSha256 !== marker.validationRecordSha256
+    || job.assignmentId !== marker.assignmentId
+    || job.authoritySnapshotSha256 !== marker.authoritySnapshotSha256
+    || job.assignmentCommitSha256 !== authority.assignmentCommitSha256
+    || job.resolvedModelId !== authority.modelId
+    || !JOB_STATUSES.has(job.status)
+  ) throw markerIntegrityError();
+  return job.status;
+}
+
+function successResponse(
+  marker: QuickForecastStartMarker,
+  authority: CurrentActiveModelAuthority,
+  status: RuntimeJobStatus,
+  recovered: boolean,
+): StartQuickForecastResponse {
+  return {
+    ok: true,
+    jobId: marker.jobId,
+    runId: marker.runId,
+    status,
+    statusUrl: marker.statusUrl,
+    deploymentId: marker.deploymentId,
+    recovered,
+    activeModelAuthority: authority,
+  };
+}
 
 function canonicalPolicySha256(policy: Record<string, unknown>): string {
   const content = { ...policy };
@@ -45,15 +176,18 @@ export async function POST(request: Request): Promise<Response> {
   try {
     await requireSuperUserMutation(request);
     const body = await request.json() as Partial<StartQuickForecastRequest> & Record<string, unknown>;
-    const allowed = new Set(["workspaceId", "datasetId", "deploymentId", "validationRecordSha256"]);
+    const allowed = new Set(["workspaceId", "datasetId", "deploymentId", "validationRecordSha256", "expectedAssignmentPointerSha256"]);
     if (Object.keys(body).some(key => !allowed.has(key))) throw new RuntimePublicError("unexpected_quick_forecast_field", "validation", "The Quick Forecast request contains an unsupported field.", 400);
-    if (!UUID.test(String(body.workspaceId ?? "")) || !SHA.test(String(body.datasetId ?? "")) || !SHA.test(String(body.validationRecordSha256 ?? ""))) {
+    if (!UUID.test(String(body.workspaceId ?? "")) || !SHA.test(String(body.datasetId ?? "")) || !SHA.test(String(body.validationRecordSha256 ?? "")) || !SHA.test(String(body.expectedAssignmentPointerSha256 ?? ""))) {
       throw new RuntimePublicError("invalid_quick_forecast_request", "validation", "The Quick Forecast request identity is invalid.", 400);
     }
     const config = loadRuntimeConfig();
     if (body.deploymentId !== config.defaultDeploymentId) throw new RuntimePublicError("deployment_mismatch", "validation", "The requested deployment is unavailable.", 400);
     await initializeRuntimeRoot(config.runtimeRoot);
     const authority=await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,String(body.deploymentId));
+    if (authority.authoritySnapshotSha256 !== body.expectedAssignmentPointerSha256) {
+      throw new RuntimePublicError("quick_forecast_assignment_conflict", "validation", "The current governed assignment changed before Quick Forecast publication.", 409);
+    }
 
     const workspace = workspacePaths(config.runtimeRoot, String(body.workspaceId));
     const metadata = JSON.parse(await readFile(workspace.workspaceMetadata, "utf8")) as RuntimeWorkspaceMetadata;
@@ -108,10 +242,43 @@ export async function POST(request: Request): Promise<Response> {
       throw new RuntimePublicError("quick_forecast_policy_ineligible", "validation", "The workspace is no longer eligible under the governed Quick Forecast policy.", 409);
     }
 
-    const jobId = randomUUID(); const runId = randomUUID(); const now = new Date().toISOString();
     const collections = runtimeCollectionPaths(config.runtimeRoot);
     const marker = assertContained(workspace.metadata, path.join(workspace.metadata, "quick_forecast_started.json"));
-    await createWorkspaceStartMarker(marker, { schemaVersion: "1.0", workspaceId: body.workspaceId, datasetId: body.datasetId, jobId, runId, createdAt: now });
+    const recover = async (existing: QuickForecastStartMarker): Promise<Response> => {
+      verifyMarkerBindings(existing, body as StartQuickForecastRequest, authority);
+      const visible = await readVisibleQuickJob(config.runtimeRoot, existing);
+      if (!visible) {
+        throw new RuntimePublicError("quick_forecast_publication_in_progress", "storage", "Quick Forecast publication is reserved and the job is not yet visible.", 409, true);
+      }
+      const status = verifyRecoveredJob(visible, existing, authority);
+      return Response.json(successResponse(existing, authority, status, true), { status: 200 });
+    };
+    const existing = await readStartMarker(marker);
+    if (existing) return await recover(existing);
+
+    const jobId = randomUUID(); const runId = randomUUID(); const now = new Date().toISOString();
+    const startMarker: QuickForecastStartMarker = {
+      schemaVersion: "2.0",
+      workflowType: "quick_forecast",
+      workspaceId: String(body.workspaceId),
+      datasetId: String(body.datasetId),
+      deploymentId: "dhaka_south",
+      validationRecordSha256: String(body.validationRecordSha256),
+      expectedAssignmentPointerSha256: String(body.expectedAssignmentPointerSha256),
+      assignmentId: authority.assignmentId,
+      authoritySnapshotSha256: authority.authoritySnapshotSha256,
+      jobId,
+      runId,
+      statusUrl: `/api/runtime/jobs/${jobId}`,
+      createdAt: now,
+    };
+    try {
+      await createWorkspaceStartMarker(marker, startMarker);
+    } catch {
+      const concurrentlyCreated = await readStartMarker(marker);
+      if (!concurrentlyCreated) throw markerIntegrityError();
+      return await recover(concurrentlyCreated);
+    }
     const job: RuntimeJobRecord = {
       schemaVersion: "2.1", jobKind: "quick_forecast", jobId, runId, workspaceId: String(body.workspaceId), datasetId: String(body.datasetId), deploymentId: String(body.deploymentId),
       workflowMode: "quick_forecast", validationRecordSha256: String(body.validationRecordSha256), policyId: policy.policyId, policyVersion: policy.policyVersion,
@@ -139,10 +306,9 @@ export async function POST(request: Request): Promise<Response> {
     try {
       await createPendingJob(jobRecordPath(collections.pendingJobs, jobId), job);
     } catch {
-      await rm(marker, { force: true }).catch(() => undefined);
-      throw new RuntimePublicError("job_creation_failed", "storage", "The Quick Forecast job could not be queued.", 500, true);
+      throw new RuntimePublicError("quick_forecast_publication_in_progress", "storage", "Quick Forecast publication is reserved and the job is not yet visible.", 409, true);
     }
-    const response: StartQuickForecastResponse = { ok: true, jobId, runId, status: "queued", statusUrl: `/api/runtime/jobs/${jobId}`, activeModelAuthority:authority };
+    const response = successResponse(startMarker, authority, "queued", false);
     return Response.json(response, { status: 202 });
   } catch (error) {
     const failure = errorResponse(error, correlationId);

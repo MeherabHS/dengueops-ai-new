@@ -22,6 +22,11 @@ export async function startQuickForecast(input: StartQuickForecastRequest): Prom
   return await response.json() as StartQuickForecastResponse;
 }
 
+export async function recoverQuickForecastStart(input: StartQuickForecastRequest): Promise<StartQuickForecastResponse> {
+  // The server's exclusive workspace-start marker makes this identical request a read/recovery operation.
+  return await startQuickForecast(input);
+}
+
 export async function startDatasetAssessment(input: StartAssessmentRequest): Promise<StartAssessmentResponse> {
   const response = await fetch("/api/runtime/assessments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) });
   return await response.json() as StartAssessmentResponse;

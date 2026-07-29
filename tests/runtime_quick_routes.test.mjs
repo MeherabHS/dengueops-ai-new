@@ -1,22 +1,48 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, readdir, rm, unlink, writeFile } from "node:fs/promises";
+import Module from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
-
-import quickRouteModule from "../app/api/runtime/runs/quick/route.ts";
-import jobRouteModule from "../app/api/runtime/jobs/[jobId]/route.ts";
-import validateRouteModule from "../app/api/runtime/validate/route.ts";
-import sessionModule from "../lib/auth/session.ts";
+import { require as tsxRequire } from "tsx/cjs/api";
 import { findPython, spawnPythonSync } from "./node_python_runner.mjs";
 
 const sessionSecret = "quick-route-test-session-secret-value-1234567890";
 process.env.DENGUEOPS_SESSION_SECRET = sessionSecret;
+const originalModuleLoad = Module._load;
+Module._load = function loadForServerRouteTest(request, parent, isMain) {
+  if (request === "server-only") {
+    return {};
+  }
+  return originalModuleLoad.call(this, request, parent, isMain);
+};
+const [
+  quickRouteImported,
+  jobRouteImported,
+  validateRouteImported,
+  sessionImported,
+] = [
+  tsxRequire("../app/api/runtime/runs/quick/route.ts", import.meta.url),
+  tsxRequire("../app/api/runtime/jobs/[jobId]/route.ts", import.meta.url),
+  tsxRequire("../app/api/runtime/validate/route.ts", import.meta.url),
+  tsxRequire("../lib/auth/session.ts", import.meta.url),
+];
+Module._load = originalModuleLoad;
+const quickRouteModule = quickRouteImported.default ?? quickRouteImported;
+const jobRouteModule = jobRouteImported.default ?? jobRouteImported;
+const validateRouteModule = validateRouteImported.default ?? validateRouteImported;
+const sessionModule = sessionImported.default ?? sessionImported;
 const { createSessionToken, sessionCookieName } = sessionModule;
 const sessionToken = await createSessionToken("quick-route-test-super-user");
 const { POST: queueQuickForecast } = quickRouteModule;
 const { GET: getRuntimeJob } = jobRouteModule;
 const { POST: validateRuntime } = validateRouteModule;
+let pythonAvailable = true;
+try {
+  findPython();
+} catch {
+  pythonAvailable = false;
+}
 function createFixture(base, modelId) {
   const built = spawnPythonSync(
     ["-m", "tests.runtime_active_model_parity_probe", "create-quick", base, modelId],
@@ -26,7 +52,7 @@ function createFixture(base, modelId) {
   return JSON.parse(built.stdout.trim().split(/\r?\n/).at(-1));
 }
 
-function requestFor(fixture, extra = {}, authority = "super_user") {
+function requestFor(fixture, extra = {}, authority = "super_user", omitExpectedPointer = false) {
   const headers = {
     "content-type": "application/json",
     ...(authority === "anonymous" ? {} : {
@@ -43,6 +69,11 @@ function requestFor(fixture, extra = {}, authority = "super_user") {
       datasetId: fixture.datasetId,
       deploymentId: "dhaka_south",
       validationRecordSha256: fixture.validationRecordSha256,
+      ...(!omitExpectedPointer ? {
+        expectedAssignmentPointerSha256: fixture.authority?.authoritySnapshotSha256
+          ?? fixture.expectedAssignmentPointerSha256
+          ?? "1".repeat(64),
+      } : {}),
       ...extra,
     }),
   });
@@ -52,7 +83,7 @@ async function withRuntime(runtime, callback) {
   const previousRoot = process.env.DENGUEOPS_RUNTIME_ROOT;
   const previousPython = process.env.DENGUEOPS_PYTHON_EXECUTABLE;
   process.env.DENGUEOPS_RUNTIME_ROOT = runtime;
-  process.env.DENGUEOPS_PYTHON_EXECUTABLE = findPython().command;
+  if (pythonAvailable) process.env.DENGUEOPS_PYTHON_EXECUTABLE = findPython().command;
   try {
     return await callback();
   } finally {
@@ -64,7 +95,7 @@ async function withRuntime(runtime, callback) {
 }
 
 for (const modelId of ["random_forest", "ridge_regression"]) {
-  test(`current ${modelId} assignment queues with exact authority and status projection`, { timeout: 420_000 }, async () => {
+  test(`current ${modelId} assignment queues once and recovers the same exclusive start`, { timeout: 420_000, skip: !pythonAvailable }, async () => {
     const temporary = await mkdtemp(path.join(tmpdir(), `b6-quick-${modelId}-`));
     try {
       const fixture = createFixture(path.join(temporary, "fixture"), modelId);
@@ -90,6 +121,8 @@ for (const modelId of ["random_forest", "ridge_regression"]) {
         const response = await queueQuickForecast(requestFor(fixture));
         assert.equal(response.status, 202, await response.clone().text());
         const queued = await response.json();
+        assert.equal(queued.recovered, false);
+        assert.equal(queued.deploymentId, "dhaka_south");
         assert.deepEqual(queued.activeModelAuthority, fixture.authority);
 
         const jobPath = path.join(fixture.runtime, "jobs", "pending", `${queued.jobId}.json`);
@@ -101,6 +134,20 @@ for (const modelId of ["random_forest", "ridge_regression"]) {
         assert.equal(job.resolvedPreprocessingIdentity, fixture.authority.preprocessingIdentity);
         assert.equal(job.quickPolicyVersion, "p2-v2");
         assert.equal(job.quickPolicySha256, "09c338d56737ba35b5a0db82c97a7e26222297dfbb07cba36bf0e5f831b9adc2");
+        const markerPath = path.join(fixture.runtime, "workspaces", fixture.workspaceId, "metadata", "quick_forecast_started.json");
+        const marker = JSON.parse(await readFile(markerPath, "utf8"));
+        assert.equal(marker.schemaVersion, "2.0");
+        assert.equal(marker.workflowType, "quick_forecast");
+        assert.equal(marker.expectedAssignmentPointerSha256, fixture.authority.authoritySnapshotSha256);
+
+        const recoveredResponse = await queueQuickForecast(requestFor(fixture));
+        assert.equal(recoveredResponse.status, 200);
+        const recovered = await recoveredResponse.json();
+        assert.equal(recovered.recovered, true);
+        assert.equal(recovered.jobId, queued.jobId);
+        assert.equal(recovered.runId, queued.runId);
+        assert.equal(recovered.statusUrl, queued.statusUrl);
+        assert.equal((await readdir(path.join(fixture.runtime, "jobs", "pending"))).length, 1);
 
         const status = await getRuntimeJob(
           new Request(`http://localhost/api/runtime/jobs/${queued.jobId}`),
@@ -116,7 +163,7 @@ for (const modelId of ["random_forest", "ridge_regression"]) {
   });
 }
 
-test("missing current assignment rejects without historical profile fallback", { timeout: 420_000 }, async () => {
+test("missing current assignment rejects without historical profile fallback", { timeout: 420_000, skip: !pythonAvailable }, async () => {
   const temporary = await mkdtemp(path.join(tmpdir(), "b6-quick-missing-"));
   try {
     const fixture = createFixture(path.join(temporary, "fixture"), "ridge_regression");
@@ -131,7 +178,7 @@ test("missing current assignment rejects without historical profile fallback", {
   }
 });
 
-test("tampered current assignment rejects before queue publication", { timeout: 420_000 }, async () => {
+test("tampered current assignment rejects before queue publication", { timeout: 420_000, skip: !pythonAvailable }, async () => {
   const temporary = await mkdtemp(path.join(tmpdir(), "b6-quick-tampered-"));
   try {
     const fixture = createFixture(path.join(temporary, "fixture"), "ridge_regression");
@@ -157,12 +204,92 @@ test("client-supplied model and authority overrides are rejected", async () => {
   };
   for (const extra of [
     { modelId: "random_forest" },
+    { candidateId: "random_forest" },
     { assignmentId: "00000000-0000-4000-8000-000000000000" },
     { lifecyclePolicySha256: "0".repeat(64) },
   ]) {
     const response = await queueQuickForecast(requestFor(fixture, extra));
     assert.equal(response.status, 400);
     assert.equal((await response.json()).error.code, "unexpected_quick_forecast_field");
+  }
+});
+
+test("expected assignment pointer is required and must be a SHA-256 identity", async () => {
+  const fixture = {
+    workspaceId: "00000000-0000-4000-8000-000000000000",
+    datasetId: "0".repeat(64),
+    validationRecordSha256: "0".repeat(64),
+  };
+  const missing = await queueQuickForecast(requestFor(fixture, {}, "super_user", true));
+  assert.equal(missing.status, 400);
+  assert.equal((await missing.json()).error.code, "invalid_quick_forecast_request");
+  const invalid = await queueQuickForecast(requestFor(fixture, { expectedAssignmentPointerSha256: "not-a-sha" }));
+  assert.equal(invalid.status, 400);
+  assert.equal((await invalid.json()).error.code, "invalid_quick_forecast_request");
+});
+
+test("stale assignment pointer rejects with 409 before enqueue", { timeout: 420_000, skip: !pythonAvailable }, async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "b9-quick-conflict-"));
+  try {
+    const fixture = createFixture(path.join(temporary, "fixture"), "ridge_regression");
+    await withRuntime(fixture.runtime, async () => {
+      const response = await queueQuickForecast(requestFor(fixture, { expectedAssignmentPointerSha256: "f".repeat(64) }));
+      assert.equal(response.status, 409);
+      assert.equal((await response.json()).error.code, "quick_forecast_assignment_conflict");
+      assert.equal((await readdir(path.join(fixture.runtime, "jobs", "pending"))).length, 0);
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+test("reserved marker without a visible job reports publication in progress", { timeout: 420_000, skip: !pythonAvailable }, async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "b9-quick-in-progress-"));
+  try {
+    const fixture = createFixture(path.join(temporary, "fixture"), "ridge_regression");
+    await withRuntime(fixture.runtime, async () => {
+      const started = await queueQuickForecast(requestFor(fixture));
+      const value = await started.json();
+      await unlink(path.join(fixture.runtime, "jobs", "pending", `${value.jobId}.json`));
+      const response = await queueQuickForecast(requestFor(fixture));
+      assert.equal(response.status, 409);
+      assert.equal((await response.json()).error.code, "quick_forecast_publication_in_progress");
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+test("conflicting and malformed exclusive markers fail closed", { timeout: 420_000, skip: !pythonAvailable }, async () => {
+  for (const malformed of [false, true]) {
+    const temporary = await mkdtemp(path.join(tmpdir(), "b9-quick-marker-integrity-"));
+    try {
+      const fixture = createFixture(path.join(temporary, "fixture"), "ridge_regression");
+      const markerPath = path.join(fixture.runtime, "workspaces", fixture.workspaceId, "metadata", "quick_forecast_started.json");
+      await writeFile(markerPath, malformed ? "not-json" : JSON.stringify({
+        schemaVersion: "2.0",
+        workflowType: "quick_forecast",
+        workspaceId: fixture.workspaceId,
+        datasetId: "f".repeat(64),
+        deploymentId: "dhaka_south",
+        validationRecordSha256: fixture.validationRecordSha256,
+        expectedAssignmentPointerSha256: fixture.authority.authoritySnapshotSha256,
+        assignmentId: fixture.authority.assignmentId,
+        authoritySnapshotSha256: fixture.authority.authoritySnapshotSha256,
+        jobId: "00000000-0000-4000-8000-000000000001",
+        runId: "00000000-0000-4000-8000-000000000002",
+        statusUrl: "/api/runtime/jobs/00000000-0000-4000-8000-000000000001",
+        createdAt: new Date().toISOString(),
+      }));
+      await withRuntime(fixture.runtime, async () => {
+        const response = await queueQuickForecast(requestFor(fixture));
+        assert.equal(response.status, 409);
+        assert.equal((await response.json()).error.code, "quick_forecast_start_integrity_error");
+        assert.equal((await readdir(path.join(fixture.runtime, "jobs", "pending"))).length, 0);
+      });
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
   }
 });
 
@@ -173,6 +300,7 @@ test("anonymous and cross-origin requests fail before runtime initialization", a
       workspaceId: "00000000-0000-4000-8000-000000000000",
       datasetId: "0".repeat(64),
       validationRecordSha256: "0".repeat(64),
+      expectedAssignmentPointerSha256: "1".repeat(64),
     };
     await withRuntime(temporary, async () => {
       const anonymous = await queueQuickForecast(requestFor(fixture, {}, "anonymous"));
@@ -195,12 +323,13 @@ test("route binds current Quick Forecast policy to the trusted lifecycle authori
   assert.doesNotMatch(source, /policy\.policyVersion\s*!==\s*["']p2-v[0-9]+["']/);
 });
 
-test("frontend refresh is gated on completed committed run identity", async () => {
-  const source = await readFile(new URL("../components/forecast/ForecastRunWorkflow.tsx", import.meta.url), "utf8");
+test("frontend handoff is gated on completed committed run and exact current authority", async () => {
+  const source = await readFile(new URL("../components/forecast/QuickForecastRunPanel.tsx", import.meta.url), "utf8");
   assert.match(source, /job\.status === "completed"/);
-  assert.match(source, /latest\.runId !== job\.committedRunId/);
-  assert.match(source, /dengueops-latest-dashboard/);
-  assert.match(source, /location\.assign\("\/dashboard"\)/);
+  assert.match(source, /job\.committedRunId !== expectedRunId/);
+  assert.match(source, /latest\.runId === committedRunId/);
+  assert.match(source, /state\.status !== "current_verified"/);
+  assert.match(source, /router\.push\("\/dashboard"\)/);
   assert.doesNotMatch(source, /EventSource|WebSocket/);
 });
 

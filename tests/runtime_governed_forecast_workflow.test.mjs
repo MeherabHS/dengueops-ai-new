@@ -7,6 +7,7 @@ const [
   workflow,
   approval,
   approvedForecast,
+  quickRun,
   leaderboard,
   stepper,
   validation,
@@ -21,6 +22,7 @@ const [
   read("components/forecast/ForecastRunWorkflow.tsx"),
   read("components/forecast/ApprovalPanel.tsx"),
   read("components/forecast/ApprovedForecastPanel.tsx"),
+  read("components/forecast/QuickForecastRunPanel.tsx"),
   read("components/forecast/ModelLeaderboard.tsx"),
   read("components/forecast/ForecastRunStepper.tsx"),
   read("components/forecast/DatasetValidationSummary.tsx"),
@@ -126,10 +128,22 @@ test("completed approved run stays on workflow with assignment and Quick Forecas
   assert.match(approvedForecast, /approvedForecastCommitSha256/);
   assert.match(approvedForecast, /committedRunId/);
   assert.match(approvedForecast, /sourceDecisionId/);
-  assert.doesNotMatch([workflow, approvedForecast].join("\n"), /location\.assign|router\.(?:push|replace)|href="\/dashboard"|startQuickForecast/);
+  const approvedStage = workflow.slice(workflow.indexOf('state.step === "approved_forecast"'), workflow.indexOf('state.step === "assignment"'));
+  assert.doesNotMatch([approvedStage, approvedForecast].join("\n"), /location\.assign|router\.(?:push|replace)|href="\/dashboard"|startQuickForecast/);
   for (const label of ["Upload", "Validation", "Assessment", "Ranking", "Decision", "Approved forecast", "Assignment", "Quick Forecast", "Complete"]) assert.match(stepper, new RegExp(label));
   assert.match(stepper, /data-stage-state/);
   assert.match(quickOption, /Pending; this workflow does not start Quick Forecast/);
+});
+
+test("Quick Forecast dashboard handoff requires the exact verified current run", () => {
+  assert.match(quickRun, /job\.committedRunId !== expectedRunId/);
+  assert.match(quickRun, /latest\.runId === committedRunId/);
+  assert.match(quickRun, /latest\.dashboard\.latestRun\.runId === committedRunId/);
+  assert.match(quickRun, /status: "current_verified"/);
+  const navigation = quickRun.slice(quickRun.indexOf('state.status !== "current_verified"'), quickRun.indexOf("const terminalFailure"));
+  assert.match(navigation, /state\.exactCurrentRunId !== state\.committedRunId/);
+  assert.match(navigation, /state\.committedRunId !== state\.expectedRunId/);
+  assert.match(navigation, /router\.push\("\/dashboard"\)/);
 });
 
 test("refresh recovery resumes GET polling but never repeats append-only actions", () => {

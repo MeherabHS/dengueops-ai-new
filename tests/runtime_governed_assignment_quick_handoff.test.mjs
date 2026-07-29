@@ -3,14 +3,16 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [panel, workflow, validationSummary, client, contracts, route, validationRoute] = await Promise.all([
+const [panel, quickPanel, workflow, validationSummary, client, contracts, route, validationRoute, quickRoute] = await Promise.all([
   read("components/forecast/ModelAssignmentPanel.tsx"),
+  read("components/forecast/QuickForecastRunPanel.tsx"),
   read("components/forecast/ForecastRunWorkflow.tsx"),
   read("components/forecast/DatasetValidationSummary.tsx"),
   read("lib/runtime/client.ts"),
   read("lib/runtime/contracts.ts"),
   read("app/api/runtime/model-assignments/route.ts"),
   read("app/api/runtime/validate/route.ts"),
+  read("app/api/runtime/runs/quick/route.ts"),
 ]);
 
 test("approved forecast terminal evidence is reverified before assignment authority is read", () => {
@@ -102,12 +104,14 @@ test("refresh recovery retains local evidence but rechecks both server authoriti
   assert.doesNotMatch(recovery, /startModelAssignment|startQuickForecast|validateRuntimeDatasets/);
 });
 
-test("verified assignment enables fresh validation while Quick Forecast execution remains pending", () => {
+test("verified assignment and fresh validation gate the deliberate Quick Forecast action", () => {
   assert.match(panel, /Governed assignment verified\. Quick Forecast validation is the next step\./);
   assert.match(workflow, /assignment\.status !== "assigned_verified" \|\| !assignment\.current/);
   assert.match(workflow, /step: "quick_forecast"/);
   assert.match(workflow, /Quick Forecast validation ready\. Forecast execution is the next step\./);
-  assert.doesNotMatch([panel, workflow].join("\n"), /startQuickForecast|router\.(?:push|replace)|location\.(?:assign|replace)|\/dashboard/);
+  assert.match(workflow, /state\.quickValidation\.status === "quick_validation_ready"[\s\S]*<QuickForecastRunPanel/);
+  assert.match(quickPanel, /Run Quick Forecast/);
+  assert.match(quickPanel, /state\.status !== "ready_to_run"/);
 });
 
 test("assessment workspace and validation evidence are reset without erasing governed evidence", () => {
@@ -209,13 +213,121 @@ test("all explicit Quick validation states and dynamic summary evidence are pres
 });
 
 test("successful validation does not start a job, redirect, or publish forecast authority", () => {
-  assert.doesNotMatch(workflow, /startQuickForecast|\/api\/runtime\/runs\/quick|router\.(?:push|replace)|location\.(?:assign|replace)|\/dashboard/);
+  const validationAction = workflow.slice(workflow.indexOf("const validateQuickForecast"), workflow.indexOf("const runAssessment"));
+  assert.doesNotMatch(validationAction, /startQuickForecast|\/api\/runtime\/runs\/quick|router\.(?:push|replace)|location\.(?:assign|replace)|\/dashboard/);
   assert.doesNotMatch(validationRoute, /forecast\/latest|write.*pointer|startQuickForecast/);
-  assert.match(workflow, /Quick Forecast remains pending\. No job was created and no forecast pointer changed\./);
+  assert.match(workflow, /quickForecast: emptyQuickForecast/);
+});
+
+test("Quick Forecast request uses only validated identities and the verified assignment pointer", () => {
+  const request = quickPanel.slice(quickPanel.indexOf("const request:"), quickPanel.indexOf("useEffect(() => () =>"));
+  for (const marker of [
+    "workspaceId: validation.workspaceId",
+    "datasetId: validation.datasetId",
+    "deploymentId: validation.deploymentId",
+    "validationRecordSha256: validation.validationRecordSha256",
+    "expectedAssignmentPointerSha256: assignment.assignmentPointerSha256",
+  ]) assert.match(request, new RegExp(marker.replaceAll(".", "\\.")));
+  assert.doesNotMatch(request, /modelId|candidateId|selectedCandidateId|assignmentId|assessmentId|decisionId|pointerContent/);
+  assert.match(quickRoute, /authority\.authoritySnapshotSha256 !== body\.expectedAssignmentPointerSha256/);
+});
+
+test("duplicate clicks and assignment conflicts cannot create an automatic retry", () => {
+  assert.match(quickPanel, /starting\.current/);
+  assert.match(quickPanel, /starting\.current = true/);
+  assert.equal((quickPanel.match(/startQuickForecast\(request\)/g) ?? []).length, 1);
+  assert.match(quickPanel, /response\.error\.code === "quick_forecast_assignment_conflict"/);
+  assert.match(quickPanel, /onAssignmentConflict\(\)/);
+  assert.match(workflow, /step: "assignment"/);
+  assert.match(workflow, /status: "loading_current_assignment"/);
+  const conflictBranch = quickPanel.slice(quickPanel.indexOf('response.error.code === "quick_forecast_assignment_conflict"'), quickPanel.indexOf('response.error.code === "quick_forecast_publication_in_progress"'));
+  assert.doesNotMatch(conflictBranch, /startQuickForecast|recoverQuickForecastStart/);
+});
+
+test("exclusive-marker recovery resumes the same bounded job polling contract", () => {
+  assert.match(quickRoute, /readStartMarker/);
+  assert.match(quickRoute, /verifyMarkerBindings/);
+  assert.match(quickRoute, /readVisibleQuickJob/);
+  assert.match(quickRoute, /verifyRecoveredJob/);
+  assert.match(quickRoute, /successResponse\(existing, authority, status, true\)/);
+  assert.match(quickPanel, /response\.recovered \? "recovering_existing_job"/);
+  assert.match(quickPanel, /getRuntimeJobByStatusUrl\(statusUrl\)/);
+});
+
+test("job polling handles bounded states and requires exact committed run identity", () => {
+  assert.match(quickPanel, /polling\.current/);
+  assert.match(quickPanel, /JOB_POLL_INITIAL_MS = 1500/);
+  assert.match(quickPanel, /JOB_POLL_MAX_MS = 5000/);
+  for (const status of ["queued", "running", "job_failed", "job_cancelled", "job_timed_out"]) assert.match(quickPanel, new RegExp(status));
+  assert.match(quickPanel, /job\.jobKind !== "quick_forecast"/);
+  assert.match(quickPanel, /!job\.committedRunId \|\| job\.committedRunId !== expectedRunId/);
+  assert.match(quickPanel, /authority\.assignmentId !== assignment\.assignmentId/);
+  assert.match(quickPanel, /authority\.authoritySnapshotSha256 !== assignment\.assignmentPointerSha256/);
+});
+
+test("Quick Forecast panel exposes every bounded execution and handoff state", () => {
+  for (const status of [
+    "ready_to_run",
+    "starting",
+    "queued",
+    "running",
+    "recovering_existing_job",
+    "publication_in_progress",
+    "assignment_conflict",
+    "job_failed",
+    "job_cancelled",
+    "job_timed_out",
+    "committed_pending_current_verification",
+    "current_verification_pending",
+    "current_verification_timeout",
+    "current_verified",
+    "authentication_required",
+    "failed_uncertain",
+  ]) assert.match(contracts + quickPanel, new RegExp(status));
+});
+
+test("job completion alone never redirects and exact current run controls dashboard handoff", () => {
+  const completed = quickPanel.slice(quickPanel.indexOf('job.status === "completed"'), quickPanel.indexOf('job.status === "failed"'));
+  assert.match(completed, /committed_pending_current_verification/);
+  assert.match(completed, /verifyCurrentForecast/);
+  assert.doesNotMatch(completed, /router\.push/);
+  for (const condition of [
+    'latest.sourceType === "uploaded"',
+    "latest.runId === committedRunId",
+    "committedRunId === expectedRunId",
+    "latest.dashboard.latestRun.runId === committedRunId",
+    'latest.dashboard.modelUse.workflowMode === "quick_forecast"',
+  ]) assert.match(quickPanel, new RegExp(condition.replaceAll(".", "\\.")));
+  assert.match(quickPanel, /state\.status !== "current_verified"/);
+  assert.match(quickPanel, /state\.exactCurrentRunId !== state\.committedRunId/);
+  assert.match(quickPanel, /router\.push\("\/dashboard"\)/);
+});
+
+test("current verification is read-only, bounded, and retry never reruns Quick Forecast", () => {
+  assert.match(quickPanel, /CURRENT_VERIFY_INITIAL_MS = 1500/);
+  assert.match(quickPanel, /CURRENT_VERIFY_MAX_MS = 5000/);
+  assert.match(quickPanel, /CURRENT_VERIFY_MAX_TOTAL_MS = 30_000/);
+  assert.match(quickPanel, /Math\.min\(CURRENT_VERIFY_MAX_MS, Math\.round\(delay \* 1\.6\)\)/);
+  assert.match(quickPanel, /current_verification_timeout/);
+  const retry = quickPanel.slice(quickPanel.indexOf('state.status === "current_verification_timeout"'), quickPanel.indexOf("Open dashboard"));
+  assert.match(retry, /verifyCurrentForecast/);
+  assert.doesNotMatch(retry, /startQuickForecast|recoverQuickForecastStart/);
+});
+
+test("refresh retains bounded job identifiers but rechecks job and current authority", () => {
+  assert.match(workflow, /quickForecast\?: Partial<QuickForecastWorkflowState>/);
+  assert.match(workflow, /boundedRetainedQuickForecast/);
+  assert.match(workflow, /status: "recovering_existing_job"/);
+  assert.match(quickPanel, /resumedJobKey/);
+  assert.match(quickPanel, /void pollJob\(state\.jobId, state\.expectedRunId, state\.statusUrl\)/);
+  assert.match(quickPanel, /activeModelAuthority/);
+  assert.match(quickPanel, /getLatestDashboard\("dhaka_south"\)/);
+  assert.doesNotMatch(quickPanel, /currentVerified.*localStorage|localStorage.*currentVerified/);
 });
 
 test("focused handoff test and browser implementation do not write accepted runtime", () => {
   assert.doesNotMatch(import.meta.url, /runtime[\\/]deployments/);
   assert.doesNotMatch(panel, /node:fs|runtimeRoot|writeFile|mkdir|execFile/);
   assert.doesNotMatch(workflow, /node:fs|DENGUEOPS_RUNTIME_ROOT/);
+  assert.doesNotMatch(quickPanel, /node:fs|DENGUEOPS_RUNTIME_ROOT|writeFile|mkdir/);
 });

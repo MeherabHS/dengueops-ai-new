@@ -116,6 +116,7 @@ export type QuickValidationFileSource = "retained" | "reselected" | null;
 export interface QuickValidationReadyEvidence {
   workspaceId: string;
   datasetId: string;
+  deploymentId: "dhaka_south";
   validationRecordSha256: string;
   workflowMode: "quick_forecast";
   assignmentId: string;
@@ -126,6 +127,36 @@ export interface QuickValidationWorkflowState {
   status: QuickValidationStatus;
   fileSource: QuickValidationFileSource;
   evidence: QuickValidationReadyEvidence | null;
+  errorCode: string | null;
+  error: string | null;
+}
+export type QuickForecastPanelStatus =
+  | "ready_to_run"
+  | "starting"
+  | "queued"
+  | "running"
+  | "recovering_existing_job"
+  | "publication_in_progress"
+  | "assignment_conflict"
+  | "job_failed"
+  | "job_cancelled"
+  | "job_timed_out"
+  | "committed_pending_current_verification"
+  | "current_verification_pending"
+  | "current_verification_timeout"
+  | "current_verified"
+  | "authentication_required"
+  | "failed_uncertain";
+export interface QuickForecastWorkflowState {
+  status: QuickForecastPanelStatus;
+  jobId: string | null;
+  expectedRunId: string | null;
+  statusUrl: string | null;
+  committedRunId: string | null;
+  progress: string | null;
+  currentVerificationStartedAt: string | null;
+  currentVerificationAttempts: number;
+  exactCurrentRunId: string | null;
   errorCode: string | null;
   error: string | null;
 }
@@ -147,6 +178,7 @@ export interface ForecastWorkflowState {
   approvedForecast: ApprovedForecastWorkflowState;
   assignment: ModelAssignmentWorkflowState;
   quickValidation: QuickValidationWorkflowState;
+  quickForecast: QuickForecastWorkflowState;
   result: ForecastRunResult | null;
   error: string | null;
 }
