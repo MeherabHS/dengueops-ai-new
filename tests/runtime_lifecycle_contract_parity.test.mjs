@@ -10,4 +10,5 @@ test("Python lifecycle fixtures, JSON schemas, and exact TypeScript contracts re
  assert.match(contracts,/assessmentCommitSha256:string;decisionCommitSha256:string;authorizationCommitSha256:string/);
  assert.match(parity,/RequestRejectsCommittedNames/);
  assert.match(parity,/CommittedArtifactsRejectExpectedNames/);
+ assert.match(parity,/CurrentLifecycleIsCandidateAware/);
 });

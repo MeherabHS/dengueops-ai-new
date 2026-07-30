@@ -52,9 +52,6 @@ function publicForecast(verified: VerifiedCurrentForecast): PublicForecast {
   const source = object(verified.dashboard.forecast);
   const history = verified.dashboard.history;
   if (!Array.isArray(history)
-    || source.forecastPresentationMode !== "point_only"
-    || source.calibrationStatus !== "unavailable"
-    || source.uncertaintyStatus !== "unavailable"
     || Number(source.horizonWeeks) !== 2) {
     throw new RuntimePublicError("unsupported_public_forecast", "storage", "The verified forecast is not publicly presentable.", 503, true);
   }
@@ -76,6 +73,13 @@ function publicForecast(verified: VerifiedCurrentForecast): PublicForecast {
     decreasing: { directionLabel: "Expected decrease", directionIndicator: "down" },
     stable: { directionLabel: "Expected to remain stable", directionIndicator: "stable" },
   } as const;
+  const lower=typeof source.empiricalLower==="number"&&Number.isFinite(source.empiricalLower)?source.empiricalLower:null;
+  const upper=typeof source.empiricalUpper==="number"&&Number.isFinite(source.empiricalUpper)?source.empiricalUpper:null;
+  const governedInterval=["2.0","2.1"].includes(String(verified.dashboard.schemaVersion))
+    && source.forecastPresentationMode==="point_and_interval"
+    && source.calibrationStatus==="governed_available"
+    && source.uncertaintyStatus==="governed_available"
+    && lower!==null&&upper!==null&&lower<=upper;
   return {
     forecastedCases: forecastPoint.cases,
     forecastPeriod: {
@@ -92,9 +96,14 @@ function publicForecast(verified: VerifiedCurrentForecast): PublicForecast {
     growthPercentage: null,
     growthComparisonStatus: "equivalent_period_unavailable",
     uncertainty: {
-      presentationMode: "point_only",
-      intervalAvailable: false,
-      publicLabel: "Forecast interval unavailable",
+      presentationMode: governedInterval?"point_and_interval":"point_only",
+      intervalAvailable: governedInterval,
+      lower: governedInterval?lower:null,
+      upper: governedInterval?upper:null,
+      publicLabel: governedInterval?"Calibrated prediction interval":"Prediction interval unavailable",
+      reason: governedInterval
+        ?"A model-specific governed interval is available for this exact committed forecast."
+        :"Prediction interval unavailable — model-specific calibration has not yet been completed.",
     },
   };
 }

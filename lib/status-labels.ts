@@ -1,8 +1,8 @@
 const STATUS_LABELS: Record<string, string> = {
-  comparison_complete_and_adopted: "Comparison complete — selected model adopted",
+  comparison_complete_and_adopted: "Benchmark comparison completed",
   "adopted_p1.2b": "Adopted through governed model review",
   temporally_evaluated_synthetic_empirical_range: "Temporally evaluated synthetic empirical range",
-  benchmark_only: "Benchmark only",
+  benchmark_only: "Benchmark evidence only",
   synthetic_capability_demonstration: "Synthetic capability demonstration",
   random_forest: "Random forest",
   gradient_boosting: "Gradient boosting",

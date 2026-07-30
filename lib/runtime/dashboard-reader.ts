@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { bundledOverviewViewModel, type OverviewViewModel } from "@/lib/dashboard-view-model";
+import type { OverviewViewModel } from "@/lib/dashboard-view-model";
 import { governedModelLabel } from "@/lib/status-labels";
 import { loadRuntimeConfig } from "./config";
 import { RuntimePublicError } from "./errors";
@@ -196,12 +196,20 @@ function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewMo
   const preparedness = object(dashboard.preparedness);
   const approved = verified.pointer.workflowMode === "approved_assessment_forecast";
   const decision = approved ? object(dashboard.decision) : {};
-  const calibrated = forecast.uncertaintyStatus === "available";
+  const legacyInterval=dashboard.schemaVersion==="1.0"
+    && forecast.uncertaintyStatus==="available";
+  const governedInterval=["2.0","2.1"].includes(String(dashboard.schemaVersion))
+    && forecast.uncertaintyStatus==="governed_available"
+    && forecast.calibrationStatus==="governed_available"
+    && forecast.forecastPresentationMode==="point_and_interval";
+  const lower=typeof forecast.empiricalLower==="number"&&Number.isFinite(forecast.empiricalLower)?forecast.empiricalLower:null;
+  const upper=typeof forecast.empiricalUpper==="number"&&Number.isFinite(forecast.empiricalUpper)?forecast.empiricalUpper:null;
+  const calibrated=(legacyInterval||governedInterval)&&lower!==null&&upper!==null&&lower<=upper;
   const value = {
     forecast: {
-      uncertaintyStatus: String(forecast.uncertaintyStatus) as OverviewViewModel["empiricalRange"]["availabilityStatus"],
-      empiricalLower: Number(forecast.empiricalLower),
-      empiricalUpper: Number(forecast.empiricalUpper),
+      uncertaintyStatus: calibrated?(governedInterval?"governed_available":"available"):"unavailable" as OverviewViewModel["empiricalRange"]["availabilityStatus"],
+      empiricalLower: lower,
+      empiricalUpper: upper,
       nominalCoverage: Number(forecast.nominalCoverage),
       historicalCoverage: Number(forecast.historicalCoverage),
     },
@@ -227,7 +235,7 @@ function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewMo
       isPredictionInterval: false,
       reason: calibrated
         ? "Dataset-specific empirical range from prior-only rolling-origin residual evidence; historical coverage does not guarantee future coverage."
-        : "Dataset-specific temporal calibration has not yet been completed.",
+        : "Prediction interval unavailable — model-specific calibration has not yet been completed.",
     },
     activeModel: {
       id: String(model.modelId),
@@ -255,15 +263,8 @@ function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewMo
 
 export async function readLatestDashboard(
   deploymentId: string,
-): Promise<{ sourceType: "bundled_benchmark" | "uploaded"; runId: string; dashboard: OverviewViewModel }> {
+): Promise<{ sourceType: "uploaded"; runId: string; dashboard: OverviewViewModel }> {
   const config = loadRuntimeConfig(false);
-  try {
-    const verified = await readVerifiedCurrentForecast(config.runtimeRoot, deploymentId);
-    return { sourceType: "uploaded", runId: String(verified.pointer.runId), dashboard: overviewFromVerified(verified) };
-  } catch (error) {
-    if (error instanceof RuntimePublicError && error.code === "current_forecast_unavailable") {
-      return { sourceType: "bundled_benchmark", runId: bundledOverviewViewModel.latestRun.runId, dashboard: bundledOverviewViewModel };
-    }
-    throw error;
-  }
+  const verified = await readVerifiedCurrentForecast(config.runtimeRoot, deploymentId);
+  return { sourceType: "uploaded", runId: String(verified.pointer.runId), dashboard: overviewFromVerified(verified) };
 }

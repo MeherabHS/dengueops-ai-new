@@ -59,7 +59,7 @@ export default function ErrorComparisonPanel() {
         Forecast Error by Model
       </h2>
       <p className="text-sm text-slate-500 mb-6 italic">&ldquo;Lower is better.&rdquo;</p>
-      <p className="text-xs text-slate-500 mb-4">Primary metrics aggregate all rolling-origin folds; active uncertainty uses RF rolling residuals, while the legacy holdout RMSE remains planning compatibility only.</p>
+      <p className="text-xs text-slate-500 mb-4">Primary metrics aggregate historical rolling-origin folds. Historical Random Forest residual evidence and legacy holdout RMSE remain benchmark compatibility evidence only.</p>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 

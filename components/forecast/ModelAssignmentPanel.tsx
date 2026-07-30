@@ -258,7 +258,7 @@ export default function ModelAssignmentPanel({
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-accent">Governed model assignment</p>
-        <h2 className="mt-1 font-semibold text-ink">{selectedCandidateLabel}</h2>
+        <h2 className="mt-1 font-semibold text-ink">{immutable?"Current governed model":"Governed assignment proposal"}</h2>
       </div>
       <StatusBadge
         label={statusLabel(state.status)}
@@ -271,10 +271,11 @@ export default function ModelAssignmentPanel({
       <div><dt className="font-medium text-ink">Pointer read</dt><dd className="mt-1 text-ink-muted">{state.approvedJobVerified && state.expectedAssignmentPointerSha256 ? "Verified current pointer identity available" : "Verification pending"}</dd></div>
       {state.current ? <>
         <div><dt className="font-medium text-ink">Current assignment ID</dt><dd className="mt-1 break-all text-ink-muted">{state.current.assignmentId}</dd></div>
-        <div><dt className="font-medium text-ink">Current assigned candidate</dt><dd className="mt-1 text-ink-muted">{state.current.selectedCandidateLabel}</dd></div>
+        <div><dt className="font-medium text-ink">{immutable?"Current governed model":"Currently active model"}</dt><dd className="mt-1 text-ink-muted">{state.current.selectedCandidateLabel}</dd></div>
         <div className="md:col-span-2"><dt className="font-medium text-ink">Approved-run relationship</dt><dd className="mt-1 text-ink-muted">{state.current.sourceApprovedForecastRunId === approvedForecast.committedRunId ? "This approved run is the verified source of the current assignment." : "The current assignment came from a different approved run."}</dd></div>
       </> : null}
     </dl>
+    {!immutable?<div className="mt-4 rounded-lg border border-border-subtle bg-background p-4 text-sm"><p className="font-medium text-ink">Proposed governed assignment</p><p className="mt-1 text-ink-muted">{selectedCandidateLabel}</p></div>:null}
 
     <div className="mt-4 rounded-lg border border-warning/25 bg-warning/10 p-4 text-sm text-ink-muted">
       Publishing changes the current governed model assignment. It is deliberate, append-only, and may conflict with another valid publication.

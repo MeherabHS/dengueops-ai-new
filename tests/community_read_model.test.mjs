@@ -38,6 +38,10 @@ test("canonical public model uses current verified evidence and governed present
   assert.equal(value.forecast.forecast.directionLabel, "Expected rise");
   assert.equal(value.forecast.forecast.growthPercentage, null);
   assert.equal(value.forecast.forecast.uncertainty.intervalAvailable, false);
+  assert.equal(value.forecast.forecast.uncertainty.lower, null);
+  assert.equal(value.forecast.forecast.uncertainty.upper, null);
+  assert.equal(value.forecast.forecast.uncertainty.publicLabel, "Prediction interval unavailable");
+  assert.match(value.forecast.forecast.uncertainty.reason, /model-specific calibration has not yet been completed/);
   assert.equal(value.forecast.forecast.recentObservedSeries.length, 52);
   assert.deepEqual(value.dashboards.map(d => d.preparedness.selectedScenario), [
     "severe_constraint", "baseline_availability", "constrained_availability", "severe_constraint",

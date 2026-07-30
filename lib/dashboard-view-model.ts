@@ -57,7 +57,7 @@ export interface OverviewViewModel {
   forecastDirection: string;
   history: HistoricalCasePoint[];
   empiricalRange: {
-    availabilityStatus: "available" | "pending_dataset_specific_calibration" | "pending_selected_model_calibration" | "unavailable_for_uploaded_dataset";
+    availabilityStatus: "available" | "governed_available" | "unavailable";
     lower: number | null;
     upper: number | null;
     nominalCoverage: number | null;

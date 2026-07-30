@@ -11,6 +11,8 @@ import type {ModelDegradationEvidence,ModelDegradationSummary} from "./contracts
 
 const HISTORICAL_POLICY_SHA="bb13b8ec1991c0587656bf4f202334dddb115135d3ac055fee21b5f5e44f3321";
 const HISTORICAL_MONITORING_SHA="c73461e211e334733309232806fa2d41c2e5fdce7aa5e096d065e13e7525eaab";
+const PREVIOUS_POLICY_SHA="69db63b59f6e0dbbd5d45e98868ce0cafae1a9407d23595c89ec52491b713c98";
+const PREVIOUS_MONITORING_SHA="5c3e1f7f14ab6a0a2fbc28639411a0269224b6f71746a315b9c6e159a6eacca6";
 type JsonObject=Record<string,unknown>;
 const sha256=(value:Buffer|string)=>createHash("sha256").update(value).digest("hex");
 function canonical(value:unknown):string{if(Array.isArray(value))return`[${value.map(canonical).join(",")}]`;if(value&&typeof value==="object")return`{${Object.entries(value as Record<string,unknown>).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([k,v])=>`${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;return JSON.stringify(value)}
@@ -53,12 +55,15 @@ async function verifyBundle(repositoryRoot:string,runtimeRoot:string,evidenceId:
   const cohortSet=sha256(canonical(e.cohorts.map(value=>({cohortId:value.cohortId,outcomeSetSha256:value.outcomeSetSha256}))));if(cohortSet!==e.includedCohortSetSha256||cohortSet!==s.includedCohortSetSha256||cohortSet!==c.includedCohortSetSha256)return integrity();
   let monitoringSummary:JsonObject;
   if(version==="2.0"){
-    if(c.policyVersion!=="p2-v2"||c.policySha256!==MODEL_DEGRADATION_POLICY_SHA||c.monitoringPolicyVersion!=="p2-v2"||c.monitoringPolicySha256!==ACCEPTED_MONITORING_POLICY_SHA||e.schemaVersion!=="2.0"||s.schemaVersion!=="2.0")return integrity();
+    const current=c.policyVersion==="p2-v3"&&c.policySha256===MODEL_DEGRADATION_POLICY_SHA&&c.monitoringPolicyVersion==="p2-v3"&&c.monitoringPolicySha256===ACCEPTED_MONITORING_POLICY_SHA;
+    const previous=c.policyVersion==="p2-v2"&&c.policySha256===PREVIOUS_POLICY_SHA&&c.monitoringPolicyVersion==="p2-v2"&&c.monitoringPolicySha256===PREVIOUS_MONITORING_SHA;
+    if((!current&&!previous)||e.schemaVersion!=="2.0"||s.schemaVersion!=="2.0")return integrity();
+    const expectedPolicyVersion=current?"p2-v3":"p2-v2",expectedMonitoringSha=current?ACCEPTED_MONITORING_POLICY_SHA:PREVIOUS_MONITORING_SHA;
     const snapshot=await json(paths.monitoringLatestSnapshot);validateStrictJsonSchema(await schema(repositoryRoot,"runtime_monitoring_latest.schema.json"),snapshot.value);
-    if(snapshot.value.schemaVersion!=="2.1"||snapshot.value.policyVersion!=="p2-v2"||snapshot.value.policySha256!==ACCEPTED_MONITORING_POLICY_SHA||sha256(snapshot.bytes)!==c.monitoringLatestSnapshotSha256||sha256(snapshot.bytes)!==artifactHashes["monitoring_latest_snapshot.json"]||e.monitoringInput.latestSnapshotSha256!==sha256(snapshot.bytes))return integrity();
+    if(snapshot.value.schemaVersion!=="2.1"||snapshot.value.policyVersion!==expectedPolicyVersion||snapshot.value.policySha256!==expectedMonitoringSha||sha256(snapshot.bytes)!==c.monitoringLatestSnapshotSha256||sha256(snapshot.bytes)!==artifactHashes["monitoring_latest_snapshot.json"]||e.monitoringInput.latestSnapshotSha256!==sha256(snapshot.bytes))return integrity();
     if(c.monitoringLatestSnapshotPath!==`degradation-evidence/${evidenceId}/artifacts/monitoring_latest_snapshot.json`)return integrity();
     const summaryPath=contained(runtimeRoot,String(snapshot.value.monitoringSummaryPath)),monitoring=await json(summaryPath);validateStrictJsonSchema(await schema(repositoryRoot,"runtime_monitoring_summary.schema.json"),monitoring.value);
-    if(snapshot.value.monitoringSummarySha256!==sha256(monitoring.bytes)||c.monitoringSummarySha256!==sha256(monitoring.bytes)||e.monitoringInput.summarySha256!==sha256(monitoring.bytes)||monitoring.value.schemaVersion!=="2.1"||monitoring.value.policyVersion!=="p2-v2"||monitoring.value.policySha256!==ACCEPTED_MONITORING_POLICY_SHA)return integrity();
+    if(snapshot.value.monitoringSummarySha256!==sha256(monitoring.bytes)||c.monitoringSummarySha256!==sha256(monitoring.bytes)||e.monitoringInput.summarySha256!==sha256(monitoring.bytes)||monitoring.value.schemaVersion!=="2.1"||monitoring.value.policyVersion!==expectedPolicyVersion||monitoring.value.policySha256!==expectedMonitoringSha)return integrity();
     monitoringSummary=monitoring.value;
     for(const cohort of e.cohorts){
       if(cohort.monitoringWindow.status!=="window_size_not_governed"||cohort.monitoringWindow.windowOutcomeCount!==null||cohort.monitoringWindow.metricsCalculated!==false||cohort.monitoringWindow.statisticalSufficiencyStatus!=="not_governed")return integrity();
@@ -85,7 +90,7 @@ export async function readVerifiedCurrentModelDegradationEvidence(repositoryRoot
   const latestPath=currentModelDegradationLatestPaths(runtimeRoot,deploymentId).latest;
   try{
     const pointer=await json(latestPath);validateStrictJsonSchema(await schema(repositoryRoot,"runtime_model_degradation_latest.schema.json"),pointer.value);const p=pointer.value,evidenceId=String(p.evidenceId??"");
-    if(p.schemaVersion!=="2.0"||p.policyVersion!=="p2-v2"||p.policySha256!==MODEL_DEGRADATION_POLICY_SHA)return integrity();
+    if(p.schemaVersion!=="2.0"||p.policyVersion!=="p2-v3"||p.policySha256!==MODEL_DEGRADATION_POLICY_SHA)return integrity();
     const verified=await verifyBundle(repositoryRoot,runtimeRoot,evidenceId),c=verified.commit;
     if(p.commitPath!==`degradation-evidence/${evidenceId}/metadata/commit.json`||p.evidencePath!==`degradation-evidence/${evidenceId}/artifacts/degradation_evidence.json`||p.summaryPath!==`degradation-evidence/${evidenceId}/artifacts/degradation_summary.json`||p.monitoringLatestSnapshotPath!==`degradation-evidence/${evidenceId}/artifacts/monitoring_latest_snapshot.json`)return integrity();
     if(p.commitSha256!==verified.integrity.commitSha256||p.evidenceSha256!==verified.integrity.evidenceSha256||p.summarySha256!==verified.integrity.summarySha256||p.monitoringLatestSnapshotSha256!==verified.integrity.monitoringLatestSnapshotSha256||p.monitoringSummarySha256!==c.monitoringSummarySha256||p.includedOutcomeSetSha256!==c.includedOutcomeSetSha256)return integrity();

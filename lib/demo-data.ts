@@ -106,6 +106,29 @@ export const modelComparison = modelComparisonRaw as any;
 export const chartData = chartDataRaw as any;
 export const pipelineRunSummary = pipelineRunSummaryRaw as unknown as PipelineRunSummary;
 
+/**
+ * Bounded historical-only projection for the Evidence page. This deliberately
+ * omits the bundled artifact's legacy current/active-model fields so the
+ * historical benchmark cannot satisfy a runtime-authority presentation.
+ */
+export const historicalBenchmarkEvidence = {
+  comparison: {
+    status: dashboardSummary.candidate_model_comparison.model_selection_status,
+    winnerModelId: dashboardSummary.candidate_model_comparison.comparison_selected_model,
+    aggregateMetrics: dashboardSummary.candidate_model_comparison.aggregate_metrics,
+    candidates: dashboardSummary.candidate_model_comparison.candidates,
+    selectionEligibility: dashboardSummary.candidate_model_comparison.selection_eligibility,
+    winnerMetrics: dashboardSummary.candidate_model_comparison.active_model_rolling_metrics,
+  },
+  rollingValidation: dashboardSummary.rolling_validation,
+  uncertainty: dashboardSummary.uncertainty,
+  featureDiagnostics: dashboardSummary.feature_importance,
+  provenance: dashboardSummary.provenance,
+  pipelineRun: pipelineRunSummary,
+  historicalGradientBoosting: dashboardSummary.historical_gbr_evidence,
+  classification: "benchmark_evidence_only" as const,
+};
+
 const activeAlerts = directives.flatMap((directive) => directive.inventory_alerts.map((alert) => ({
   facilityName: directive.facility_name,
   level: alert.alert_level,

@@ -4,6 +4,7 @@ import type {
   BootstrapModelAssignment,
   CommittedAssignmentActiveModelAuthority,
   CommittedAssignmentQuickForecastJob,
+  CurrentLifecycleAuthority,
   DeferLifecycleDecision,
   DeferLifecycleJob,
   HistoricalProfileFallbackQuickForecastJob,
@@ -52,6 +53,8 @@ type _DecisionParity = Expect<Equal<_EveryLifecycleDecision,import("../lib/runti
 type _AssignmentParity = Expect<Equal<_EveryAssignment,ModelAssignment>>;
 type _FallbackAuthorityHasProfile = Expect<Equal<HistoricalProfileActiveModelAuthority["profileSha256"],string>>;
 type _CommittedAuthorityHasPointer = Expect<Equal<CommittedAssignmentActiveModelAuthority["assignmentPointerSha256"],string>>;
+type _CurrentLifecycleIsCandidateAware = Expect<Equal<CurrentLifecycleAuthority["modelId"],import("../lib/runtime/contracts").CurrentSelectableCandidateId>>;
+type _CurrentLifecycleHasFriendlyLabel = Expect<Equal<CurrentLifecycleAuthority["modelLabel"],string>>;
 type _CommittedArtifactsRejectExpectedNames = Expect<Equal<"expectedAuthorizationCommitSha256" extends keyof LifecycleDecisionCommit ? true:false,false>>;
 type _RequestRejectsCommittedNames = Expect<Equal<"authorizationCommitSha256" extends keyof PromotionLifecycleJob ? true:false,false>>;
 

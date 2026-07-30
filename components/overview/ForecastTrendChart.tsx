@@ -33,6 +33,7 @@ export default function ForecastTrendChart({ history, targetPeriod, forecast, lo
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+  const rangeAvailable=lower!==null&&upper!==null&&Number.isFinite(lower)&&Number.isFinite(upper)&&lower<=upper;
   const data = useMemo(() => {
     const visible = history.slice(-16);
     return [
@@ -49,12 +50,12 @@ export default function ForecastTrendChart({ history, targetPeriod, forecast, lo
         observed: null,
         connector: forecast,
         forecast,
-        rangeCenter: lower === null || upper === null ? null : (lower + upper) / 2,
-        rangeError: lower === null || upper === null ? null : (upper - lower) / 2,
+        rangeCenter: rangeAvailable ? (lower + upper) / 2 : null,
+        rangeError: rangeAvailable ? (upper - lower) / 2 : null,
       },
     ];
-  }, [forecast, history, lower, targetPeriod, upper]);
-  const summary = `Observed cases end at ${history.at(-1)?.cases ?? "an unavailable value"}. The committed forecast is ${forecast} cases for ${targetPeriod}.${lower === null || upper === null ? " Dataset-specific empirical range evidence is unavailable." : ` The empirical range is ${lower} to ${upper}.`}`;
+  }, [forecast, history, lower, rangeAvailable, targetPeriod, upper]);
+  const summary = `Observed cases end at ${history.at(-1)?.cases ?? "an unavailable value"}. The committed forecast is ${forecast} cases for ${targetPeriod}.${rangeAvailable ? ` The calibrated prediction interval is ${lower} to ${upper}.` : " Prediction interval unavailable — model-specific calibration has not yet been completed."}`;
   return (
     <figure>
       <div className="h-80 min-w-0" aria-hidden="true">
@@ -68,9 +69,9 @@ export default function ForecastTrendChart({ history, targetPeriod, forecast, lo
             <Line type="monotone" dataKey="observed" name="Observed" stroke={CHART_COLORS.observed} strokeWidth={2.5} dot={false} isAnimationActive={!reduceMotion} animationDuration={700} />
             <Line type="linear" dataKey="connector" name="Forecast connector" stroke={CHART_COLORS.forecast} strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls isAnimationActive={!reduceMotion} animationBegin={650} animationDuration={420} />
             <Scatter dataKey="forecast" name="Forecast" fill={CHART_COLORS.forecast} isAnimationActive={!reduceMotion} animationBegin={1050} animationDuration={250} />
-            <Scatter dataKey="rangeCenter" name="Empirical range" fill={CHART_COLORS.range} isAnimationActive={!reduceMotion && lower !== null && upper !== null} animationBegin={1200} animationDuration={400}>
+            {rangeAvailable?<Scatter dataKey="rangeCenter" name="Prediction interval" fill={CHART_COLORS.range} isAnimationActive={!reduceMotion} animationBegin={1200} animationDuration={400}>
               <ErrorBar dataKey="rangeError" direction="y" width={14} stroke={CHART_COLORS.forecast} strokeWidth={7} />
-            </Scatter>
+            </Scatter>:null}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

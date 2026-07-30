@@ -8,11 +8,11 @@ import {fileURLToPath} from "node:url";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("current degradation reads use the p2-v2 pointer without redefining historical paths", async () => {
+test("current degradation reads use the p2-v3 pointer without redefining historical paths", async () => {
   const paths = await read("lib/runtime/paths.ts");
   const store = await read("lib/runtime/model-degradation-store.ts");
   assert.match(paths, /currentModelDegradationLatestPaths/);
-  assert.match(paths, /latest_p2-v2\.json/);
+  assert.match(paths, /latest_p2-v3\.json/);
   assert.match(paths, /modelDegradationLatestPaths[\s\S]*latest\.json/);
   assert.match(store, /readVerifiedCurrentModelDegradationEvidence/);
   assert.match(store, /readVerifiedModelDegradationEvidenceById/);
@@ -33,7 +33,8 @@ test("historical snapshots are bound through commit, summary, and included outco
   ]) {
     assert.match(store, new RegExp(token));
   }
-  assert.match(store, /policyVersion!==["']p2-v2["']/);
+  assert.match(store, /const previous=.*p2-v2/);
+  assert.match(store, /const current=.*p2-v3/);
   assert.match(store, /policyVersion!==["']p2-v1["']/);
 });
 
@@ -90,7 +91,7 @@ test("default read returns D2 while explicit D1 survives M2 and assignment-point
       }
     }
 
-    const latest = path.join(fixture.runtime, "deployments", "dhaka_south", "degradation", "latest_p2-v2.json");
+    const latest = path.join(fixture.runtime, "deployments", "dhaka_south", "degradation", "latest_p2-v3.json");
     const latestBytes = await readFile(latest);
     try {
       const changed = JSON.parse(latestBytes.toString("utf8"));

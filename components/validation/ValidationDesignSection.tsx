@@ -1,7 +1,7 @@
 import { AlertTriangle, ArrowRight } from "lucide-react";
-import { rollingValidation as rv } from "@/lib/demo-data";
-import { candidateModelComparison as comparison } from "@/lib/demo-data";
+import { historicalBenchmarkEvidence } from "@/lib/demo-data";
 
+const rv = historicalBenchmarkEvidence.rollingValidation;
 const flow = [
   ["Historical training data", `${rv.initial_training_window}-row initial history`],
   ["One-row label embargo", "Unavailable future target excluded"],
@@ -43,11 +43,20 @@ export default function ValidationDesignSection() {
       <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
         <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
         <p className="text-xs text-amber-800 leading-relaxed">
-          Label policy: {rv.label_availability_policy}. Real reporting publication delays and revision vintages
+          Only outcomes available by each forecast date were used. Real reporting publication delays and revision vintages
           are not modeled yet. Results use deterministic synthetic benchmark data and do not establish real-world Dhaka performance.
         </p>
       </div>
-      <p className="mt-4 text-xs text-slate-600">Candidate comparison status: {comparison.model_selection_status}. Seven fixed candidates use these same fold descriptors; preprocessing is fitted inside each fold.</p>
+      <p className="mt-4 text-xs text-slate-600">Benchmark comparison completed. Seven fixed candidates use these same fold descriptors; preprocessing is fitted inside each fold.</p>
+      <details className="mt-4 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
+        <summary className="cursor-pointer font-semibold text-slate-800">Technical evidence</summary>
+        <dl className="mt-2 space-y-1 font-mono">
+          <div><dt className="inline">Phase: </dt><dd className="inline">P1.4</dd></div>
+          <div><dt className="inline">Validation method: </dt><dd className="inline">{rv.validation_method}</dd></div>
+          <div><dt className="inline">Label policy: </dt><dd className="inline">{rv.label_availability_policy}</dd></div>
+          <div><dt className="inline">Comparison status: </dt><dd className="inline">{historicalBenchmarkEvidence.comparison.status}</dd></div>
+        </dl>
+      </details>
     </section>
   );
 }

@@ -17,46 +17,49 @@ import FacilityAttentionList from "@/components/overview/FacilityAttentionList";
 import AlertList from "@/components/overview/AlertList";
 import LatestRunCard from "@/components/overview/LatestRunCard";
 import DashboardRefreshStatus from "@/components/overview/DashboardRefreshStatus";
-import { bundledOverviewViewModel } from "@/lib/dashboard-view-model";
+import type {OverviewViewModel} from "@/lib/dashboard-view-model";
 import { formatDhakaDateTime } from "@/lib/formatters";
 import { getLatestDashboard } from "@/lib/runtime/client";
 
 export default function DashboardPage() {
-  const [vm, setVm] = useState(bundledOverviewViewModel);
+  const [state,setState]=useState<
+    |{status:"loading"}
+    |{status:"verified";vm:OverviewViewModel}
+    |{status:"unavailable";message:string}
+  >({status:"loading"});
+  const load=async()=>{
+    setState({status:"loading"});
+    try{
+      const latest=await getLatestDashboard();
+      if(latest.ok&&latest.sourceType==="uploaded"&&latest.dashboard.latestRun.runId===latest.runId){
+        setState({status:"verified",vm:latest.dashboard});
+        return;
+      }
+      setState({status:"unavailable",message:latest.ok?"The latest response did not match the verified current run.":latest.error.message});
+    }catch{
+      setState({status:"unavailable",message:"The verified current forecast could not be loaded."});
+    }
+  };
   useEffect(() => {
     let active = true;
-    const load = async () => {
+    const initialLoad = async () => {
       try {
-        const cached = sessionStorage.getItem("dengueops-latest-dashboard");
-        if (cached) {
-          const value = JSON.parse(cached) as {
-            runId?: string;
-            dashboard?: typeof bundledOverviewViewModel;
-          };
-          if (
-            active &&
-            value.runId &&
-            value.dashboard?.latestRun.runId === value.runId
-          )
-            setVm(value.dashboard);
-          sessionStorage.removeItem("dengueops-latest-dashboard");
-        }
         const latest = await getLatestDashboard();
-        if (
-          active &&
-          latest.ok &&
-          latest.dashboard.latestRun.runId === latest.runId
-        )
-          setVm(latest.dashboard);
+        if(!active)return;
+        if(latest.ok&&latest.sourceType==="uploaded"&&latest.dashboard.latestRun.runId===latest.runId)setState({status:"verified",vm:latest.dashboard});
+        else setState({status:"unavailable",message:latest.ok?"The latest response did not match the verified current run.":latest.error.message});
       } catch {
-        /* preserve the previous committed view */
+        if(active)setState({status:"unavailable",message:"The verified current forecast could not be loaded."});
       }
     };
-    void load();
+    void initialLoad();
     return () => {
       active = false;
     };
   }, []);
+  if(state.status==="loading")return <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><section className="rounded-2xl border border-border bg-surface p-6" aria-live="polite"><StatusBadge label="Verifying" variant="info"/><h1 className="mt-3 text-2xl font-bold text-primary">Verifying current forecast authority</h1><p className="mt-2 text-sm text-secondary">Current forecast cards remain hidden until the latest pointer and exact committed run have been verified.</p></section></main>;
+  if(state.status==="unavailable")return <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><section className="rounded-2xl border border-warning/30 bg-surface p-6"><StatusBadge label="Authority unavailable" variant="warning"/><h1 className="mt-3 text-2xl font-bold text-primary">Current forecast authority unavailable</h1><p className="mt-2 text-sm text-secondary">{state.message} Bundled benchmark or cached qualification evidence is not shown as current.</p><Button className="mt-5" variant="secondary" onClick={()=>void load()}>Retry verification</Button></section></main>;
+  const vm=state.vm;
   const committedAt = formatDhakaDateTime(vm.latestRun.timestamp);
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -144,9 +147,9 @@ export default function DashboardPage() {
           <aside className="flex flex-col justify-between bg-surface-raised p-5 sm:p-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-                {vm.empiricalRange.availabilityStatus === "available"
-                  ? "Empirical forecast range"
-                  : "Empirical range unavailable"}
+                {vm.empiricalRange.availabilityStatus === "available"||vm.empiricalRange.availabilityStatus === "governed_available"
+                  ? "Calibrated prediction interval"
+                  : "Point forecast only"}
               </p>
               {vm.empiricalRange.lower !== null &&
               vm.empiricalRange.upper !== null ? (
@@ -155,7 +158,7 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 <p className="mt-4 text-lg font-semibold text-warning">
-                  Pending calibration
+                  Prediction interval unavailable
                 </p>
               )}
               <p className="mt-2 text-sm leading-relaxed text-secondary">
@@ -178,8 +181,8 @@ export default function DashboardPage() {
                 <div className="flex justify-between gap-4">
                   <dt className="text-secondary">Range status</dt>
                   <dd className="text-right text-primary">
-                    {vm.empiricalRange.availabilityStatus === "available"
-                      ? "Empirical evidence"
+                    {vm.empiricalRange.availabilityStatus === "available"||vm.empiricalRange.availabilityStatus === "governed_available"
+                      ? "Calibrated interval"
                       : "Unavailable"}
                   </dd>
                 </div>

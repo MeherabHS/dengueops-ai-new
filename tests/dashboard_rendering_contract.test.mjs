@@ -50,6 +50,31 @@ test("active dashboard rendering uses the shared deterministic formatter", async
   assert.doesNotMatch(`${page}\n${card}`, /suppressHydrationWarning/);
 });
 
+test("dashboard waits for exact current authority and never promotes cache or bundled evidence",async()=>{
+  const page=await readFile(path.join(root,"app/dashboard/page.tsx"),"utf8");
+  const reader=await readFile(path.join(root,"lib/runtime/dashboard-reader.ts"),"utf8");
+  assert.match(page,/Verifying current forecast authority/);
+  assert.match(page,/Current forecast authority unavailable/);
+  assert.match(page,/latest\.dashboard\.latestRun\.runId===latest\.runId/);
+  assert.doesNotMatch(page,/sessionStorage|dengueops-latest-dashboard|bundledOverviewViewModel/);
+  assert.doesNotMatch(reader,/return \{ sourceType: "bundled_benchmark"/);
+});
+
+test("point-only forecasts hide the interval series and use truthful wording",async()=>{
+  const page=await readFile(path.join(root,"app/dashboard/page.tsx"),"utf8");
+  const chart=await readFile(path.join(root,"components/overview/ForecastTrendChart.tsx"),"utf8");
+  const reader=await readFile(path.join(root,"lib/runtime/dashboard-reader.ts"),"utf8");
+  assert.match(page,/Point forecast only/);
+  assert.match(page,/Prediction interval unavailable/);
+  assert.doesNotMatch(page,/Pending calibration/);
+  assert.match(chart,/\{rangeAvailable\?<Scatter/);
+  assert.match(chart,/name="Prediction interval"/);
+  assert.doesNotMatch(chart,/name="Empirical range"/);
+  assert.match(reader,/forecast\.uncertaintyStatus==="governed_available"/);
+  assert.match(reader,/lower!==null&&upper!==null&&lower<=upper/);
+  assert.match(reader,/lower: calibrated \? value\.forecast\.empiricalLower : null/);
+});
+
 test("dashboard model projection uses bounded candidate identity instead of artifact display labels", async () => {
   const labels = runDashboardLabels();
   assert.deepEqual(labels, [

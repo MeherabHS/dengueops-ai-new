@@ -91,6 +91,9 @@ test("pointer conflicts and publication locks never retry assignment automatical
   assert.match(panel, /response\.error\.code === "assignment_publication_in_progress"/);
   assert.match(panel, /No assignment retry will occur automatically/);
   assert.match(panel, /Refresh current assignment/);
+  assert.match(panel,/Currently active model/);
+  assert.match(panel,/Proposed governed assignment/);
+  assert.match(panel,/Current governed model/);
   assert.equal((panel.match(/startModelAssignment\(/g) ?? []).length, 1);
   assert.ok(panel.indexOf("getCurrentModelAssignment()") < panel.indexOf("const publish ="));
 });

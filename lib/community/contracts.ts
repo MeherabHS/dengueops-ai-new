@@ -32,9 +32,12 @@ export interface PublicForecast {
   growthPercentage: null;
   growthComparisonStatus: "equivalent_period_unavailable";
   uncertainty: {
-    presentationMode: "point_only";
-    intervalAvailable: false;
-    publicLabel: "Forecast interval unavailable";
+    presentationMode: "point_only"|"point_and_interval";
+    intervalAvailable: boolean;
+    lower: number|null;
+    upper: number|null;
+    publicLabel: "Prediction interval unavailable"|"Calibrated prediction interval";
+    reason: string;
   };
 }
 

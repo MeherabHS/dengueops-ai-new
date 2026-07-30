@@ -132,7 +132,7 @@ test("verified current p2-v3 poisson_gam assignment resolves and stale or tamper
   }
 });
 
-for (const modelId of ["random_forest", "ridge_regression"]) {
+for (const modelId of ["random_forest", "ridge_regression", "hist_gradient_boosting"]) {
   test(`Python and TypeScript resolve identical ${modelId} current authority`, { timeout: 360_000 }, async () => {
     const temporary = await mkdtemp(path.join(tmpdir(), `b6-${modelId}-`));
     try {
