@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import ApprovedForecastPanel from "./ApprovedForecastPanel";
 import ApprovalPanel from "./ApprovalPanel";
@@ -10,18 +11,14 @@ import ForecastRunStepper from "./ForecastRunStepper";
 import ModelAssignmentPanel from "./ModelAssignmentPanel";
 import ModelSuitabilitySummary from "./ModelSuitabilitySummary";
 import ProcessingState from "./ProcessingState";
-import QuickForecastRunPanel from "./QuickForecastRunPanel";
 import type {
   ApprovedForecastWorkflowState,
   ForecastWorkflowState,
   LocalFilePreview,
   ModelAssignmentWorkflowState,
-  QuickForecastWorkflowState,
-  QuickValidationWorkflowState,
   WorkflowStep,
 } from "@/lib/forecast-workflow-types";
 import {
-  getCurrentModelAssignment,
   getDatasetAssessment,
   getRuntimeJob,
   getRuntimeJobByStatusUrl,
@@ -34,8 +31,9 @@ import type {
   JobStatusResponse,
   RuntimeCandidateId,
 } from "@/lib/runtime/contracts";
+import { modelLabel } from "@/lib/status-labels";
 
-const STORAGE_KEY = "dengueops-b9-4b-governed-forecast";
+const STORAGE_KEY = "dengueops-model-assessment-workflow-v1";
 const ASSESSMENT_COMPLETED = "assessment_completed";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[a-f0-9]{64}$/;
@@ -76,28 +74,6 @@ const emptyAssignment: ModelAssignmentWorkflowState = {
   error: null,
 };
 
-const emptyQuickValidation: QuickValidationWorkflowState = {
-  status: "quick_validation_pending",
-  fileSource: null,
-  evidence: null,
-  errorCode: null,
-  error: null,
-};
-
-const emptyQuickForecast: QuickForecastWorkflowState = {
-  status: "ready_to_run",
-  jobId: null,
-  expectedRunId: null,
-  statusUrl: null,
-  committedRunId: null,
-  progress: null,
-  currentVerificationStartedAt: null,
-  currentVerificationAttempts: 0,
-  exactCurrentRunId: null,
-  errorCode: null,
-  error: null,
-};
-
 const initial: ForecastWorkflowState = {
   step: "upload",
   files: {},
@@ -115,8 +91,6 @@ const initial: ForecastWorkflowState = {
   approval: null,
   approvedForecast: emptyApprovedForecast,
   assignment: emptyAssignment,
-  quickValidation: emptyQuickValidation,
-  quickForecast: emptyQuickForecast,
   result: null,
   error: null,
 };
@@ -127,14 +101,12 @@ interface RetainedWorkflow {
   decisionId?: string;
   approvedForecast?: Partial<ApprovedForecastWorkflowState>;
   assignment?: Partial<ModelAssignmentWorkflowState>;
-  quickValidation?: Partial<QuickValidationWorkflowState>;
-  quickForecast?: Partial<QuickForecastWorkflowState>;
 }
 
 const completedThrough = (state: ForecastWorkflowState): WorkflowStep | null => {
-  if (state.quickForecast.status === "current_verified") return "complete";
+  if (state.step === "complete") return "complete";
   if (state.assignment.status === "assigned_verified") return "assignment";
-  if (state.approvedForecast.status === "completed") return "approved_forecast";
+  if (state.approvedForecast.status === "completed") return "qualification_run";
   if (state.approval || state.assessment?.workflow.decision) return "decision";
   if (state.step === "decision") return "ranking";
   if (state.assessment) return "assessment";
@@ -197,68 +169,21 @@ function boundedRetainedAssignment(value: unknown): ModelAssignmentWorkflowState
   };
 }
 
-function boundedRetainedQuickValidation(value: unknown): QuickValidationWorkflowState {
-  if (!value || typeof value !== "object") return emptyQuickValidation;
-  const candidate = value as Partial<QuickValidationWorkflowState>;
-  const evidence = candidate.evidence;
-  if (
-    candidate.status !== "quick_validation_ready"
-    || !evidence
-    || typeof evidence.workspaceId !== "string"
-    || !UUID.test(evidence.workspaceId)
-    || typeof evidence.datasetId !== "string"
-    || evidence.datasetId.length === 0
-    || evidence.datasetId.length > 160
-    || !SHA.test(evidence.validationRecordSha256)
-    || evidence.workflowMode !== "quick_forecast"
-    || evidence.deploymentId !== "dhaka_south"
-    || !UUID.test(evidence.assignmentId)
-    || !SHA.test(evidence.assignmentPointerSha256)
-    || !RUNTIME_CANDIDATE_IDS.has(evidence.selectedCandidateId)
-  ) return emptyQuickValidation;
-  return {
-    status: "quick_validation_ready",
-    fileSource: null,
-    evidence,
-    errorCode: null,
-    error: null,
-  };
-}
-
-function boundedRetainedQuickForecast(value: unknown): QuickForecastWorkflowState {
-  if (!value || typeof value !== "object") return emptyQuickForecast;
-  const candidate = value as Partial<QuickForecastWorkflowState>;
-  const jobId = typeof candidate.jobId === "string" && UUID.test(candidate.jobId) ? candidate.jobId : null;
-  const expectedRunId = typeof candidate.expectedRunId === "string" && UUID.test(candidate.expectedRunId) ? candidate.expectedRunId : null;
-  const statusUrl = jobId && candidate.statusUrl === `/api/runtime/jobs/${jobId}` ? candidate.statusUrl : null;
-  if (!jobId || !expectedRunId || !statusUrl) return emptyQuickForecast;
-  const committedRunId = typeof candidate.committedRunId === "string" && UUID.test(candidate.committedRunId) ? candidate.committedRunId : null;
-  return {
-    status: "recovering_existing_job",
-    jobId,
-    expectedRunId,
-    statusUrl,
-    committedRunId,
-    progress: typeof candidate.progress === "string" ? candidate.progress.slice(0, 160) : null,
-    currentVerificationStartedAt: null,
-    currentVerificationAttempts: 0,
-    exactCurrentRunId: null,
-    errorCode: null,
-    error: null,
-  };
-}
-
 export default function ForecastRunWorkflow() {
   const [state, setState] = useState<ForecastWorkflowState>(initial);
   const mounted = useRef(true);
   const assessmentAction = useRef(false);
   const decisionAction = useRef(false);
-  const quickValidationAction = useRef(false);
   const recoveryStarted = useRef(false);
   const recordedDecision = state.approval ?? state.assessment?.workflow.decision ?? null;
   const decisionPolicyAvailable = Boolean(state.assessment && ["phase1_decision_policy_available", "phase2_decision_policy_available"].includes(String(state.assessment.workflow.decisionCompatibilityStatus)));
 
-  useEffect(() => () => { mounted.current = false; }, []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const persist = (next: ForecastWorkflowState) => {
     const retained: RetainedWorkflow = {
@@ -267,8 +192,6 @@ export default function ForecastRunWorkflow() {
       decisionId: (next.approval ?? next.assessment?.workflow.decision)?.decisionId,
       approvedForecast: next.approvedForecast,
       assignment: next.assignment,
-      quickValidation: next.quickValidation,
-      quickForecast: next.quickForecast,
     };
     if (retained.assessmentId || retained.assessmentJobId || retained.decisionId || retained.approvedForecast?.jobId) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(retained));
@@ -293,7 +216,13 @@ export default function ForecastRunWorkflow() {
       assessment,
       processingStatus: "completed",
       job: current.job?.ok ? { ...current.job, progress: ASSESSMENT_COMPLETED } as JobStatusResponse : current.job,
-      step: assessment.workflow.decision ? "approved_forecast" : "ranking",
+      step: current.assignment.status === "assigned_verified"
+        ? "complete"
+        : current.approvedForecast.status === "completed"
+          ? "assignment"
+          : assessment.workflow.decision
+            ? "qualification_run"
+            : "ranking",
       error: null,
     }));
   };
@@ -324,6 +253,24 @@ export default function ForecastRunWorkflow() {
     }
   };
 
+  const checkAssessmentStatus = async () => {
+    if (!state.assessmentJobId || !state.retainedAssessmentId) return;
+    try {
+      const job = await getRuntimeJob(state.assessmentJobId);
+      if (!job.ok) throw new Error(job.error.message);
+      if (job.jobKind !== "dataset_assessment" || job.jobId !== state.assessmentJobId || job.assessmentId !== state.retainedAssessmentId) {
+        throw new Error("The assessment job did not match the retained workspace evidence.");
+      }
+      update((current) => ({ ...current, job, processingStatus: job.status, error: null }));
+      if (job.status === "completed") {
+        if (job.committedAssessmentId !== state.retainedAssessmentId) throw new Error("The assessment completed without the expected committed identity.");
+        await loadCommittedAssessment(state.retainedAssessmentId);
+      }
+    } catch (reason) {
+      update((current) => ({ ...current, error: reason instanceof Error ? reason.message.slice(0, 500) : "Assessment status could not be verified." }));
+    }
+  };
+
   useEffect(() => {
     if (recoveryStarted.current) return;
     recoveryStarted.current = true;
@@ -337,10 +284,8 @@ export default function ForecastRunWorkflow() {
     const assessmentJobId = typeof retained.assessmentJobId === "string" && UUID.test(retained.assessmentJobId) ? retained.assessmentJobId : null;
     const approvedForecast = boundedRetainedForecast(retained.approvedForecast);
     const assignment = boundedRetainedAssignment(retained.assignment);
-    const quickValidation = boundedRetainedQuickValidation(retained.quickValidation);
-    const quickForecast = boundedRetainedQuickForecast(retained.quickForecast);
     if (!assessmentId) return;
-    update((current) => ({ ...current, retainedAssessmentId: assessmentId, assessmentJobId, approvedForecast, assignment, quickValidation, quickForecast, step: "assessment", processingStatus: assessmentJobId ? "queued" : "idle" }));
+    update((current) => ({ ...current, retainedAssessmentId: assessmentId, assessmentJobId, approvedForecast, assignment, step: "assessment", processingStatus: assessmentJobId ? "queued" : "idle" }));
     void loadCommittedAssessment(assessmentId).catch(() => {
       if (assessmentJobId) void pollAssessment(assessmentJobId, assessmentId);
       else if (mounted.current) update((current) => ({ ...current, error: "The retained assessment could not be verified. No decision or forecast was restarted." }));
@@ -365,54 +310,6 @@ export default function ForecastRunWorkflow() {
     return { ...current, files, serverValidation: { status: "idle" }, validatedWorkflowMode: null, workspaceId: null, datasetId: null, error: null };
   });
 
-  const setQuickFile = (preview: LocalFilePreview) => update((current) => {
-    const files = { ...current.files, [preview.key]: preview };
-    return {
-      ...current,
-      files,
-      mode: "quick_forecast",
-      validatedWorkflowMode: null,
-      workflowRevalidationRequired: true,
-      processingStatus: "idle",
-      serverValidation: { status: "idle" },
-      workspaceId: null,
-      datasetId: null,
-      job: null,
-      result: null,
-      quickValidation: {
-        status: files.dengue && files.climate ? "quick_files_reuse_available" : "quick_files_required",
-        fileSource: "reselected",
-        evidence: null,
-        errorCode: null,
-        error: null,
-      },
-      quickForecast: emptyQuickForecast,
-      error: null,
-    };
-  });
-
-  const removeQuickFiles = () => update((current) => ({
-    ...current,
-    files: {},
-    validatedWorkflowMode: null,
-    workflowRevalidationRequired: true,
-    processingStatus: "idle",
-    serverValidation: { status: "idle" },
-    workspaceId: null,
-    datasetId: null,
-    job: null,
-    result: null,
-    quickValidation: {
-      status: "quick_files_required",
-      fileSource: "reselected",
-      evidence: null,
-      errorCode: null,
-      error: null,
-    },
-    quickForecast: emptyQuickForecast,
-    error: null,
-  }));
-
   const validate = async () => {
     if (!state.files.dengue || !state.files.climate || state.processingStatus === "validating") return;
     update((current) => ({ ...current, processingStatus: "validating", serverValidation: { status: "submitting" }, error: null }));
@@ -435,175 +332,6 @@ export default function ForecastRunWorkflow() {
       }));
     } catch (reason) {
       update((current) => ({ ...current, processingStatus: "failed", serverValidation: { status: "failed", error: { code: "validation_request_failed", category: "internal", message: reason instanceof Error ? reason.message.slice(0, 500) : "Validation failed.", retryable: true, correlationId: "not-available" } } }));
-    }
-  };
-
-  const validateQuickForecast = async () => {
-    const verifiedAssignment = state.assignment.current;
-    if (
-      quickValidationAction.current
-      || state.assignment.status !== "assigned_verified"
-      || !verifiedAssignment
-      || !state.files.dengue
-      || !state.files.climate
-      || state.quickValidation.status === "quick_validation_running"
-      || state.quickValidation.status === "quick_validation_ready"
-    ) return;
-    quickValidationAction.current = true;
-    update((current) => ({
-      ...current,
-      mode: "quick_forecast",
-      validatedWorkflowMode: null,
-      workflowRevalidationRequired: true,
-      processingStatus: "validating",
-      serverValidation: { status: "submitting" },
-      workspaceId: null,
-      datasetId: null,
-      job: null,
-      result: null,
-      quickValidation: {
-        ...current.quickValidation,
-        status: "quick_validation_running",
-        evidence: null,
-        errorCode: null,
-        error: null,
-      },
-      error: null,
-    }));
-    try {
-      const response = await validateRuntimeDatasets({
-        dengueFile: state.files.dengue.file,
-        climateFile: state.files.climate.file,
-        deploymentId: "dhaka_south",
-        workflowMode: "quick_forecast",
-      });
-      if (!response.ok) throw new Error(response.error.message);
-      const authority = response.activeModelAuthority;
-      const assignmentMatches = Boolean(
-        authority
-        && authority.authoritySource === "committed_assignment"
-        && authority.assignmentId === verifiedAssignment.assignmentId
-        && authority.authoritySnapshotSha256 === verifiedAssignment.assignmentPointerSha256
-        && authority.modelId === verifiedAssignment.selectedCandidateId,
-      );
-      if (!assignmentMatches) {
-        const refreshed = await getCurrentModelAssignment();
-        update((current) => ({
-          ...current,
-          step: "assignment",
-          assignment: refreshed.ok
-            ? {
-                status: "pointer_conflict",
-                current: refreshed,
-                approvedJobVerified: current.assignment.approvedJobVerified,
-                expectedAssignmentPointerSha256: refreshed.assignmentPointerSha256,
-                errorCode: "assignment_pointer_conflict",
-                error: "The current governed assignment changed during validation. Review the refreshed authority before validating again.",
-              }
-            : current.assignment,
-          validatedWorkflowMode: null,
-          workflowRevalidationRequired: true,
-          processingStatus: "blocked",
-          serverValidation: { status: response.status, response },
-          workspaceId: null,
-          datasetId: null,
-          quickValidation: {
-            ...current.quickValidation,
-            status: "quick_assignment_conflict",
-            evidence: null,
-            errorCode: "assignment_pointer_conflict",
-            error: "Fresh validation was bound to a different current assignment. No Quick Forecast was started.",
-          },
-          quickForecast: { ...emptyQuickForecast, status: "assignment_conflict", errorCode: "assignment_pointer_conflict", error: "The governed assignment changed before Quick Forecast execution." },
-          error: null,
-        }));
-        return;
-      }
-      const ready = response.status === "ready"
-        && response.workflowMode === "quick_forecast"
-        && response.deploymentId === "dhaka_south"
-        && response.workspaceId.length > 0
-        && response.datasetId.length > 0
-        && SHA.test(response.validationRecordSha256)
-        && response.eligibility.quickForecast.eligible;
-      if (!ready || !authority) {
-        update((current) => ({
-          ...current,
-          validatedWorkflowMode: null,
-          workflowRevalidationRequired: true,
-          processingStatus: "blocked",
-          serverValidation: { status: response.status, response },
-          workspaceId: null,
-          datasetId: null,
-          quickValidation: {
-            ...current.quickValidation,
-            status: "quick_validation_failed",
-            evidence: null,
-            errorCode: null,
-            error: "The fresh Quick Forecast validation did not return complete eligible evidence.",
-          },
-          error: null,
-        }));
-        return;
-      }
-      update((current) => ({
-        ...current,
-        mode: "quick_forecast",
-        validatedWorkflowMode: "quick_forecast",
-        workflowRevalidationRequired: false,
-        processingStatus: "ready",
-        serverValidation: { status: "ready", response },
-        workspaceId: response.workspaceId,
-        datasetId: response.datasetId,
-        job: null,
-        result: null,
-        quickValidation: {
-          ...current.quickValidation,
-          status: "quick_validation_ready",
-          evidence: {
-            workspaceId: response.workspaceId,
-            datasetId: response.datasetId,
-            deploymentId: "dhaka_south",
-            validationRecordSha256: response.validationRecordSha256,
-            workflowMode: "quick_forecast",
-            assignmentId: authority.assignmentId,
-            assignmentPointerSha256: authority.authoritySnapshotSha256,
-            selectedCandidateId: authority.modelId,
-          },
-          errorCode: null,
-          error: null,
-        },
-        quickForecast: emptyQuickForecast,
-        error: null,
-      }));
-    } catch (reason) {
-      update((current) => ({
-        ...current,
-        validatedWorkflowMode: null,
-        workflowRevalidationRequired: true,
-        processingStatus: "failed",
-        serverValidation: {
-          status: "failed",
-          error: {
-            code: "validation_request_failed",
-            category: "internal",
-            message: reason instanceof Error ? reason.message.slice(0, 500) : "Fresh Quick Forecast validation failed.",
-            retryable: true,
-            correlationId: "not-available",
-          },
-        },
-        workspaceId: null,
-        datasetId: null,
-        quickValidation: {
-          ...current.quickValidation,
-          status: "quick_validation_failed",
-          evidence: null,
-          errorCode: "validation_request_failed",
-          error: reason instanceof Error ? reason.message.slice(0, 500) : "Fresh Quick Forecast validation failed.",
-        },
-      }));
-    } finally {
-      quickValidationAction.current = false;
     }
   };
 
@@ -631,7 +359,7 @@ export default function ForecastRunWorkflow() {
     try {
       const response = await recordAssessmentDecision(state.assessment.assessmentId, request);
       if (!response.ok) throw new Error(response.error.message);
-      update((current) => ({ ...current, approval: response, processingStatus: "completed", step: "approved_forecast", error: null }));
+      update((current) => ({ ...current, approval: response, processingStatus: "completed", step: "qualification_run", error: null }));
     } catch (reason) {
       update((current) => ({ ...current, processingStatus: "failed", error: reason instanceof Error ? reason.message.slice(0, 500) : "The governed model decision could not be recorded." }));
     } finally {
@@ -643,6 +371,11 @@ export default function ForecastRunWorkflow() {
     && state.validatedWorkflowMode === "assess_dataset"
     && state.serverValidation.response.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible";
   const approvedState = useMemo(() => state.approvedForecast, [state.approvedForecast]);
+  const assessmentCandidateCount = state.serverValidation.status === "ready"
+    && state.serverValidation.response.workflowMode === "assess_dataset"
+    && state.serverValidation.response.eligibility.assessDataset.candidateSetStatus === "complete_candidate_set"
+    ? Object.keys(state.serverValidation.response.eligibility.assessDataset.candidateEligibility).length
+    : undefined;
   const approvedEvidenceReady = Boolean(
     recordedDecision
     && approvedState.status === "completed"
@@ -655,20 +388,29 @@ export default function ForecastRunWorkflow() {
     && approvedState.selectedModelId
     && approvedState.selectedModelId === recordedDecision.selectedModelId,
   );
-  const selectedCandidateLabel = recordedDecision && "selectedModelLabel" in recordedDecision && recordedDecision.selectedModelLabel
-    ? recordedDecision.selectedModelLabel
-    : state.assessment?.workflow.candidates.find((candidate) => candidate.modelId === recordedDecision?.selectedModelId)?.modelLabel
-      ?? "Server-resolved candidate";
+  const selectedCandidateLabel = recordedDecision?.selectedModelId
+    ? modelLabel(recordedDecision.selectedModelId)
+    : "Server-resolved candidate";
 
   useEffect(() => {
-    if (!approvedEvidenceReady || state.step !== "approved_forecast") return;
+    if (!approvedEvidenceReady || state.step !== "qualification_run") return;
     update((current) => ({ ...current, step: "assignment", processingStatus: "completed", error: null }));
     // Transition only after retained approved-run identities reconcile.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [approvedEvidenceReady, state.step]);
 
+  const activeStepState = state.error
+    ? "failed"
+    : state.assignment.status === "pointer_conflict" || state.assignment.status === "publication_in_progress"
+      ? "conflict"
+      : ["validating", "queued", "running", "committing"].includes(state.processingStatus)
+        || state.assignment.status === "loading_current_assignment"
+        || state.assignment.status === "publishing"
+        ? "busy"
+        : "idle";
+
   return <div className="space-y-6">
-    <ForecastRunStepper current={state.step} completedThrough={completedThrough(state)} />
+    <ForecastRunStepper current={state.step} completedThrough={completedThrough(state)} activeState={activeStepState} />
     {state.error && state.step !== "decision" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive" role="alert">{state.error}</div> : null}
     <div className="rounded-2xl border border-border-subtle bg-surface p-5 shadow-sm sm:p-7">
       {state.step === "upload" ? <div className="space-y-5">
@@ -686,7 +428,7 @@ export default function ForecastRunWorkflow() {
 
       {state.step === "assessment" ? <div className="space-y-5">
         <div className="rounded-xl border border-border-subtle bg-surface-muted p-5"><h2 className="font-semibold text-ink">Governed assessment</h2><p className="mt-2 text-sm text-ink-muted">The validated workspace will evaluate the complete candidate set under its immutable common fold plan. No forecast or assignment starts here.</p></div>
-        {["queued", "running", "committing"].includes(state.processingStatus) ? <ProcessingState status={state.processingStatus} stage={state.job?.ok ? state.job.progress : undefined} workflow="assess_dataset" /> : null}
+        {["queued", "running", "committing"].includes(state.processingStatus) ? <ProcessingState status={state.processingStatus} stage={state.job?.ok ? state.job.progress : undefined} workflow="assess_dataset" candidateCount={assessmentCandidateCount} onCheckStatus={() => void checkAssessmentStatus()} /> : null}
         {!state.retainedAssessmentId ? <Button disabled={!assessmentReady || assessmentAction.current} onClick={() => void runAssessment()}>Start governed assessment</Button> : null}
       </div> : null}
 
@@ -700,7 +442,7 @@ export default function ForecastRunWorkflow() {
         <ApprovalPanel assessment={state.assessment} decision={recordedDecision} busy={decisionAction.current || state.processingStatus === "queued"} error={state.error} onGovernedDecision={(request) => void recordDecision(request)} />
       </div> : null}
 
-      {state.step === "approved_forecast" && state.assessment && recordedDecision ? <div className="space-y-5">
+      {state.step === "qualification_run" && state.assessment && recordedDecision ? <div className="space-y-5">
         <ModelSuitabilitySummary assessment={state.assessment} />
         <ApprovalPanel assessment={state.assessment} decision={recordedDecision} busy error={null} />
         <ApprovedForecastPanel decision={recordedDecision} state={approvedState} onStateChange={(approvedForecast) => update((current) => ({ ...current, approvedForecast, step: approvedForecast.status === "completed" ? "assignment" : current.step, processingStatus: approvedForecast.status === "idle" ? current.processingStatus : approvedForecast.status }))} />
@@ -712,159 +454,21 @@ export default function ForecastRunWorkflow() {
           approvedForecast={approvedState}
           selectedCandidateLabel={selectedCandidateLabel}
           state={state.assignment}
-          onStateChange={(assignment) => update((current) => {
-            if (assignment.status !== "assigned_verified" || !assignment.current) {
-              return { ...current, assignment };
-            }
-            const retainedEvidence = current.quickValidation.evidence;
-            const retainedValidationMatches = Boolean(
-              retainedEvidence
-              && retainedEvidence.assignmentId === assignment.current.assignmentId
-              && retainedEvidence.assignmentPointerSha256 === assignment.current.assignmentPointerSha256
-              && retainedEvidence.selectedCandidateId === assignment.current.selectedCandidateId,
-            );
-            const retainedFilesAvailable = Boolean(current.files.dengue && current.files.climate);
-            return {
-              ...current,
-              step: "quick_forecast",
-              files: retainedFilesAvailable ? current.files : {},
-              mode: "quick_forecast",
-              validatedWorkflowMode: retainedValidationMatches ? "quick_forecast" : null,
-              workflowRevalidationRequired: !retainedValidationMatches,
-              processingStatus: retainedValidationMatches ? "ready" : "idle",
-              serverValidation: { status: "idle" },
-              workspaceId: retainedValidationMatches ? retainedEvidence!.workspaceId : null,
-              datasetId: retainedValidationMatches ? retainedEvidence!.datasetId : null,
-              job: null,
-              result: null,
-              assignment,
-              quickValidation: retainedValidationMatches
-                ? { ...current.quickValidation, status: "quick_validation_ready", fileSource: null, errorCode: null, error: null }
-                : {
-                    status: retainedFilesAvailable ? "quick_files_reuse_available" : "quick_files_required",
-                    fileSource: retainedFilesAvailable ? "retained" : null,
-                    evidence: null,
-                    errorCode: null,
-                    error: null,
-                  },
-              quickForecast: retainedValidationMatches ? current.quickForecast : emptyQuickForecast,
-              error: null,
-            };
-          })}
+          onStateChange={(assignment) => update((current) => ({
+            ...current,
+            assignment,
+            step: assignment.status === "assigned_verified" && assignment.current ? "complete" : current.step,
+            processingStatus: assignment.status === "assigned_verified" ? "completed" : current.processingStatus,
+            error: null,
+          }))}
         />
       </div> : null}
 
-      {state.step === "quick_forecast" && state.assignment.status === "assigned_verified" && state.assignment.current ? <div className="space-y-5">
-        <div className="rounded-xl border border-success/25 bg-success/10 p-5" role="status">
-          <h2 className="font-semibold text-ink">Governed assignment verified</h2>
-          <p className="mt-1 text-sm text-ink-muted">Assignment {state.assignment.current.assignmentId} is current. Fresh Quick Forecast validation is now available for {state.assignment.current.selectedCandidateLabel}.</p>
-        </div>
-
-        {state.quickValidation.status === "quick_files_required" ? <div className="rounded-xl border border-warning/25 bg-warning/10 p-5" role="status">
-          <h3 className="font-semibold text-ink">Select both datasets again</h3>
-          <p className="mt-1 text-sm text-ink-muted">The original files are no longer available in this browser session. Select both datasets again to create a fresh Quick Forecast validation workspace.</p>
-        </div> : null}
-
-        {state.quickValidation.status !== "quick_validation_ready" ? <div className="grid gap-5 lg:grid-cols-2">
-          <DatasetUploadPanel kind="dengue" preview={state.files.dengue} onChange={setQuickFile} onRemove={removeQuickFiles} />
-          <DatasetUploadPanel kind="climate" preview={state.files.climate} onChange={setQuickFile} onRemove={removeQuickFiles} />
-        </div> : null}
-
-        {state.files.dengue && state.files.climate && state.quickValidation.status !== "quick_validation_ready" ? <DatasetValidationSummary
-          files={state.files}
-          mode="quick_forecast"
-          serverValidation={state.serverValidation}
-          onMode={() => undefined}
-          onValidate={() => void validateQuickForecast()}
-          revalidationRequired
-          currentAssignment={state.assignment.current}
-          validationActionLabel={state.quickValidation.fileSource === "retained"
-            ? "Reuse uploaded files and validate for Quick Forecast"
-            : "Validate selected files for Quick Forecast"}
-        /> : null}
-
-        {state.quickValidation.status === "quick_assignment_conflict" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-5" role="alert">
-          <h3 className="font-semibold text-ink">Current governed assignment changed</h3>
-          <p className="mt-1 text-sm text-ink-muted">{state.quickValidation.error}</p>
-          <p className="mt-2 text-xs text-ink-muted">Validation was not retried and no Quick Forecast job was created.</p>
-        </div> : null}
-
-        {state.quickValidation.status === "quick_validation_ready" && state.quickValidation.evidence ? <div className="rounded-xl border border-success/25 bg-success/10 p-5" role="status">
-          <h3 className="font-semibold text-ink">Fresh Quick Forecast validation verified. Ready to run Quick Forecast.</h3>
-          <dl className="mt-3 grid gap-2 text-sm text-ink-muted sm:grid-cols-2">
-            <div><dt className="font-medium text-ink">Workspace</dt><dd>{state.quickValidation.evidence.workspaceId}</dd></div>
-            <div><dt className="font-medium text-ink">Dataset</dt><dd>{state.quickValidation.evidence.datasetId}</dd></div>
-            <div><dt className="font-medium text-ink">Current governed assignment</dt><dd>{state.quickValidation.evidence.assignmentId}</dd></div>
-            <div><dt className="font-medium text-ink">Workflow mode</dt><dd>Quick Forecast</dd></div>
-          </dl>
-          <p className="mt-4 text-sm font-medium text-success">Quick Forecast validation ready. Forecast execution is the next step.</p>
-          <p className="mt-1 text-xs text-ink-muted">This validation created no forecast job and changed no forecast pointer. Execution remains a separate deliberate action.</p>
-        </div> : null}
-
-        {state.quickValidation.status === "quick_validation_ready" && state.quickValidation.evidence ? <QuickForecastRunPanel
-          validation={state.quickValidation.evidence}
-          assignment={state.assignment.current}
-          state={state.quickForecast}
-          onStateChange={(quickForecast) => update((current) => ({
-            ...current,
-            quickForecast,
-            processingStatus: quickForecast.status === "current_verified"
-              ? "completed"
-              : quickForecast.status === "queued"
-                ? "queued"
-                : quickForecast.status === "running"
-                  ? "running"
-                  : current.processingStatus,
-          }))}
-          onAssignmentConflict={() => update((current) => ({
-            ...current,
-            step: "assignment",
-            assignment: {
-              ...current.assignment,
-              status: "loading_current_assignment",
-              approvedJobVerified: false,
-              errorCode: "quick_forecast_assignment_conflict",
-              error: "The assignment changed before Quick Forecast publication. Review current authority and validate again.",
-            },
-            validatedWorkflowMode: null,
-            workflowRevalidationRequired: true,
-            serverValidation: { status: "idle" },
-            workspaceId: null,
-            datasetId: null,
-            quickValidation: {
-              status: "quick_assignment_conflict",
-              fileSource: current.files.dengue && current.files.climate ? "retained" : null,
-              evidence: null,
-              errorCode: "quick_forecast_assignment_conflict",
-              error: "Fresh Quick Forecast validation is required for the refreshed assignment.",
-            },
-            quickForecast: {
-              ...current.quickForecast,
-              status: "assignment_conflict",
-              errorCode: "quick_forecast_assignment_conflict",
-              error: "Quick Forecast was not started because assignment authority changed.",
-            },
-          }))}
-          onRequireFreshValidation={() => update((current) => ({
-            ...current,
-            validatedWorkflowMode: null,
-            workflowRevalidationRequired: true,
-            processingStatus: "idle",
-            serverValidation: { status: "idle" },
-            workspaceId: null,
-            datasetId: null,
-            job: null,
-            result: null,
-            quickValidation: {
-              status: current.files.dengue && current.files.climate ? "quick_files_reuse_available" : "quick_files_required",
-              fileSource: current.files.dengue && current.files.climate ? "retained" : null,
-              evidence: null,
-              errorCode: null,
-              error: null,
-            },
-            quickForecast: emptyQuickForecast,
-          }))}
-        /> : null}
+      {state.step === "complete" && state.assignment.status === "assigned_verified" && state.assignment.current ? <div className="rounded-xl border border-success/25 bg-success/10 p-6" role="status">
+        <h2 className="text-xl font-semibold text-ink">Model assessment and assignment complete</h2>
+        <p className="mt-2 text-sm text-ink-muted">The governed assignment for {modelLabel(state.assignment.current.selectedCandidateId)} is verified as current. No operational forecast was started.</p>
+        <Link href="/forecast/run" className="mt-4 inline-flex rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-focus">Run Forecast</Link>
+        <details className="mt-4"><summary className="cursor-pointer text-xs font-semibold text-accent outline-none focus-visible:ring-2 focus-visible:ring-focus">Technical assignment evidence</summary><dl className="mt-2 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Assignment ID: </dt><dd className="inline break-all font-mono">{state.assignment.current.assignmentId}</dd></div><div><dt className="inline font-medium text-ink">Assignment pointer SHA-256: </dt><dd className="inline break-all font-mono">{state.assignment.current.assignmentPointerSha256}</dd></div></dl></details>
       </div> : null}
     </div>
   </div>;

@@ -17,6 +17,7 @@ import { readVerifiedDecision } from "@/lib/runtime/decision-store";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained } from "@/lib/runtime/paths";
 import { validateStrictJsonSchema } from "@/lib/runtime/strict-json-schema";
+import { modelLabel } from "@/lib/status-labels";
 
 export const runtime = "nodejs";
 
@@ -45,10 +46,6 @@ type VerifiedCurrentAssignment = {
 
 function exactRequest(body: Record<string, unknown>): body is Record<keyof StartModelAssignmentRequest, unknown> {
   return Object.keys(body).sort().join("|") === REQUEST_KEYS.join("|");
-}
-
-function candidateLabel(candidateId: string): string {
-  return candidateId.split("_").map(part => part ? `${part[0].toUpperCase()}${part.slice(1)}` : part).join(" ");
 }
 
 async function verifiedPointer(config: ReturnType<typeof loadRuntimeConfig>, expectedSha: string) {
@@ -238,7 +235,7 @@ async function verifiedCurrentAssignment(
       assignmentId: active.assignmentId,
       status: "assigned",
       selectedCandidateId: active.modelId,
-      selectedCandidateLabel: candidateLabel(active.modelId),
+      selectedCandidateLabel: modelLabel(active.modelId),
       assignmentCommitSha256: active.assignmentCommitSha256,
       assignmentPointerSha256: active.authoritySnapshotSha256,
       sourceApprovedForecastRunId,

@@ -37,6 +37,28 @@ export function formatDate(iso: string): string {
   });
 }
 
+const DHAKA_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Dhaka",
+  year: "numeric",
+  month: "short",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+});
+
+/**
+ * Format a runtime ISO timestamp deterministically for server and browser
+ * rendering. Runtime contracts retain the original ISO timestamp.
+ */
+export function formatDhakaDateTime(iso: string | null | undefined): string {
+  if (!iso) return "Not available";
+  const value = new Date(iso);
+  if (Number.isNaN(value.getTime())) return "Not available";
+  return `${DHAKA_DATE_TIME_FORMATTER.format(value)} — Dhaka time`;
+}
+
 /**
  * Format epi week label.
  */

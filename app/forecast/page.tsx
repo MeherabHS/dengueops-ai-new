@@ -2,7 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import ForecastRunWorkflow from "@/components/forecast/ForecastRunWorkflow";
 import StatusBadge from "@/components/ui/StatusBadge";
 
-export const metadata = { title: "New Forecast — DengueOps AI" };
+export const metadata = { title: "Model Assessment and Assignment — DengueOps AI" };
 
 export default function ForecastPage() {
   return (
@@ -12,9 +12,9 @@ export default function ForecastPage() {
           <StatusBadge label="Governed runtime workflow" variant="info" />
           <StatusBadge label="Trusted internal use" />
         </div>
-        <h1 className="mt-4 text-3xl font-bold text-primary">New Forecast</h1>
+        <h1 className="mt-4 text-3xl font-bold text-primary">Model Assessment and Assignment</h1>
         <p className="mt-2 max-w-3xl text-sm text-secondary">
-          Validate an uploaded assessment dataset, review its complete governed candidate ranking, record a bounded model-use decision, and generate one authorized forecast run.
+          Validate assessment data, review the complete governed candidate ranking, record a bounded model-use decision, run qualification evidence, and publish a governed assignment.
         </p>
         <div className="mt-4 flex gap-2 rounded-xl border border-warning/25 bg-warning/10 p-4 text-sm text-warning">
           <ShieldCheck className="h-5 w-5 shrink-0" />

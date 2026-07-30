@@ -132,6 +132,82 @@ def load_and_validate_quick_forecast_policy(deployment_id: str) -> tuple[dict[st
     return policy, computed
 
 
+def load_and_validate_current_quick_forecast_policy(
+    deployment_id: str,
+    active_authority: Mapping[str, Any],
+) -> tuple[dict[str, Any], str]:
+    """Load the current assignment-bound policy without historical profile fallback."""
+    if not deployment_id or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for character in deployment_id):
+        raise RuntimePolicyError("Invalid deployment identifier for Quick Forecast policy.")
+    path = (ROOT / "config" / "deployments" / deployment_id / "quick_forecast_policy.json").resolve()
+    expected_parent = (ROOT / "config" / "deployments" / deployment_id).resolve()
+    if path.parent != expected_parent or not path.exists():
+        raise RuntimePolicyError("Current Quick Forecast policy is unavailable.")
+    try:
+        policy = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimePolicyError("Current Quick Forecast policy is not valid UTF-8 JSON.") from exc
+    computed = canonical_policy_sha256(policy)
+    registry_path = ROOT / "config" / "candidate_models.json"
+    registry_bytes = registry_path.read_bytes()
+    registry = json.loads(registry_bytes.decode("utf-8"))
+    candidate = next(
+        (value for value in registry.get("candidates", []) if value.get("model_id") == active_authority.get("modelId")),
+        None,
+    )
+    from runtime_model_lifecycle_policy import load_model_lifecycle_policy
+    lifecycle, lifecycle_sha256 = load_model_lifecycle_policy(
+        policy_version=active_authority.get("lifecyclePolicyVersion"),
+        repository_root=ROOT,
+        deployment_id=deployment_id,
+    )
+    errors: list[str] = []
+    if policy.get("schemaVersion") != "2.0":
+        errors.append("Current Quick Forecast policy schema is unsupported.")
+    if policy.get("policyId") != "RUNTIME.QUICK_FORECAST.COMPATIBILITY":
+        errors.append("Current Quick Forecast policy identifier is unsupported.")
+    if policy.get("policyVersion") != "p2-v2" or policy.get("policyStatus") != "active":
+        errors.append("Current Quick Forecast policy is not active and supported.")
+    if policy.get("policySha256") != computed:
+        errors.append("Current Quick Forecast policy hash mismatch.")
+    if policy.get("deploymentId") != deployment_id:
+        errors.append("Current Quick Forecast policy deployment mismatch.")
+    if policy.get("requiresActiveAssignment") is not True:
+        errors.append("Current Quick Forecast policy does not require assignment authority.")
+    if policy.get("profileFallbackAllowed") is not False or policy.get("baselineQuickForecastAllowed") is not False:
+        errors.append("Current Quick Forecast policy permits an unsupported authority fallback.")
+    if active_authority.get("authoritySource") != "committed_assignment":
+        errors.append("Current Quick Forecast validation requires committed assignment authority.")
+    if policy.get("candidateRegistrySha256") != hashlib.sha256(registry_bytes).hexdigest():
+        errors.append("Current Quick Forecast candidate registry mismatch.")
+    if policy.get("candidateRegistrySha256") != active_authority.get("candidateRegistrySha256"):
+        errors.append("Assignment candidate registry differs from the current Quick Forecast policy.")
+    if policy.get("featureOrderSha256") != active_authority.get("featureOrderSha256"):
+        errors.append("Assignment feature identity differs from the current Quick Forecast policy.")
+    if active_authority.get("modelId") not in policy.get("allowedCandidateIds", []):
+        errors.append("The current assigned candidate is not allowed for operational forecasting.")
+    if not candidate or candidate.get("candidate_class") != "learned_model" or candidate.get("selectable") is not True:
+        errors.append("The current assigned candidate is not a selectable learned model.")
+    if candidate and (
+        candidate.get("model_family") != active_authority.get("modelFamily")
+        or candidate.get("parameters_sha256") != active_authority.get("parameterSha256")
+        or candidate.get("preprocessing_identity") != active_authority.get("preprocessingIdentity")
+        or candidate.get("feature_order_sha256") != active_authority.get("featureOrderSha256")
+    ):
+        errors.append("The current assigned candidate evidence does not reconcile with the registry.")
+    if lifecycle_sha256 != active_authority.get("lifecyclePolicySha256"):
+        errors.append("Current lifecycle policy identity differs from assignment authority.")
+    if lifecycle.get("policyId") != active_authority.get("lifecyclePolicyId"):
+        errors.append("Current lifecycle policy identifier differs from assignment authority.")
+    if lifecycle.get("allowedQuickForecastPolicyVersion") != policy.get("policyVersion"):
+        errors.append("Lifecycle policy does not permit the current Quick Forecast policy version.")
+    if lifecycle.get("allowedQuickForecastPolicySha256") != computed:
+        errors.append("Lifecycle policy does not permit the current Quick Forecast policy identity.")
+    if errors:
+        raise RuntimePolicyError(" ".join(dict.fromkeys(errors)))
+    return policy, computed
+
+
 def _matches_geography(actual: Any, expected: Mapping[str, Any]) -> bool:
     return isinstance(actual, Mapping) and (
         actual.get("geography_level"), actual.get("geography_id"), actual.get("geography_name")
@@ -187,8 +263,8 @@ def evaluate_quick_forecast_policy(policy: Mapping[str, Any], context: Mapping[s
     uncertainty = policy.get("uncertainty_policy", {})
     preparedness = policy.get("preparedness_policy", {})
     reasons = ([
-        "The uploaded dataset matches the current governed Dhaka South synthetic benchmark deployment contract.",
-        "Quick Forecast may use the approved Random Forest configuration for a point forecast; this is not a dataset-specific best-model finding.",
+        "The uploaded dataset matches the current governed Dhaka forecasting scope.",
+        "Operational forecasting may use the current governed model assignment; validation does not select a model.",
     ] if eligible else [REASON_MESSAGES[code] for code in reason_codes])
     return {
         "eligible": eligible,
@@ -200,4 +276,64 @@ def evaluate_quick_forecast_policy(policy: Mapping[str, Any], context: Mapping[s
         "policyId": policy.get("policy_id"),
         "policyVersion": policy.get("policy_version"),
         "policySha256": policy.get("policy_sha256"),
+    }
+
+
+def evaluate_current_quick_forecast_policy(
+    policy: Mapping[str, Any],
+    active_authority: Mapping[str, Any],
+    context: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Evaluate data readiness while retaining current assignment as the sole model authority."""
+    reason_codes: list[str] = []
+
+    def fail(code: str, condition: bool) -> None:
+        if condition and code not in reason_codes:
+            reason_codes.append(code)
+
+    fail("policy_inactive", policy.get("policyStatus") != "active")
+    fail("validation_failed", context.get("validation_passed") is not True)
+    fail("deployment_mismatch", context.get("deployment_id") != policy.get("deploymentId"))
+    fail(
+        "feature_contract_mismatch",
+        context.get("feature_order_sha256") != policy.get("featureOrderSha256")
+        or context.get("constructible_feature_count") != len(context.get("feature_columns", [])),
+    )
+    fail(
+        "insufficient_quick_history",
+        context.get("overlap_weeks", 0) < 111 or context.get("labelled_rows", 0) < 104,
+    )
+    fail(
+        "non_contiguous_history",
+        not all(context.get(name) is True for name in (
+            "chronological_order_valid",
+            "duplicate_periods_absent",
+            "contiguous_history",
+            "case_climate_aligned",
+        )),
+    )
+    fail("invalid_inference_row", context.get("valid_inference_row") is not True)
+    fail("approved_model_mismatch", active_authority.get("modelId") not in policy.get("allowedCandidateIds", []))
+    eligible = not reason_codes
+    return {
+        "eligible": eligible,
+        "assignedCandidateId": active_authority.get("modelId"),
+        "uncertaintyStatus": (
+            "pending_dataset_specific_calibration" if eligible else "unavailable_for_uploaded_dataset"
+        ),
+        "preparednessStatus": (
+            "unavailable_missing_planning_policy" if eligible else "unavailable_for_uploaded_dataset"
+        ),
+        "reasonCodes": reason_codes if reason_codes else ["compatible_with_current_governed_assignment"],
+        "reasons": (
+            [
+                "The uploaded dataset is ready for operational forecasting under the current governed assignment.",
+                "Validation confirms authority compatibility without selecting or changing a model.",
+            ]
+            if eligible
+            else [REASON_MESSAGES.get(code, "The governed operational forecast requirements were not met.") for code in reason_codes]
+        ),
+        "policyId": policy.get("policyId"),
+        "policyVersion": policy.get("policyVersion"),
+        "policySha256": policy.get("policySha256"),
     }

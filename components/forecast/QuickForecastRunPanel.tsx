@@ -15,6 +15,7 @@ import {
   startQuickForecast,
 } from "@/lib/runtime/client";
 import type { CurrentModelAssignmentResultSuccess, StartQuickForecastRequest } from "@/lib/runtime/contracts";
+import AsyncStatusIndicator from "./AsyncStatusIndicator";
 
 const JOB_POLL_INITIAL_MS = 1500;
 const JOB_POLL_MAX_MS = 5000;
@@ -161,7 +162,7 @@ export default function QuickForecastRunPanel({
           currentVerificationAttempts: attempts,
           exactCurrentRunId: null,
           errorCode: "current_forecast_verification_timeout",
-          error: "The exact committed run did not become current within 30 seconds. Quick Forecast was not rerun.",
+          error: "The exact committed run did not become current within 30 seconds. The operational forecast was not rerun.",
         });
       }
     } catch (reason) {
@@ -209,11 +210,11 @@ export default function QuickForecastRunPanel({
           || authority.assignmentId !== assignment.assignmentId
           || authority.authoritySnapshotSha256 !== assignment.assignmentPointerSha256
           || authority.modelId !== assignment.selectedCandidateId
-        ) throw new Error("The Quick Forecast job did not match the verified workspace and assignment authority.");
+        ) throw new Error("The operational forecast job did not match the verified workspace and assignment authority.");
 
         if (job.status === "completed") {
           if (!job.committedRunId || job.committedRunId !== expectedRunId) {
-            throw new Error("The completed Quick Forecast job did not commit the expected run.");
+            throw new Error("The completed operational forecast job did not commit the expected run.");
           }
           onStateChange({
             ...state,
@@ -231,15 +232,15 @@ export default function QuickForecastRunPanel({
           return;
         }
         if (job.status === "failed") {
-          onStateChange({ ...state, status: "job_failed", jobId, expectedRunId, statusUrl, progress: job.progress, errorCode: job.error?.code ?? "quick_forecast_failed", error: job.error?.message ?? "Quick Forecast failed." });
+          onStateChange({ ...state, status: "job_failed", jobId, expectedRunId, statusUrl, progress: job.progress, errorCode: job.error?.code ?? "quick_forecast_failed", error: job.error?.message ?? "The operational forecast failed." });
           return;
         }
         if (job.status === "cancelled") {
-          onStateChange({ ...state, status: "job_cancelled", jobId, expectedRunId, statusUrl, progress: job.progress, errorCode: job.error?.code ?? "quick_forecast_cancelled", error: job.error?.message ?? "Quick Forecast was cancelled." });
+          onStateChange({ ...state, status: "job_cancelled", jobId, expectedRunId, statusUrl, progress: job.progress, errorCode: job.error?.code ?? "quick_forecast_cancelled", error: job.error?.message ?? "The operational forecast was cancelled." });
           return;
         }
         if (job.status === "timed_out") {
-          onStateChange({ ...state, status: "job_timed_out", jobId, expectedRunId, statusUrl, progress: job.progress, errorCode: job.error?.code ?? "quick_forecast_timed_out", error: job.error?.message ?? "Quick Forecast timed out." });
+          onStateChange({ ...state, status: "job_timed_out", jobId, expectedRunId, statusUrl, progress: job.progress, errorCode: job.error?.code ?? "quick_forecast_timed_out", error: job.error?.message ?? "The operational forecast timed out." });
           return;
         }
         onStateChange({
@@ -263,7 +264,7 @@ export default function QuickForecastRunPanel({
           expectedRunId,
           statusUrl,
           errorCode: "quick_forecast_polling_paused",
-          error: "Quick Forecast polling paused after the bounded wait. Refresh status without starting another job.",
+          error: "Operational forecast polling paused after the bounded wait. Refresh status without starting another job.",
         });
       }
     } catch (reason) {
@@ -275,7 +276,7 @@ export default function QuickForecastRunPanel({
           expectedRunId,
           statusUrl,
           errorCode: "quick_forecast_job_verification_failed",
-          error: reason instanceof Error ? reason.message.slice(0, 500) : "Quick Forecast job verification failed.",
+          error: reason instanceof Error ? reason.message.slice(0, 500) : "Operational forecast job verification failed.",
         });
       }
     } finally {
@@ -325,7 +326,7 @@ export default function QuickForecastRunPanel({
         || authority.assignmentId !== assignment.assignmentId
         || authority.authoritySnapshotSha256 !== assignment.assignmentPointerSha256
         || authority.modelId !== assignment.selectedCandidateId
-      ) throw new Error("The Quick Forecast start response did not match the verified assignment authority.");
+      ) throw new Error("The operational forecast start response did not match the verified assignment authority.");
       const nextStatus = response.recovered ? "recovering_existing_job" : response.status === "queued" ? "queued" : "running";
       onStateChange({
         ...state,
@@ -347,7 +348,7 @@ export default function QuickForecastRunPanel({
         ...state,
         status: "failed_uncertain",
         errorCode: "quick_forecast_start_uncertain",
-        error: reason instanceof Error ? reason.message.slice(0, 500) : "The Quick Forecast start response was uncertain.",
+        error: reason instanceof Error ? reason.message.slice(0, 500) : "The operational forecast start response was uncertain.",
       });
     } finally {
       starting.current = false;
@@ -381,29 +382,40 @@ export default function QuickForecastRunPanel({
   return <section className="space-y-4 rounded-xl border border-border-subtle bg-surface-muted p-5" aria-labelledby="quick-forecast-run-title">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h3 id="quick-forecast-run-title" className="font-semibold text-ink">Quick Forecast execution</h3>
-        <p className="mt-1 text-sm text-ink-muted">This action may publish a new current forecast for Dhaka South. The assigned candidate is resolved from verified server authority.</p>
+        <h3 id="quick-forecast-run-title" className="font-semibold text-ink">Operational forecast execution</h3>
+        <p className="mt-1 text-sm text-ink-muted">This action may publish a new current forecast for Dhaka. The assigned model is resolved from verified server authority.</p>
       </div>
       <StatusBadge label={state.status.replaceAll("_", " ")} variant={state.status === "current_verified" ? "success" : terminalFailure || state.status === "assignment_conflict" ? "destructive" : "info"} />
     </div>
 
     <dl className="grid gap-2 text-sm text-ink-muted sm:grid-cols-2">
-      <div><dt className="font-medium text-ink">Current governed assignment</dt><dd>{assignment.assignmentId}</dd></div>
-      <div><dt className="font-medium text-ink">Assigned candidate</dt><dd>{assignment.selectedCandidateLabel}</dd></div>
-      <div><dt className="font-medium text-ink">Validated workspace</dt><dd>{validation.workspaceId}</dd></div>
-      <div><dt className="font-medium text-ink">Dataset</dt><dd>{validation.datasetId}</dd></div>
-      <div><dt className="font-medium text-ink">Validation status</dt><dd>Verified Quick Forecast ready</dd></div>
-      <div><dt className="font-medium text-ink">Job</dt><dd>{state.jobId ?? "Not started"}</dd></div>
+      <div><dt className="font-medium text-ink">Current governed assignment</dt><dd>Verified</dd></div>
+      <div><dt className="font-medium text-ink">Assigned model</dt><dd>{assignment.selectedCandidateLabel}</dd></div>
+      <div><dt className="font-medium text-ink">Fresh validation workspace</dt><dd>Verified</dd></div>
+      <div><dt className="font-medium text-ink">Validation status</dt><dd>Ready for operational forecast</dd></div>
     </dl>
+    <details className="rounded-lg border border-border-subtle bg-surface p-3"><summary className="cursor-pointer text-xs font-semibold text-accent outline-none focus-visible:ring-2 focus-visible:ring-focus">Technical execution evidence</summary><dl className="mt-2 grid gap-2 text-xs text-ink-muted sm:grid-cols-2"><div><dt className="font-medium text-ink">Assignment ID</dt><dd className="break-all font-mono">{assignment.assignmentId}</dd></div><div><dt className="font-medium text-ink">Candidate ID</dt><dd className="font-mono">{assignment.selectedCandidateId}</dd></div><div><dt className="font-medium text-ink">Workspace ID</dt><dd className="break-all font-mono">{validation.workspaceId}</dd></div><div><dt className="font-medium text-ink">Dataset ID</dt><dd className="break-all font-mono">{validation.datasetId}</dd></div>{state.jobId ? <div><dt className="font-medium text-ink">Job ID</dt><dd className="break-all font-mono">{state.jobId}</dd></div> : null}</dl></details>
 
     {state.error ? <div className="rounded-lg border border-warning/25 bg-warning/10 p-3 text-sm text-ink-muted" role="status">{state.error}</div> : null}
     {state.progress ? <p className="text-sm text-ink-muted">Progress: {state.progress}</p> : null}
+    {busy ? <AsyncStatusIndicator
+      label={state.status === "starting"
+        ? "Starting forecast…"
+        : state.status === "queued" || state.status === "recovering_existing_job"
+          ? "Waiting for forecasting worker"
+          : state.status === "running"
+            ? "Generating forecast with the current assigned model"
+            : state.status === "committed_pending_current_verification"
+              ? "Verifying committed forecast evidence"
+              : "Verifying the completed run as the current forecast"}
+      delayedAfterSeconds={state.status === "queued" || state.status === "recovering_existing_job" ? 15 : state.status === "running" ? 30 : 10}
+    /> : null}
 
-    {state.status === "ready_to_run" ? <Button disabled={!entryVerified} onClick={() => void startOrRecover(false)}>Run Quick Forecast</Button> : null}
-    {state.status === "publication_in_progress" || state.status === "failed_uncertain" ? <Button onClick={() => void startOrRecover(true)}>Recover Quick Forecast status</Button> : null}
+    {state.status === "ready_to_run" ? <Button disabled={!entryVerified} onClick={() => void startOrRecover(false)}>Run operational forecast</Button> : null}
+    {state.status === "publication_in_progress" || state.status === "failed_uncertain" ? <Button onClick={() => void startOrRecover(true)}>Recover operational forecast status</Button> : null}
     {state.status === "current_verification_timeout" && state.committedRunId && state.expectedRunId ? <Button onClick={() => void verifyCurrentForecast(state.committedRunId!, state.expectedRunId!)}>Retry current verification</Button> : null}
     {state.status === "current_verified" && state.committedRunId === state.expectedRunId && state.exactCurrentRunId === state.committedRunId ? <Button onClick={() => router.push("/dashboard")}>Open dashboard</Button> : null}
-    {terminalFailure ? <div className="space-y-2"><p className="text-xs text-ink-muted">A retry requires deliberate fresh Quick Forecast validation in a new workspace. This consumed workspace will not be reused.</p><Button variant="secondary" onClick={onRequireFreshValidation}>Validate a new workspace</Button></div> : null}
+    {terminalFailure ? <div className="space-y-2"><p className="text-xs text-ink-muted">A retry requires deliberate fresh operational validation in a new workspace. This consumed workspace will not be reused.</p><Button variant="secondary" onClick={onRequireFreshValidation}>Validate a new workspace</Button></div> : null}
     {busy ? <p className="text-xs text-ink-muted">Duplicate execution controls are disabled while the existing governed operation is verified.</p> : null}
   </section>;
 }

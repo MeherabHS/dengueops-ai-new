@@ -4,8 +4,8 @@ const STATUS_LABELS: Record<string, string> = {
   temporally_evaluated_synthetic_empirical_range: "Temporally evaluated synthetic empirical range",
   benchmark_only: "Benchmark only",
   synthetic_capability_demonstration: "Synthetic capability demonstration",
-  random_forest: "Random Forest",
-  gradient_boosting: "Gradient Boosting",
+  random_forest: "Random forest",
+  gradient_boosting: "Gradient boosting",
   not_evaluated_across_temporal_folds: "Temporal importance stability not evaluated",
   operational_planning_compatibility_only_not_forecast_interval: "Planning compatibility only — not a forecast interval",
   passed: "Passed",
@@ -41,12 +41,12 @@ const STATUS_LABELS: Record<string, string> = {
   forecast_authorized: "One forecast run authorized",
   forecast_authorization_reserved: "Forecast authorization reserved",
   forecast_authorization_consumed: "Forecast authorization consumed",
-  forecast_execution_failed: "Approved forecast failed",
+  forecast_execution_failed: "Qualification run failed",
   decision_superseded: "Decision superseded",
   one_run_scope: "One-run scope",
   trusted_internal_unverified: "Trusted internal operator — identity not verified",
-  approved_assessment_forecast: "Approved assessment forecast",
-  preparing_approved_forecast: "Preparing approved forecast",
+  approved_assessment_forecast: "Governed qualification run",
+  preparing_approved_forecast: "Preparing qualification run",
   verifying_decision: "Verifying decision",
   verifying_assessment: "Verifying assessment",
   loading_immutable_inputs: "Loading immutable assessment inputs",
@@ -71,6 +71,44 @@ export function statusLabel(value: string | null | undefined): string {
   return STATUS_LABELS[value] ?? value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+const MODEL_LABELS: Readonly<Record<string, string>> = {
+  moving_average_4w: "Four-week moving average",
+  seasonal_naive_52w: "Seasonal naïve (52-week)",
+  ridge_regression: "Ridge regression",
+  poisson_regression: "Poisson regression",
+  random_forest: "Random forest",
+  gradient_boosting: "Gradient boosting",
+  elastic_net: "Elastic net",
+  negative_binomial_regression: "Negative binomial regression",
+  extra_trees: "Extra trees",
+  hist_gradient_boosting: "Histogram gradient boosting",
+  poisson_gam: "Poisson GAM",
+  previous_week_naive: "Previous-week naïve",
+};
+
+export function governedModelLabel(value: string | null | undefined): string | null {
+  return value ? MODEL_LABELS[value] ?? null : null;
+}
+
+export function primaryCandidateStatusLabel(
+  candidateClass: "naive_baseline" | "comparison_baseline" | "learned_model",
+  status: string,
+  completionStatus: string,
+): string {
+  if (candidateClass !== "learned_model") return "Baseline";
+  if (status === "ineligible") {
+    return statusLabel(completionStatus === "incomplete" ? "candidate_incomplete" : "candidate_ineligible");
+  }
+  return "Eligible";
+}
+
+export function assessmentRunningLabel(candidateCount?: number): string {
+  return Number.isSafeInteger(candidateCount) && Number(candidateCount) > 0
+    ? `Evaluating ${candidateCount} governed candidates`
+    : "Evaluating governed candidates";
+}
+
 export function modelLabel(value: string | null | undefined): string {
-  return statusLabel(value);
+  if (!value) return "Unavailable";
+  return governedModelLabel(value) ?? statusLabel(value);
 }

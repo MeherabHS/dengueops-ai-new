@@ -18,6 +18,7 @@ import AlertList from "@/components/overview/AlertList";
 import LatestRunCard from "@/components/overview/LatestRunCard";
 import DashboardRefreshStatus from "@/components/overview/DashboardRefreshStatus";
 import { bundledOverviewViewModel } from "@/lib/dashboard-view-model";
+import { formatDhakaDateTime } from "@/lib/formatters";
 import { getLatestDashboard } from "@/lib/runtime/client";
 
 export default function DashboardPage() {
@@ -56,7 +57,7 @@ export default function DashboardPage() {
       active = false;
     };
   }, []);
-  const committedAt = new Date(vm.latestRun.timestamp).toLocaleString();
+  const committedAt = formatDhakaDateTime(vm.latestRun.timestamp);
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       <section
@@ -69,8 +70,8 @@ export default function DashboardPage() {
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
             <div className="flex flex-wrap gap-2">
-              <StatusBadge label={vm.deployment.mode} variant="info" />
-              <StatusBadge label={vm.deployment.gate} variant="warning" />
+              <StatusBadge label="Dhaka" variant="info" />
+              <StatusBadge label="Current governed policy" variant="warning" />
               <StatusBadge label={vm.latestRun.status} variant="success" />
             </div>
             <h1
@@ -87,8 +88,8 @@ export default function DashboardPage() {
               Committed {committedAt}
             </p>
           </div>
-          <Button href="/forecast" className="self-start lg:self-auto">
-            Start New Forecast Run <ArrowRight className="h-4 w-4" />
+          <Button href="/forecast/run" className="self-start lg:self-auto">
+            Run Forecast <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </section>
@@ -186,7 +187,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-8 space-y-1 text-xs text-text-muted">
               <p>Model used for this run: <span className="font-semibold text-secondary">{vm.activeModel.label}</span></p>
-              {vm.modelUse.scope === "one_run" ? <><p>Decision scope: <span className="font-semibold text-warning">One forecast run</span></p><p>Deployment-wide Random Forest model unchanged.</p></> : null}
+              {vm.modelUse.scope === "one_run" ? <><p>Decision scope: <span className="font-semibold text-warning">One forecast run</span></p><p>The current governed model assignment is unchanged.</p></> : null}
             </div>
           </aside>
         </div>

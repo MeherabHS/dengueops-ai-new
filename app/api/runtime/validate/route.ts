@@ -4,6 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { loadRuntimeConfig } from "@/lib/runtime/config";
 import type {
+  RuntimeValidationAuthorityBinding,
   RuntimeValidationResponseSuccess,
   RuntimeWorkspaceMetadata,
   WorkflowMode,
@@ -22,6 +23,25 @@ import { inspectCsvUpload } from "@/lib/runtime/uploads";
 import { requireSuperUserMutation } from "@/lib/auth/authorization";
 
 export const runtime = "nodejs";
+
+function validationAuthorityMatches(
+  binding: RuntimeValidationAuthorityBinding,
+  current: Awaited<ReturnType<typeof resolveActiveModel>>,
+): boolean {
+  return binding.authoritySource === "committed_assignment"
+    && binding.assignmentId === current.assignmentId
+    && binding.assignmentCommitSha256 === current.assignmentCommitSha256
+    && binding.authoritySnapshotSha256 === current.authoritySnapshotSha256
+    && binding.assignedCandidateId === current.modelId
+    && binding.candidateRegistrySha256 === current.candidateRegistrySha256
+    && binding.featureOrderSha256 === current.featureOrderSha256
+    && binding.lifecyclePolicyId === current.lifecyclePolicyId
+    && binding.lifecyclePolicyVersion === current.lifecyclePolicyVersion
+    && binding.lifecyclePolicySha256 === current.lifecyclePolicySha256
+    && binding.operationalPolicyId === "RUNTIME.QUICK_FORECAST.COMPATIBILITY"
+    && binding.operationalPolicyVersion === "p2-v2"
+    && /^[a-f0-9]{64}$/.test(binding.operationalPolicySha256);
+}
 
 function singleString(form: FormData, name: string): string {
   const values = form.getAll(name);
@@ -183,9 +203,10 @@ export async function POST(request: Request): Promise<Response> {
       deploymentId,
       workflowMode,
     });
-    const validation = JSON.parse(await readFile(paths.validation, "utf8")) as Omit<RuntimeValidationResponseSuccess, "ok" | "workflowMode"> & {
+    const validation = JSON.parse(await readFile(paths.validation, "utf8")) as Omit<RuntimeValidationResponseSuccess, "ok" | "workflowMode" | "activeModelAuthority"> & {
       schemaVersion: string;
       workflowMode?: unknown;
+      activeModelAuthority?: RuntimeValidationAuthorityBinding;
     };
     const validationRecordSha256 = createHash("sha256").update(await readFile(paths.validation)).digest("hex");
     if (validation.status !== "ready" && validation.status !== "invalid") {
@@ -197,6 +218,21 @@ export async function POST(request: Request): Promise<Response> {
     }
     if (verifiedWorkflowMode !== workflowMode) {
       throw new RuntimePublicError("invalid_validation_output", "validation", "Authoritative validation did not match the requested workflow mode.", 500, true);
+    }
+    const currentAuthority = await resolveActiveModel(config.repositoryRoot, config.runtimeRoot, validation.deploymentId);
+    if (verifiedWorkflowMode === "quick_forecast") {
+      if (
+        !validation.activeModelAuthority
+        || !validationAuthorityMatches(validation.activeModelAuthority, currentAuthority)
+        || validation.eligibility.quickForecast.assignedCandidateId !== currentAuthority.modelId
+      ) {
+        throw new RuntimePublicError(
+          "quick_validation_authority_mismatch",
+          "validation",
+          "Quick Forecast validation could not be reconciled with the current governed assignment.",
+          409,
+        );
+      }
     }
     metadata = {
       ...metadata,
@@ -230,7 +266,7 @@ export async function POST(request: Request): Promise<Response> {
       counts: validation.counts,
       issues: validation.issues,
       eligibility: validation.eligibility,
-      activeModelAuthority:await resolveActiveModel(config.repositoryRoot,config.runtimeRoot,validation.deploymentId),
+      activeModelAuthority: currentAuthority,
     };
     return Response.json(response, { status: validation.status === "ready" ? 200 : 422 });
   } catch (error) {

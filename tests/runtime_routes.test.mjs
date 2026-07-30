@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const route = await read("app/api/runtime/validate/route.ts");
 const uploads = await read("lib/runtime/uploads.ts");
 const workflow = await read("components/forecast/ForecastRunWorkflow.tsx");
+const operationalWorkflow = await read("components/forecast/OperationalForecastWorkflow.tsx");
 const quickPanel = await read("components/forecast/QuickForecastRunPanel.tsx");
 const quickRoute = await read("app/api/runtime/runs/quick/route.ts");
 const contracts = await read("lib/runtime/contracts.ts");
@@ -27,11 +28,12 @@ test("CSV upload inspection rejects unsafe input classes", () => {
   assert.match(uploads, /safeOriginalName/);
 });
 
-test("B9.4C3 starts Quick Forecast only from the deliberate validated handoff", () => {
+test("governance and operational forecasting use separate deliberate handoffs", () => {
   assert.match(workflow, /workflowMode: "assess_dataset"/);
-  assert.match(workflow, /workflowMode: "quick_forecast"/);
   assert.match(workflow, /startDatasetAssessment/);
-  assert.match(workflow, /<QuickForecastRunPanel/);
+  assert.doesNotMatch(workflow, /workflowMode: "quick_forecast"|<QuickForecastRunPanel/);
+  assert.match(operationalWorkflow, /workflowMode: "quick_forecast"/);
+  assert.match(operationalWorkflow, /<QuickForecastRunPanel/);
   assert.match(quickPanel, /startQuickForecast\(request\)/);
   assert.doesNotMatch(workflow, /location\.assign|getLatestDashboard/);
   assert.match(assessmentOption, /current governed temporal assessment/);
@@ -70,6 +72,22 @@ test("validation artifact workflow mode fails closed when missing, unsupported, 
   assert.match(route, /Authoritative validation returned an invalid workflow mode/);
   assert.match(route, /Authoritative validation did not match the requested workflow mode/);
   assert.match(route, /workflowModeValue !== "quick_forecast" && workflowModeValue !== "assess_dataset"/);
+});
+
+test("Quick Forecast validation reconciles persisted assignment binding with current authority", () => {
+  assert.match(route, /validationAuthorityMatches/);
+  assert.match(route, /validation\.activeModelAuthority/);
+  assert.match(route, /validation\.eligibility\.quickForecast\.assignedCandidateId !== currentAuthority\.modelId/);
+  assert.match(route, /quick_validation_authority_mismatch/);
+  assert.doesNotMatch(route, /approvedModelId === currentAuthority\.modelId/);
+});
+
+test("validation contracts keep assessment 1.0 separate from assignment-bound Quick 1.1", () => {
+  assert.match(contracts, /approvedModelId: CurrentSelectableCandidateId/);
+  assert.match(contracts, /assignedCandidateId: CurrentSelectableCandidateId/);
+  assert.match(contracts, /assignedCandidateId\?: never/);
+  assert.match(contracts, /approvedModelId\?: never/);
+  assert.match(route, /validationAuthorityMatches/);
 });
 
 test("validation and assessment never publish a decision or approved forecast automatically", () => {

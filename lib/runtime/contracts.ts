@@ -84,22 +84,34 @@ export interface RuntimeAssessmentEligibility {
   decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_available" | "phase2_decision_policy_not_yet_available";
 }
 
+interface RuntimeQuickEligibilityBase {
+  eligible: boolean;
+  reasons: string[];
+  reasonCodes: string[];
+  uncertaintyStatus:
+    | "pending_dataset_specific_calibration"
+    | "unavailable_for_uploaded_dataset";
+  preparednessStatus:
+    | "unavailable_missing_planning_policy"
+    | "unavailable_for_uploaded_dataset";
+  policyId: "RUNTIME.QUICK_FORECAST.COMPATIBILITY";
+  policySha256: string;
+}
+
+export type RuntimeQuickEligibility =
+  | (RuntimeQuickEligibilityBase & {
+      approvedModelId: CurrentSelectableCandidateId;
+      assignedCandidateId?: never;
+      policyVersion: "p1.4f-v1" | "p2-v1";
+    })
+  | (RuntimeQuickEligibilityBase & {
+      approvedModelId?: never;
+      assignedCandidateId: CurrentSelectableCandidateId;
+      policyVersion: "p2-v2";
+    });
+
 export interface RuntimeEligibility {
-  quickForecast: {
-    eligible: boolean;
-    reasons: string[];
-    reasonCodes: string[];
-    approvedModelId: CurrentSelectableCandidateId;
-    uncertaintyStatus:
-      | "pending_dataset_specific_calibration"
-      | "unavailable_for_uploaded_dataset";
-    preparednessStatus:
-      | "unavailable_missing_planning_policy"
-      | "unavailable_for_uploaded_dataset";
-    policyId: "RUNTIME.QUICK_FORECAST.COMPATIBILITY";
-    policyVersion: "p1.4f-v1" | "p2-v1" | "p2-v2";
-    policySha256: string;
-  };
+  quickForecast: RuntimeQuickEligibility;
   assessDataset: RuntimeAssessmentEligibility;
 }
 
@@ -121,6 +133,22 @@ export interface RuntimeValidationResponseSuccess {
   issues: ValidationIssue[];
   eligibility: RuntimeEligibility;
   activeModelAuthority?:CurrentActiveModelAuthority;
+}
+
+export interface RuntimeValidationAuthorityBinding {
+  authoritySource: "committed_assignment";
+  assignmentId: string;
+  assignmentCommitSha256: string;
+  authoritySnapshotSha256: string;
+  assignedCandidateId: CurrentSelectableCandidateId;
+  candidateRegistrySha256: string;
+  featureOrderSha256: string;
+  lifecyclePolicyId: "RUNTIME.MODEL_LIFECYCLE.DECISION";
+  lifecyclePolicyVersion: "p2-v2" | "p2-v3";
+  lifecyclePolicySha256: string;
+  operationalPolicyId: "RUNTIME.QUICK_FORECAST.COMPATIBILITY";
+  operationalPolicyVersion: "p2-v2";
+  operationalPolicySha256: string;
 }
 
 export interface RuntimeErrorResponse {
@@ -535,6 +563,15 @@ export interface DatasetAssessmentResultSuccess {
   foldPolicy: { policyId: string; policyVersion: string; plannedFoldCount: number; minimumFoldCount: number; maximumFoldCount: number; foldCapApplied: boolean; selectedValidationStartIndex: number; selectedValidationEndIndex: number; selectedEvaluationPeriod: {start:string;end:string}; initialTrainingRows: 104; embargoRows: 1; validationRowsPerFold: 1; stepSizeWeeks: 1; horizonWeeks: 2; samePlanForAllCandidates: true };
   foldPlanSha256: string;
   candidateSetStatus: "complete_candidate_set" | "partial_candidate_set" | "insufficient_candidate_breadth";
+  candidateCoverage: {
+    expectedCount: number;
+    returnedCount: number;
+    status: "complete_candidate_set" | "partial_candidate_set";
+  };
+  candidateEligibility: {
+    eligibleCount: number;
+    ineligibleCount: number;
+  };
   candidates: AssessmentCandidateSummary[];
   technicalWinnerModelId: RuntimeCandidateId | null;
   selectionReason: string;

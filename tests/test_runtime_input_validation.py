@@ -1,3 +1,4 @@
+import copy
 import json
 import subprocess
 import sys
@@ -49,6 +50,8 @@ class RuntimeInputValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             result, value = run_validation(Path(directory), self.dengue, self.climate)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(value["schemaVersion"], "1.0")
+        self.assertEqual(value["workflowMode"], "assess_dataset")
         self.assertEqual(value["status"], "ready")
         self.assertEqual(value["counts"], {"caseRows": 180, "climateRows": 180, "overlapWeeks": 180, "labelledRows": 173})
         self.assertEqual(value["acceptedPeriod"], {"start": "2021-W01", "end": "2024-W24"})
@@ -75,6 +78,77 @@ class RuntimeInputValidationTests(unittest.TestCase):
         serialized = json.dumps(value).lower()
         self.assertNotIn("53–187", serialized)
         self.assertNotIn("87/120/153", serialized)
+
+    def test_current_quick_workspace_schema_requires_assignment_binding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result, value = run_validation(Path(directory), self.dengue, self.climate)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        policy = json.loads(
+            (ROOT / "config" / "deployments" / "dhaka_south" / "quick_forecast_policy.json").read_text(encoding="utf-8")
+        )
+        lifecycle = json.loads(
+            (ROOT / "config" / "deployments" / "dhaka_south" / "model_lifecycle_policy.json").read_text(encoding="utf-8")
+        )
+        value["schemaVersion"] = "1.1"
+        quick = value["eligibility"]["quickForecast"]
+        quick.pop("approvedModelId")
+        quick["assignedCandidateId"] = "poisson_gam"
+        quick["policyVersion"] = policy["policyVersion"]
+        quick["policySha256"] = policy["policySha256"]
+        value["workflowMode"] = "quick_forecast"
+        value["activeModelAuthority"] = {
+            "authoritySource": "committed_assignment",
+            "assignmentId": "11111111-1111-4111-8111-111111111111",
+            "assignmentCommitSha256": "1" * 64,
+            "authoritySnapshotSha256": "2" * 64,
+            "assignedCandidateId": "poisson_gam",
+            "candidateRegistrySha256": policy["candidateRegistrySha256"],
+            "featureOrderSha256": policy["featureOrderSha256"],
+            "lifecyclePolicyId": lifecycle["policyId"],
+            "lifecyclePolicyVersion": lifecycle["policyVersion"],
+            "lifecyclePolicySha256": lifecycle["policySha256"],
+            "operationalPolicyId": policy["policyId"],
+            "operationalPolicyVersion": policy["policyVersion"],
+            "operationalPolicySha256": policy["policySha256"],
+        }
+        schema = json.loads((ROOT / "config" / "runtime_workspace.schema.json").read_text(encoding="utf-8"))
+        validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+        validator.validate(value)
+        for mutate in (
+            lambda artifact: artifact.pop("activeModelAuthority"),
+            lambda artifact: artifact["eligibility"]["quickForecast"].pop("assignedCandidateId"),
+            lambda artifact: artifact["eligibility"]["quickForecast"].update(approvedModelId="random_forest"),
+            lambda artifact: artifact.update(schemaVersion="1.0"),
+        ):
+            invalid = copy.deepcopy(value)
+            mutate(invalid)
+            with self.subTest(mutation=mutate):
+                with self.assertRaises(jsonschema.ValidationError):
+                    validator.validate(invalid)
+
+    def test_assessment_workspace_schema_preserves_legacy_identity_contract(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result, value = run_validation(Path(directory), self.dengue, self.climate)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        schema = json.loads((ROOT / "config" / "runtime_workspace.schema.json").read_text(encoding="utf-8"))
+        validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+        validator.validate(value)
+        self.assertEqual(value["schemaVersion"], "1.0")
+        self.assertEqual(value["workflowMode"], "assess_dataset")
+        self.assertEqual(value["eligibility"]["quickForecast"]["approvedModelId"], "random_forest")
+        self.assertNotIn("assignedCandidateId", value["eligibility"]["quickForecast"])
+        self.assertNotIn("activeModelAuthority", value)
+
+        missing_legacy = copy.deepcopy(value)
+        missing_legacy["eligibility"]["quickForecast"].pop("approvedModelId")
+        quick_replacement = copy.deepcopy(value)
+        quick_replacement["eligibility"]["quickForecast"].pop("approvedModelId")
+        quick_replacement["eligibility"]["quickForecast"]["assignedCandidateId"] = "poisson_gam"
+        wrong_version = copy.deepcopy(value)
+        wrong_version["schemaVersion"] = "1.1"
+        for invalid in (missing_legacy, quick_replacement, wrong_version):
+            with self.assertRaises(jsonschema.ValidationError):
+                validator.validate(invalid)
 
     def test_missing_required_column_is_structured_user_invalidity(self):
         malformed = self.dengue.replace(b",cases,", b",case_count,", 1)

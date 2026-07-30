@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { bundledOverviewViewModel, type OverviewViewModel } from "@/lib/dashboard-view-model";
+import { governedModelLabel } from "@/lib/status-labels";
 import { loadRuntimeConfig } from "./config";
 import { RuntimePublicError } from "./errors";
 import { assertContained, deploymentRuntimePaths, runtimeCollectionPaths } from "./paths";
@@ -9,6 +10,7 @@ import { assertContained, deploymentRuntimePaths, runtimeCollectionPaths } from 
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[a-f0-9]{64}$/;
+const EPI_PERIOD = /^\d{4}-W(?:0[1-9]|[1-4]\d|5[0-3])$/;
 
 type JsonObject = Record<string, unknown>;
 
@@ -35,6 +37,27 @@ function exactKeys(value: JsonObject, keys: string[]): boolean {
 
 function integer(value: unknown): value is number {
   return Number.isSafeInteger(value) && Number(value) >= 0;
+}
+
+function acceptedPeriodLabel(value: unknown): string {
+  const period = object(value);
+  if (
+    !exactKeys(period, ["start", "end"])
+    || typeof period.start !== "string"
+    || typeof period.end !== "string"
+    || !EPI_PERIOD.test(period.start)
+    || !EPI_PERIOD.test(period.end)
+  ) {
+    throw new Error("accepted period");
+  }
+  return `${period.start} – ${period.end}`;
+}
+
+export function dashboardModelLabel(value: unknown): string {
+  if (typeof value !== "string") throw new Error("model identity");
+  const label = governedModelLabel(value);
+  if (!label) throw new Error("model identity");
+  return label;
 }
 
 export async function readVerifiedCurrentForecast(
@@ -208,7 +231,7 @@ function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewMo
     },
     activeModel: {
       id: String(model.modelId),
-      label: String(model.modelLabel),
+      label: dashboardModelLabel(model.modelId),
       adoptionStatus: approved ? "Used for this one-run internal decision; deployment model unchanged" : "Approved under Quick Forecast compatibility policy",
     },
     modelUse: approved
@@ -223,7 +246,7 @@ function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewMo
       timestamp: String(run.committedAt),
       status: "Completed",
       validationStatus: "Validated",
-      acceptedPeriod: validation.acceptedPeriod as OverviewViewModel["latestRun"]["acceptedPeriod"],
+      acceptedPeriod: acceptedPeriodLabel(validation.acceptedPeriod),
       completedSteps: Number(run.completedSteps),
       refreshState: "committed",
     },

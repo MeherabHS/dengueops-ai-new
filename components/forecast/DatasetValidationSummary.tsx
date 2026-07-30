@@ -4,6 +4,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type { LocalFilePreview, ServerValidationState, WorkflowMode } from "@/lib/forecast-workflow-types";
 import type { CurrentModelAssignmentResultSuccess } from "@/lib/runtime/contracts";
+import AsyncStatusIndicator from "./AsyncStatusIndicator";
 
 export default function DatasetValidationSummary({ files, mode, serverValidation, onMode, onValidate, revalidationRequired, currentAssignment = null, validationActionLabel }: {
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
@@ -26,19 +27,19 @@ export default function DatasetValidationSummary({ files, mode, serverValidation
     <div className="rounded-xl border border-border-subtle bg-surface-muted p-5">
       <h3 className="font-semibold text-ink">Authoritative validation intent</h3>
       <p className="mt-1 text-sm text-ink-muted">{isQuickForecast
-        ? "Fresh Quick Forecast validation creates a new governed workspace from the selected local files and binds it to the Current governed assignment."
-        : "This workspace is created only for governed dataset assessment. Quick Forecast remains pending."}</p>
+        ? "Fresh operational forecast validation creates a new governed workspace from the selected local files and binds it to the current governed assignment."
+        : "This workspace is created only for governed dataset assessment. Operational forecasting is a separate workflow."}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {isQuickForecast
-          ? <Button variant="primary" disabled>Fresh Quick Forecast validation</Button>
-          : <><Button variant="primary" onClick={() => onMode("assess_dataset")}>Assess Dataset</Button><Button variant="secondary" disabled>Quick Forecast pending</Button></>}
+          ? <Button variant="primary" disabled>Fresh operational validation</Button>
+          : <Button variant="primary" onClick={() => onMode("assess_dataset")}>Assess Dataset</Button>}
       </div>
       <Button className="mt-4" disabled={!mode || serverValidation.status === "submitting"} onClick={onValidate}>
         {serverValidation.status === "submitting" ? "Validating datasets…" : validationActionLabel ?? "Validate datasets"}
       </Button>
     </div>
     {serverValidation.status === "idle" ? <div className="rounded-xl border border-informational/25 bg-informational/10 p-5"><div className="flex gap-3"><CircleDashed className="h-5 w-5 text-informational" /><div><h3 className="font-semibold text-ink">Server validation not submitted</h3><p className="mt-1 text-sm text-ink-muted">Local preview is not authoritative. Submit both files to check schema, chronology, alignment, and current analytical eligibility.</p></div></div></div> : null}
-    {serverValidation.status === "submitting" ? <div className="rounded-xl border border-informational/25 bg-informational/10 p-5" role="status"><div className="flex gap-3"><CircleDashed className="h-5 w-5 text-informational" /><div><h3 className="font-semibold text-ink">Authoritative validation in progress</h3><p className="mt-1 text-sm text-ink-muted">The files are being checked in an isolated server workspace. No forecast is running.</p></div></div></div> : null}
+    {serverValidation.status === "submitting" ? <AsyncStatusIndicator label={isQuickForecast ? "Validating latest data against the current assignment" : "Validating assessment data…"} detail="The files are being checked in an isolated server workspace. No forecast is running." delayedAfterSeconds={10} /> : null}
     {serverValidation.status === "failed" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-5" role="alert"><h3 className="font-semibold text-ink">Validation service failed</h3><p className="mt-1 text-sm text-ink-muted">{serverValidation.error.message}</p><p className="mt-2 text-xs text-ink-muted">Reference: {serverValidation.error.correlationId}</p></div> : null}
     {(serverValidation.status === "ready" || serverValidation.status === "invalid") ? <AuthoritativeResult response={serverValidation.response} currentAssignment={currentAssignment} /> : null}
   </div>;
@@ -55,23 +56,23 @@ function AuthoritativeResult({ response, currentAssignment }: {
     return <div className={`rounded-xl border p-5 ${response.status === "ready" && quick.eligible ? "border-success/25 bg-success/10" : "border-destructive/25 bg-destructive/10"}`} role="status">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-ink">Fresh Quick Forecast validation: {response.status === "ready" ? "passed" : "invalid"}</h3>
+          <h3 className="font-semibold text-ink">Fresh operational forecast validation: {response.status === "ready" ? "passed" : "invalid"}</h3>
           <p className="mt-1 text-sm text-ink-muted">A new workflow-specific workspace was created. The assessment workspace was not reused.</p>
         </div>
-        <StatusBadge label={response.status === "ready" && quick.eligible ? "Quick Forecast eligible" : "Quick Forecast blocked"} variant={response.status === "ready" && quick.eligible ? "success" : "destructive"} />
+        <StatusBadge label={response.status === "ready" && quick.eligible ? "Operational forecast eligible" : "Operational forecast blocked"} variant={response.status === "ready" && quick.eligible ? "success" : "destructive"} />
       </div>
       <dl className="mt-4 grid gap-2 text-sm text-ink-muted sm:grid-cols-2">
         <div><dt className="font-medium text-ink">New workspace created</dt><dd>{response.workspaceId}</dd></div>
         <div><dt className="font-medium text-ink">Dataset identity</dt><dd>{response.datasetId}</dd></div>
         <div><dt className="font-medium text-ink">Validation status</dt><dd>{response.status}</dd></div>
-        <div><dt className="font-medium text-ink">Verified workflow mode</dt><dd>Quick Forecast</dd></div>
-        <div><dt className="font-medium text-ink">Current governed assignment</dt><dd>{authority?.assignmentId ?? "Not available"}</dd></div>
-        <div><dt className="font-medium text-ink">Selected assigned candidate</dt><dd>{currentAssignment?.selectedCandidateLabel ?? "Not available"}</dd></div>
+        <div><dt className="font-medium text-ink">Verified workflow mode</dt><dd>Operational forecast</dd></div>
+        <div><dt className="font-medium text-ink">Current governed assignment</dt><dd>{authority && currentAssignment ? "Verified" : "Not available"}</dd></div>
+        <div><dt className="font-medium text-ink">Current governed model</dt><dd>{currentAssignment?.selectedCandidateLabel ?? "Not available"}</dd></div>
         <div><dt className="font-medium text-ink">Assignment binding</dt><dd>{authority && currentAssignment && authority.assignmentId === currentAssignment.assignmentId && authority.authoritySnapshotSha256 === currentAssignment.assignmentPointerSha256 ? "Verified" : "Not verified"}</dd></div>
-        <div><dt className="font-medium text-ink">Quick Forecast eligibility</dt><dd>{quick.eligible ? "Eligible" : "Blocked"}</dd></div>
+        <div><dt className="font-medium text-ink">Operational forecast eligibility</dt><dd>{quick.eligible ? "Eligible" : "Blocked"}</dd></div>
       </dl>
       {response.issues.length ? <div className="mt-4"><p className="text-sm font-semibold text-ink">Validation warnings or failures</p><ul className="mt-2 space-y-1 text-sm text-ink-muted">{response.issues.map((value, index) => <li key={`${value.code}-${index}`}><span className="font-medium text-ink">{value.severity === "error" ? "Error" : "Warning"}:</span> {value.message}</li>)}</ul></div> : <p className="mt-4 text-sm text-success">No authoritative file, schema, temporal, or alignment errors were found.</p>}
-      <p className="mt-4 text-xs text-ink-muted">No Quick Forecast job was created by validation.</p>
+      <p className="mt-4 text-xs text-ink-muted">No operational forecast job was created by validation.</p>
     </div>;
   }
   const compatibility = String(assess.decisionCompatibilityStatus);
@@ -86,7 +87,7 @@ function AuthoritativeResult({ response, currentAssignment }: {
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-ink">Authoritative server validation: {response.status === "ready" ? "passed" : "invalid"}</h3><p className="mt-1 text-sm text-ink-muted">{response.counts.overlapWeeks} overlapping weeks · {response.counts.labelledRows} labelled rows</p></div><StatusBadge label={response.status === "ready" ? "Validated" : "Invalid"} variant={response.status === "ready" ? "success" : "destructive"} /></div>
     {response.acceptedPeriod ? <p className="mt-3 text-sm text-ink-muted">Accepted period: {response.acceptedPeriod.start} to {response.acceptedPeriod.end}</p> : null}
     <div className="mt-4 grid gap-3 md:grid-cols-2">
-      <div className="rounded-lg border border-border-subtle bg-surface p-4"><p className="font-semibold text-ink">Quick Forecast</p><p className="mt-1 text-sm text-ink-muted">Pending for B9.4B; no Quick Forecast action is exposed.</p>{quick.eligible ? <p className="mt-2 text-xs leading-relaxed text-ink-muted">Compatibility was reported for the current assigned model, which is resolved dynamically by server authority.</p> : null}<ul className="mt-2 space-y-1 text-xs text-ink-muted">{quick.reasons.map(reason => <li key={reason}>• {reason}</li>)}</ul><dl className="mt-3 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Empirical range: </dt><dd className="inline">{quick.uncertaintyStatus === "pending_dataset_specific_calibration" ? "pending dataset-specific calibration" : "unavailable for this uploaded dataset"}</dd></div><div><dt className="inline font-medium text-ink">Preparedness: </dt><dd className="inline">{quick.preparednessStatus === "unavailable_missing_planning_policy" ? "unavailable until a planning-scenario policy is approved" : "unavailable for this uploaded dataset"}</dd></div></dl></div>
+      <div className="rounded-lg border border-border-subtle bg-surface p-4"><p className="font-semibold text-ink">Operational forecast</p><p className="mt-1 text-sm text-ink-muted">Operational forecasting is a separate workflow and does not start from assessment validation.</p>{quick.eligible ? <p className="mt-2 text-xs leading-relaxed text-ink-muted">Compatibility is resolved dynamically from the current governed model assignment.</p> : <ul className="mt-2 space-y-1 text-xs text-ink-muted">{quick.reasons.map(reason => <li key={reason}>• {reason}</li>)}</ul>}<dl className="mt-3 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Empirical range: </dt><dd className="inline">{quick.uncertaintyStatus === "pending_dataset_specific_calibration" ? "pending dataset-specific calibration" : "unavailable for this uploaded dataset"}</dd></div><div><dt className="inline font-medium text-ink">Preparedness: </dt><dd className="inline">{quick.preparednessStatus === "unavailable_missing_planning_policy" ? "unavailable until a planning-scenario policy is approved" : "unavailable for this uploaded dataset"}</dd></div></dl></div>
       <div className="rounded-lg border border-border-subtle bg-surface p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="font-semibold text-ink">Assess Dataset</p>
@@ -98,12 +99,12 @@ function AuthoritativeResult({ response, currentAssignment }: {
           <div><dt className="inline font-medium text-ink">Planned folds: </dt><dd className="inline">{assess.plannedFoldCount || "none"}</dd></div>
           <div><dt className="inline font-medium text-ink">Governed range: </dt><dd className="inline">{assess.minimumFoldCount} minimum / {assess.maximumFoldCount} maximum</dd></div>
           <div><dt className="inline font-medium text-ink">Recent-fold cap: </dt><dd className="inline">{assess.foldCapApplied ? "applied; older rows remain in expanding training" : "not applied"}</dd></div>
-          <div><dt className="inline font-medium text-ink">Assessment policy: </dt><dd className="inline">{assess.assessmentPolicyVersion}</dd></div>
-          <div><dt className="inline font-medium text-ink">Candidate set: </dt><dd className="inline">{assess.candidateSetStatus === "complete_candidate_set" ? `${Object.keys(assess.candidateEligibility).length} governed candidates expected from the current registry` : assess.candidateSetStatus === "partial_candidate_set" ? "partial candidate set" : "insufficient candidate breadth"}</dd></div>
+          <div><dt className="inline font-medium text-ink">Assessment policy: </dt><dd className="inline">Current governed assessment and decision policy</dd></div>
+          <div><dt className="inline font-medium text-ink">Candidate eligibility evidence: </dt><dd className="inline">{Object.keys(assess.candidateEligibility).length} registered candidates checked</dd></div>
           <div><dt className="inline font-medium text-ink">Recommendation governance: </dt><dd className="inline">{assess.recommendationStatus === "evidence_only" ? "technical evidence only; strength not available" : "no recommendation"}</dd></div>
           <div><dt className="inline font-medium text-ink">Assessment decision: </dt><dd className="inline">{decisionAvailability}</dd></div>
         </dl>
-        <ul className="mt-3 space-y-1 text-xs text-ink-muted">{assess.reasons.map((reason, index) => <li key={`${assess.reasonCodes[index] ?? "reason"}-${index}`}>• {reason}</li>)}</ul>
+        <details className="mt-3 rounded-lg border border-border-subtle bg-surface-muted p-3"><summary className="cursor-pointer text-xs font-semibold text-accent outline-none focus-visible:ring-2 focus-visible:ring-focus">Technical validation evidence</summary><dl className="mt-2 grid gap-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Policy version: </dt><dd className="inline">{assess.assessmentPolicyVersion}</dd></div><div><dt className="inline font-medium text-ink">Candidate-set eligibility status: </dt><dd className="inline">{assess.candidateSetStatus}</dd></div></dl><ul className="mt-2 space-y-1 text-xs text-ink-muted">{assess.reasons.map((reason, index) => <li key={`${assess.reasonCodes[index] ?? "reason"}-${index}`}>• {reason}</li>)}</ul></details>
         {!assess.eligible && assess.availableFoldCount < assess.minimumFoldCount ? <p className="mt-3 text-xs font-medium text-warning">At least {assess.minimumFoldCount} complete temporal folds are required; this dataset provides {assess.availableFoldCount}.</p> : null}
         <p className="mt-3 text-xs text-ink-muted">Validation and assessment evidence alone do not authorize forecasting. Protected operator actions require trusted server-side ingress, a governed final decision, and an unconsumed one-run authorization.</p>
       </div>

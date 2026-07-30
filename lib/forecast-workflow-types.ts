@@ -63,9 +63,14 @@ export type WorkflowStep =
   | "assessment"
   | "ranking"
   | "decision"
-  | "approved_forecast"
+  | "qualification_run"
   | "assignment"
-  | "quick_forecast"
+  | "complete";
+export type OperationalForecastStep =
+  | "upload_latest_data"
+  | "validation"
+  | "forecast"
+  | "current_verification"
   | "complete";
 export interface LocalFilePreview { key: "dengue" | "climate"; file: File; detectedColumns: string[]; missingColumns: string[]; approximateRowCount: number; headerPreviewComplete: boolean; }
 export type ServerValidationState =
@@ -177,8 +182,6 @@ export interface ForecastWorkflowState {
   approval: ModelApprovalDecision | null;
   approvedForecast: ApprovedForecastWorkflowState;
   assignment: ModelAssignmentWorkflowState;
-  quickValidation: QuickValidationWorkflowState;
-  quickForecast: QuickForecastWorkflowState;
   result: ForecastRunResult | null;
   error: string | null;
 }

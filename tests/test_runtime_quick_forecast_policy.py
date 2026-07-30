@@ -52,6 +52,28 @@ class RuntimeQuickForecastPolicyTests(unittest.TestCase):
             "valid_inference_row": True,
         }
 
+    def current_authority(self):
+        registry = json.loads((ROOT / "config" / "candidate_models.json").read_text(encoding="utf-8"))
+        candidate = next(item for item in registry["candidates"] if item["model_id"] == "poisson_gam")
+        lifecycle = json.loads((ROOT / "config" / "deployments" / "dhaka_south" / "model_lifecycle_policy.json").read_text(encoding="utf-8"))
+        return {
+            "deploymentId": "dhaka_south",
+            "authoritySource": "committed_assignment",
+            "modelId": candidate["model_id"],
+            "modelFamily": candidate["model_family"],
+            "parameterSha256": candidate["parameters_sha256"],
+            "preprocessingIdentity": candidate["preprocessing_identity"],
+            "candidateRegistrySha256": hashlib.sha256((ROOT / "config" / "candidate_models.json").read_bytes()).hexdigest(),
+            "featureOrderSha256": candidate["feature_order_sha256"],
+            "assignmentId": "11111111-1111-4111-8111-111111111111",
+            "assignmentCommitSha256": "1" * 64,
+            "assignmentAction": "assign_selected_model",
+            "lifecyclePolicyId": lifecycle["policyId"],
+            "lifecyclePolicyVersion": lifecycle["policyVersion"],
+            "lifecyclePolicySha256": lifecycle["policySha256"],
+            "authoritySnapshotSha256": "2" * 64,
+        }
+
     def assert_blocked(self, mutation, code):
         context = self.context()
         mutation(context)
@@ -129,6 +151,30 @@ class RuntimeQuickForecastPolicyTests(unittest.TestCase):
         for forbidden in (".fit(", "build_candidate_comparison", "build_directives", "generate_forecast"):
             self.assertNotIn(forbidden, implementation)
             self.assertNotIn(forbidden, validator)
+
+    def test_current_policy_binds_eligibility_to_server_assignment(self):
+        authority = self.current_authority()
+        policy, policy_sha = runtime_policy.load_and_validate_current_quick_forecast_policy(
+            "dhaka_south",
+            authority,
+        )
+        context = self.context() | {
+            "feature_columns": [f"feature_{index}" for index in range(18)],
+            "candidate_registry_sha256": authority["candidateRegistrySha256"],
+        }
+        result = runtime_policy.evaluate_current_quick_forecast_policy(policy, authority, context)
+        self.assertTrue(result["eligible"])
+        self.assertEqual(result["assignedCandidateId"], "poisson_gam")
+        self.assertNotIn("approvedModelId", result)
+        self.assertEqual(result["policyVersion"], "p2-v2")
+        self.assertEqual(result["policySha256"], policy_sha)
+        self.assertNotIn("Random Forest", json.dumps(result))
+
+    def test_current_policy_rejects_mismatched_assignment_identity(self):
+        authority = self.current_authority()
+        authority["candidateRegistrySha256"] = "0" * 64
+        with self.assertRaises(runtime_policy.RuntimePolicyError):
+            runtime_policy.load_and_validate_current_quick_forecast_policy("dhaka_south", authority)
 
 
 if __name__ == "__main__":

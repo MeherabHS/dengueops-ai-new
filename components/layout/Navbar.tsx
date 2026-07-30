@@ -43,7 +43,7 @@ export default function Navbar() {
           })}
           {authenticated ? <button type="button" onClick={signOut} className="rounded-md px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-muted hover:text-primary">Sign out</button> : null}
         </nav>
-        <div className="hidden items-center gap-2 xl:flex" aria-label="Deployment status">
+        <div className="hidden items-center gap-2 xl:flex" aria-label="Dhaka forecasting scope">
           <StatusBadge variant="info">Synthetic Capability Demonstration</StatusBadge>
           <StatusBadge variant="warning">Benchmark Only</StatusBadge>
         </div>

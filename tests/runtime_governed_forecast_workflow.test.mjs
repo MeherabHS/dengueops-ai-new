@@ -81,28 +81,31 @@ test("decision reason and acknowledgements are bounded and duplicate publication
 test("ranking renders every returned candidate without hardcoded candidate count", () => {
   assert.match(leaderboard, /assessment\.workflow\.candidates/);
   assert.match(leaderboard, /candidates\.map/);
-  assert.match(leaderboard, /candidate\.successfulFolds\} completed \/ \{requiredFolds\} required/);
+  assert.match(leaderboard, /candidate\.successfulFolds\} \/ \{requiredFolds\}/);
   assert.match(leaderboard, /candidate\.failedFolds\} failed/);
   for (const marker of ["displayRank", "modelLabel", "modelFamily", "successfulFolds", "plannedFoldCount", "mae", "rmse", "wape", "candidateClass", "Technical winner", "Eligible override", "candidate.reasons"]) {
     assert.match(leaderboard, new RegExp(marker.replace(".", "\\.")));
   }
   assert.doesNotMatch([leaderboard, validation].join("\n"), /seven governed candidates/i);
-  assert.match(leaderboard, /candidate\.modelLabel \|\| modelLabel\(candidate\.modelId\)/);
+  assert.match(leaderboard, /modelLabel\(candidate\.modelId\)/);
   for (const candidate of ["moving_average_4w", "seasonal_naive_52w", "ridge_regression", "poisson_regression", "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression", "extra_trees", "hist_gradient_boosting", "poisson_gam"]) {
     assert.match(contracts, new RegExp(candidate));
   }
-  assert.match(labels, /return statusLabel\(value\)/);
+  assert.match(labels, /return governedModelLabel\(value\) \?\? statusLabel\(value\)/);
+  assert.match(leaderboard, /primaryCandidateStatusLabel/);
+  assert.match(leaderboard, /Evaluation only/);
+  assert.match(leaderboard, /candidateClass !== "learned_model"/);
+  assert.doesNotMatch(leaderboard, /baseline[\s\S]{0,120}Eligible override/);
 });
 
 test("existing server-generated MSE and R-squared render only as secondary diagnostics", () => {
   assert.match(contracts, /mse\?: number \| null/);
   assert.match(contracts, /r2\?: number \| null/);
-  assert.match(leaderboard, /Core ranking metrics/);
-  assert.match(leaderboard, /Secondary diagnostics/);
+  assert.match(leaderboard, /MSE and R² are secondary diagnostics/);
   for (const metricName of ["mae", "mse", "rmse", "wape", "r2"]) {
     assert.match(leaderboard, new RegExp(`candidate\\.metrics\\?\\.${metricName}`));
   }
-  assert.match(leaderboard, /\["MAE", "RMSE", "WAPE", "MSE", "R²"\]/);
+  for (const label of ["MAE", "RMSE", "WAPE", "MSE", "R²"]) assert.match(leaderboard, new RegExp(`"${label}"`));
   assert.match(leaderboard, /value == null \? "Not available" : `\$\{value\.toFixed\(2\)\}\$\{suffix\}`/);
   assert.doesNotMatch(leaderboard, /metrics\?\.rmse\s*\*\s*candidate\.metrics\?\.rmse|Math\.pow\([^)]*rmse|Math\.(?:max|min)\([^)]*r2/);
   assert.doesNotMatch(leaderboard, /\bMAPE\b/i);
@@ -123,16 +126,18 @@ test("approved forecast sends no model identity, polls the returned job URL, and
   assert.match(client, /fetch\(statusUrl, \{ cache: "no-store" \}\)/);
 });
 
-test("completed approved run stays on workflow with assignment and Quick Forecast pending", () => {
+test("qualification completion stays on governance workflow and assignment completes it", () => {
   assert.match(approvedForecast, /Ready for governed assignment/);
   assert.match(approvedForecast, /approvedForecastCommitSha256/);
   assert.match(approvedForecast, /committedRunId/);
   assert.match(approvedForecast, /sourceDecisionId/);
-  const approvedStage = workflow.slice(workflow.indexOf('state.step === "approved_forecast"'), workflow.indexOf('state.step === "assignment"'));
+  const approvedStage = workflow.slice(workflow.indexOf('state.step === "qualification_run"'), workflow.indexOf('state.step === "assignment"'));
   assert.doesNotMatch([approvedStage, approvedForecast].join("\n"), /location\.assign|router\.(?:push|replace)|href="\/dashboard"|startQuickForecast/);
-  for (const label of ["Upload", "Validation", "Assessment", "Ranking", "Decision", "Approved forecast", "Assignment", "Quick Forecast", "Complete"]) assert.match(stepper, new RegExp(label));
+  for (const label of ["Upload", "Validation", "Assessment", "Ranking", "Decision", "Qualification run", "Assignment", "Complete"]) assert.match(stepper, new RegExp(label));
+  const governanceStages = stepper.slice(stepper.indexOf("const governanceSteps"), stepper.indexOf("const operationalSteps"));
+  assert.doesNotMatch(governanceStages, /Quick Forecast/);
   assert.match(stepper, /data-stage-state/);
-  assert.match(quickOption, /Pending; this workflow does not start Quick Forecast/);
+  assert.doesNotMatch(workflow, /QuickForecastOption|QuickForecastRunPanel/);
 });
 
 test("Quick Forecast dashboard handoff requires the exact verified current run", () => {

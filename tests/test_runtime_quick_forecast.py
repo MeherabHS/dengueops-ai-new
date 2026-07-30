@@ -29,7 +29,13 @@ def iso_now():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def build_ready_runtime(base: Path, row_count: int | None = None, runtime_root: Path | None = None):
+def build_ready_runtime(
+    base: Path,
+    row_count: int | None = None,
+    runtime_root: Path | None = None,
+    *,
+    validation_mode: str = "assess_dataset",
+):
     runtime = (runtime_root or (base / "runtime")).resolve()
     workspace_id, job_id, run_id = (str(uuid.uuid4()) for _ in range(3))
     workspace = runtime / "workspaces" / workspace_id
@@ -49,11 +55,13 @@ def build_ready_runtime(base: Path, row_count: int | None = None, runtime_root: 
         canonical_dengue_output=str(workspace / "inputs/canonical/dengue_cases.csv"),
         canonical_climate_output=str(workspace / "inputs/canonical/climate_data.csv"),
         validation_output=str(workspace / "metadata/validation.json"),
-        deployment_id="dhaka_south", workflow_mode="quick_forecast",
+        deployment_id="dhaka_south", workflow_mode=validation_mode,
     ))
-    assert result["status"] == "ready" and result["eligibility"]["quickForecast"]["eligible"]
+    assert result["status"] == "ready"
+    if validation_mode == "quick_forecast":
+        assert result["eligibility"]["quickForecast"]["eligible"]
     metadata = {"schemaVersion": "1.0", "workspaceId": workspace_id, "correlationId": str(uuid.uuid4()),
-        "deploymentId": "dhaka_south", "workflowMode": "quick_forecast", "status": "ready",
+        "deploymentId": "dhaka_south", "workflowMode": validation_mode, "status": "ready",
         "createdAt": created, "updatedAt": iso_now(), "originalFiles": {}, "datasetId": result["datasetId"]}
     (workspace / "metadata/workspace.json").write_text(json.dumps(metadata), encoding="utf-8")
     validation_hash = hashlib.sha256((workspace / "metadata/validation.json").read_bytes()).hexdigest()

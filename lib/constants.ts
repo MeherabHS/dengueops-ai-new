@@ -25,7 +25,8 @@ export const SCENARIO_COLORS: Record<ScenarioKey, string> = {
 // ─── Navigation ───────────────────────────────────────────────────────────
 export const NAV_LINKS: NavLink[] = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/forecast", label: "New Forecast" },
+  { href: "/forecast", label: "Assess Model" },
+  { href: "/forecast/run", label: "Run Forecast" },
   { href: "/preparedness", label: "Preparedness" },
   { href: "/validation", label: "Evidence" },
 ];

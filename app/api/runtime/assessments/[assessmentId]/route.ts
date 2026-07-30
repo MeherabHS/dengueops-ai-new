@@ -114,6 +114,19 @@ export async function GET(
       await readFile(path.join(config.repositoryRoot, "config", "candidate_models.json"), "utf8"),
     ) as { candidates: Array<{ model_id: RuntimeCandidateId; model_family: string }> };
     const families = new Map(registry.candidates.map((candidate) => [candidate.model_id, candidate.model_family]));
+    const returnedCandidateIds = new Set(summary.candidates.map((candidate) => candidate.modelId));
+    if (
+      returnedCandidateIds.size !== summary.candidates.length
+      || summary.candidates.some((candidate) => !families.has(candidate.modelId))
+      || returnedCandidateIds.size > registry.candidates.length
+    ) {
+      throw new RuntimePublicError(
+        "assessment_candidate_coverage_invalid",
+        "storage",
+        "The assessment candidate coverage could not be verified.",
+        409,
+      );
+    }
     const order = deriveAssessmentDisplayOrder(summary.candidates);
     const rank = new Map(
       order
@@ -171,6 +184,17 @@ export async function GET(
     const winner = projectedCandidates.find((candidate) => candidate.technicalWinner) ?? null;
     const normalizedSummary = {
       ...summary,
+      candidateCoverage: {
+        expectedCount: registry.candidates.length,
+        returnedCount: returnedCandidateIds.size,
+        status: returnedCandidateIds.size === registry.candidates.length
+          ? "complete_candidate_set" as const
+          : "partial_candidate_set" as const,
+      },
+      candidateEligibility: {
+        eligibleCount: summary.candidates.filter((candidate) => candidate.selectionEligible).length,
+        ineligibleCount: summary.candidates.filter((candidate) => !candidate.selectionEligible).length,
+      },
       availableFoldCount: summary.availableFoldCount ?? 68,
       decisionCompatibilityStatus: summary.decisionCompatibilityStatus ?? "phase1_decision_policy_available",
       foldPolicy: {

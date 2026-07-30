@@ -32,7 +32,10 @@ def main() -> None:
         value = {"runtime": str(runtime), "authority": authority}
         if action == "create-quick":
             from tests.test_product_v2_quick_forecast import build_ready_workspace
-            workspace, dataset_id, validation_sha = build_ready_workspace(runtime)
+            workspace, dataset_id, validation_sha = build_ready_workspace(
+                runtime,
+                bind_current_assignment=True,
+            )
             value.update({
                 "workspaceId": workspace.name,
                 "datasetId": dataset_id,

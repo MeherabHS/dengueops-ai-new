@@ -21,7 +21,7 @@
     "eligibility"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.0" },
+    "schemaVersion": { "enum": ["1.0", "1.1"] },
     "workspaceId": { "type": "string", "format": "uuid" },
     "datasetId": { "$ref": "#/$defs/sha256" },
     "deploymentId": {
@@ -124,6 +124,40 @@
       }
     },
     "issues": { "type": "array", "items": { "$ref": "#/$defs/issue" } },
+    "activeModelAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authoritySource",
+        "assignmentId",
+        "assignmentCommitSha256",
+        "authoritySnapshotSha256",
+        "assignedCandidateId",
+        "candidateRegistrySha256",
+        "featureOrderSha256",
+        "lifecyclePolicyId",
+        "lifecyclePolicyVersion",
+        "lifecyclePolicySha256",
+        "operationalPolicyId",
+        "operationalPolicyVersion",
+        "operationalPolicySha256"
+      ],
+      "properties": {
+        "authoritySource": { "const": "committed_assignment" },
+        "assignmentId": { "type": "string", "format": "uuid" },
+        "assignmentCommitSha256": { "$ref": "#/$defs/sha256" },
+        "authoritySnapshotSha256": { "$ref": "#/$defs/sha256" },
+        "assignedCandidateId": { "$ref": "#/$defs/selectableCandidateId" },
+        "candidateRegistrySha256": { "$ref": "#/$defs/sha256" },
+        "featureOrderSha256": { "$ref": "#/$defs/sha256" },
+        "lifecyclePolicyId": { "const": "RUNTIME.MODEL_LIFECYCLE.DECISION" },
+        "lifecyclePolicyVersion": { "enum": ["p2-v2", "p2-v3"] },
+        "lifecyclePolicySha256": { "$ref": "#/$defs/sha256" },
+        "operationalPolicyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
+        "operationalPolicyVersion": { "const": "p2-v2" },
+        "operationalPolicySha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
     "eligibility": {
       "type": "object",
       "additionalProperties": false,
@@ -136,7 +170,6 @@
             "eligible",
             "reasons",
             "reasonCodes",
-            "approvedModelId",
             "uncertaintyStatus",
             "preparednessStatus",
             "policyId",
@@ -156,7 +189,8 @@
               "minItems": 1,
               "uniqueItems": true
             },
-            "approvedModelId": { "const": "random_forest" },
+            "approvedModelId": { "$ref": "#/$defs/selectableCandidateId" },
+            "assignedCandidateId": { "$ref": "#/$defs/selectableCandidateId" },
             "uncertaintyStatus": {
               "enum": [
                 "pending_dataset_specific_calibration",
@@ -170,7 +204,7 @@
               ]
             },
             "policyId": { "const": "RUNTIME.QUICK_FORECAST.COMPATIBILITY" },
-            "policyVersion": { "const": "p1.4f-v1" },
+            "policyVersion": { "enum": ["p1.4f-v1", "p2-v2"] },
             "policySha256": { "$ref": "#/$defs/sha256" }
           }
         },
@@ -379,7 +413,73 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "workflowMode": { "const": "assess_dataset" } },
+        "required": ["workflowMode"]
+      },
+      "then": {
+        "properties": {
+          "schemaVersion": { "const": "1.0" },
+          "eligibility": {
+            "properties": {
+              "quickForecast": {
+                "required": ["approvedModelId"],
+                "properties": {
+                  "approvedModelId": { "const": "random_forest" },
+                  "policyVersion": { "const": "p1.4f-v1" }
+                },
+                "not": { "required": ["assignedCandidateId"] }
+              }
+            }
+          }
+        },
+        "not": { "required": ["activeModelAuthority"] }
+      }
+    },
+    {
+      "if": {
+        "properties": { "workflowMode": { "const": "quick_forecast" } },
+        "required": ["workflowMode"]
+      },
+      "then": {
+        "properties": { "schemaVersion": { "const": "1.1" } },
+        "required": ["activeModelAuthority"],
+        "allOf": [
+          {
+            "properties": {
+              "eligibility": {
+                "properties": {
+                  "quickForecast": {
+                    "required": ["assignedCandidateId"],
+                    "properties": {
+                      "policyVersion": { "const": "p2-v2" }
+                    },
+                    "not": { "required": ["approvedModelId"] }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
   "$defs": {
+    "selectableCandidateId": {
+      "enum": [
+        "ridge_regression",
+        "poisson_regression",
+        "random_forest",
+        "gradient_boosting",
+        "elastic_net",
+        "negative_binomial_regression",
+        "extra_trees",
+        "hist_gradient_boosting",
+        "poisson_gam"
+      ]
+    },
     "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "fileHashes": {
       "type": "object",

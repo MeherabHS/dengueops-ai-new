@@ -21,8 +21,10 @@ from runtime_context import ROOT, RuntimeContextError, require_absolute_director
 from runtime_policy import (
     EXPECTED_CASE_COLUMNS,
     EXPECTED_CLIMATE_COLUMNS,
+    evaluate_current_quick_forecast_policy,
     evaluate_quick_forecast_policy,
     load_and_validate_quick_forecast_policy,
+    load_and_validate_current_quick_forecast_policy,
 )
 from runtime_assessment_policy import (
     evaluate_assessment_policy,
@@ -265,9 +267,16 @@ def _contains_approximated_values(frame: pd.DataFrame) -> bool | None:
 
 def validate(args: argparse.Namespace) -> dict[str, Any]:
     runtime_root=getattr(args,"runtime_root",None)
+    active_model_authority: dict[str, Any] | None = None
     if runtime_root:
         from runtime_active_model import resolve_active_model
-        resolve_active_model(ROOT,require_absolute_directory(runtime_root,"runtime root"),args.deployment_id)
+        active_model_authority = resolve_active_model(
+            ROOT,
+            require_absolute_directory(runtime_root, "runtime root"),
+            args.deployment_id,
+        )
+    elif args.workflow_mode == "quick_forecast":
+        raise RuntimeContextError("Quick Forecast validation requires current assignment authority.")
     workspace = Path(args.workspace_root).resolve()
     dengue_input = require_within(workspace, args.dengue_input, "dengue input")
     climate_input = require_within(workspace, args.climate_input, "climate input")
@@ -278,7 +287,15 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
     if not profile_path.exists():
         raise RuntimeContextError("The requested deployment profile is unavailable.")
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
-    quick_policy, quick_policy_sha256 = load_and_validate_quick_forecast_policy(args.deployment_id)
+    if args.workflow_mode == "quick_forecast":
+        if active_model_authority is None:
+            raise RuntimeContextError("Quick Forecast validation requires current assignment authority.")
+        quick_policy, quick_policy_sha256 = load_and_validate_current_quick_forecast_policy(
+            args.deployment_id,
+            active_model_authority,
+        )
+    else:
+        quick_policy, quick_policy_sha256 = load_and_validate_quick_forecast_policy(args.deployment_id)
     assessment_policy, assessment_policy_sha256 = load_and_validate_assessment_policy(args.deployment_id)
     feature_hash = str(profile.get("forecast_uncertainty", {}).get("feature_order_sha256", ""))
     if len(feature_hash) != 64:
@@ -343,7 +360,7 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
         "contiguous_history": not any(value["code"] in {"case_missing_period", "climate_missing_period", "noncontiguous_overlap"} for value in issues),
         "case_climate_aligned": bool(case_periods) and case_periods == climate_periods,
     }
-    quick = evaluate_quick_forecast_policy(quick_policy, {
+    quick_context = {
         "validation_passed": error_count == 0,
         "deployment_id": args.deployment_id,
         "deployment_gate": profile.get("deployment_gate"),
@@ -358,12 +375,23 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
         "approved_model_family": profile.get("model", {}).get("model_family"),
         "approved_model_parameters_sha256": profile.get("model", {}).get("model_parameters_sha256"),
         "candidate_registry_sha256": hashlib.sha256(quick_registry_bytes).hexdigest(),
+        "feature_columns": FEATURE_COLUMNS,
         "source_metadata": source_metadata,
         "overlap_weeks": len(overlap),
         "labelled_rows": labelled_rows,
         **temporal_context,
         "valid_inference_row": valid_inference_row,
-    })
+    }
+    if args.workflow_mode == "quick_forecast":
+        if active_model_authority is None:
+            raise RuntimeContextError("Quick Forecast validation requires current assignment authority.")
+        quick = evaluate_current_quick_forecast_policy(
+            quick_policy,
+            active_model_authority,
+            quick_context,
+        )
+    else:
+        quick = evaluate_quick_forecast_policy(quick_policy, quick_context)
     if quick.get("policySha256") != quick_policy_sha256:
         raise RuntimeContextError("Quick Forecast policy identity changed during evaluation.")
     assess = evaluate_assessment_policy(assessment_policy, {
@@ -391,7 +419,7 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     status = "invalid" if error_count else "ready"
     result: dict[str, Any] = {
-        "schemaVersion": "1.0",
+        "schemaVersion": "1.1" if args.workflow_mode == "quick_forecast" else "1.0",
         "workspaceId": args.workspace_id,
         "datasetId": dataset_id,
         "deploymentId": args.deployment_id,
@@ -436,6 +464,24 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
             "assessDataset": assess,
         },
     }
+    if args.workflow_mode == "quick_forecast":
+        if active_model_authority is None:
+            raise RuntimeContextError("Quick Forecast validation requires current assignment authority.")
+        result["activeModelAuthority"] = {
+            "authoritySource": active_model_authority["authoritySource"],
+            "assignmentId": active_model_authority["assignmentId"],
+            "assignmentCommitSha256": active_model_authority["assignmentCommitSha256"],
+            "authoritySnapshotSha256": active_model_authority["authoritySnapshotSha256"],
+            "assignedCandidateId": active_model_authority["modelId"],
+            "candidateRegistrySha256": active_model_authority["candidateRegistrySha256"],
+            "featureOrderSha256": active_model_authority["featureOrderSha256"],
+            "lifecyclePolicyId": active_model_authority["lifecyclePolicyId"],
+            "lifecyclePolicyVersion": active_model_authority["lifecyclePolicyVersion"],
+            "lifecyclePolicySha256": active_model_authority["lifecyclePolicySha256"],
+            "operationalPolicyId": quick["policyId"],
+            "operationalPolicyVersion": quick["policyVersion"],
+            "operationalPolicySha256": quick["policySha256"],
+        }
     if overlap:
         result["acceptedPeriod"] = {
             "start": f"{overlap[0][0]}-W{overlap[0][1]:02d}",

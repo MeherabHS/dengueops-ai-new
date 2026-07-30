@@ -19,6 +19,7 @@ import type {
   RuntimeErrorResponse,
 } from "@/lib/runtime/contracts";
 import { statusLabel } from "@/lib/status-labels";
+import AsyncStatusIndicator from "./AsyncStatusIndicator";
 
 const MIN_REASON_LENGTH = 12;
 const MAX_REASON_LENGTH = 1000;
@@ -61,7 +62,7 @@ export default function ModelAssignmentPanel({
       || !approvedForecast.selectedModelId
       || !approvedForecast.approvedForecastCommitSha256
     ) {
-      throw new Error("The retained approved forecast evidence is incomplete.");
+      throw new Error("The retained qualification-run evidence is incomplete.");
     }
     const job = await getRuntimeJob(approvedForecast.jobId);
     if (!job.ok) {
@@ -79,7 +80,7 @@ export default function ModelAssignmentPanel({
       || job.approvedForecastCommitSha256 !== approvedForecast.approvedForecastCommitSha256
       || !SHA.test(job.approvedForecastCommitSha256)
     ) {
-      throw new Error("The approved forecast job no longer matches the retained verified evidence.");
+      throw new Error("The qualification job no longer matches the retained verified evidence.");
     }
   };
 
@@ -266,7 +267,7 @@ export default function ModelAssignmentPanel({
     </div>
 
     <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-      <div><dt className="font-medium text-ink">Approved forecast run ID</dt><dd className="mt-1 break-all text-ink-muted">{approvedForecast.committedRunId}</dd></div>
+      <div><dt className="font-medium text-ink">Qualification evidence</dt><dd className="mt-1 text-ink-muted">Verified run available</dd></div>
       <div><dt className="font-medium text-ink">Pointer read</dt><dd className="mt-1 text-ink-muted">{state.approvedJobVerified && state.expectedAssignmentPointerSha256 ? "Verified current pointer identity available" : "Verification pending"}</dd></div>
       {state.current ? <>
         <div><dt className="font-medium text-ink">Current assignment ID</dt><dd className="mt-1 break-all text-ink-muted">{state.current.assignmentId}</dd></div>
@@ -276,7 +277,7 @@ export default function ModelAssignmentPanel({
     </dl>
 
     <div className="mt-4 rounded-lg border border-warning/25 bg-warning/10 p-4 text-sm text-ink-muted">
-      Publishing changes the deployment&apos;s active model assignment pointer. It is deliberate, append-only, and may conflict with another valid publication.
+      Publishing changes the current governed model assignment. It is deliberate, append-only, and may conflict with another valid publication.
     </div>
 
     {state.status === "ready" ? <div className="mt-5 space-y-4">
@@ -293,13 +294,13 @@ export default function ModelAssignmentPanel({
       </label>
       <label className="flex items-start gap-3 text-sm text-ink">
         <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
-        <span>I acknowledge that this publishes the server-derived candidate from the verified approved forecast as the current governed assignment.</span>
+        <span>I acknowledge that this publishes the server-derived candidate from the verified qualification run as the current governed assignment.</span>
       </label>
       <Button disabled={!reasonValid || !acknowledged || state.status !== "ready"} onClick={() => void publish()}>Publish governed assignment</Button>
     </div> : null}
 
-    {state.status === "loading_current_assignment" ? <Button className="mt-4" disabled>Reading current assignment…</Button> : null}
-    {state.status === "publishing" ? <Button className="mt-4" disabled>Publishing governed assignment…</Button> : null}
+    {state.status === "loading_current_assignment" ? <div className="mt-4 space-y-3"><Button disabled>Verifying current assignment…</Button><AsyncStatusIndicator label="Verifying current model authority" delayedAfterSeconds={10} /></div> : null}
+    {state.status === "publishing" ? <div className="mt-4 space-y-3"><Button disabled>Publishing governed assignment…</Button><AsyncStatusIndicator label="Publishing governed assignment" delayedAfterSeconds={10} /></div> : null}
     {state.error ? <p className="mt-4 rounded-lg border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive" role="alert">{state.error}</p> : null}
     {["pointer_conflict", "publication_in_progress", "failed_uncertain"].includes(state.status) ? <div className="mt-4">
       <p className="text-sm text-ink-muted">No assignment retry will occur automatically. Refresh the current authority before deciding what to do next.</p>
@@ -307,8 +308,8 @@ export default function ModelAssignmentPanel({
     </div> : null}
     {state.status === "authentication_required" ? <p className="mt-4 text-sm text-destructive">Your authenticated session is unavailable. Sign in again, then explicitly refresh; no assignment will be published automatically.</p> : null}
     {immutable ? <div className="mt-5 rounded-lg border border-success/25 bg-surface p-4">
-      <p className="font-semibold text-success">Governed assignment verified. Quick Forecast validation is the next step.</p>
-      <p className="mt-1 text-sm text-ink-muted">The assignment was reconciled through current server authority. Quick Forecast remains pending and has not started.</p>
+      <p className="font-semibold text-success">Governed assignment verified.</p>
+      <p className="mt-1 text-sm text-ink-muted">The assignment was reconciled through current server authority. Model assessment and assignment are complete.</p>
     </div> : null}
   </section>;
 }
