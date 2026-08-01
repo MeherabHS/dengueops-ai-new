@@ -16,6 +16,11 @@ export const runtime = "nodejs";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[a-f0-9]{64}$/;
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
+const canonical = (value: unknown): string => Array.isArray(value)
+  ? `[${value.map(canonical).join(",")}]`
+  : value && typeof value === "object"
+    ? `{${Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([key, child]) => `${JSON.stringify(key)}:${canonical(child)}`).join(",")}}`
+    : JSON.stringify(value) ?? "null";
 
 function recomputeDatasetId(dengue: Buffer, climate: Buffer, deploymentId: string, featureHash: string): string {
   const digest = createHash("sha256");
@@ -78,20 +83,27 @@ export async function POST(request: Request): Promise<Response> {
     const registryPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.json"));
     const policySchemaPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "runtime_assessment_policy.schema.json"));
     const registrySchemaPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.schema.json"));
-    const [policyBytes, registryBytes, policySchemaBytes, registrySchemaBytes] = await Promise.all([
-      readFile(policyPath), readFile(registryPath), readFile(policySchemaPath), readFile(registrySchemaPath),
+    const temporalPolicyPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "deployments", String(body.deploymentId), "feature_availability_policy.json"));
+    const temporalSchemaPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "feature_availability_policy.schema.json"));
+    const [policyBytes, registryBytes, policySchemaBytes, registrySchemaBytes, temporalPolicyBytes, temporalSchemaBytes] = await Promise.all([
+      readFile(policyPath), readFile(registryPath), readFile(policySchemaPath), readFile(registrySchemaPath), readFile(temporalPolicyPath), readFile(temporalSchemaPath),
     ]);
     const policyValue = JSON.parse(policyBytes.toString("utf8")) as Record<string, unknown>;
     const registryValue = JSON.parse(registryBytes.toString("utf8")) as Record<string, unknown>;
+    const temporalPolicyValue = JSON.parse(temporalPolicyBytes.toString("utf8")) as Record<string, unknown>;
     try {
       validateStrictJsonSchema(JSON.parse(policySchemaBytes.toString("utf8")), policyValue);
       validateStrictJsonSchema(JSON.parse(registrySchemaBytes.toString("utf8")), registryValue);
+      validateStrictJsonSchema(JSON.parse(temporalSchemaBytes.toString("utf8")), temporalPolicyValue);
     } catch {
       throw new RuntimePublicError("assessment_authority_invalid", "configuration", "The current assessment authority failed schema validation.", 409);
     }
     const policy = policyValue as Record<string, any>;
     const registry = registryValue as Record<string, any>;
+    const temporalPolicy = temporalPolicyValue as Record<string, any>;
     const policyHash = String(policy.policy_sha256 ?? "");
+    const temporalWithoutHash = { ...temporalPolicy }; delete temporalWithoutHash.policy_sha256;
+    const temporalPolicyHash = createHash("sha256").update(canonical(temporalWithoutHash), "utf8").digest("hex");
     const decisionPolicy = await loadDecisionPolicy(config.repositoryRoot, String(body.deploymentId), {
       schemaVersion: "2.0",
       policyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE",
@@ -127,11 +139,18 @@ export async function POST(request: Request): Promise<Response> {
     const minimumLabelledRows = Number(foldPolicy.minimum_labelled_rows);
     const minimumFoldCount = Number(foldPolicy.minimum_fold_count);
     const maximumFoldCount = Number(foldPolicy.maximum_fold_count);
-    const firstAvailableValidationIndex = initialTrainingRows + embargoRows;
+    const targetPurgeRows = Number(temporalPolicy.target?.horizon_weeks);
+    const effectivePurgeRows = Math.max(embargoRows, targetPurgeRows);
+    const firstAvailableValidationIndex = initialTrainingRows + effectivePurgeRows;
     const expectedAvailableFoldCount = Math.max(0, labelledRows - firstAvailableValidationIndex);
     const expectedPlannedFoldCount = Math.min(expectedAvailableFoldCount, maximumFoldCount);
     if (!SHA.test(policyHash) || policy.policy_status !== "active" || policy.deployment_id !== body.deploymentId
       || policy.policy_id !== "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE"
+      || temporalPolicy.policy_id !== "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"
+      || temporalPolicy.policy_version !== "b9.l-v1" || temporalPolicy.policy_status !== "active"
+      || temporalPolicy.policy_sha256 !== temporalPolicyHash || temporalPolicy.deployment_id !== body.deploymentId
+      || validation.temporalValidation?.policySha256 !== temporalPolicyHash
+      || validation.temporalValidation?.purgeGapWeeks !== effectivePurgeRows
       || decisionPolicy.allowedAssessmentPolicyVersion !== policy.policy_version
       || decisionPolicy.allowedAssessmentPolicySha256 !== policyHash
       || decisionPolicy.candidateRegistrySha256 !== sha256(registryBytes)
@@ -180,6 +199,8 @@ export async function POST(request: Request): Promise<Response> {
       schemaVersion: "1.0", jobKind: "dataset_assessment", jobId, assessmentId, workspaceId: String(body.workspaceId), datasetId: String(body.datasetId),
       deploymentId: String(body.deploymentId), workflowMode: "assess_dataset", validationRecordSha256: String(body.validationRecordSha256),
       assessmentPolicyId: policy.policy_id, assessmentPolicyVersion: policy.policy_version, assessmentPolicySha256: policyHash,
+      temporalValidationPolicyId: temporalPolicy.policy_id, temporalValidationPolicyVersion: temporalPolicy.policy_version,
+      temporalValidationPolicySha256: temporalPolicyHash,
       candidateRegistrySha256: sha256(registryBytes), status: "queued", progress: "queued", createdAt: now, claimedAt: null,
       startedAt: null, updatedAt: now, completedAt: null, heartbeatAt: null, workerId: null, processId: null,
       timeoutSeconds: config.assessmentTimeoutSeconds, retryCount: 0, error: null, committedAssessmentId: null,

@@ -353,6 +353,9 @@
             "embargoRows": {
               "const": 1
             },
+            "targetPurgeRows": {
+              "const": 2
+            },
             "validationRowsPerFold": {
               "const": 1
             },
@@ -494,6 +497,9 @@
             },
             "featureOrderSha256": {
               "$ref": "#/$defs/p2/sha"
+            },
+            "temporalValidationPolicySha256": {
+              "$ref": "#/$defs/p2/sha"
             }
           }
         },
@@ -503,6 +509,9 @@
         },
         "decisionCompatibilityStatus": {
           "const": "phase2_decision_policy_not_yet_available"
+        },
+        "scientificValidation": {
+          "$ref": "#/$defs/scientificValidation"
         }
       },
       "allOf": [
@@ -542,6 +551,15 @@
     }
   ],
   "$defs": {
+    "scientificValidation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["validationStrategy", "foldCountRequired", "foldCountCompleted", "targetHorizonWeeks", "purgeGapWeeks", "featureAvailabilityPolicy", "preprocessingScope", "datasetSnapshotClassification", "trueHistoricalVintageDataAvailable", "qualificationScope", "qualificationUntouchedHoldout", "leakageAuditStatus"],
+      "properties": {
+        "validationStrategy": {"const": "rolling_origin_expanding_window"}, "foldCountRequired": {"type": "integer", "minimum": 1}, "foldCountCompleted": {"type": "integer", "minimum": 1}, "targetHorizonWeeks": {"const": 2}, "purgeGapWeeks": {"const": 2},
+        "featureAvailabilityPolicy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"}, "policyVersion": {"const": "b9.l-v1"}, "policySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+        "preprocessingScope": {"const": "fold_training_rows_only"}, "datasetSnapshotClassification": {"const": "retrospective_latest_revision"}, "trueHistoricalVintageDataAvailable": {"const": false}, "qualificationScope": {"const": "workflow_execution_on_assessment_history"}, "qualificationUntouchedHoldout": {"const": false}, "leakageAuditStatus": {"const": "passed"}
+      }
+    },
     "p1": {
       "uuid": {
         "type": "string",

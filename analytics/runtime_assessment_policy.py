@@ -158,6 +158,16 @@ def available_fold_count(labelled_rows: int, fold_policy: Mapping[str, Any]) -> 
     return len(range(first_validation_index, max(0, int(labelled_rows)), step))
 
 
+def effective_purge_rows(fold_policy: Mapping[str, Any], temporal_purge_rows: Any = None) -> int:
+    """Resolve the stricter of the historical embargo and target-derived purge."""
+    embargo = int(fold_policy["embargo_rows"])
+    if temporal_purge_rows is None:
+        return embargo
+    if isinstance(temporal_purge_rows, bool) or not isinstance(temporal_purge_rows, int) or temporal_purge_rows < 0:
+        raise RuntimeAssessmentPolicyError("Temporal target purge is invalid.")
+    return max(embargo, temporal_purge_rows)
+
+
 def select_planned_validation_indexes(
     labelled_row_count: int,
     initial_training_rows: int,
@@ -231,7 +241,8 @@ def evaluate_assessment_policy(policy: Mapping[str, Any], context: Mapping[str, 
 
     fold_policy = policy.get("fold_policy", {})
     labelled_rows = max(0, int(context.get("labelled_rows", 0)))
-    available = available_fold_count(labelled_rows, fold_policy)
+    purge_rows = effective_purge_rows(fold_policy, context.get("temporal_purge_rows"))
+    available = available_fold_count(labelled_rows, {**fold_policy, "embargo_rows": purge_rows})
     is_phase_two = policy.get("policy_version") in {"p2-v1", "p2-v2", "p2-v3"}
     minimum_rows = int(fold_policy.get("minimum_labelled_rows",
         fold_policy.get("recommendation_grade_minimum_labelled_rows", 0)))
@@ -345,12 +356,12 @@ def evaluate_assessment_policy(policy: Mapping[str, Any], context: Mapping[str, 
             "trainingWindow": fold_policy.get("training_window"),
             "initialTrainingRows": fold_policy.get("initial_training_rows"),
             "embargoRows": fold_policy.get("embargo_rows"),
+            "targetPurgeRows": purge_rows,
             "validationRowsPerFold": fold_policy.get("validation_rows_per_fold"),
             "stepSizeWeeks": fold_policy.get("step_size_weeks"),
             "horizonWeeks": fold_policy.get("target_horizon_weeks"),
             "samePlanForAllCandidates": fold_policy.get("same_precomputed_plan_for_all_candidates"),
-            "firstAvailableValidationIndex": int(fold_policy.get("first_available_validation_index",
-                int(fold_policy.get("initial_training_rows", 0)) + int(fold_policy.get("embargo_rows", 0)))),
+            "firstAvailableValidationIndex": int(fold_policy.get("initial_training_rows", 0)) + purge_rows,
             "minimumFoldCount": minimum_folds,
             "maximumFoldCount": maximum_folds,
             "foldSelectionRule": fold_policy.get("fold_selection_rule"),

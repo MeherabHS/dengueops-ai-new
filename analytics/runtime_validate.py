@@ -30,6 +30,11 @@ from runtime_assessment_policy import (
     evaluate_assessment_policy,
     load_and_validate_assessment_policy,
 )
+from temporal_leakage import (
+    audit_feature_availability,
+    load_and_validate_feature_availability_policy,
+    required_target_purge_rows,
+)
 
 
 CASE_COLUMNS = EXPECTED_CASE_COLUMNS
@@ -297,6 +302,8 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
     else:
         quick_policy, quick_policy_sha256 = load_and_validate_quick_forecast_policy(args.deployment_id)
     assessment_policy, assessment_policy_sha256 = load_and_validate_assessment_policy(args.deployment_id)
+    temporal_policy, temporal_policy_sha256 = load_and_validate_feature_availability_policy(args.deployment_id)
+    audit_feature_availability(temporal_policy, FEATURE_COLUMNS)
     feature_hash = str(profile.get("forecast_uncertainty", {}).get("feature_order_sha256", ""))
     if len(feature_hash) != 64:
         raise RuntimeContextError("The deployment feature-order identity is unavailable.")
@@ -409,6 +416,7 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
         "available_history_weeks": len(overlap),
         "candidate_registry": registry,
         "candidate_registry_sha256": hashlib.sha256(registry_bytes).hexdigest(),
+        "temporal_purge_rows": required_target_purge_rows(temporal_policy),
         **temporal_context,
     })
     if assess.get("policySha256") != assessment_policy_sha256:
@@ -427,6 +435,17 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
         "status": status,
         "createdAt": args.created_at,
         "updatedAt": now,
+        "temporalValidation": {
+            "policyId": temporal_policy["policy_id"],
+            "policyVersion": temporal_policy["policy_version"],
+            "policySha256": temporal_policy_sha256,
+            "targetHorizonWeeks": temporal_policy["target"]["horizon_weeks"],
+            "purgeGapWeeks": required_target_purge_rows(temporal_policy),
+            "preprocessingScope": temporal_policy["preprocessing"]["learned_fit_scope"],
+            "datasetSnapshotClassification": temporal_policy["dataset_snapshot"]["classification"],
+            "trueHistoricalVintageDataAvailable": temporal_policy["dataset_snapshot"]["historical_vintages_available"],
+            "leakageAuditStatus": "policy_validated",
+        },
         "files": {
             "original": {
                 "dengueSha256": sha256_file(dengue_input),

@@ -32,6 +32,22 @@
     "status": { "enum": ["ready", "invalid"] },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time" },
+    "temporalValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyId", "policyVersion", "policySha256", "targetHorizonWeeks", "purgeGapWeeks", "preprocessingScope", "datasetSnapshotClassification", "trueHistoricalVintageDataAvailable", "leakageAuditStatus"],
+      "properties": {
+        "policyId": {"const": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"},
+        "policyVersion": {"const": "b9.l-v1"},
+        "policySha256": {"$ref": "#/$defs/sha256"},
+        "targetHorizonWeeks": {"const": 2},
+        "purgeGapWeeks": {"const": 2},
+        "preprocessingScope": {"const": "fold_training_rows_only"},
+        "datasetSnapshotClassification": {"const": "retrospective_latest_revision"},
+        "trueHistoricalVintageDataAvailable": {"const": false},
+        "leakageAuditStatus": {"const": "policy_validated"}
+      }
+    },
     "acceptedPeriod": {
       "type": "object",
       "additionalProperties": false,
@@ -274,6 +290,7 @@
                 "trainingWindow",
                 "initialTrainingRows",
                 "embargoRows",
+                "targetPurgeRows",
                 "validationRowsPerFold",
                 "stepSizeWeeks",
                 "horizonWeeks",
@@ -284,6 +301,7 @@
                 "trainingWindow": { "const": "expanding" },
                 "initialTrainingRows": { "const": 104 },
                 "embargoRows": { "const": 1 },
+                "targetPurgeRows": { "type": "integer", "minimum": 1 },
                 "validationRowsPerFold": { "const": 1 },
                 "stepSizeWeeks": { "const": 1 },
                 "horizonWeeks": { "const": 2 },

@@ -65,6 +65,13 @@ def build_ready_assessment_runtime(
         "candidateRegistrySha256":registry_hash,"status":"queued","progress":"queued","createdAt":created,"claimedAt":None,"startedAt":None,
         "updatedAt":created,"completedAt":None,"heartbeatAt":None,"workerId":None,"processId":None,"timeoutSeconds":1800,"retryCount":0,
         "error":None,"committedAssessmentId":None}
+    if policy["policy_version"] == "p2-v3":
+        temporal = result["temporalValidation"]
+        job.update({
+            "temporalValidationPolicyId": temporal["policyId"],
+            "temporalValidationPolicyVersion": temporal["policyVersion"],
+            "temporalValidationPolicySha256": temporal["policySha256"],
+        })
     job_path = runtime / "jobs/pending" / f"{job_id}.json"
     job_path.write_text(json.dumps(job), encoding="utf-8")
     return runtime, workspace, job_path, job
@@ -92,7 +99,7 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
 
     def test_minimum_history_commits_common_52_fold_plan_for_all_candidates(self):
         with tempfile.TemporaryDirectory() as directory:
-            runtime, _workspace, pending, job = build_ready_assessment_runtime(Path(directory), source_rows=164)
+            runtime, _workspace, pending, job = build_ready_assessment_runtime(Path(directory), source_rows=165)
             self.assertTrue(run_once(runtime, "minimum-assessment-test-worker"))
             completed = runtime / "jobs/completed" / pending.name
             failed = runtime / "jobs/failed" / pending.name
@@ -100,7 +107,7 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             committed = runtime / "assessments" / job["assessmentId"]
             rolling = json.loads((committed / "artifacts/rolling_validation.json").read_text())
             comparison = json.loads((committed / "artifacts/candidate_model_comparison.json").read_text())
-            self.assertEqual(rolling["labelledRows"], 157)
+            self.assertEqual(rolling["labelledRows"], 158)
             self.assertEqual(rolling["availableFoldCount"], 52)
             self.assertEqual(rolling["plannedFoldCount"], 52)
             self.assertFalse(rolling["foldCapApplied"])
@@ -249,7 +256,12 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             rolling = json.loads((committed / "artifacts/rolling_validation.json").read_text())
             comparison = json.loads((committed / "artifacts/candidate_model_comparison.json").read_text())
             recommendation = json.loads((committed / "artifacts/recommendation.json").read_text())
-            self.assertEqual(len(rolling["folds"]), 68)
+            self.assertEqual(len(rolling["folds"]), 67)
+            self.assertEqual(rolling["foldPolicy"]["targetPurgeRows"], 2)
+            self.assertEqual(rolling["scientificValidation"]["leakageAuditStatus"], "passed")
+            self.assertEqual(rolling["scientificValidation"]["foldCountCompleted"], 67)
+            self.assertEqual(rolling["scientificValidation"]["datasetSnapshotClassification"], "retrospective_latest_revision")
+            self.assertFalse(rolling["scientificValidation"]["qualificationUntouchedHoldout"])
             current_registry = json.loads((ROOT / "config/candidate_models.json").read_text())
             self.assertTrue(
                 all(

@@ -82,6 +82,7 @@ test("assessment start uses the schema-verified current policy and registry with
   assert.match(source, /full_assessment_eligible/);
   assert.match(source, /runtime_assessment_policy\.schema\.json/);
   assert.match(source, /candidate_models\.schema\.json/);
+  assert.match(source, /feature_availability_policy\.json/);
   assert.match(source, /validateStrictJsonSchema/);
   assert.match(source, /registryById/);
   assert.match(source, /governedCandidates\.length === registryCandidates\.length/);
@@ -89,10 +90,21 @@ test("assessment start uses the schema-verified current policy and registry with
   assert.match(source, /minimumFoldCount/);
   assert.match(source, /maximumFoldCount/);
   assert.match(source, /expectedPlannedFoldCount = Math\.min\(expectedAvailableFoldCount, maximumFoldCount\)/);
+  assert.match(source, /temporalValidationPolicySha256: temporalPolicyHash/);
+  assert.match(source, /validation\.temporalValidation\?\.purgeGapWeeks !== effectivePurgeRows/);
   assert.doesNotMatch(source, /governedCandidates\.length === 7|registryCandidates\.length === 7/);
   assert.doesNotMatch(source, /policy\.policy_version !== "p2-v[123]"/);
   assert.doesNotMatch(source, /labelledRows\s*!==\s*173|availableFoldCount\s*!==\s*68/);
   assert.doesNotMatch(source, /spawn\(|exec\(|candidateIds\s*:|technicalWinner\s*:/);
+});
+
+test("assessment evidence presents bounded temporal validation without claiming an untouched holdout", async () => {
+  const component = await read("components/validation/RuntimeAssessmentWorkflow.tsx");
+  assert.match(component, /Temporal validation/);
+  assert.match(component, /Rolling-origin assessment/);
+  assert.match(component, /Leakage checks/);
+  assert.match(component, /Latest retrospective snapshot/);
+  assert.match(component, /not an untouched scientific holdout/);
 });
 
 test("current assessment authority binds every current registry candidate and its exact identities", async () => {

@@ -314,6 +314,9 @@ export interface DatasetAssessmentJobRecord extends RuntimeJobBase {
   assessmentPolicyId: "RUNTIME.DATASET_ASSESSMENT.GOVERNANCE";
   assessmentPolicyVersion: RuntimeAssessmentPolicyVersion;
   assessmentPolicySha256: string;
+  temporalValidationPolicyId: "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION";
+  temporalValidationPolicyVersion: "b9.l-v1";
+  temporalValidationPolicySha256: string;
   candidateRegistrySha256: string;
   committedAssessmentId: string | null;
 }
@@ -570,7 +573,7 @@ export interface DatasetAssessmentResultSuccess {
   assessmentStatus: "assessment_complete";
   approvalStatus: "approval_pending";
   adoptionStatus: "not_adopted";
-  foldPolicy: { policyId: string; policyVersion: string; plannedFoldCount: number; minimumFoldCount: number; maximumFoldCount: number; foldCapApplied: boolean; selectedValidationStartIndex: number; selectedValidationEndIndex: number; selectedEvaluationPeriod: {start:string;end:string}; initialTrainingRows: 104; embargoRows: 1; validationRowsPerFold: 1; stepSizeWeeks: 1; horizonWeeks: 2; samePlanForAllCandidates: true };
+  foldPolicy: { policyId: string; policyVersion: string; plannedFoldCount: number; minimumFoldCount: number; maximumFoldCount: number; foldCapApplied: boolean; selectedValidationStartIndex: number; selectedValidationEndIndex: number; selectedEvaluationPeriod: {start:string;end:string}; initialTrainingRows: 104; embargoRows: 1; targetPurgeRows?: 2; validationRowsPerFold: 1; stepSizeWeeks: 1; horizonWeeks: 2; samePlanForAllCandidates: true };
   foldPlanSha256: string;
   candidateSetStatus: "complete_candidate_set" | "partial_candidate_set" | "insufficient_candidate_breadth";
   candidateCoverage: {
@@ -595,7 +598,21 @@ export interface DatasetAssessmentResultSuccess {
   decisionCompatibilityStatus: "phase1_decision_policy_available" | "phase2_decision_policy_available" | "phase2_decision_policy_not_yet_available";
   limitations: string[];
   evidenceHashes: { rollingValidationSha256: string; candidateComparisonSha256: string; recommendationSha256: string };
-  provenance: { validationRecordSha256: string; assessmentPolicySha256: string; candidateRegistrySha256: string; featureOrderSha256: string };
+  provenance: { validationRecordSha256: string; assessmentPolicySha256: string; candidateRegistrySha256: string; featureOrderSha256: string; temporalValidationPolicySha256?: string };
+  scientificValidation?: {
+    validationStrategy: "rolling_origin_expanding_window";
+    foldCountRequired: number;
+    foldCountCompleted: number;
+    targetHorizonWeeks: 2;
+    purgeGapWeeks: 2;
+    featureAvailabilityPolicy: { policyId: "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"; policyVersion: "b9.l-v1"; policySha256: string };
+    preprocessingScope: "fold_training_rows_only";
+    datasetSnapshotClassification: "retrospective_latest_revision";
+    trueHistoricalVintageDataAvailable: false;
+    qualificationScope: "workflow_execution_on_assessment_history";
+    qualificationUntouchedHoldout: false;
+    leakageAuditStatus: "passed";
+  };
   integrity: { assessmentSummarySha256: string; assessmentCommitSha256: string };
   workflow: AssessmentWorkflowProjection;
 }

@@ -32,6 +32,9 @@
     "assessmentPolicyId": {},
     "assessmentPolicyVersion": {},
     "assessmentPolicySha256": {},
+    "temporalValidationPolicyId": {},
+    "temporalValidationPolicyVersion": {},
+    "temporalValidationPolicySha256": {},
     "candidateRegistrySha256": {},
     "status": {},
     "progress": {},
@@ -3325,6 +3328,15 @@
         },
         "assessmentPolicyVersion": { "enum": ["p2-v1", "p2-v2", "p2-v3"] },
         "assessmentPolicySha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "temporalValidationPolicyId": {
+          "const": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"
+        },
+        "temporalValidationPolicyVersion": {
+          "const": "b9.l-v1"
+        },
+        "temporalValidationPolicySha256": {
           "$ref": "#/$defs/sha"
         },
         "candidateRegistrySha256": {

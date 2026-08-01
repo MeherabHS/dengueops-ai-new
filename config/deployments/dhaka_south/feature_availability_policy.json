@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION",
+  "policy_version": "b9.l-v1",
+  "policy_status": "active",
+  "policy_sha256": "8d36ebe98f77d780529806a5850189122753314220c47ce57218dbe948a153e9",
+  "deployment_id": "dhaka_south",
+  "target": {"feature_id": "target_cases_next_2w", "horizon_weeks": 2, "construction": "cases_shift_minus_2_output_only", "purge_rule": "training_target_outcome_strictly_before_validation_forecast_origin"},
+  "validation": {"strategy": "rolling_origin", "training_window": "expanding", "shuffle": false, "validation_rows_per_fold": 1, "step_size_weeks": 1, "minimum_training_rows": 104, "purge_derived_from_target_horizon": true},
+  "preprocessing": {"learned_fit_scope": "fold_training_rows_only", "missing_value_strategy": "drop_incomplete_rows_no_imputation", "prohibited_operations": ["backfill", "bidirectional_interpolation", "whole_series_interpolation", "global_statistical_imputation", "global_learned_scaling"]},
+  "dataset_snapshot": {"classification": "retrospective_latest_revision", "historical_vintages_available": false, "revision_identity_available": false},
+  "qualification": {"classification": "workflow_execution_on_assessment_history", "participates_in_candidate_ranking": false, "untouched_scientific_holdout": false},
+  "features": [
+    {"feature_id":"rainfall_lag_2w","source":"climate_observation","availability_type":"external_observed","minimum_lag_weeks":2,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":2,"center":false,"fill_method":"none"}},
+    {"feature_id":"rainfall_lag_4w","source":"climate_observation","availability_type":"external_observed","minimum_lag_weeks":4,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":4,"center":false,"fill_method":"none"}},
+    {"feature_id":"temp_lag_2w","source":"climate_observation","availability_type":"external_observed","minimum_lag_weeks":2,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":2,"center":false,"fill_method":"none"}},
+    {"feature_id":"temp_lag_4w","source":"climate_observation","availability_type":"external_observed","minimum_lag_weeks":4,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":4,"center":false,"fill_method":"none"}},
+    {"feature_id":"humidity_lag_2w","source":"climate_observation","availability_type":"external_observed","minimum_lag_weeks":2,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":2,"center":false,"fill_method":"none"}},
+    {"feature_id":"humidity_lag_4w","source":"climate_observation","availability_type":"external_observed","minimum_lag_weeks":4,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":4,"center":false,"fill_method":"none"}},
+    {"feature_id":"cases_lag_1w","source":"dengue_cases","availability_type":"lagged","minimum_lag_weeks":1,"lookback_window_weeks":null,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":1,"center":false,"fill_method":"none"}},
+    {"feature_id":"cases_lag_2w","source":"dengue_cases","availability_type":"lagged","minimum_lag_weeks":2,"lookback_window_weeks":null,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":2,"center":false,"fill_method":"none"}},
+    {"feature_id":"cases_lag_4w","source":"dengue_cases","availability_type":"lagged","minimum_lag_weeks":4,"lookback_window_weeks":null,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"shift","shift_weeks":4,"center":false,"fill_method":"none"}},
+    {"feature_id":"cases_rolling_3w","source":"dengue_cases","availability_type":"rolling_backward","minimum_lag_weeks":1,"lookback_window_weeks":3,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"rolling","shift_weeks":1,"center":false,"fill_method":"none"}},
+    {"feature_id":"cases_rolling_4w","source":"dengue_cases","availability_type":"rolling_backward","minimum_lag_weeks":1,"lookback_window_weeks":4,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"rolling","shift_weeks":1,"center":false,"fill_method":"none"}},
+    {"feature_id":"cases_rolling_8w","source":"dengue_cases","availability_type":"rolling_backward","minimum_lag_weeks":1,"lookback_window_weeks":8,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"rolling","shift_weeks":1,"center":false,"fill_method":"none"}},
+    {"feature_id":"growth_rate_1w","source":"dengue_cases","availability_type":"rolling_backward","minimum_lag_weeks":1,"lookback_window_weeks":2,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"ratio_of_lags","shift_weeks":1,"center":false,"fill_method":"none"}},
+    {"feature_id":"growth_rate_2w","source":"dengue_cases","availability_type":"rolling_backward","minimum_lag_weeks":1,"lookback_window_weeks":4,"uses_target_history":true,"future_data_allowed":false,"transformation":{"operation":"ratio_of_lags","shift_weeks":1,"center":false,"fill_method":"none"}},
+    {"feature_id":"epi_week_sin","source":"calendar","availability_type":"calendar_known_in_advance","minimum_lag_weeks":0,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"calendar","shift_weeks":0,"center":false,"fill_method":"none"}},
+    {"feature_id":"epi_week_cos","source":"calendar","availability_type":"calendar_known_in_advance","minimum_lag_weeks":0,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"calendar","shift_weeks":0,"center":false,"fill_method":"none"}},
+    {"feature_id":"monsoon_flag","source":"calendar","availability_type":"calendar_known_in_advance","minimum_lag_weeks":0,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"calendar","shift_weeks":0,"center":false,"fill_method":"none"}},
+    {"feature_id":"post_monsoon_flag","source":"calendar","availability_type":"calendar_known_in_advance","minimum_lag_weeks":0,"lookback_window_weeks":null,"uses_target_history":false,"future_data_allowed":false,"transformation":{"operation":"calendar","shift_weeks":0,"center":false,"fill_method":"none"}}
+  ],
+  "limitations": [
+    "Feature-specific minimum lags govern the synthetic benchmark timing assumption; real-world dengue and climate publication delays have not been calibrated.",
+    "Historical source vintages and revision identities are unavailable, so this is retrospective latest-revision validation rather than a real-time historical simulation."
+  ]
+}

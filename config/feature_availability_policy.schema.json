@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dengueops.ai/schemas/feature_availability_policy.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_id", "policy_version", "policy_status", "policy_sha256", "deployment_id", "target", "validation", "preprocessing", "dataset_snapshot", "qualification", "features", "limitations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"},
+    "policy_version": {"const": "b9.l-v1"},
+    "policy_status": {"const": "active"},
+    "policy_sha256": {"$ref": "#/$defs/sha"},
+    "deployment_id": {"const": "dhaka_south"},
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["feature_id", "horizon_weeks", "construction", "purge_rule"],
+      "properties": {
+        "feature_id": {"const": "target_cases_next_2w"},
+        "horizon_weeks": {"const": 2},
+        "construction": {"const": "cases_shift_minus_2_output_only"},
+        "purge_rule": {"const": "training_target_outcome_strictly_before_validation_forecast_origin"}
+      }
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strategy", "training_window", "shuffle", "validation_rows_per_fold", "step_size_weeks", "minimum_training_rows", "purge_derived_from_target_horizon"],
+      "properties": {
+        "strategy": {"const": "rolling_origin"},
+        "training_window": {"const": "expanding"},
+        "shuffle": {"const": false},
+        "validation_rows_per_fold": {"const": 1},
+        "step_size_weeks": {"const": 1},
+        "minimum_training_rows": {"const": 104},
+        "purge_derived_from_target_horizon": {"const": true}
+      }
+    },
+    "preprocessing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["learned_fit_scope", "missing_value_strategy", "prohibited_operations"],
+      "properties": {
+        "learned_fit_scope": {"const": "fold_training_rows_only"},
+        "missing_value_strategy": {"const": "drop_incomplete_rows_no_imputation"},
+        "prohibited_operations": {
+          "const": ["backfill", "bidirectional_interpolation", "whole_series_interpolation", "global_statistical_imputation", "global_learned_scaling"]
+        }
+      }
+    },
+    "dataset_snapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["classification", "historical_vintages_available", "revision_identity_available"],
+      "properties": {
+        "classification": {"const": "retrospective_latest_revision"},
+        "historical_vintages_available": {"const": false},
+        "revision_identity_available": {"const": false}
+      }
+    },
+    "qualification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["classification", "participates_in_candidate_ranking", "untouched_scientific_holdout"],
+      "properties": {
+        "classification": {"const": "workflow_execution_on_assessment_history"},
+        "participates_in_candidate_ranking": {"const": false},
+        "untouched_scientific_holdout": {"const": false}
+      }
+    },
+    "features": {
+      "type": "array", "minItems": 18, "maxItems": 18,
+      "items": {"$ref": "#/$defs/feature"}
+    },
+    "limitations": {
+      "type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "feature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["feature_id", "source", "availability_type", "minimum_lag_weeks", "lookback_window_weeks", "uses_target_history", "future_data_allowed", "transformation"],
+      "properties": {
+        "feature_id": {"type": "string", "minLength": 1},
+        "source": {"enum": ["dengue_cases", "climate_observation", "calendar"]},
+        "availability_type": {"enum": ["lagged", "rolling_backward", "calendar_known_in_advance", "external_observed"]},
+        "minimum_lag_weeks": {"type": "integer", "minimum": 0},
+        "lookback_window_weeks": {"type": ["integer", "null"], "minimum": 1},
+        "uses_target_history": {"type": "boolean"},
+        "future_data_allowed": {"const": false},
+        "transformation": {
+          "type": "object", "additionalProperties": false,
+          "required": ["operation", "shift_weeks", "center", "fill_method"],
+          "properties": {
+            "operation": {"enum": ["shift", "rolling", "ratio_of_lags", "calendar"]},
+            "shift_weeks": {"type": "integer", "minimum": 0},
+            "center": {"const": false},
+            "fill_method": {"const": "none"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -32,6 +32,13 @@ from runtime_assessment_policy import (
     select_planned_validation_indexes,
 )
 from runtime_validate import TARGET
+from temporal_leakage import (
+    audit_feature_availability,
+    audit_fold_boundaries,
+    audit_preprocessing_registry,
+    load_and_validate_feature_availability_policy,
+    required_target_purge_rows,
+)
 
 
 def _load_registry_for_policy(policy_version: str):
@@ -128,7 +135,7 @@ def _same_metrics(actual: dict[str, Any] | None, expected: dict[str, Any] | None
 
 def _reconcile(
     rolling: dict[str, Any], comparison: dict[str, Any], recommendation: dict[str, Any],
-    feature_rows: list[dict[str, str]], policy: dict[str, Any],
+    feature_rows: list[dict[str, str]], policy: dict[str, Any], temporal_policy: dict[str, Any] | None,
 ) -> None:
     folds = rolling["folds"]
     candidate_ids = rolling["candidateIds"]
@@ -152,10 +159,11 @@ def _reconcile(
         raise RuntimeAssessmentCommitError("Phase 1 assessment must contain exactly 173 labelled rows.")
     if labelled_rows < minimum_rows:
         raise RuntimeAssessmentCommitError("Assessment labelled-row count is below the governed minimum.")
-    available = available_fold_count(labelled_rows, fold_policy)
+    purge_rows = required_target_purge_rows(temporal_policy) if temporal_policy is not None else int(fold_policy["embargo_rows"])
+    available = available_fold_count(labelled_rows, {**fold_policy, "embargo_rows": purge_rows})
     try:
         selected_indexes = select_planned_validation_indexes(
-            labelled_rows, int(fold_policy["initial_training_rows"]), int(fold_policy["embargo_rows"]),
+            labelled_rows, int(fold_policy["initial_training_rows"]), purge_rows,
             minimum_folds, maximum_folds,
         )
     except Exception as exc:
@@ -174,15 +182,20 @@ def _reconcile(
         actuals, records = validate_fold_identities(
             folds, candidate_ids, selected_validation_indexes=selected_indexes,
             initial_training_rows=int(fold_policy["initial_training_rows"]),
-            embargo_rows=int(fold_policy["embargo_rows"]),
+            embargo_rows=purge_rows,
             horizon_weeks=int(fold_policy["target_horizon_weeks"]),
         )
         validate_folds_against_feature_rows(
             folds, feature_rows, FEATURE_COLUMNS, TARGET,
             labelled_row_count=labelled_rows, selected_validation_indexes=selected_indexes,
             initial_training_rows=int(fold_policy["initial_training_rows"]),
-            embargo_rows=int(fold_policy["embargo_rows"]),
+            embargo_rows=purge_rows,
         )
+        if temporal_policy is not None:
+            audit_fold_boundaries(feature_rows, [
+                {**fold, "validationIndex": index, "trainEndExclusive": index - purge_rows}
+                for fold, index in zip(folds, selected_indexes)
+            ], temporal_policy)
     except AssessmentEvidenceError as exc:
         raise RuntimeAssessmentCommitError(f"Assessment fold evidence is invalid: {exc}.") from exc
     computed_fold_hash = fold_plan_sha256(folds)
@@ -360,10 +373,18 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
         policy, policy_hash = load_and_validate_assessment_policy(
             job["deploymentId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"]
         )
+        temporal_policy = None
+        temporal_policy_hash = None
+        if rolling.get("scientificValidation") is not None or job.get("temporalValidationPolicySha256") is not None:
+            temporal_policy, temporal_policy_hash = load_and_validate_feature_availability_policy(
+                job["deploymentId"], job.get("temporalValidationPolicySha256")
+            )
+            audit_feature_availability(temporal_policy, FEATURE_COLUMNS)
     except Exception as exc:
         raise RuntimeAssessmentCommitError("Assessment policy identity cannot be resolved.") from exc
     try:
-        _, registry_hash = _load_registry_for_policy(policy["policy_version"])
+        registry, registry_hash = _load_registry_for_policy(policy["policy_version"])
+        audit_preprocessing_registry(registry)
     except Exception as exc:
         raise RuntimeAssessmentCommitError("Candidate registry identity cannot be resolved.") from exc
     if registry_hash != job["candidateRegistrySha256"] or any(
@@ -385,7 +406,13 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
             feature_rows = list(csv.DictReader(handle))
     except (OSError, UnicodeDecodeError, csv.Error) as exc:
         raise RuntimeAssessmentCommitError("Assessment feature matrix is not valid canonical CSV.") from exc
-    _reconcile(rolling, comparison, recommendation, feature_rows, policy)
+    if temporal_policy is not None and (
+        rolling.get("scientificValidation", {}).get("featureAvailabilityPolicy", {}).get("policySha256") != temporal_policy_hash
+        or assessment.get("scientificValidation") != rolling.get("scientificValidation")
+        or summary.get("scientificValidation") != rolling.get("scientificValidation")
+    ):
+        raise RuntimeAssessmentCommitError("Temporal validation evidence does not reconcile.")
+    _reconcile(rolling, comparison, recommendation, feature_rows, policy, temporal_policy)
     if policy["policy_version"] in {"p2-v1", "p2-v2", "p2-v3"}:
         dynamic = (summary["labelledRows"], summary["availableFoldCount"], summary["foldPolicy"]["plannedFoldCount"], summary["foldPolicy"]["foldCapApplied"], summary["foldPolicy"]["selectedValidationStartIndex"], summary["foldPolicy"]["selectedValidationEndIndex"])
         expected = (rolling["labelledRows"], rolling["availableFoldCount"], rolling["plannedFoldCount"], rolling["foldCapApplied"], rolling["selectedValidationStartIndex"], rolling["selectedValidationEndIndex"])

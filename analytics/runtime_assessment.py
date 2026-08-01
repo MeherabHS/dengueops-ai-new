@@ -39,6 +39,14 @@ from runtime_assessment_policy import (
 from runtime_commit import atomic_json, patch_running_job, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from runtime_validate import CONTRACT_VERSION, HORIZON_WEEKS, TARGET, compute_dataset_id
+from temporal_leakage import (
+    audit_feature_availability,
+    audit_fold_boundaries,
+    audit_preprocessing_registry,
+    evidence as temporal_evidence,
+    load_and_validate_feature_availability_policy,
+    required_target_purge_rows,
+)
 
 
 HISTORICAL_LEARNED_IDS = {
@@ -110,7 +118,9 @@ def _update_job(path: Path, job: dict[str, Any], **changes: Any) -> None:
     )
 
 
-def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tuple[tuple[dict[str, Any], ...], str]:
+def build_common_fold_plan(
+    frame: pd.DataFrame, policy: Mapping[str, Any], temporal_policy: Mapping[str, Any] | None = None,
+) -> tuple[tuple[dict[str, Any], ...], str]:
     ordered = frame.sort_values(["epi_year", "epi_week"]).reset_index(drop=True)
     fold_policy = policy["fold_policy"]
     minimum_rows = int(fold_policy.get("minimum_labelled_rows", fold_policy.get("recommendation_grade_minimum_labelled_rows", 0)))
@@ -123,16 +133,17 @@ def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tu
     mondays = [date.fromisocalendar(int(row.epi_year), int(row.epi_week), 1) for row in ordered.itertuples()]
     if any(current != previous + timedelta(weeks=1) for previous, current in zip(mondays, mondays[1:])):
         raise ValueError("The labelled feature matrix contains a temporal gap.")
+    purge_rows = required_target_purge_rows(temporal_policy) if temporal_policy is not None else int(fold_policy["embargo_rows"])
     validation_indexes = select_planned_validation_indexes(
-        len(ordered), int(fold_policy["initial_training_rows"]), int(fold_policy["embargo_rows"]),
+        len(ordered), int(fold_policy["initial_training_rows"]), purge_rows,
         minimum_folds, maximum_folds,
     )
     descriptors: list[dict[str, Any]] = []
     for sequence, validation_index in enumerate(validation_indexes, 1):
-        train_end = validation_index - int(fold_policy["embargo_rows"])
+        train_end = validation_index - purge_rows
         train = ordered.iloc[:train_end]
         validation = ordered.iloc[validation_index]
-        embargo = ordered.iloc[validation_index - 1]
+        embargo = ordered.iloc[train_end]
         origin = _period(validation)
         target_period = _advance_period(validation, HORIZON_WEEKS)
         trajectory = "rising" if float(validation[TARGET]) > float(validation["cases"]) else "declining" if float(validation[TARGET]) < float(validation["cases"]) else "stable"
@@ -142,6 +153,7 @@ def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tu
             "embargoIndex": validation_index - 1, "validationIndex": validation_index,
             "trainingPeriod": {"start": _period(train.iloc[0]), "end": _period(train.iloc[-1])},
             "trainingRowCount": len(train), "embargoPeriod": _period(embargo),
+            "targetPurgeRows": purge_rows,
             "forecastOrigin": origin, "targetPeriod": target_period, "actualTarget": float(validation[TARGET]),
             "targetTrajectory": trajectory, "featureOrderSha256": policy["feature_contract"]["feature_order_sha256"],
             "trainingMatrixSha256": _matrix_sha(train),
@@ -150,6 +162,8 @@ def build_common_fold_plan(frame: pd.DataFrame, policy: Mapping[str, Any]) -> tu
         })
     if not minimum_folds <= len(descriptors) <= maximum_folds:
         raise ValueError("The governed assessment fold count is outside the active policy range.")
+    if temporal_policy is not None:
+        audit_fold_boundaries(ordered.to_dict("records"), descriptors, temporal_policy)
     return tuple(descriptors), fold_plan_sha256(descriptors)
 
 
@@ -210,7 +224,20 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     policy, policy_hash = load_and_validate_assessment_policy(
         job["deploymentId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"]
     )
+    temporal_policy = None
+    temporal_policy_hash = None
+    if job.get("temporalValidationPolicySha256") is not None:
+        temporal_policy, temporal_policy_hash = load_and_validate_feature_availability_policy(
+            job["deploymentId"], job.get("temporalValidationPolicySha256")
+        )
+        if (job.get("temporalValidationPolicyId"), job.get("temporalValidationPolicyVersion"), temporal_policy_hash) != (
+            temporal_policy["policy_id"], temporal_policy["policy_version"], job.get("temporalValidationPolicySha256")
+        ):
+            raise ValueError("Temporal validation governance identity changed after queueing.")
+        audit_feature_availability(temporal_policy, FEATURE_COLUMNS)
     registry, registry_hash = _load_registry_for_policy(policy["policy_version"])
+    if temporal_policy is not None:
+        audit_preprocessing_registry(registry)
     if (policy["policy_id"], policy["policy_version"], policy_hash, registry_hash) != (
         job["assessmentPolicyId"], job["assessmentPolicyVersion"], job["assessmentPolicySha256"], job["candidateRegistrySha256"],
     ):
@@ -236,6 +263,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "horizon_weeks": validation["datasetIdentity"]["horizonWeeks"], "source_metadata": source_metadata,
         "labelled_rows": validation["counts"]["labelledRows"], "available_history_weeks": validation["counts"]["overlapWeeks"],
         "candidate_registry": registry, "candidate_registry_sha256": registry_hash,
+        **({"temporal_purge_rows": required_target_purge_rows(temporal_policy)} if temporal_policy is not None else {}),
         "chronological_order_valid": True, "duplicate_periods_absent": True, "contiguous_history": True, "case_climate_aligned": True,
     })
     planned_fold_count = int(assessment_policy_result["plannedFoldCount"])
@@ -269,12 +297,18 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "workspaceId": job["workspaceId"], "datasetId": job["datasetId"], "deploymentId": job["deploymentId"],
         "validationRecordSha256": job["validationRecordSha256"], "originalHashes": validation["files"]["original"],
         "canonicalHashes": validation["files"]["canonical"], "featureOrderSha256": feature_hash,
+        **({"datasetSnapshot": {
+            "classification": temporal_policy["dataset_snapshot"]["classification"],
+            "ingestedAt": validation["createdAt"],
+            "historicalVintagesAvailable": temporal_policy["dataset_snapshot"]["historical_vintages_available"],
+            "revisionIdentityAvailable": temporal_policy["dataset_snapshot"]["revision_identity_available"],
+        }} if temporal_policy is not None else {}),
         "modelFeaturesSha256": sha256_file(feature_path), "generatedAt": generated_at,
     }
     atomic_json(staging / "artifacts/input_manifest.json", manifest)
 
     _update_job(job_path, job, progress="creating_fold_plan")
-    plan, plan_hash = build_common_fold_plan(frame, policy)
+    plan, plan_hash = build_common_fold_plan(frame, policy, temporal_policy)
     if len(plan) != planned_fold_count:
         raise ValueError("The common fold plan differs from the policy-selected fold count.")
     frozen_plan_hash = plan_hash
@@ -342,6 +376,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     selected_start_index = int(assessment_policy_result["selectedValidationStartIndex"])
     selected_end_index = int(assessment_policy_result["selectedValidationEndIndex"])
     selected_evaluation_period = {"start": plan[0]["forecastOrigin"], "end": plan[-1]["forecastOrigin"]}
+    scientific_validation = temporal_evidence(temporal_policy, str(temporal_policy_hash), planned_fold_count) if temporal_policy is not None else None
     phase_two_dynamic = {
         "labelledRows": labelled_row_count, "availableFoldCount": available_fold_count,
         "foldCapApplied": fold_cap_applied,
@@ -439,6 +474,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "candidateRegistrySha256": registry_hash, "foldPolicy": {
             "policyId": policy["fold_policy"]["policy_id"], "policyVersion": policy["fold_policy"]["policy_version"],
             "trainingWindow": "expanding", "initialTrainingRows": 104, "embargoRows": 1,
+            **({"targetPurgeRows": required_target_purge_rows(temporal_policy)} if temporal_policy is not None else {}),
             "validationRowsPerFold": 1, "stepSizeWeeks": 1, "samePlanForAllCandidates": True,
             **({"minimumFoldCount": int(assessment_policy_result["minimumFoldCount"]),
                 "maximumFoldCount": int(assessment_policy_result["maximumFoldCount"]),
@@ -447,6 +483,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         **({"selectedEvaluationPeriod": selected_evaluation_period} if is_phase_two else {}),
         "candidateIds": list(candidate_ids),
         "featureOrderSha256": feature_hash, "target": TARGET, "horizonWeeks": 2, "folds": fold_values,
+        **({"scientificValidation": scientific_validation} if scientific_validation is not None else {}),
         "generatedAt": generated_at,
     }
     rolling_path = staging / "artifacts/rolling_validation.json"
@@ -520,6 +557,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "datasetId": job["datasetId"], "deploymentId": job["deploymentId"], "sourceType": "uploaded",
         "acceptedPeriod": validation["acceptedPeriod"], "assessmentPolicy": {"policyId": policy["policy_id"], "policyVersion": policy["policy_version"], "policySha256": policy_hash},
         "foldPlanSha256": plan_hash, "candidateRegistrySha256": registry_hash,
+        **({"scientificValidation": scientific_validation} if scientific_validation is not None else {}),
         **({**phase_two_dynamic, "plannedFoldCount": planned_fold_count} if is_phase_two else {}),
         **({"selectedEvaluationPeriod": selected_evaluation_period,
             "decisionCompatibilityStatus": assessment_policy_result["decisionCompatibilityStatus"]} if is_phase_two else {}),
@@ -553,7 +591,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
                 "maximumFoldCount": int(assessment_policy_result["maximumFoldCount"]), "foldCapApplied": fold_cap_applied,
                 "selectedValidationStartIndex": selected_start_index, "selectedValidationEndIndex": selected_end_index,
                 "selectedEvaluationPeriod": selected_evaluation_period} if is_phase_two else {}),
-            "initialTrainingRows": 104, "embargoRows": 1, "validationRowsPerFold": 1,
+            "initialTrainingRows": 104, "embargoRows": 1,
+            **({"targetPurgeRows": required_target_purge_rows(temporal_policy)} if temporal_policy is not None else {}),
+            "validationRowsPerFold": 1,
             "stepSizeWeeks": 1, "horizonWeeks": 2, "samePlanForAllCandidates": True},
         "foldPlanSha256": plan_hash, "candidateSetStatus": candidate_set_status, "candidates": candidate_results,
         "technicalWinnerModelId": winner, "selectionReason": selection_reason, "tieStage": tie_stage,
@@ -564,7 +604,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "limitations": limitations,
         "evidenceHashes": {"rollingValidationSha256": rolling_hash, "candidateComparisonSha256": comparison_hash, "recommendationSha256": recommendation_hash},
         "provenance": {"validationRecordSha256": job["validationRecordSha256"], "assessmentPolicySha256": policy_hash,
-            "candidateRegistrySha256": registry_hash, "featureOrderSha256": feature_hash},
+            "candidateRegistrySha256": registry_hash, "featureOrderSha256": feature_hash,
+            **({"temporalValidationPolicySha256": temporal_policy_hash} if temporal_policy_hash is not None else {})},
+        **({"scientificValidation": scientific_validation} if scientific_validation is not None else {}),
     }
     _schema_validate(summary, SCHEMAS["assessment_summary.json"])
     atomic_json(staging / "artifacts/assessment_summary.json", summary)
