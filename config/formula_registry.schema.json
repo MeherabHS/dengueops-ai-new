@@ -6,7 +6,7 @@
   "required": ["schemaVersion", "registryVersion", "registrySha256", "supportedFormulaSlots", "formulas"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
-    "registryVersion": {"type": "string", "pattern": "^b8\\.5-v[1-9][0-9]*$"},
+    "registryVersion": {"type": "string", "pattern": "^b(?:8\\.5|9\\.5)-v[1-9][0-9]*$"},
     "registrySha256": {"$ref": "#/$defs/sha"},
     "supportedFormulaSlots": {
       "type": "array", "const": ["inventory.gap"]

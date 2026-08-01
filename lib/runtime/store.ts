@@ -23,7 +23,7 @@ export async function initializeRuntimeRoot(runtimeRoot: string): Promise<void> 
   const workspaces = path.join(/* turbopackIgnore: true */ runtimeRoot, "workspaces");
   await mkdir(workspaces, { recursive: true, mode: 0o700 });
   await rejectSymlink(workspaces);
-  for (const relative of ["jobs/pending", "jobs/running", "jobs/completed", "jobs/failed", "staging", "runs", "assessment-staging", "assessments", "outcome-staging", "forecast-outcomes", "degradation-staging", "degradation-evidence", "lifecycle-staging", "model-lifecycle", "decisions", "assessment-decisions", "authorizations", "authorization-state", "deployments", "locks", "locks/decisions", "locks/authorizations"]) {
+  for (const relative of ["jobs/pending", "jobs/running", "jobs/completed", "jobs/failed", "staging", "runs", "assessment-staging", "assessments", "outcome-staging", "forecast-outcomes", "degradation-staging", "degradation-evidence", "lifecycle-staging", "model-lifecycle", "operational-preparedness-staging", "operational-preparedness", "decisions", "assessment-decisions", "authorizations", "authorization-state", "deployments", "locks", "locks/decisions", "locks/authorizations"]) {
     await mkdir(path.join(runtimeRoot, relative), { recursive: true, mode: 0o700 });
   }
 }
@@ -43,7 +43,7 @@ export async function createWorkspace(paths: WorkspacePaths): Promise<void> {
     await mkdir(paths.originalInputs, { recursive: true, mode: 0o700 });
     await mkdir(paths.canonicalInputs, { recursive: true, mode: 0o700 });
     await mkdir(paths.logs, { mode: 0o700 });
-  } catch (error) {
+  } catch {
     await rm(paths.root, { recursive: true, force: true }).catch(() => undefined);
     throw new RuntimePublicError("workspace_creation_failed", "storage", "An isolated validation workspace could not be created.", 500, true);
   }

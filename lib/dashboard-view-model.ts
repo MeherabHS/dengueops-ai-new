@@ -47,6 +47,15 @@ export interface LatestRunViewModel {
   refreshState: DashboardRefreshState;
 }
 
+export interface OperationalPreparednessRowViewModel {
+  hospitalId:string;hospitalName:string;participationStatus:"included";
+  capacityReference:{value:number|null;status:"available"|"unknown";sourceLabel:"Official capacity reference"};
+  currentLiveAvailability:{value:null;status:"not_reported"};
+  forecastPlanningInput:{currentForecastCases:number;allocatedForecastCases:number|null;targetPeriod:string};
+  preparednessMetric:{formulaLabel:string;value:number|null;unit:string;status:"available"|"unavailable_missing_input"};
+  planningState:{status:"calculated"|"insufficient_data";reason:string};planningSuggestion:string|null;
+}
+
 export interface OverviewViewModel {
   sourceType: "bundled_benchmark" | "uploaded";
   latestObservedCases: number;
@@ -73,7 +82,10 @@ export interface OverviewViewModel {
   modelUse: { workflowMode: "bundled_benchmark" | "quick_forecast" | "approved_assessment_forecast"; technicalWinnerId: string | null; decisionId: string | null; assessmentId: string | null; decisionOutcome: string | null; scope: "deployment" | "one_run"; deploymentModelUnchanged: boolean };
   deployment: { mode: string; gate: string };
   preparedness: {
-    availabilityStatus: "available" | "unavailable_missing_planning_policy" | "unavailable_for_uploaded_dataset";
+    availabilityStatus: "available" | "calculating" | "unavailable_missing_planning_policy" | "unavailable_for_uploaded_dataset" | "stale";
+    reason:string|null;
+    formulaLabel:string|null;
+    rows:OperationalPreparednessRowViewModel[];
     totalFacilities: number;
     bedDeficitFacilities: number;
     ns1StockHorizonFacilities: number;
@@ -154,6 +166,7 @@ export function buildBundledOverviewViewModel(): OverviewViewModel {
     },
     preparedness: {
       availabilityStatus: "available",
+      reason:"Historical bundled demonstration only.",formulaLabel:null,rows:[],
       totalFacilities,
       bedDeficitFacilities: directives.filter((facility) => facility.bed_gap_expected > 0).length,
       ns1StockHorizonFacilities: directives.filter((facility) => (facility.sdh_ns1_expected ?? Infinity) <= 14).length,

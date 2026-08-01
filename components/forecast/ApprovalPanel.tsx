@@ -16,6 +16,7 @@ import AsyncStatusIndicator from "./AsyncStatusIndicator";
 
 const MIN_REASON_LENGTH = 12;
 const MAX_REASON_LENGTH = 1000;
+export const DEFAULT_TECHNICAL_WINNER_REASON = "Technical winner approved based on the verified governed assessment ranking.";
 
 type RecordedDecision = DecisionResultSuccess | AssessmentDecisionWorkflowProjection;
 
@@ -38,7 +39,8 @@ export default function ApprovalPanel({
   onForecast?: () => void;
 }) {
   const [overrideOpen, setOverrideOpen] = useState(false);
-  const [reason, setReason] = useState("");
+  const [winnerNote, setWinnerNote] = useState("");
+  const [overrideReason, setOverrideReason] = useState("");
   const [selectedOverride, setSelectedOverride] = useState<CurrentSelectableCandidateId | null>(null);
   const [uncertaintyAcknowledged, setUncertaintyAcknowledged] = useState(false);
   const [winnerNotSelectedAcknowledged, setWinnerNotSelectedAcknowledged] = useState(false);
@@ -57,8 +59,9 @@ export default function ApprovalPanel({
     && candidate.failedFolds === 0
     && candidate.deployableForOneRun,
   ), [assessment.workflow.candidates]);
-  const boundedReason = reason.trim();
-  const reasonValid = boundedReason.length >= MIN_REASON_LENGTH && boundedReason.length <= MAX_REASON_LENGTH;
+  const boundedWinnerNote = winnerNote.trim();
+  const boundedOverrideReason = overrideReason.trim();
+  const overrideReasonValid = boundedOverrideReason.length >= MIN_REASON_LENGTH && boundedOverrideReason.length <= MAX_REASON_LENGTH;
 
   const recorded = decision ?? workflowDecision;
   if (recorded) {
@@ -78,11 +81,11 @@ export default function ApprovalPanel({
   }
 
   const submitWinner = () => {
-    if (!winner || !reasonValid || !uncertaintyAcknowledged || busy) return;
+    if (!winner || boundedWinnerNote.length > MAX_REASON_LENGTH || !uncertaintyAcknowledged || busy) return;
     const request: GovernedDecisionRequest = {
       decision: "approve_technical_winner",
       expectedAssessmentSummarySha256: assessment.integrity.assessmentSummarySha256,
-      reason: boundedReason,
+      reason: boundedWinnerNote || DEFAULT_TECHNICAL_WINNER_REASON,
       uncertaintyLimitationsAcknowledged: true,
     };
     if (onGovernedDecision) onGovernedDecision(request);
@@ -91,12 +94,12 @@ export default function ApprovalPanel({
 
   const submitOverride = () => {
     const selected = overrideCandidates.find((candidate) => candidate.modelId === selectedOverride);
-    if (!selected || !reasonValid || !winnerNotSelectedAcknowledged || !uncertaintyAcknowledged || busy) return;
+    if (!selected || !overrideReasonValid || !winnerNotSelectedAcknowledged || !uncertaintyAcknowledged || busy) return;
     const request: GovernedDecisionRequest = {
       decision: "approve_eligible_non_winner",
       expectedAssessmentSummarySha256: assessment.integrity.assessmentSummarySha256,
       selectedModelId: selected.modelId as CurrentSelectableCandidateId,
-      reason: boundedReason,
+      reason: boundedOverrideReason,
       technicalWinnerNotSelectedAcknowledged: true,
       uncertaintyLimitationsAcknowledged: true,
     };
@@ -109,20 +112,21 @@ export default function ApprovalPanel({
       <div><p className="text-xs font-semibold uppercase tracking-wide text-accent">Governed decision</p><h2 className="mt-1 font-semibold text-ink">Technical winner is the default path</h2></div>
       {winner ? <StatusBadge label={modelLabel(winner.modelId)} variant="success" /> : <StatusBadge label="No valid technical winner" variant="warning" />}
     </div>
-    <p className="mt-3 text-sm text-ink-muted">The default candidate was derived from the uploaded dataset&apos;s verified assessment performance. The browser does not choose or submit a model ID on this path.</p>
-    <label className="mt-4 block text-sm font-medium text-ink" htmlFor="decision-reason">Decision reason</label>
-    <textarea id="decision-reason" value={reason} minLength={MIN_REASON_LENGTH} maxLength={MAX_REASON_LENGTH} disabled={busy} onChange={(event) => setReason(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-border bg-surface-muted p-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" />
-    <p className="mt-1 text-xs text-ink-muted">{boundedReason.length}/{MAX_REASON_LENGTH} characters; at least {MIN_REASON_LENGTH} required.</p>
+    <p className="mt-3 text-sm text-ink-muted">The technical winner was derived from this dataset&apos;s governed assessment. The browser does not choose or submit a model ID on this path.</p>
+    {!overrideOpen ? <><label className="mt-4 block text-sm font-medium text-ink" htmlFor="winner-audit-note">Optional audit note</label>
+    <textarea id="winner-audit-note" value={winnerNote} maxLength={MAX_REASON_LENGTH} disabled={busy} onChange={(event) => setWinnerNote(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-border bg-surface-muted p-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" />
+    <p className="mt-1 text-xs text-ink-muted">{boundedWinnerNote.length}/{MAX_REASON_LENGTH} characters. When blank, the governed assessment-ranking reason is recorded.</p></> : null}
     <label className="mt-3 flex items-start gap-2 text-sm text-ink-muted"><input type="checkbox" checked={uncertaintyAcknowledged} disabled={busy} onChange={(event) => setUncertaintyAcknowledged(event.target.checked)} className="mt-1" />I acknowledge the selected model&apos;s uncertainty and limitations for this qualification run.</label>
     {error ? <p className="mt-3 rounded-lg border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive" role="alert">{error}</p> : null}
     {busy ? <div className="mt-3"><AsyncStatusIndicator label="Recording governed decision" delayedAfterSeconds={10} /></div> : null}
 
     {!overrideOpen ? <div className="mt-4 flex flex-wrap gap-2">
-      <Button disabled={busy || !winner || !reasonValid || !uncertaintyAcknowledged} onClick={submitWinner}>{busy ? "Publishing governed decision…" : "Approve technical winner"}</Button>
+      <Button disabled={busy || !winner || boundedWinnerNote.length > MAX_REASON_LENGTH || !uncertaintyAcknowledged} onClick={submitWinner}>{busy ? "Publishing governed decision…" : "Approve technical winner"}</Button>
       <Button variant="secondary" disabled={busy || overrideCandidates.length === 0} onClick={() => setOverrideOpen(true)}>Use governed expert override</Button>
     </div> : <div className="mt-5 rounded-xl border border-warning/25 bg-warning/10 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold text-ink">Governed expert override</h3><Button variant="quiet" disabled={busy} onClick={() => { setOverrideOpen(false); setSelectedOverride(null); setWinnerNotSelectedAcknowledged(false); }}>Return to technical winner</Button></div>
-      <label className="mt-3 block text-sm font-medium text-ink" htmlFor="governed-override-candidate">Eligible non-winner candidate</label>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold text-ink">Governed expert override</h3><Button variant="quiet" disabled={busy} onClick={() => { setOverrideOpen(false); setSelectedOverride(null); setOverrideReason(""); setWinnerNotSelectedAcknowledged(false); }}>Cancel override</Button></div>
+      <p className="mt-2 text-sm text-ink-muted"><span className="font-medium text-ink">Technical winner:</span> {winner ? modelLabel(winner.modelId) : "Unavailable"}</p>
+      <label className="mt-3 block text-sm font-medium text-ink" htmlFor="governed-override-candidate">Select eligible alternative</label>
       <select id="governed-override-candidate" value={selectedOverride ?? ""} disabled={busy} onChange={(event) => {
         const selected = overrideCandidates.find((candidate) => candidate.modelId === event.target.value);
         setSelectedOverride(selected ? selected.modelId as CurrentSelectableCandidateId : null);
@@ -130,8 +134,11 @@ export default function ApprovalPanel({
         <option value="">Select an eligible non-winner</option>
         {overrideCandidates.map((candidate) => <option key={candidate.modelId} value={candidate.modelId}>{modelLabel(candidate.modelId)}</option>)}
       </select>
-      <label className="mt-3 flex items-start gap-2 text-sm text-ink-muted"><input type="checkbox" checked={winnerNotSelectedAcknowledged} disabled={busy} onChange={(event) => setWinnerNotSelectedAcknowledged(event.target.checked)} className="mt-1" />I acknowledge that the verified technical winner is not being selected.</label>
-      <Button className="mt-4" disabled={busy || !selectedOverride || !reasonValid || !winnerNotSelectedAcknowledged || !uncertaintyAcknowledged} onClick={submitOverride}>{busy ? "Publishing governed decision…" : "Approve eligible non-winner"}</Button>
+      <label className="mt-3 block text-sm font-medium text-ink" htmlFor="override-justification">Override justification *</label>
+      <textarea id="override-justification" value={overrideReason} minLength={MIN_REASON_LENGTH} maxLength={MAX_REASON_LENGTH} required disabled={busy} onChange={(event) => setOverrideReason(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-border bg-surface p-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" />
+      <p className="mt-1 text-xs text-ink-muted">{boundedOverrideReason.length}/{MAX_REASON_LENGTH} characters; at least {MIN_REASON_LENGTH} required.</p>
+      <label className="mt-3 flex items-start gap-2 text-sm text-ink-muted"><input type="checkbox" checked={winnerNotSelectedAcknowledged} disabled={busy} onChange={(event) => setWinnerNotSelectedAcknowledged(event.target.checked)} className="mt-1" />I acknowledge that this selection overrides the technical winner.</label>
+      <Button className="mt-4" disabled={busy || !selectedOverride || !overrideReasonValid || !winnerNotSelectedAcknowledged || !uncertaintyAcknowledged} onClick={submitOverride}>{busy ? "Publishing governed decision…" : "Approve governed override"}</Button>
     </div>}
   </section>;
 }

@@ -95,6 +95,28 @@ const initial: ForecastWorkflowState = {
   error: null,
 };
 
+export async function runValidationStartOnce<T>(
+  guard: { current: boolean },
+  operation: () => Promise<T>,
+): Promise<T | null> {
+  if (guard.current) return null;
+  guard.current = true;
+  try {
+    return await operation();
+  } finally {
+    guard.current = false;
+  }
+}
+
+export function isAssessmentValidationReady(
+  serverValidation: ForecastWorkflowState["serverValidation"],
+  validatedWorkflowMode: ForecastWorkflowState["validatedWorkflowMode"],
+): boolean {
+  return serverValidation.status === "ready"
+    && validatedWorkflowMode === "assess_dataset"
+    && serverValidation.response.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible";
+}
+
 interface RetainedWorkflow {
   assessmentId?: string;
   assessmentJobId?: string;
@@ -169,9 +191,19 @@ function boundedRetainedAssignment(value: unknown): ModelAssignmentWorkflowState
   };
 }
 
-export default function ForecastRunWorkflow() {
+export function isRetainedAssessmentComplete(value: unknown): boolean {
+  return Boolean(
+    value
+    && typeof value === "object"
+    && (value as Partial<ModelAssignmentWorkflowState>).status === "assigned_verified"
+    && boundedRetainedAssignment(value).current,
+  );
+}
+
+export default function ForecastRunWorkflow({ entryIntent = "resume" }: { entryIntent?: "resume" | "reassess" }) {
   const [state, setState] = useState<ForecastWorkflowState>(initial);
   const mounted = useRef(true);
+  const validationAction = useRef(false);
   const assessmentAction = useRef(false);
   const decisionAction = useRef(false);
   const recoveryStarted = useRef(false);
@@ -274,6 +306,11 @@ export default function ForecastRunWorkflow() {
   useEffect(() => {
     if (recoveryStarted.current) return;
     recoveryStarted.current = true;
+    if (entryIntent === "reassess") {
+      localStorage.removeItem(STORAGE_KEY);
+      window.history.replaceState(window.history.state, "", "/forecast");
+      return;
+    }
     let retained: RetainedWorkflow = {};
     try {
       retained = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as RetainedWorkflow;
@@ -284,6 +321,10 @@ export default function ForecastRunWorkflow() {
     const assessmentJobId = typeof retained.assessmentJobId === "string" && UUID.test(retained.assessmentJobId) ? retained.assessmentJobId : null;
     const approvedForecast = boundedRetainedForecast(retained.approvedForecast);
     const assignment = boundedRetainedAssignment(retained.assignment);
+    if (isRetainedAssessmentComplete(retained.assignment)) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
     if (!assessmentId) return;
     update((current) => ({ ...current, retainedAssessmentId: assessmentId, assessmentJobId, approvedForecast, assignment, step: "assessment", processingStatus: assessmentJobId ? "queued" : "idle" }));
     void loadCommittedAssessment(assessmentId).catch(() => {
@@ -292,7 +333,7 @@ export default function ForecastRunWorkflow() {
     });
     // Recovery runs once and never publishes or consumes an append-only action.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [entryIntent]);
 
   const setFile = (preview: LocalFilePreview) => update((current) => ({
     ...current,
@@ -311,28 +352,32 @@ export default function ForecastRunWorkflow() {
   });
 
   const validate = async () => {
-    if (!state.files.dengue || !state.files.climate || state.processingStatus === "validating") return;
-    update((current) => ({ ...current, processingStatus: "validating", serverValidation: { status: "submitting" }, error: null }));
-    try {
-      const response = await validateRuntimeDatasets({
-        dengueFile: state.files.dengue.file,
-        climateFile: state.files.climate.file,
-        deploymentId: "dhaka_south",
-        workflowMode: "assess_dataset",
-      });
-      if (!response.ok) throw new Error(response.error.message);
-      update((current) => ({
-        ...current,
-        serverValidation: { status: response.status, response },
-        validatedWorkflowMode: response.status === "ready" ? "assess_dataset" : null,
-        workspaceId: response.workspaceId,
-        datasetId: response.datasetId,
-        processingStatus: response.status === "ready" ? "ready" : "blocked",
-        error: null,
-      }));
-    } catch (reason) {
-      update((current) => ({ ...current, processingStatus: "failed", serverValidation: { status: "failed", error: { code: "validation_request_failed", category: "internal", message: reason instanceof Error ? reason.message.slice(0, 500) : "Validation failed.", retryable: true, correlationId: "not-available" } } }));
-    }
+    const dengue = state.files.dengue;
+    const climate = state.files.climate;
+    if (!dengue || !climate || state.processingStatus === "validating") return;
+    await runValidationStartOnce(validationAction, async () => {
+      update((current) => ({ ...current, processingStatus: "validating", serverValidation: { status: "submitting" }, error: null }));
+      try {
+        const response = await validateRuntimeDatasets({
+          dengueFile: dengue.file,
+          climateFile: climate.file,
+          deploymentId: "dhaka_south",
+          workflowMode: "assess_dataset",
+        });
+        if (!response.ok) throw new Error(response.error.message);
+        update((current) => ({
+          ...current,
+          serverValidation: { status: response.status, response },
+          validatedWorkflowMode: response.status === "ready" ? "assess_dataset" : null,
+          workspaceId: response.workspaceId,
+          datasetId: response.datasetId,
+          processingStatus: response.status === "ready" ? "ready" : "blocked",
+          error: null,
+        }));
+      } catch (reason) {
+        update((current) => ({ ...current, processingStatus: "failed", serverValidation: { status: "failed", error: { code: "validation_request_failed", category: "internal", message: reason instanceof Error ? reason.message.slice(0, 500) : "Validation failed.", retryable: true, correlationId: "not-available" } } }));
+      }
+    });
   };
 
   const runAssessment = async () => {
@@ -367,9 +412,7 @@ export default function ForecastRunWorkflow() {
     }
   };
 
-  const assessmentReady = state.serverValidation.status === "ready"
-    && state.validatedWorkflowMode === "assess_dataset"
-    && state.serverValidation.response.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible";
+  const assessmentReady = isAssessmentValidationReady(state.serverValidation, state.validatedWorkflowMode);
   const approvedState = useMemo(() => state.approvedForecast, [state.approvedForecast]);
   const validationCandidateCount = state.serverValidation.status === "ready"
     && state.serverValidation.response.workflowMode === "assess_dataset"
@@ -436,7 +479,7 @@ export default function ForecastRunWorkflow() {
       {state.step === "assessment" ? <div className="space-y-5">
         <div className="rounded-xl border border-border-subtle bg-surface-muted p-5"><h2 className="font-semibold text-ink">Governed assessment</h2><p className="mt-2 text-sm text-ink-muted">The validated workspace will evaluate the complete candidate set under its immutable common fold plan. No forecast or assignment starts here.</p></div>
         {["queued", "running", "committing"].includes(state.processingStatus) ? <ProcessingState status={state.processingStatus} stage={state.job?.ok ? state.job.progress : undefined} workflow="assess_dataset" candidateCount={assessmentCandidateCount} onCheckStatus={() => void checkAssessmentStatus()} /> : null}
-        {!state.retainedAssessmentId ? <Button disabled={!assessmentReady || assessmentAction.current} onClick={() => void runAssessment()}>Start governed assessment</Button> : null}
+        {!state.retainedAssessmentId ? <Button disabled={!assessmentReady || assessmentAction.current} onClick={() => void runAssessment()}>Start model assessment</Button> : null}
       </div> : null}
 
       {state.step === "ranking" ? <div className="space-y-5">
@@ -473,8 +516,12 @@ export default function ForecastRunWorkflow() {
 
       {state.step === "complete" && state.assignment.status === "assigned_verified" && state.assignment.current ? <div className="rounded-xl border border-success/25 bg-success/10 p-6" role="status">
         <h2 className="text-xl font-semibold text-ink">Model assessment and assignment complete</h2>
-        <p className="mt-2 text-sm text-ink-muted">The governed assignment for {modelLabel(state.assignment.current.selectedCandidateId)} is verified as current. No operational forecast was started.</p>
-        <Link href="/forecast/run" className="mt-4 inline-flex rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-focus">Run Forecast</Link>
+        <p className="mt-2 text-sm text-ink-muted"><span className="font-medium text-ink">Current governed model: {modelLabel(state.assignment.current.selectedCandidateId)}.</span> The current assignment remains active until another governed assignment is successfully published. No operational forecast was started.</p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href="/forecast/run?source=assessed" className="inline-flex rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-focus">Run forecast with assessed dataset</Link>
+          <Link href="/forecast/run?source=new" className="inline-flex rounded-lg border border-border-subtle bg-surface px-4 py-2 text-sm font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-focus">Forecast with newer data</Link>
+          <Link href="/forecast?intent=reassess" className="inline-flex rounded-lg border border-border-subtle bg-surface px-4 py-2 text-sm font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-focus">Reassess models with updated data</Link>
+        </div>
         <details className="mt-4"><summary className="cursor-pointer text-xs font-semibold text-accent outline-none focus-visible:ring-2 focus-visible:ring-focus">Technical assignment evidence</summary><dl className="mt-2 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Assignment ID: </dt><dd className="inline break-all font-mono">{state.assignment.current.assignmentId}</dd></div><div><dt className="inline font-medium text-ink">Assignment pointer SHA-256: </dt><dd className="inline break-all font-mono">{state.assignment.current.assignmentPointerSha256}</dd></div></dl></details>
       </div> : null}
     </div>

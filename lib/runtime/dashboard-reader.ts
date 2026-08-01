@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile,readdir } from "node:fs/promises";
 import path from "node:path";
 import type { OverviewViewModel } from "@/lib/dashboard-view-model";
 import { governedModelLabel } from "@/lib/status-labels";
 import { loadRuntimeConfig } from "./config";
 import { RuntimePublicError } from "./errors";
 import { assertContained, deploymentRuntimePaths, runtimeCollectionPaths } from "./paths";
+import {readCurrentOperationalPreparedness} from "./operational-preparedness-reader";
+import {resolveCurrentPreparednessAuthority} from "./preparedness-authority";
 
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -186,7 +188,7 @@ export async function readVerifiedCurrentForecast(
   }
 }
 
-function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewModel {
+function overviewFromVerified(verified: VerifiedCurrentForecast,operational:Awaited<ReturnType<typeof readCurrentOperationalPreparedness>>|null,preparednessReason:string|null,calculating=false): OverviewViewModel {
   const dashboard = verified.dashboard;
   const forecast = object(dashboard.forecast);
   const model = object(dashboard.model);
@@ -246,7 +248,10 @@ function overviewFromVerified(verified: VerifiedCurrentForecast): OverviewViewMo
       ? { workflowMode: "approved_assessment_forecast", technicalWinnerId: String(model.technicalWinnerModelId), decisionId: String(decision.decisionId), assessmentId: String(decision.assessmentId), decisionOutcome: String(decision.outcome), scope: "one_run", deploymentModelUnchanged: true }
       : { workflowMode: "quick_forecast", technicalWinnerId: null, decisionId: null, assessmentId: null, decisionOutcome: null, scope: "deployment", deploymentModelUnchanged: false },
     deployment: { mode: "Synthetic capability demonstration", gate: "Benchmark only" },
-    preparedness: { availabilityStatus: value.preparedness.availabilityStatus, totalFacilities: 0, bedDeficitFacilities: 0, ns1StockHorizonFacilities: 0, ivFluidStockHorizonFacilities: 0, criticalReviewFacilities: 0 },
+    preparedness: operational?{
+      availabilityStatus:"available",reason:null,formulaLabel:String(object(operational.summary.formula).label),rows:operational.facilities.rows as unknown as OverviewViewModel["preparedness"]["rows"],
+      totalFacilities:operational.facilities.rows.length,bedDeficitFacilities:operational.facilities.rows.filter(row=>Number(object(row.preparednessMetric).value)>0).length,ns1StockHorizonFacilities:0,ivFluidStockHorizonFacilities:0,criticalReviewFacilities:0,
+    }:{availabilityStatus:calculating?"calculating":value.preparedness.availabilityStatus,reason:calculating?"Operational preparedness is calculating for the current forecast, formula, policy, and inventory.":preparednessReason,formulaLabel:null,rows:[],totalFacilities:0,bedDeficitFacilities:0,ns1StockHorizonFacilities:0,ivFluidStockHorizonFacilities:0,criticalReviewFacilities:0},
     facilitiesRequiringAttention: [],
     alerts: [],
     latestRun: {
@@ -266,5 +271,7 @@ export async function readLatestDashboard(
 ): Promise<{ sourceType: "uploaded"; runId: string; dashboard: OverviewViewModel }> {
   const config = loadRuntimeConfig(false);
   const verified = await readVerifiedCurrentForecast(config.runtimeRoot, deploymentId);
-  return { sourceType: "uploaded", runId: String(verified.pointer.runId), dashboard: overviewFromVerified(verified) };
+  let operational:Awaited<ReturnType<typeof readCurrentOperationalPreparedness>>|null=null;let reason:string|null=null;let calculating=false;
+  try{operational=await readCurrentOperationalPreparedness()}catch(error){if(error instanceof RuntimePublicError){reason=error.message;try{const authority=await resolveCurrentPreparednessAuthority();const collections=runtimeCollectionPaths(config.runtimeRoot);for(const directory of [collections.pendingJobs,collections.runningJobs])for(const name of await readdir(directory)){if(!name.endsWith(".json"))continue;const job=object(JSON.parse(await readFile(path.join(directory,name),"utf8")));if(job.jobKind==="operational_preparedness"&&job.authoritySnapshotSha256===authority.authoritySnapshotSha256)calculating=true}}catch{}}else throw error}
+  return { sourceType: "uploaded", runId: String(verified.pointer.runId), dashboard: overviewFromVerified(verified,operational,reason,calculating) };
 }

@@ -19,12 +19,14 @@ from formula_policy import (  # noqa: E402
 from formula_registry import governed_formula_sha256, governed_registry_sha256, load_governed_formula_registry  # noqa: E402
 
 
-def test_formula_is_registered_only_in_qualification_authority() -> None:
+def test_qualification_formula_identity_is_preserved_but_not_operationally_activated() -> None:
     registry = load_governed_formula_registry()
     formula = registry["formulas"][0]
     assert formula["formulaId"] == "inventory.gap.synthetic-qualification.v1"
     assert formula["outputUnit"] == "bed_units"
-    assert load_formula_activation_policy()["inventoryGapActivationStatus"] == "not_configured"
+    activation = load_formula_activation_policy()
+    assert activation["inventoryGapActivationStatus"] == "configured"
+    assert activation["formulaBindings"]["inventory.gap"]["activeFormulaId"] == "inventory.gap.operational.v1"
     assert resolve_qualification_formula(
         "inventory.gap", requested_evidence_scope="synthetic_qualification"
     )["formulaSha256"] == formula["formulaSha256"]

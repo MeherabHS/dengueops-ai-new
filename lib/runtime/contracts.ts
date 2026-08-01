@@ -422,7 +422,12 @@ export type CurrentLifecycleAuthority=CurrentActiveModelAuthority&{
 export type ModelLifecycleJobStatusResponse={ok:true;jobKind:"model_lifecycle";jobId:string;lifecycleDecisionId:string;workflowMode:"model_lifecycle";action:LifecycleAction;status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedLifecycleDecisionId:string|null};
 export type ModelLifecycleResponse={ok:true;authority:CurrentLifecycleAuthority;history:Array<{lifecycleDecisionId:string;action:LifecycleAction;createdAt:string;modelIdentityChanged:boolean;assignmentProduced:boolean}>;rollbackAvailable:boolean;humanGoverned:true;automaticActionAllowed:false;materialWorseningStatus:"not_governed";statisticalSufficiencyStatus:"not_governed";modelQualificationStatus:"not_governed"}|RuntimeErrorResponse;
 
-export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord | ForecastOutcomeJobRecord | DegradationEvidenceJobRecord | ModelLifecycleJobRecord;
+export interface OperationalPreparednessJobRecord {
+  schemaVersion:"1.0";jobKind:"operational_preparedness";jobId:string;preparednessId:string;deploymentId:"dhaka_south";workflowMode:"operational_preparedness";authoritySnapshotSha256:string;
+  status:RuntimeJobStatus;progress:string;createdAt:string;claimedAt:string|null;startedAt:string|null;updatedAt:string;completedAt:string|null;heartbeatAt:string|null;workerId:string|null;processId:number|null;timeoutSeconds:number;retryCount:0;error:{code:string;message:string;retryable:boolean}|null;committedPreparednessId:string|null;
+}
+export type RuntimeJobRecord = QuickForecastJobRecord | DatasetAssessmentJobRecord | ApprovedForecastJobRecord | ForecastOutcomeJobRecord | DegradationEvidenceJobRecord | ModelLifecycleJobRecord | OperationalPreparednessJobRecord;
+export type StartOperationalPreparednessResponse={ok:true;jobId:string|null;preparednessId:string;status:RuntimeJobStatus;statusUrl:string|null;recovered:boolean;authoritySnapshotSha256:string}|RuntimeErrorResponse;
 
 export type StartQuickForecastResponse =
   | { ok: true; jobId: string; runId: string; status: RuntimeJobStatus; statusUrl: string; deploymentId: "dhaka_south"; recovered: boolean; activeModelAuthority:CurrentActiveModelAuthority }
@@ -459,6 +464,7 @@ export type JobStatusResponse =
   | ({ ok:true; jobKind:"forecast_outcome"; jobId:string; outcomeId:string; workflowMode:"forecast_outcome_monitoring"; status:RuntimeJobStatus; progress:string; createdAt:string; startedAt:string|null; updatedAt:string; completedAt:string|null; retryable:boolean; error:RuntimeJobRecord["error"]; committedOutcomeId:string|null })
   | ({ok:true;jobKind:"degradation_evidence";jobId:string;evidenceId:string;workflowMode:"degradation_evidence";status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedEvidenceId:string|null})
   | ({ok:true;jobKind:"model_lifecycle";jobId:string;lifecycleDecisionId:string;workflowMode:"model_lifecycle";action:LifecycleAction;status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:false;error:RuntimeJobRecord["error"];committedLifecycleDecisionId:string|null})
+  | ({ok:true;jobKind:"operational_preparedness";jobId:string;preparednessId:string;workflowMode:"operational_preparedness";status:RuntimeJobStatus;progress:string;createdAt:string;startedAt:string|null;updatedAt:string;completedAt:string|null;retryable:boolean;error:RuntimeJobRecord["error"];committedPreparednessId:string|null})
   | RuntimeErrorResponse;
 
 export type CurrentRuntimeCandidateId =

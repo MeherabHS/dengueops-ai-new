@@ -1,13 +1,19 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { require as tsxRequire } from "tsx/cjs/api";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const suitabilityModule = tsxRequire("../components/forecast/ModelSuitabilitySummary.tsx", import.meta.url);
 const approvedForecastModule = tsxRequire("../components/forecast/ApprovedForecastPanel.tsx", import.meta.url);
+const forecastWorkflowModule = tsxRequire("../components/forecast/ForecastRunWorkflow.tsx", import.meta.url);
+const datasetValidationModule = tsxRequire("../components/forecast/DatasetValidationSummary.tsx", import.meta.url);
 const { friendlyWinnerSelectionReason } = suitabilityModule;
 const { runQualificationStartOnce } = approvedForecastModule;
+const { isAssessmentValidationReady, isRetainedAssessmentComplete, runValidationStartOnce } = forecastWorkflowModule;
+const DatasetValidationSummary = datasetValidationModule.default;
 const [
   workflow,
   approval,
@@ -40,16 +46,153 @@ const [
   read("lib/status-labels.ts"),
 ]);
 
+const previewFiles = {
+  dengue: { missingColumns: [] },
+  climate: { missingColumns: [] },
+};
+
+const renderAssessmentValidation = (serverValidation) => renderToStaticMarkup(createElement(DatasetValidationSummary, {
+  files: previewFiles,
+  mode: "assess_dataset",
+  serverValidation,
+  onMode: () => undefined,
+  onValidate: () => undefined,
+  revalidationRequired: false,
+}));
+
+test("assessment validation has one authoritative mutation action and no Assess Dataset control", () => {
+  const html = renderAssessmentValidation({ status: "idle" });
+  assert.match(html, /Local preview complete/);
+  assert.match(html, /Row content has not been governed or accepted/);
+  assert.match(html, /Authoritative dataset validation/);
+  assert.match(html, /Validate the uploaded dengue and climate datasets against the governed assessment requirements before model assessment begins/);
+  assert.equal((html.match(/>Validate datasets<\/button>/g) ?? []).length, 1);
+  assert.doesNotMatch(html, /Assess Dataset/);
+});
+
+test("assignment completion exposes three distinct recurring workflow actions", () => {
+  for (const label of [
+    "Run forecast with assessed dataset",
+    "Forecast with newer data",
+    "Reassess models with updated data",
+  ]) assert.equal((workflow.match(new RegExp(label, "g")) ?? []).length, 1);
+  assert.match(workflow, /href="\/forecast\/run\?source=assessed"/);
+  assert.match(workflow, /href="\/forecast\/run\?source=new"/);
+  assert.match(workflow, /href="\/forecast\?intent=reassess"/);
+  assert.doesNotMatch(workflow, />Use newer datasets<\/Link>/);
+  assert.match(workflow, /The current assignment remains active until another governed assignment is successfully published/);
+});
+
+test("explicit reassessment starts clean at Upload without any authority mutation", () => {
+  assert.match(page, /query\.intent === "reassess"/);
+  assert.match(page, /entryIntent=\{entryIntent\}/);
+  assert.match(page, /Upload updated labelled dengue and climate history/);
+  const recovery = workflow.slice(workflow.indexOf("useEffect(() => {\n    if (recoveryStarted"), workflow.indexOf("const setFile"));
+  assert.match(recovery, /entryIntent === "reassess"/);
+  assert.match(recovery, /localStorage\.removeItem\(STORAGE_KEY\)/);
+  assert.match(recovery, /window\.history\.replaceState\(window\.history\.state, "", "\/forecast"\)/);
+  assert.ok(recovery.indexOf('entryIntent === "reassess"') < recovery.indexOf("localStorage.getItem(STORAGE_KEY)"));
+  assert.doesNotMatch(recovery, /startDatasetAssessment|recordAssessmentDecision|startApprovedForecast|startModelAssignment|validateRuntimeDatasets|startQuickForecast|signOut|sessionStorage/);
+});
+
+test("terminal assessment recovery is rejected while nonterminal recovery remains available", () => {
+  const current = {
+    ok: true,
+    status: "assigned",
+    assignmentId: "11111111-1111-4111-8111-111111111111",
+    selectedCandidateId: "gradient_boosting",
+    selectedCandidateLabel: "Gradient boosting",
+    assignmentCommitSha256: "a".repeat(64),
+    assignmentPointerSha256: "b".repeat(64),
+    sourceApprovedForecastRunId: "22222222-2222-4222-8222-222222222222",
+    createdAt: "2026-08-02T00:00:00.000Z",
+  };
+  assert.equal(isRetainedAssessmentComplete({ status: "assigned_verified", current }), true);
+  assert.equal(isRetainedAssessmentComplete({ status: "publishing", current }), false);
+  assert.equal(isRetainedAssessmentComplete(undefined), false);
+  const recovery = workflow.slice(workflow.indexOf("useEffect(() => {\n    if (recoveryStarted"), workflow.indexOf("const setFile"));
+  assert.match(recovery, /isRetainedAssessmentComplete\(retained\.assignment\)/);
+  assert.match(recovery, /loadCommittedAssessment\(assessmentId\)/);
+  assert.match(recovery, /pollAssessment\(assessmentJobId, assessmentId\)/);
+});
+
+test("pending assessment validation is accessible, disabled, and guarded against duplicate POSTs", async () => {
+  const html = renderAssessmentValidation({ status: "submitting" });
+  assert.match(html, /<button[^>]*disabled=""[^>]*>Validating datasets…<\/button>/);
+  assert.match(html, /animate-spin/);
+  assert.match(html, /Validating datasets…/);
+  assert.match(html, /0s elapsed/);
+
+  let resolveValidation;
+  let validationPosts = 0;
+  const pending = new Promise((resolve) => { resolveValidation = resolve; });
+  const guard = { current: false };
+  const postValidation = () => {
+    validationPosts += 1;
+    return pending;
+  };
+  const first = runValidationStartOnce(guard, postValidation);
+  const duplicate = runValidationStartOnce(guard, postValidation);
+  assert.equal(validationPosts, 1);
+  assert.equal(guard.current, true);
+  resolveValidation({ ok: true });
+  assert.deepEqual(await first, { ok: true });
+  assert.equal(await duplicate, null);
+  assert.equal(guard.current, false);
+});
+
+test("assessment continuation requires successful authoritative validation", () => {
+  const eligibleResponse = {
+    status: "ready",
+    response: { eligibility: { assessDataset: { assessmentStatus: "full_assessment_eligible" } } },
+  };
+  assert.equal(isAssessmentValidationReady({ status: "idle" }, null), false);
+  assert.equal(isAssessmentValidationReady(eligibleResponse, null), false);
+  assert.equal(isAssessmentValidationReady(eligibleResponse, "assess_dataset"), true);
+  assert.equal(isAssessmentValidationReady({ status: "failed", error: {} }, "assess_dataset"), false);
+});
+
+test("assessment workflow owns assess_dataset mode and separates continuation from assessment mutation", () => {
+  assert.match(workflow, /const initial:[\s\S]*?mode: "assess_dataset"/);
+  assert.match(workflow, /workflowMode: "assess_dataset"/);
+  const continuation = workflow.slice(workflow.indexOf("Continue to assessment") - 260, workflow.indexOf("Continue to assessment") + 80);
+  assert.match(continuation, /disabled=\{!assessmentReady\}/);
+  assert.match(continuation, /step: "assessment"/);
+  assert.doesNotMatch(continuation, /runAssessment|startDatasetAssessment/);
+  assert.match(workflow, /Start model assessment/);
+});
+
+test("authoritative validation failures remain visible without enabling continuation", () => {
+  const html = renderAssessmentValidation({
+    status: "failed",
+    error: {
+      code: "validation_request_failed",
+      category: "internal",
+      message: "The runtime Python executable is not configured.",
+      retryable: true,
+      correlationId: "not-available",
+    },
+  });
+  assert.match(html, /Validation service failed/);
+  assert.match(html, /The runtime Python executable is not configured\./);
+  assert.match(html, /Reference: not-available/);
+  assert.equal(isAssessmentValidationReady({ status: "failed", error: {} }, "assess_dataset"), false);
+});
+
 test("technical winner is assessment-derived and is the bounded default decision", () => {
   assert.match(approval, /assessment\.technicalWinnerModelId/);
   assert.match(approval, /candidate\.status === "technical_winner"/);
   assert.match(approval, /Technical winner is the default path/);
-  assert.match(approval, /uploaded dataset.*verified assessment performance/i);
+  assert.match(approval, /technical winner.*dataset.*governed assessment/i);
   const winner = approval.slice(approval.indexOf("const submitWinner"), approval.indexOf("const submitOverride"));
   assert.match(winner, /decision: "approve_technical_winner"/);
   assert.match(winner, /expectedAssessmentSummarySha256/);
+  assert.match(winner, /boundedWinnerNote \|\| DEFAULT_TECHNICAL_WINNER_REASON/);
   assert.match(winner, /uncertaintyLimitationsAcknowledged: true/);
   assert.doesNotMatch(winner, /selectedModelId/);
+  assert.doesNotMatch(winner, /MIN_REASON_LENGTH|overrideReasonValid/);
+  assert.match(approval, /Optional audit note/);
+  assert.match(approval, /Technical winner approved based on the verified governed assessment ranking\./);
 });
 
 test("technical winner reason replaces only the exact raw winner token", () => {
@@ -93,6 +236,9 @@ test("governed override is explicit and contains only verified eligible non-winn
   assert.match(approval, /candidate\.failedFolds === 0/);
   assert.match(approval, /candidate\.deployableForOneRun/);
   assert.match(approval, /<select id="governed-override-candidate"/);
+  assert.match(approval, /Select eligible alternative/);
+  assert.match(approval, /Override justification \*/);
+  assert.match(approval, /Approve governed override/);
   assert.doesNotMatch(approval, /name=["']selectedModelId|placeholder=.*model.*id/i);
   const overrideStart = approval.indexOf("const submitOverride");
   const override = approval.slice(overrideStart, approval.indexOf("return <section", overrideStart));
@@ -105,11 +251,14 @@ test("governed override is explicit and contains only verified eligible non-winn
   ]) assert.match(override, new RegExp(marker));
 });
 
-test("decision reason and acknowledgements are bounded and duplicate publication is blocked", () => {
+test("override reason and acknowledgements are bounded and duplicate publication is blocked", () => {
   assert.match(approval, /MIN_REASON_LENGTH = 12/);
   assert.match(approval, /MAX_REASON_LENGTH = 1000/);
+  assert.match(approval, /overrideReasonValid/);
   assert.match(approval, /winnerNotSelectedAcknowledged/);
   assert.match(approval, /uncertaintyAcknowledged/);
+  assert.match(approval, /setSelectedOverride\(null\)/);
+  assert.match(approval, /setOverrideReason\(""\)/);
   assert.match(workflow, /decisionAction\.current/);
   assert.match(workflow, /if \(!state\.assessment \|\| recordedDecision \|\| decisionAction\.current\) return/);
   assert.match(approval, /Governed model decision recorded/);

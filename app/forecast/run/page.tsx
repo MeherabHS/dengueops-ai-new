@@ -4,7 +4,14 @@ import StatusBadge from "@/components/ui/StatusBadge";
 
 export const metadata = { title: "Run Operational Forecast — DengueOps AI" };
 
-export default function OperationalForecastPage() {
+export default async function OperationalForecastPage({ searchParams }: { searchParams: Promise<{ source?: string | string[] }> }) {
+  const query = await searchParams;
+  const initialSource = query.source === "assessed" ? "assessed" : "newer";
+  const entryIntent = query.source === "assessed"
+    ? "new_assessed"
+    : query.source === "new"
+      ? "new_upload"
+      : "resume";
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-7 rounded-2xl border border-border bg-surface p-6">
@@ -19,7 +26,7 @@ export default function OperationalForecastPage() {
           <p>The assigned model is resolved from authenticated server authority. No model selector or browser-supplied model identity is permitted.</p>
         </div>
       </header>
-      <OperationalForecastWorkflow />
+      <OperationalForecastWorkflow initialSource={initialSource} entryIntent={entryIntent} />
     </div>
   );
 }

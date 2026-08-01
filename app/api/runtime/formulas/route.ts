@@ -57,7 +57,7 @@ export async function GET(): Promise<Response> {
       !exactKeys(policy, policyFields)
       || policy.schemaVersion !== "1.0"
       || policy.policyId !== "RUNTIME.FORMULA.ACTIVATION"
-      || policy.policyVersion !== "b8.5-v1"
+      || !["b8.5-v1", "b9.5-v1"].includes(String(policy.policyVersion))
       || policy.policyStatus !== "active"
       || policy.deploymentId !== scope.internalDeploymentId
       || JSON.stringify(policy.supportedFormulaSlots) !== '["inventory.gap"]'

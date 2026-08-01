@@ -16,13 +16,14 @@ test("hospital inventory route is read-only and verifies immutable hashes", asyn
   assert.match(route, /Cache-Control/);
 });
 
-test("formula route is read-only and reports unconfigured slot", async () => {
+test("formula route is read-only and verifies configured operational slot", async () => {
   const route = await read("app/api/runtime/formulas/route.ts");
   assert.match(route, /export async function GET/);
   assert.doesNotMatch(route, /export async function (?:POST|PUT|PATCH|DELETE)/);
   assert.match(route, /RUNTIME\.FORMULA\.ACTIVATION/);
   assert.match(route, /inventory\.gap/);
-  assert.match(route, /not_configured/);
+  assert.match(route, /configured/);
+  assert.match(route, /activeFormulaSha256/);
   assert.match(route, /formula_registry_tampered/);
   assert.match(route, /formula_policy_tampered/);
 });

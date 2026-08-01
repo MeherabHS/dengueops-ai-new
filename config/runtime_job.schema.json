@@ -95,7 +95,9 @@
     "lifecyclePolicySha256": {},
     "quickPolicyId": {},
     "quickPolicyVersion": {},
-    "quickPolicySha256": {}
+    "quickPolicySha256": {},
+    "preparednessId": {},
+    "committedPreparednessId": {}
   },
   "oneOf": [
     {
@@ -121,6 +123,9 @@
     },
     {
       "$ref": "#/$defs/modelLifecycle"
+    },
+    {
+      "$ref": "#/$defs/operationalPreparedness"
     }
   ],
   "$defs": {
@@ -3506,6 +3511,34 @@
           "type": ["string", "null"],
           "format": "uuid"
         }
+      }
+    },
+    "operationalPreparedness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "jobKind", "jobId", "preparednessId", "deploymentId", "workflowMode", "authoritySnapshotSha256", "status", "progress", "createdAt", "claimedAt", "startedAt", "updatedAt", "completedAt", "heartbeatAt", "workerId", "processId", "timeoutSeconds", "retryCount", "error", "committedPreparednessId"],
+      "properties": {
+        "schemaVersion": {"const": "1.0"},
+        "jobKind": {"const": "operational_preparedness"},
+        "jobId": {"$ref": "#/$defs/uuid"},
+        "preparednessId": {"$ref": "#/$defs/uuid"},
+        "deploymentId": {"const": "dhaka_south"},
+        "workflowMode": {"const": "operational_preparedness"},
+        "authoritySnapshotSha256": {"$ref": "#/$defs/sha"},
+        "status": {"$ref": "#/$defs/status"},
+        "progress": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "claimedAt": {"type": ["string", "null"], "format": "date-time"},
+        "startedAt": {"type": ["string", "null"], "format": "date-time"},
+        "updatedAt": {"type": "string", "format": "date-time"},
+        "completedAt": {"type": ["string", "null"], "format": "date-time"},
+        "heartbeatAt": {"type": ["string", "null"]},
+        "workerId": {"type": ["string", "null"]},
+        "processId": {"type": ["integer", "null"]},
+        "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 900},
+        "retryCount": {"const": 0},
+        "error": {"$ref": "#/$defs/error"},
+        "committedPreparednessId": {"type": ["string", "null"], "format": "uuid"}
       }
     },
     "degradationEvidenceP2": {

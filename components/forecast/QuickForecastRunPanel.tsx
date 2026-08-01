@@ -12,6 +12,7 @@ import {
   getLatestDashboard,
   getRuntimeJobByStatusUrl,
   recoverQuickForecastStart,
+  startOperationalPreparedness,
   startQuickForecast,
 } from "@/lib/runtime/client";
 import type { CurrentModelAssignmentResultSuccess, StartQuickForecastRequest } from "@/lib/runtime/contracts";
@@ -118,6 +119,8 @@ export default function QuickForecastRunPanel({
             && latest.dashboard.latestRun.runId === committedRunId
             && latest.dashboard.modelUse.workflowMode === "quick_forecast";
           if (exactCurrent) {
+            // Downstream authority is server-resolved and idempotent; forecast publication never waits for it.
+            void startOperationalPreparedness().catch(() => undefined);
             onStateChange({
               ...state,
               status: "current_verified",

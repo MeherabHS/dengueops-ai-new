@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "preparednessId", "deploymentId", "authoritySnapshotSha256", "rows"],
+  "properties": {"schemaVersion": {"const": "1.0"}, "preparednessId": {"type": "string", "format": "uuid"}, "deploymentId": {"const": "dhaka_south"}, "authoritySnapshotSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "rows": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/row"}}},
+  "$defs": {"nullableNumber": {"type": ["number", "null"], "minimum": 0}, "row": {"type": "object", "additionalProperties": false, "required": ["hospitalId", "hospitalName", "participationStatus", "capacityReference", "currentLiveAvailability", "forecastPlanningInput", "preparednessMetric", "planningState", "planningSuggestion"], "properties": {
+    "hospitalId": {"type": "string"}, "hospitalName": {"type": "string"}, "participationStatus": {"const": "included"},
+    "capacityReference": {"type": "object", "additionalProperties": false, "required": ["value", "status", "sourceLabel"], "properties": {"value": {"$ref": "#/$defs/nullableNumber"}, "status": {"enum": ["available", "unknown"]}, "sourceLabel": {"const": "Official capacity reference"}}},
+    "currentLiveAvailability": {"type": "object", "additionalProperties": false, "required": ["value", "status"], "properties": {"value": {"const": null}, "status": {"const": "not_reported"}}},
+    "forecastPlanningInput": {"type": "object", "additionalProperties": false, "required": ["currentForecastCases", "allocatedForecastCases", "targetPeriod"], "properties": {"currentForecastCases": {"type": "integer", "minimum": 0}, "allocatedForecastCases": {"type": ["integer", "null"], "minimum": 0}, "targetPeriod": {"type": "string"}}},
+    "preparednessMetric": {"type": "object", "additionalProperties": false, "required": ["formulaLabel", "value", "unit", "status"], "properties": {"formulaLabel": {"const": "Formula-derived preparedness"}, "value": {"$ref": "#/$defs/nullableNumber"}, "unit": {"type": "string"}, "status": {"enum": ["available", "unavailable_missing_input"]}}},
+    "planningState": {"type": "object", "additionalProperties": false, "required": ["status", "reason"], "properties": {"status": {"enum": ["calculated", "insufficient_data"]}, "reason": {"type": "string"}}}, "planningSuggestion": {"type": ["string", "null"]}
+  }}}
+}

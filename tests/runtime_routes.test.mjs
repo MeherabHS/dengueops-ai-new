@@ -61,7 +61,7 @@ test("validation success returns only a server-verified bounded workflow mode", 
   assert.match(contracts, /workflowMode: "quick_forecast" \| "assess_dataset"/);
   assert.match(route, /const verifiedWorkflowMode = validation\.workflowMode/);
   assert.match(route, /verifiedWorkflowMode !== "quick_forecast" && verifiedWorkflowMode !== "assess_dataset"/);
-  assert.match(route, /verifiedWorkflowMode !== workflowMode/);
+  assert.match(route, /verifiedWorkflowMode !== input\.requestedWorkflowMode/);
   assert.match(route, /workflowMode: verifiedWorkflowMode/);
   assert.doesNotMatch(route, /workflowMode:\s*workflowMode,/);
 });

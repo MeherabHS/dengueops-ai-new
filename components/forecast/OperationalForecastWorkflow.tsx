@@ -15,8 +15,8 @@ import type {
   QuickValidationReadyEvidence,
   ServerValidationState,
 } from "@/lib/forecast-workflow-types";
-import { getCurrentModelAssignment, validateRuntimeDatasets } from "@/lib/runtime/client";
-import type { CurrentModelAssignmentResultSuccess, RuntimeCandidateId } from "@/lib/runtime/contracts";
+import { getCurrentModelAssignment, validateAssessedDataset, validateRuntimeDatasets } from "@/lib/runtime/client";
+import type { CurrentModelAssignmentResultSuccess, RuntimeCandidateId, RuntimeValidationResponseSuccess } from "@/lib/runtime/contracts";
 import { modelLabel } from "@/lib/status-labels";
 
 const STORAGE_KEY = "dengueops-operational-forecast-workflow-v1";
@@ -27,6 +27,24 @@ const CANDIDATES = new Set<RuntimeCandidateId>([
   "random_forest", "gradient_boosting", "elastic_net", "negative_binomial_regression",
   "extra_trees", "hist_gradient_boosting", "poisson_gam", "previous_week_naive",
 ]);
+const RECOVERABLE_QUICK_FORECAST_STATUSES = new Set<QuickForecastWorkflowState["status"]>([
+  "queued",
+  "running",
+  "recovering_existing_job",
+  "publication_in_progress",
+  "committed_pending_current_verification",
+  "current_verification_pending",
+  "current_verification_timeout",
+  "authentication_required",
+]);
+
+function assessedDatasetFailureHeading(code: string): string {
+  if (code === "assessment_dataset_source_unavailable") return "Source assessment unavailable";
+  if (code === "assessment_dataset_integrity_failed") return "Dataset integrity verification failed";
+  if (code === "assessment_dataset_incompatible" || code === "quick_validation_authority_mismatch") return "Dataset incompatible with current assignment";
+  if (code === "python_executable_not_configured") return "Worker unavailable";
+  return "Operational validation failed";
+}
 
 const emptyQuickForecast: QuickForecastWorkflowState = {
   status: "ready_to_run",
@@ -71,7 +89,7 @@ function boundedQuickForecast(value: unknown): QuickForecastWorkflowState | null
   const jobId = UUID.test(String(retained.jobId ?? "")) ? retained.jobId! : null;
   const expectedRunId = UUID.test(String(retained.expectedRunId ?? "")) ? retained.expectedRunId! : null;
   const statusUrl = jobId && retained.statusUrl === `/api/runtime/jobs/${jobId}` ? retained.statusUrl : null;
-  if (!jobId || !expectedRunId || !statusUrl) return null;
+  if (!jobId || !expectedRunId || !statusUrl || !retained.status || !RECOVERABLE_QUICK_FORECAST_STATUSES.has(retained.status)) return null;
   return {
     ...emptyQuickForecast,
     status: "recovering_existing_job",
@@ -83,8 +101,15 @@ function boundedQuickForecast(value: unknown): QuickForecastWorkflowState | null
   };
 }
 
-export default function OperationalForecastWorkflow() {
+export default function OperationalForecastWorkflow({
+  initialSource = "newer",
+  entryIntent = "resume",
+}: {
+  initialSource?: "assessed" | "newer";
+  entryIntent?: "resume" | "new_assessed" | "new_upload";
+}) {
   const [step, setStep] = useState<OperationalForecastStep>("upload_latest_data");
+  const [sourceMode, setSourceMode] = useState<"assessed" | "newer">(initialSource);
   const [assignment, setAssignment] = useState<CurrentModelAssignmentResultSuccess | null>(null);
   const [assignmentState, setAssignmentState] = useState<"loading" | "ready" | "failed">("loading");
   const [files, setFiles] = useState<Partial<Record<"dengue" | "climate", LocalFilePreview>>>({});
@@ -114,6 +139,11 @@ export default function OperationalForecastWorkflow() {
     const recover = async () => {
       const current = await readAssignment();
       if (!active || !current) return;
+      if (entryIntent !== "resume") {
+        localStorage.removeItem(STORAGE_KEY);
+        window.history.replaceState(window.history.state, "", "/forecast/run");
+        return;
+      }
       let retained: RetainedOperationalWorkflow = {};
       try {
         retained = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as RetainedOperationalWorkflow;
@@ -139,7 +169,7 @@ export default function OperationalForecastWorkflow() {
     return () => {
       active = false;
     };
-  }, [readAssignment]);
+  }, [entryIntent, readAssignment]);
 
   const resetValidation = (nextFiles = files) => {
     setFiles(nextFiles);
@@ -161,6 +191,40 @@ export default function OperationalForecastWorkflow() {
     resetValidation(next);
   };
 
+  const acceptValidation = async (response: RuntimeValidationResponseSuccess, currentAssignment: CurrentModelAssignmentResultSuccess) => {
+    const authority = response.activeModelAuthority;
+    const bound = response.status === "ready"
+      && response.workflowMode === "quick_forecast"
+      && response.deploymentId === "dhaka_south"
+      && response.eligibility.quickForecast.eligible
+      && authority?.authoritySource === "committed_assignment"
+      && authority.assignmentId === currentAssignment.assignmentId
+      && authority.authoritySnapshotSha256 === currentAssignment.assignmentPointerSha256
+      && authority.modelId === currentAssignment.selectedCandidateId;
+    if (!bound || !authority) {
+      setValidationState({ status: response.status, response });
+      setValidation(null);
+      setStep("validation");
+      setError("The validation evidence did not match the verified current assignment. Review the refreshed authority before validating again.");
+      await readAssignment();
+      return;
+    }
+    const evidence: QuickValidationReadyEvidence = {
+      workspaceId: response.workspaceId,
+      datasetId: response.datasetId,
+      deploymentId: "dhaka_south",
+      validationRecordSha256: response.validationRecordSha256,
+      workflowMode: "quick_forecast",
+      assignmentId: authority.assignmentId,
+      assignmentPointerSha256: authority.authoritySnapshotSha256,
+      selectedCandidateId: authority.modelId,
+    };
+    setValidationState({ status: "ready", response });
+    setValidation(evidence);
+    setQuickForecast(emptyQuickForecast);
+    setStep("forecast");
+  };
+
   const validate = async () => {
     if (validating.current || !assignment || !files.dengue || !files.climate) return;
     validating.current = true;
@@ -174,40 +238,33 @@ export default function OperationalForecastWorkflow() {
         workflowMode: "quick_forecast",
       });
       if (!response.ok) throw new Error(response.error.message);
-      const authority = response.activeModelAuthority;
-      const bound = response.status === "ready"
-        && response.workflowMode === "quick_forecast"
-        && response.deploymentId === "dhaka_south"
-        && response.eligibility.quickForecast.eligible
-        && authority?.authoritySource === "committed_assignment"
-        && authority.assignmentId === assignment.assignmentId
-        && authority.authoritySnapshotSha256 === assignment.assignmentPointerSha256
-        && authority.modelId === assignment.selectedCandidateId;
-      if (!bound || !authority) {
-        setValidationState({ status: response.status, response });
-        setValidation(null);
-        setStep("validation");
-        setError("The validation evidence did not match the verified current assignment. Review the refreshed authority before validating again.");
-        await readAssignment();
-        return;
-      }
-      const evidence: QuickValidationReadyEvidence = {
-        workspaceId: response.workspaceId,
-        datasetId: response.datasetId,
-        deploymentId: "dhaka_south",
-        validationRecordSha256: response.validationRecordSha256,
-        workflowMode: "quick_forecast",
-        assignmentId: authority.assignmentId,
-        assignmentPointerSha256: authority.authoritySnapshotSha256,
-        selectedCandidateId: authority.modelId,
-      };
-      setValidationState({ status: "ready", response });
-      setValidation(evidence);
-      setQuickForecast(emptyQuickForecast);
-      setStep("forecast");
+      await acceptValidation(response, assignment);
     } catch (reason) {
       const message = reason instanceof Error ? reason.message.slice(0, 500) : "Operational forecast validation failed.";
       setValidationState({ status: "failed", error: { code: "validation_request_failed", category: "internal", message, retryable: true, correlationId: "not-available" } });
+      setError(message);
+    } finally {
+      validating.current = false;
+    }
+  };
+
+  const validateAssessmentSource = async () => {
+    if (validating.current || !assignment) return;
+    validating.current = true;
+    setStep("validation");
+    setValidationState({ status: "submitting" });
+    setError(null);
+    try {
+      const response = await validateAssessedDataset();
+      if (!response.ok) {
+        setValidationState({ status: "failed", error: response.error });
+        setError(response.error.message);
+        return;
+      }
+      await acceptValidation(response, assignment);
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message.slice(0, 500) : "Assessment dataset cannot be reused for the current operational forecast.";
+      setValidationState({ status: "failed", error: { code: "assessment_dataset_handoff_failed", category: "validation", message, retryable: true, correlationId: "not-available" } });
       setError(message);
     } finally {
       validating.current = false;
@@ -244,7 +301,15 @@ export default function OperationalForecastWorkflow() {
     {assignmentState === "failed" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-4" role="alert"><p className="font-semibold text-ink">Current assignment unavailable</p><p className="mt-1 text-sm text-ink-muted">{error}</p><Button className="mt-3" variant="secondary" onClick={() => void readAssignment()}>Check assignment status</Button></div> : null}
     {assignment ? <section className="rounded-xl border border-border-subtle bg-surface p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-accent">Current governed model</p><h2 className="mt-1 font-semibold text-ink">{modelLabel(assignment.selectedCandidateId)}</h2></div><StatusBadge label="Assignment verified" variant="success" /></div><p className="mt-2 text-sm text-ink-muted">Forecast execution resolves this identity from server authority. The browser does not submit a model or candidate.</p><details className="mt-3"><summary className="cursor-pointer text-xs font-semibold text-accent outline-none focus-visible:ring-2 focus-visible:ring-focus">Technical assignment evidence</summary><dl className="mt-2 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Assignment ID: </dt><dd className="inline break-all font-mono">{assignment.assignmentId}</dd></div><div><dt className="inline font-medium text-ink">Candidate ID: </dt><dd className="inline font-mono">{assignment.selectedCandidateId}</dd></div></dl></details></section> : null}
 
-    {assignment && (step === "upload_latest_data" || step === "validation") ? <div className="space-y-5 rounded-2xl border border-border-subtle bg-surface p-5 shadow-sm sm:p-7">
+    {assignment && (step === "upload_latest_data" || step === "validation") && sourceMode === "assessed" ? <div className="space-y-5 rounded-2xl border border-border-subtle bg-surface p-5 shadow-sm sm:p-7">
+      <div><p className="text-xs font-semibold uppercase tracking-wide text-accent">Data source</p><h2 className="mt-1 font-semibold text-ink">Using the validated dataset from the completed model assessment</h2><p className="mt-2 text-sm text-ink-muted">A new operational workspace will be created and validated against the current governed assignment.</p></div>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2"><div className="rounded-lg border border-border-subtle bg-surface-muted p-4"><dt className="font-medium text-ink">Dengue data</dt><dd className="mt-1 text-ink-muted">Verified assessment dataset</dd></div><div className="rounded-lg border border-border-subtle bg-surface-muted p-4"><dt className="font-medium text-ink">Climate data</dt><dd className="mt-1 text-ink-muted">Verified assessment dataset</dd></div></dl>
+      {validationState.status === "submitting" ? <AsyncStatusIndicator label="Validating assessed dataset for operational forecasting" detail="The server is creating a distinct operational workspace and revalidating it against the current assignment." delayedAfterSeconds={10} /> : null}
+      {validationState.status === "failed" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-4" role="alert"><p className="font-semibold text-ink">{assessedDatasetFailureHeading(validationState.error.code)}</p><p className="mt-1 text-sm text-ink-muted">{validationState.error.message}</p><p className="mt-2 text-xs text-ink-muted">Assessment dataset cannot be reused for the current operational forecast.</p></div> : null}
+      <div className="flex flex-wrap gap-3"><Button disabled={validationState.status === "submitting"} onClick={() => void validateAssessmentSource()}>{validationState.status === "submitting" ? "Validating assessed dataset…" : "Continue to operational validation"}</Button><Button variant="secondary" disabled={validationState.status === "submitting"} onClick={() => { resetValidation({}); setSourceMode("newer"); setStep("upload_latest_data"); }}>Use newer datasets instead</Button></div>
+    </div> : null}
+
+    {assignment && (step === "upload_latest_data" || step === "validation") && sourceMode === "newer" ? <div className="space-y-5 rounded-2xl border border-border-subtle bg-surface p-5 shadow-sm sm:p-7">
       <div className="rounded-xl border border-warning/25 bg-warning/10 p-4 text-sm text-ink-muted">Select both latest datasets to create a new operational forecast workspace. Assessment workspaces and browser path strings are never reused.</div>
       <div className="grid gap-5 lg:grid-cols-2">
         <DatasetUploadPanel workflow="operational" kind="dengue" preview={files.dengue} onChange={setFile} onRemove={() => removeFile("dengue")} />

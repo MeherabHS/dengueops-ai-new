@@ -79,7 +79,17 @@ export function runtimeCollectionPaths(runtimeRoot: string) {
     degradationEvidence: assertContained(root, path.join(root, "degradation-evidence")),
     lifecycleStaging: assertContained(root, path.join(root, "lifecycle-staging")),
     modelLifecycle: assertContained(root, path.join(root, "model-lifecycle")),
+    operationalPreparednessStaging: assertContained(root, path.join(root, "operational-preparedness-staging")),
+    operationalPreparedness: assertContained(root, path.join(root, "operational-preparedness")),
   };
+}
+
+export function operationalPreparednessPaths(runtimeRoot:string,deploymentId:string,preparednessId?:string){
+  const deployment=deploymentRuntimePaths(runtimeRoot,deploymentId);const authorityRoot=assertContained(deployment.root,path.join(deployment.root,"operational-preparedness"));
+  const result={authorityRoot,latest:assertContained(authorityRoot,path.join(authorityRoot,"latest.json")),requests:assertContained(authorityRoot,path.join(authorityRoot,"requests")),locks:assertContained(authorityRoot,path.join(authorityRoot,"locks"))};
+  if(!preparednessId)return result;
+  const collections=runtimeCollectionPaths(runtimeRoot);const committed=uuidPath(collections.operationalPreparedness,preparednessId,"preparedness");const staging=uuidPath(collections.operationalPreparednessStaging,preparednessId,"preparedness");
+  return {...result,committed,staging,summary:assertContained(committed,path.join(committed,"artifacts","preparedness.json")),facilities:assertContained(committed,path.join(committed,"artifacts","facility_preparedness.json")),commit:assertContained(committed,path.join(committed,"metadata","commit.json"))};
 }
 
 export function modelLifecyclePaths(runtimeRoot:string,lifecycleDecisionId:string){const collections=runtimeCollectionPaths(runtimeRoot);const staging=uuidPath(collections.lifecycleStaging,lifecycleDecisionId,"lifecycle_decision");const committed=uuidPath(collections.modelLifecycle,lifecycleDecisionId,"lifecycle_decision");return{staging,committed,decision:assertContained(committed,path.join(committed,"artifacts","lifecycle_decision.json")),assignment:assertContained(committed,path.join(committed,"artifacts","model_assignment.json")),decisionCommit:assertContained(committed,path.join(committed,"metadata","lifecycle_decision_commit.json")),assignmentCommit:assertContained(committed,path.join(committed,"metadata","model_assignment_commit.json"))};}

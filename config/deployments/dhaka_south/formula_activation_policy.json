@@ -1,26 +1,31 @@
 {
   "schemaVersion": "1.0",
   "policyId": "RUNTIME.FORMULA.ACTIVATION",
-  "policyVersion": "b8.5-v1",
+  "policyVersion": "b9.5-v1",
   "policyStatus": "active",
   "deploymentId": "dhaka_south",
   "supportedFormulaSlots": [
     "inventory.gap"
   ],
-  "formulaBindings": {},
-  "inventoryGapActivationStatus": "not_configured",
-  "authorityGate": {
-    "status": "not_approved",
-    "resourceType": null,
-    "resourceUnit": null,
-    "resourcePerCase": null,
-    "coefficientSourceReferenceId": null,
-    "coefficientHorizon": null,
-    "allocationPolicyId": null,
-    "allocationApprovalReferenceId": null,
-    "roundingRule": null,
-    "approvedInventoryId": null,
-    "formulaActivationApprovalReferenceId": null
+  "formulaBindings": {
+    "inventory.gap": {
+      "activeFormulaId": "inventory.gap.operational.v1",
+      "activeFormulaSha256": "d97fea25b66584dccf75940529700ebc654422ce661b7e3ea0c526b67a0bad36"
+    }
   },
-  "policySha256": "61c43aa4aa4d826294a21d8e5cebbccbbb488162a742471b5a2106b56d3babdd"
+  "inventoryGapActivationStatus": "configured",
+  "authorityGate": {
+    "status": "approved",
+    "resourceType": "official_bed_capacity_reference",
+    "resourceUnit": "bed_units",
+    "resourcePerCase": "0.050000",
+    "coefficientSourceReferenceId": "B9.5A.initial-product-preparedness-formula",
+    "coefficientHorizon": "two_week_forecast_horizon",
+    "allocationPolicyId": "official_capacity_reference_proportional_v1",
+    "allocationApprovalReferenceId": "B9.5A.product-planning-allocation",
+    "roundingRule": "ceiling_to_integer",
+    "approvedInventoryId": "dhaka-government-hospitals-20260729-v3",
+    "formulaActivationApprovalReferenceId": "B9.5A.user-approved-initial-product-formula"
+  },
+  "policySha256": "d2f50de4a0f8ecd75b6beb3164593a40039f6c08612b512d046102a68a63da01"
 }

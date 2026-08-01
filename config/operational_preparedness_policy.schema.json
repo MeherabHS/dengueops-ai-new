@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policyId", "policyVersion", "policyStatus", "deploymentId", "authorityScope", "forecastRequirement", "formulaSlot", "inventoryRequirement", "participationRequirement", "allocationMethod", "missingInputBehavior", "allowedCalculation", "prohibitedClaims", "operationalUseAllowed", "activatedAt", "policySha256"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "policyId": {"const": "RUNTIME.OPERATIONAL_PREPAREDNESS.PLANNING"},
+    "policyVersion": {"const": "b9.5-v1"},
+    "policyStatus": {"const": "active"},
+    "deploymentId": {"const": "dhaka_south"},
+    "authorityScope": {"const": "operational_product_planning"},
+    "forecastRequirement": {"const": "exact_current_committed"},
+    "formulaSlot": {"const": "inventory.gap"},
+    "inventoryRequirement": {"const": "current_governed_inventory"},
+    "participationRequirement": {"const": "included"},
+    "allocationMethod": {"const": "official_capacity_reference_proportional"},
+    "missingInputBehavior": {"const": "field_level_unavailable"},
+    "allowedCalculation": {"const": "capacity_reference_planning_gap"},
+    "prohibitedClaims": {"type": "array", "minItems": 5, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "operationalUseAllowed": {"const": true},
+    "activatedAt": {"type": "string", "format": "date-time"},
+    "policySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

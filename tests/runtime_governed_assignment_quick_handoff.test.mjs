@@ -156,31 +156,32 @@ test("fresh validation multipart request contains only governed validation input
 });
 
 test("fresh validation requires ready quick mode, eligibility, and exact assignment binding", () => {
-  const quickValidation = operationalWorkflow.slice(operationalWorkflow.indexOf("const validate = async"), operationalWorkflow.indexOf("const updateQuickForecast"));
+  const quickValidation = operationalWorkflow.slice(operationalWorkflow.indexOf("const acceptValidation"), operationalWorkflow.indexOf("const validate = async"));
   for (const marker of [
     'response.status === "ready"',
     'response.workflowMode === "quick_forecast"',
     'response.deploymentId === "dhaka_south"',
     "response.eligibility.quickForecast.eligible",
-    "authority.assignmentId === assignment.assignmentId",
-    "authority.authoritySnapshotSha256 === assignment.assignmentPointerSha256",
-    "authority.modelId === assignment.selectedCandidateId",
+    "authority.assignmentId === currentAssignment.assignmentId",
+    "authority.authoritySnapshotSha256 === currentAssignment.assignmentPointerSha256",
+    "authority.modelId === currentAssignment.selectedCandidateId",
   ]) assert.match(quickValidation, new RegExp(marker.replaceAll(".", "\\.")));
   assert.match(quickValidation, /validationRecordSha256: response\.validationRecordSha256/);
   assert.match(quickValidation, /setValidation\(evidence\)/);
 });
 
 test("assignment mismatch fails closed, refreshes current authority, and never retries validation", () => {
-  const quickValidation = operationalWorkflow.slice(operationalWorkflow.indexOf("const validate = async"), operationalWorkflow.indexOf("const updateQuickForecast"));
-  assert.match(quickValidation, /await readAssignment\(\)/);
-  assert.match(quickValidation, /setValidation\(null\)/);
-  assert.match(quickValidation, /setStep\("validation"\)/);
-  assert.equal((quickValidation.match(/validateRuntimeDatasets\(\{/g) ?? []).length, 1);
+  const acceptance = operationalWorkflow.slice(operationalWorkflow.indexOf("const acceptValidation"), operationalWorkflow.indexOf("const validate = async"));
+  const validationActions = operationalWorkflow.slice(operationalWorkflow.indexOf("const validate = async"), operationalWorkflow.indexOf("const updateQuickForecast"));
+  assert.match(acceptance, /await readAssignment\(\)/);
+  assert.match(acceptance, /setValidation\(null\)/);
+  assert.match(acceptance, /setStep\("validation"\)/);
+  assert.equal((validationActions.match(/validateRuntimeDatasets\(\{/g) ?? []).length, 1);
 });
 
 test("validation route verifies artifact mode instead of echoing the form field", () => {
   assert.match(validationRoute, /const verifiedWorkflowMode = validation\.workflowMode/);
-  assert.match(validationRoute, /verifiedWorkflowMode !== workflowMode/);
+  assert.match(validationRoute, /verifiedWorkflowMode !== input\.requestedWorkflowMode/);
   assert.match(validationRoute, /workflowMode: verifiedWorkflowMode/);
   assert.doesNotMatch(validationRoute, /workflowMode:\s*workflowMode,/);
 });

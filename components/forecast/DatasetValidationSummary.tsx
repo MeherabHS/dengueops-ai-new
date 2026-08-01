@@ -6,7 +6,7 @@ import type { LocalFilePreview, ServerValidationState, WorkflowMode } from "@/li
 import type { CurrentModelAssignmentResultSuccess } from "@/lib/runtime/contracts";
 import AsyncStatusIndicator from "./AsyncStatusIndicator";
 
-export default function DatasetValidationSummary({ files, mode, serverValidation, onMode, onValidate, revalidationRequired, currentAssignment = null, validationActionLabel }: {
+export default function DatasetValidationSummary({ files, mode, serverValidation, onValidate, revalidationRequired, currentAssignment = null, validationActionLabel }: {
   files: Partial<Record<"dengue" | "climate", LocalFilePreview>>;
   mode: WorkflowMode | null;
   serverValidation: ServerValidationState;
@@ -25,21 +25,17 @@ export default function DatasetValidationSummary({ files, mode, serverValidation
     </div>
     {revalidationRequired ? <div className="rounded-xl border border-warning/25 bg-warning/10 p-5" role="status"><h3 className="font-semibold text-ink">Workflow revalidation required</h3><p className="mt-1 text-sm text-ink-muted">Runtime workspaces are workflow-specific. Your selected files are retained, but submit them again to validate the newly selected workflow.</p></div> : null}
     <div className="rounded-xl border border-border-subtle bg-surface-muted p-5">
-      <h3 className="font-semibold text-ink">Authoritative validation intent</h3>
+      <h3 className="font-semibold text-ink">{isQuickForecast ? "Authoritative operational validation" : "Authoritative dataset validation"}</h3>
       <p className="mt-1 text-sm text-ink-muted">{isQuickForecast
         ? "Fresh operational forecast validation creates a new governed workspace from the selected local files and binds it to the current governed assignment."
-        : "This workspace is created only for governed dataset assessment. Operational forecasting is a separate workflow."}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {isQuickForecast
-          ? <Button variant="primary" disabled>Fresh operational validation</Button>
-          : <Button variant="primary" onClick={() => onMode("assess_dataset")}>Assess Dataset</Button>}
-      </div>
+        : "Validate the uploaded dengue and climate datasets against the governed assessment requirements before model assessment begins."}</p>
+      {isQuickForecast ? <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" disabled>Fresh operational validation</Button></div> : null}
       <Button className="mt-4" disabled={!mode || serverValidation.status === "submitting"} onClick={onValidate}>
         {serverValidation.status === "submitting" ? "Validating datasets…" : validationActionLabel ?? "Validate datasets"}
       </Button>
     </div>
     {serverValidation.status === "idle" ? <div className="rounded-xl border border-informational/25 bg-informational/10 p-5"><div className="flex gap-3"><CircleDashed className="h-5 w-5 text-informational" /><div><h3 className="font-semibold text-ink">Server validation not submitted</h3><p className="mt-1 text-sm text-ink-muted">Local preview is not authoritative. Submit both files to check schema, chronology, alignment, and current analytical eligibility.</p></div></div></div> : null}
-    {serverValidation.status === "submitting" ? <AsyncStatusIndicator label={isQuickForecast ? "Validating latest data against the current assignment" : "Validating assessment data…"} detail="The files are being checked in an isolated server workspace. No forecast is running." delayedAfterSeconds={10} /> : null}
+    {serverValidation.status === "submitting" ? <AsyncStatusIndicator label={isQuickForecast ? "Validating latest data against the current assignment" : "Validating datasets…"} detail="The files are being checked in an isolated server workspace. No forecast is running." delayedAfterSeconds={10} /> : null}
     {serverValidation.status === "failed" ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-5" role="alert"><h3 className="font-semibold text-ink">Validation service failed</h3><p className="mt-1 text-sm text-ink-muted">{serverValidation.error.message}</p><p className="mt-2 text-xs text-ink-muted">Reference: {serverValidation.error.correlationId}</p></div> : null}
     {(serverValidation.status === "ready" || serverValidation.status === "invalid") ? <AuthoritativeResult response={serverValidation.response} currentAssignment={currentAssignment} /> : null}
   </div>;
@@ -90,7 +86,7 @@ function AuthoritativeResult({ response, currentAssignment }: {
       <div className="rounded-lg border border-border-subtle bg-surface p-4"><p className="font-semibold text-ink">Operational forecast</p><p className="mt-1 text-sm text-ink-muted">Operational forecasting is a separate workflow and does not start from assessment validation.</p>{quick.eligible ? <p className="mt-2 text-xs leading-relaxed text-ink-muted">Compatibility is resolved dynamically from the current governed model assignment.</p> : <ul className="mt-2 space-y-1 text-xs text-ink-muted">{quick.reasons.map(reason => <li key={reason}>• {reason}</li>)}</ul>}<dl className="mt-3 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Prediction interval: </dt><dd className="inline">unavailable — model-specific calibration has not yet been completed</dd></div><div><dt className="inline font-medium text-ink">Preparedness: </dt><dd className="inline">{quick.preparednessStatus === "unavailable_missing_planning_policy" ? "unavailable until a planning-scenario policy is approved" : "unavailable for this uploaded dataset"}</dd></div></dl></div>
       <div className="rounded-lg border border-border-subtle bg-surface p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-semibold text-ink">Assess Dataset</p>
+          <p className="font-semibold text-ink">Model assessment eligibility</p>
           <StatusBadge label={assess.eligible ? "Dataset assessment eligible" : "Assessment blocked"} variant={assess.eligible ? "success" : "warning"} />
         </div>
         <p className="mt-2 text-sm text-ink-muted">{assess.eligible ? `${assess.plannedFoldCount} temporal folds are governed for the isolated dataset assessment.` : "No assessment or model comparison can start under the current policy decision."}</p>

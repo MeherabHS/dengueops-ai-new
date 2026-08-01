@@ -58,12 +58,12 @@ export interface PublicHospital {
   ns1RdtStatus: "unknown";
   ivFluidStatus: "unknown";
   lastUpdatedAt: string;
-  evidenceClassification: "synthetic_qualification";
-  operationalUseAllowed: false;
+  evidenceClassification: "synthetic_qualification"|"current_operational_preparedness";
+  operationalUseAllowed: boolean;
 }
 
 export interface PublicPreparedness {
-  selectedScenario: AvailabilityScenario;
+  selectedScenario: AvailabilityScenario|null;
   availableScenarios: Array<{ id: AvailabilityScenario; label: string }>;
   scenarioExplanation: string;
   participatingHospitals: number;
@@ -73,14 +73,15 @@ export interface PublicPreparedness {
   noCalculatedGapHospitals: number;
   insufficientDataHospitals: number;
   hospitals: PublicHospital[];
+  evidenceClassification:"synthetic_qualification"|"current_operational_preparedness";
 }
 
 export interface PublicEvidenceClassification {
-  classification: "synthetic_qualification";
-  operationalDhakaValidation: false;
-  operationalPreparednessEvidencePublished: false;
-  productionFormulaActivated: false;
-  operationalUseAllowed: false;
+  classification: "synthetic_qualification"|"current_operational_preparedness";
+  operationalDhakaValidation: boolean;
+  operationalPreparednessEvidencePublished: boolean;
+  productionFormulaActivated: boolean;
+  operationalUseAllowed: boolean;
 }
 
 export interface PublicForecastResponse {
@@ -99,6 +100,7 @@ export interface PublicDashboardResponse {
   area: { id: "dhaka_south"; displayName: "Dhaka" };
   forecast: PublicForecast;
   preparedness: PublicPreparedness;
+  qualificationPreparedness: PublicPreparedness|null;
   freshness: { updatedAt: string; state: "current" };
   evidence: PublicEvidenceClassification;
 }

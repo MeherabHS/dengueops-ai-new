@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
-  "registryVersion": "b8.5-v1",
-  "registrySha256": "7bdcf388c0ab81fb177047e27718c49aac47bca4a9b8f33db8fc77282494d148",
+  "registryVersion": "b9.5-v1",
+  "registrySha256": "107550369d6947a2cf690e93458826e843304f7b84df7575e1fbc69059a43d78",
   "supportedFormulaSlots": [
     "inventory.gap"
   ],
@@ -27,6 +27,28 @@
         "Output cannot support operational, clinical or hospital decisions."
       ],
       "formulaSha256": "ee446cacbff6ee82b065b01cce1b33aea1d8df214955852639acf998cc7b58c1"
+    },
+    {
+      "formulaId": "inventory.gap.operational.v1",
+      "formulaSlot": "inventory.gap",
+      "formulaVersion": "1.0.0",
+      "expression": "max(0, ceil(allocatedForecastCases * resourcePerCase) - availableResource)",
+      "description": "Product preparedness planning estimate against official capacity reference; it is not live bed availability or hospital-approved operational guidance.",
+      "inputs": [
+        {"name": "allocatedForecastCases", "unit": "cases_per_two_week_forecast_horizon", "domain": "nonnegative_decimal"},
+        {"name": "resourcePerCase", "unit": "bed_units_per_case_per_two_week_forecast_horizon", "domain": "nonnegative_decimal"},
+        {"name": "availableResource", "unit": "bed_units", "domain": "nonnegative_integer"}
+      ],
+      "outputUnit": "bed_units",
+      "outputDomain": "nonnegative_integer",
+      "roundingPolicy": "ceiling_to_integer",
+      "status": "approved",
+      "scientificLimitations": [
+        "This is an active product preparedness formula, not hospital, clinical, institutional, or emergency-response approval.",
+        "Official capacity reference is not current live bed availability.",
+        "The resource-per-case coefficient is a product planning parameter and is not a hospitalization or admission rate."
+      ],
+      "formulaSha256": "d97fea25b66584dccf75940529700ebc654422ce661b7e3ea0c526b67a0bad36"
     }
   ]
 }

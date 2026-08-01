@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -56,7 +57,8 @@ def validate_formula_activation_policy(policy: Any) -> dict[str, Any]:
     return dict(policy)
 
 
-def load_formula_activation_policy(path: str | Path = POLICY_PATH) -> dict[str, Any]:
+def load_formula_activation_policy(path: str | Path | None = None) -> dict[str, Any]:
+    path = path or os.environ.get("DENGUEOPS_OPERATIONAL_FORMULA_POLICY_PATH", str(POLICY_PATH))
     try:
         policy = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -129,7 +131,8 @@ def resolve_active_formula(
     registry: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     authority = policy or load_formula_activation_policy()
-    catalog = registry or load_governed_formula_registry()
+    registry_path = os.environ.get("DENGUEOPS_OPERATIONAL_FORMULA_REGISTRY_PATH")
+    catalog = registry or load_governed_formula_registry(registry_path) if registry_path else registry or load_governed_formula_registry()
     if slot not in SUPPORTED_FORMULA_SLOTS:
         raise FormulaPolicyError("Unsupported formula slot.")
     binding = authority["formulaBindings"].get(slot)

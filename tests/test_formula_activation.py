@@ -93,16 +93,16 @@ def approved_policy(formula: dict) -> dict:
     return value
 
 
-def test_production_registry_and_policy_are_unconfigured() -> None:
+def test_production_registry_and_policy_activate_only_operational_formula() -> None:
     registry, policy = load_governed_formula_registry(), load_formula_activation_policy()
     assert [formula["formulaId"] for formula in registry["formulas"]] == [
-        "inventory.gap.synthetic-qualification.v1"
+        "inventory.gap.synthetic-qualification.v1",
+        "inventory.gap.operational.v1",
     ]
-    assert policy["formulaBindings"] == {}
-    assert policy["inventoryGapActivationStatus"] == "not_configured"
-    assert policy["authorityGate"]["status"] == "not_approved"
-    with pytest.raises(FormulaPolicyError, match="formula_not_configured"):
-        resolve_active_formula("inventory.gap", policy=policy, registry=registry)
+    assert policy["formulaBindings"]["inventory.gap"]["activeFormulaId"] == "inventory.gap.operational.v1"
+    assert policy["inventoryGapActivationStatus"] == "configured"
+    assert policy["authorityGate"]["status"] == "approved"
+    assert resolve_active_formula("inventory.gap", policy=policy, registry=registry)["formulaId"] == "inventory.gap.operational.v1"
 
 
 def test_explicit_approved_id_sha_binding_can_resolve_fixture() -> None:
@@ -112,8 +112,13 @@ def test_explicit_approved_id_sha_binding_can_resolve_fixture() -> None:
 
 def test_registered_formula_never_activates_itself() -> None:
     formula = approved_formula()
+    policy = copy.deepcopy(load_formula_activation_policy())
+    policy["formulaBindings"] = {}
+    policy["inventoryGapActivationStatus"] = "not_configured"
+    policy["authorityGate"] = {key: ("not_approved" if key == "status" else None) for key in policy["authorityGate"]}
+    policy["policySha256"] = canonical_policy_sha256(policy)
     with pytest.raises(FormulaPolicyError, match="formula_not_configured"):
-        resolve_active_formula("inventory.gap", registry=registry_with(formula))
+        resolve_active_formula("inventory.gap", policy=policy, registry=registry_with(formula))
 
 
 def test_wrong_sha_tampered_expression_inactive_and_old_sha_fail_closed() -> None:
@@ -149,7 +154,7 @@ def test_duplicate_variable_and_policy_tampering_fail_closed() -> None:
     with pytest.raises((FormulaRegistryError, ValueError)):
         validate_governed_formula_registry(registry_with(formula))
     policy = load_formula_activation_policy()
-    policy["inventoryGapActivationStatus"] = "configured"
+    policy["formulaBindings"] = {}
     policy["policySha256"] = canonical_policy_sha256(policy)
     with pytest.raises(FormulaPolicyError, match="inconsistent"):
         validate_formula_activation_policy(policy)

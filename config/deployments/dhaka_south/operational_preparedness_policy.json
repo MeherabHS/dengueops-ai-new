@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "policyId": "RUNTIME.OPERATIONAL_PREPAREDNESS.PLANNING",
+  "policyVersion": "b9.5-v1",
+  "policyStatus": "active",
+  "deploymentId": "dhaka_south",
+  "authorityScope": "operational_product_planning",
+  "forecastRequirement": "exact_current_committed",
+  "formulaSlot": "inventory.gap",
+  "inventoryRequirement": "current_governed_inventory",
+  "participationRequirement": "included",
+  "allocationMethod": "official_capacity_reference_proportional",
+  "missingInputBehavior": "field_level_unavailable",
+  "allowedCalculation": "capacity_reference_planning_gap",
+  "prohibitedClaims": [
+    "current_live_availability",
+    "hospital_approved_requirement",
+    "clinical_recommendation",
+    "emergency_response_authorization",
+    "synthetic_qualification_as_operational"
+  ],
+  "operationalUseAllowed": true,
+  "activatedAt": "2026-08-01T00:00:00Z",
+  "policySha256": "0cff6b458545c39a9caf8a79d8433867f33fe50e36c48dccf9196675c7953f88"
+}

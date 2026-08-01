@@ -11,7 +11,7 @@
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "policyId": {"const": "RUNTIME.FORMULA.ACTIVATION"},
-    "policyVersion": {"const": "b8.5-v1"},
+    "policyVersion": {"enum": ["b8.5-v1", "b9.5-v1"]},
     "policyStatus": {"const": "active"},
     "deploymentId": {"const": "dhaka_south"},
     "supportedFormulaSlots": {"type": "array", "const": ["inventory.gap"]},

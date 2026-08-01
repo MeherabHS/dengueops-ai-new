@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "preparednessId", "deploymentId", "evidenceClassification", "operationalCalculationStatus", "generatedAt", "authoritySnapshotSha256", "sourceAuthority", "forecast", "formula", "summary", "limitations"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "preparednessId": {"type": "string", "format": "uuid"}, "deploymentId": {"const": "dhaka_south"},
+    "evidenceClassification": {"const": "current_operational_preparedness"}, "operationalCalculationStatus": {"enum": ["completed", "completed_with_missing_inputs"]},
+    "generatedAt": {"type": "string", "format": "date-time"}, "authoritySnapshotSha256": {"$ref": "#/$defs/sha"},
+    "sourceAuthority": {"type": "object"},
+    "forecast": {"type": "object", "required": ["runId", "forecastCases", "targetPeriod"], "properties": {"runId": {"type": "string", "format": "uuid"}, "forecastCases": {"type": "integer", "minimum": 0}, "targetPeriod": {"type": "string"}}, "additionalProperties": false},
+    "formula": {"type": "object", "required": ["formulaId", "formulaVersion", "formulaSha256", "label", "outputUnit"], "properties": {"formulaId": {"type": "string"}, "formulaVersion": {"type": "string"}, "formulaSha256": {"$ref": "#/$defs/sha"}, "label": {"const": "Formula-derived preparedness"}, "outputUnit": {"type": "string"}}, "additionalProperties": false},
+    "summary": {"type": "object", "required": ["participatingHospitals", "capacityKnownHospitals", "capacityUnknownHospitals", "calculatedHospitals", "unavailableHospitals"], "additionalProperties": {"type": "integer", "minimum": 0}},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+  }, "$defs": {"sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

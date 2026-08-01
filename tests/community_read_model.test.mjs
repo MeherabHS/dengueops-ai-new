@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cp, mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -19,19 +19,33 @@ function run(code, runtimeRoot = path.join(cwd, "runtime")) {
   }));
 }
 
-test("canonical public model uses current verified evidence and governed presentation semantics", () => {
+async function operationalRuntime() {
+  const root = await mkdtemp(path.join(os.tmpdir(), "dengueops-community-operational-"));
+  await cp(path.join(cwd, "runtime"), root, { recursive: true });
+  const code = `import json,sys,uuid\nfrom datetime import datetime,timezone\nfrom pathlib import Path\nsys.path.insert(0,'analytics')\nfrom runtime_operational_preparedness import resolve_authorities,build_artifacts,write_staging\nfrom runtime_operational_preparedness_commit import commit_staging\nr=Path(sys.argv[1]);a=resolve_authorities(r);pid=str(uuid.uuid4());jid=str(uuid.uuid4());st=r/'operational-preparedness-staging'/pid;summary,facilities=build_artifacts(a,pid,datetime.now(timezone.utc).isoformat().replace('+00:00','Z'));write_staging(st,summary,facilities);commit_staging(r,st,{'preparednessId':pid,'jobId':jid,'deploymentId':'dhaka_south','authoritySnapshotSha256':a['authoritySnapshotSha256']},a)`;
+  const executable = process.platform === "win32" ? "py" : (process.env.DENGUEOPS_PYTHON_EXECUTABLE || "python");
+  const args = process.platform === "win32" ? ["-3.13", "-c", code, root] : ["-c", code, root];
+  execFileSync(executable, args, { cwd, env: { ...process.env, DENGUEOPS_RUNTIME_ROOT: root }, encoding: "utf8" });
+  return root;
+}
+
+test("canonical public model prefers current operational preparedness and separates qualification", async t => {
+  const runtimeRoot = await operationalRuntime();
+  t.after(()=>rm(runtimeRoot,{recursive:true,force:true}));
   const value = run(`
     const m=await import('./lib/community/public-read-model.ts'); const api=m.default||m;
+    const d=await import('./lib/runtime/dashboard-reader.ts'); const dashboardApi=d.default||d;
     const forecast=await api.readPublicForecast();
     const dashboards=[];
     for(const scenario of [null,'baseline_availability','constrained_availability','severe_constraint']) dashboards.push(await api.readPublicDashboard(scenario));
-    console.log(JSON.stringify({forecast,dashboards,mappings:[
+    const web=await dashboardApi.readLatestDashboard('dhaka_south');
+    console.log(JSON.stringify({forecast,dashboards,web,mappings:[
       api.mapReadinessStatus('calculated_synthetic_gap_present'),
       api.mapReadinessStatus('formula_not_configured'),
       api.mapReadinessStatus('no_calculated_synthetic_gap'),
       api.mapReadinessStatus('insufficient_capacity_reference')
     ]}));
-  `);
+  `, runtimeRoot);
   assert.equal(value.forecast.forecast.forecastedCases, 144);
   assert.deepEqual(value.forecast.forecast.latestObservedPoint, { period: "2024-W24", date: null, cases: 107 });
   assert.equal(value.forecast.forecast.forecast_growth_category, "increasing");
@@ -43,9 +57,10 @@ test("canonical public model uses current verified evidence and governed present
   assert.equal(value.forecast.forecast.uncertainty.publicLabel, "Prediction interval unavailable");
   assert.match(value.forecast.forecast.uncertainty.reason, /model-specific calibration has not yet been completed/);
   assert.equal(value.forecast.forecast.recentObservedSeries.length, 52);
-  assert.deepEqual(value.dashboards.map(d => d.preparedness.selectedScenario), [
-    "severe_constraint", "baseline_availability", "constrained_availability", "severe_constraint",
-  ]);
+  assert.equal(value.web.dashboard.preparedness.availabilityStatus,"available");
+  assert.equal(value.web.dashboard.preparedness.rows.length,13);
+  assert.deepEqual(value.dashboards.map(d => d.preparedness.selectedScenario), [null,null,null,null]);
+  assert.deepEqual(value.dashboards.map(d => d.qualificationPreparedness?.selectedScenario ?? null), [null,"baseline_availability","constrained_availability","severe_constraint"]);
   for (const dashboard of value.dashboards) {
     assert.equal(dashboard.forecast.forecastedCases, 144);
     assert.equal(dashboard.preparedness.participatingHospitals, 13);
@@ -54,12 +69,17 @@ test("canonical public model uses current verified evidence and governed present
     assert.equal(dashboard.preparedness.noCalculatedGapHospitals, 9);
     assert.equal(dashboard.preparedness.insufficientDataHospitals, 4);
     assert.equal(dashboard.preparedness.hospitals.some(h => h.readinessStatus === "critical"), false);
+    assert.equal(dashboard.preparedness.evidenceClassification, "current_operational_preparedness");
+    assert.equal(dashboard.preparedness.hospitals.every(h => h.currentAvailableBeds === null && h.syntheticAvailableBedUnits === null), true);
+    assert.equal(dashboard.evidence.productionFormulaActivated, true);
+    assert.equal(dashboard.evidence.operationalPreparednessEvidencePublished, true);
   }
   assert.deepEqual(value.mappings, ["warning", "not_calculated", "no_calculated_gap", "insufficient_data"]);
 });
 
-test("tampered forecast pointer and artifact fail closed without bundled fallback", async () => {
+test("tampered forecast pointer and artifact fail closed without bundled fallback", async t => {
   const root = await mkdtemp(path.join(os.tmpdir(), "dengueops-community-"));
+  t.after(()=>rm(root,{recursive:true,force:true}));
   const sourcePointer = path.join(cwd, "runtime", "deployments", "dhaka_south", "latest.json");
   const pointer = JSON.parse(await readFile(sourcePointer, "utf8"));
   const targetPointer = path.join(root, "deployments", "dhaka_south", "latest.json");
@@ -84,8 +104,9 @@ test("tampered forecast pointer and artifact fail closed without bundled fallbac
   `, root).failed, true);
 });
 
-test("tampered current hospital inventory fails closed", async () => {
+test("tampered current hospital inventory fails closed", async t => {
   const root = await mkdtemp(path.join(os.tmpdir(), "dengueops-inventory-"));
+  t.after(()=>rm(root,{recursive:true,force:true}));
   await cp(
     path.join(cwd, "runtime", "deployments", "dhaka_south", "hospital-inventory"),
     path.join(root, "deployments", "dhaka_south", "hospital-inventory"),

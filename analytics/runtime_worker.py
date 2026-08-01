@@ -35,7 +35,7 @@ def runtime_root_from_environment() -> Path:
 
 
 def ensure_structure(root: Path) -> None:
-    for relative in ("jobs/pending", "jobs/running", "jobs/completed", "jobs/failed", "staging", "runs", "assessment-staging", "assessments", "outcome-staging", "forecast-outcomes", "degradation-staging", "degradation-evidence", "lifecycle-staging", "model-lifecycle", "decisions", "assessment-decisions", "authorizations", "authorization-state", "deployments", "locks"):
+    for relative in ("jobs/pending", "jobs/running", "jobs/completed", "jobs/failed", "staging", "runs", "assessment-staging", "assessments", "outcome-staging", "forecast-outcomes", "degradation-staging", "degradation-evidence", "lifecycle-staging", "model-lifecycle", "operational-preparedness-staging", "operational-preparedness", "decisions", "assessment-decisions", "authorizations", "authorization-state", "deployments", "locks"):
         (root / relative).mkdir(parents=True, exist_ok=True)
 
 
@@ -57,10 +57,11 @@ def load_job(path: Path) -> dict[str, Any]:
         "approved_forecast",
         "degradation_evidence",
         "model_lifecycle",
+        "operational_preparedness",
     }:
         raise ValueError("Invalid runtime job record.")
-    identity_field = "assessmentId" if kind == "dataset_assessment" else "outcomeId" if kind == "forecast_outcome" else "evidenceId" if kind == "degradation_evidence" else "lifecycleDecisionId" if kind == "model_lifecycle" else "runId"
-    fields = ("jobId", identity_field) if kind in {"forecast_outcome", "degradation_evidence", "model_lifecycle"} else ("jobId", "workspaceId", identity_field)
+    identity_field = "assessmentId" if kind == "dataset_assessment" else "outcomeId" if kind == "forecast_outcome" else "evidenceId" if kind == "degradation_evidence" else "lifecycleDecisionId" if kind == "model_lifecycle" else "preparednessId" if kind == "operational_preparedness" else "runId"
+    fields = ("jobId", identity_field) if kind in {"forecast_outcome", "degradation_evidence", "model_lifecycle", "operational_preparedness"} else ("jobId", "workspaceId", identity_field)
     for field in fields:
         uuid.UUID(str(value[field]))
     return value
@@ -150,8 +151,8 @@ def recover_stale_jobs(root: Path) -> None:
                 continue
             terminate_abandoned_pid(int(job.get("processId") or -1))
             kind = job.get("jobKind", "quick_forecast")
-            identity = job["assessmentId"] if kind == "dataset_assessment" else job["outcomeId"] if kind == "forecast_outcome" else job["evidenceId"] if kind == "degradation_evidence" else job["lifecycleDecisionId"] if kind=="model_lifecycle" else job["runId"]
-            staging = root / ("assessment-staging" if kind == "dataset_assessment" else "outcome-staging" if kind == "forecast_outcome" else "degradation-staging" if kind == "degradation_evidence" else "lifecycle-staging" if kind=="model_lifecycle" else "staging") / identity
+            identity = job["assessmentId"] if kind == "dataset_assessment" else job["outcomeId"] if kind == "forecast_outcome" else job["evidenceId"] if kind == "degradation_evidence" else job["lifecycleDecisionId"] if kind=="model_lifecycle" else job["preparednessId"] if kind=="operational_preparedness" else job["runId"]
+            staging = root / ("assessment-staging" if kind == "dataset_assessment" else "outcome-staging" if kind == "forecast_outcome" else "degradation-staging" if kind == "degradation_evidence" else "lifecycle-staging" if kind=="model_lifecycle" else "operational-preparedness-staging" if kind=="operational_preparedness" else "staging") / identity
             if staging.exists():
                 quarantine = staging.with_name(f"{identity}.failed-{int(time.time())}")
                 os.replace(staging, quarantine)
@@ -181,14 +182,14 @@ def terminate_process(process: subprocess.Popen[bytes]) -> None:
 def execute_claimed(root: Path, job_path: Path, worker_id: str) -> None:
     job = load_job(job_path)
     kind = job.get("jobKind", "quick_forecast")
-    workspace = None if kind in {"approved_forecast", "forecast_outcome", "degradation_evidence", "model_lifecycle"} else require_within(root, root / "workspaces" / job["workspaceId"], "workspace")
-    identity = job["assessmentId"] if kind == "dataset_assessment" else job["outcomeId"] if kind == "forecast_outcome" else job["evidenceId"] if kind == "degradation_evidence" else job["lifecycleDecisionId"] if kind == "model_lifecycle" else job["runId"]
-    staging_collection = "assessment-staging" if kind == "dataset_assessment" else "outcome-staging" if kind == "forecast_outcome" else "degradation-staging" if kind == "degradation_evidence" else "lifecycle-staging" if kind == "model_lifecycle" else "staging"
+    workspace = None if kind in {"approved_forecast", "forecast_outcome", "degradation_evidence", "model_lifecycle", "operational_preparedness"} else require_within(root, root / "workspaces" / job["workspaceId"], "workspace")
+    identity = job["assessmentId"] if kind == "dataset_assessment" else job["outcomeId"] if kind == "forecast_outcome" else job["evidenceId"] if kind == "degradation_evidence" else job["lifecycleDecisionId"] if kind == "model_lifecycle" else job["preparednessId"] if kind == "operational_preparedness" else job["runId"]
+    staging_collection = "assessment-staging" if kind == "dataset_assessment" else "outcome-staging" if kind == "forecast_outcome" else "degradation-staging" if kind == "degradation_evidence" else "lifecycle-staging" if kind == "model_lifecycle" else "operational-preparedness-staging" if kind == "operational_preparedness" else "staging"
     staging = require_within(root, root / staging_collection / identity, "staging")
     if staging.exists():
         raise RuntimeError("A staging directory already exists for the claimed job.")
     input_root = (root / "assessments" / job["assessmentId"]) if kind == "approved_forecast" else workspace
-    input_bytes = 0 if kind in {"forecast_outcome", "degradation_evidence", "model_lifecycle"} else sum((input_root / "inputs" / group / name).stat().st_size for group, name in (
+    input_bytes = 0 if kind in {"forecast_outcome", "degradation_evidence", "model_lifecycle", "operational_preparedness"} else sum((input_root / "inputs" / group / name).stat().st_size for group, name in (
         ("canonical", "dengue_cases.csv"), ("canonical", "climate_data.csv"),
         ("original", "dengue.csv"), ("original", "climate.csv"),
     ))
@@ -198,13 +199,13 @@ def execute_claimed(root: Path, job_path: Path, worker_id: str) -> None:
     (staging / "logs").mkdir(parents=True, exist_ok=False)
     stdout_path, stderr_path = staging / "logs" / "stdout.log", staging / "logs" / "stderr.log"
     started = now()
-    initial_progress = "preparing_assessment" if kind == "dataset_assessment" else "preparing_approved_forecast" if kind == "approved_forecast" else "validating_forecast_commit" if kind == "forecast_outcome" else "verifying_monitoring_snapshot" if kind == "degradation_evidence" else "verifying_lifecycle_sources" if kind == "model_lifecycle" else "preparing_isolated_run"
+    initial_progress = "preparing_assessment" if kind == "dataset_assessment" else "preparing_approved_forecast" if kind == "approved_forecast" else "validating_forecast_commit" if kind == "forecast_outcome" else "verifying_monitoring_snapshot" if kind == "degradation_evidence" else "verifying_lifecycle_sources" if kind == "model_lifecycle" else "verifying_preparedness_authorities" if kind == "operational_preparedness" else "preparing_isolated_run"
     job = update_job(job_path, job, status="running", progress=initial_progress, claimedAt=started,
         startedAt=started, heartbeatAt=started, workerId=worker_id, processId=None)
-    script = "runtime_assessment.py" if kind == "dataset_assessment" else "runtime_approved_forecast.py" if kind == "approved_forecast" else "runtime_forecast_outcome.py" if kind == "forecast_outcome" else "runtime_model_degradation_evidence.py" if kind == "degradation_evidence" else "runtime_model_lifecycle.py" if kind == "model_lifecycle" else "runtime_quick_forecast.py"
+    script = "runtime_assessment.py" if kind == "dataset_assessment" else "runtime_approved_forecast.py" if kind == "approved_forecast" else "runtime_forecast_outcome.py" if kind == "forecast_outcome" else "runtime_model_degradation_evidence.py" if kind == "degradation_evidence" else "runtime_model_lifecycle.py" if kind == "model_lifecycle" else "runtime_operational_preparedness.py" if kind == "operational_preparedness" else "runtime_quick_forecast.py"
     command = [sys.executable, str(ROOT / "analytics" / script), "--runtime-root", str(root), "--job-record", str(job_path)]
     if kind == "approved_forecast": command.extend(["--assessment", str(root / "assessments" / job["assessmentId"])])
-    elif kind not in {"forecast_outcome", "degradation_evidence", "model_lifecycle"}: command.extend(["--workspace", str(workspace)])
+    elif kind not in {"forecast_outcome", "degradation_evidence", "model_lifecycle", "operational_preparedness"}: command.extend(["--workspace", str(workspace)])
     command.extend(["--staging", str(staging)])
     process = subprocess.Popen(command, cwd=ROOT, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         start_new_session=(os.name != "nt"), creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0))
@@ -237,17 +238,25 @@ def execute_claimed(root: Path, job_path: Path, worker_id: str) -> None:
             error={"code": "assessment_failed" if kind == "dataset_assessment" else "approved_forecast_failed" if kind == "approved_forecast" else outcome_code if kind == "forecast_outcome" else "degradation_evidence_failed" if kind == "degradation_evidence" else "model_lifecycle_failed" if kind == "model_lifecycle" else "quick_forecast_failed",
                 "message": "The isolated dataset assessment did not complete." if kind == "dataset_assessment" else "The approved forecast did not complete." if kind == "approved_forecast" else "Forecast outcome evaluation did not complete." if kind == "forecast_outcome" else "Model-degradation evidence generation did not complete." if kind == "degradation_evidence" else "The model lifecycle action did not complete." if kind == "model_lifecycle" else "The isolated Quick Forecast did not complete.", "retryable": outcome_retryable if kind == "forecast_outcome" else kind not in {"approved_forecast","degradation_evidence","model_lifecycle"}})
         return
-    committed_root = root / ("assessments" if kind == "dataset_assessment" else "forecast-outcomes" if kind == "forecast_outcome" else "degradation-evidence" if kind == "degradation_evidence" else "model-lifecycle" if kind == "model_lifecycle" else "runs") / identity
+    committed_root = root / ("assessments" if kind == "dataset_assessment" else "forecast-outcomes" if kind == "forecast_outcome" else "degradation-evidence" if kind == "degradation_evidence" else "model-lifecycle" if kind == "model_lifecycle" else "operational-preparedness" if kind == "operational_preparedness" else "runs") / identity
     degradation_latest = f"degradation/latest_{job.get('policyVersion')}.json" if kind == "degradation_evidence" and job.get("policyVersion") in {"p2-v2", "p2-v3"} else "degradation/latest.json"
     latest = root / "deployments" / job["deploymentId"] / ("monitoring/latest.json" if kind == "forecast_outcome" else degradation_latest if kind == "degradation_evidence" else "latest.json")
     assignment_action=kind=="model_lifecycle" and job.get("action") in {"bootstrap_historical_profile","promote_selected_model","rollback_previous_assignment"}
     if kind=="model_lifecycle": latest=root/"deployments"/job["deploymentId"]/"model-assignment/latest.json"
-    if not committed_root.exists() or (kind in {"quick_forecast", "approved_forecast", "forecast_outcome", "degradation_evidence"} and not latest.exists()) or (assignment_action and not latest.exists()):
+    if kind=="operational_preparedness": latest=root/"deployments"/job["deploymentId"]/"operational-preparedness/latest.json"
+    if not committed_root.exists() or (kind in {"quick_forecast", "approved_forecast", "forecast_outcome", "degradation_evidence", "operational_preparedness"} and not latest.exists()) or (assignment_action and not latest.exists()):
         finalize_job(job_path, root / "jobs" / "failed" / job_path.name, job, status="failed", progress="commit_failed", completedAt=now(), processId=None,
             error={"code": "assessment_commit_missing" if kind == "dataset_assessment" else "forecast_outcome_commit_missing" if kind == "forecast_outcome" else "degradation_evidence_commit_missing" if kind == "degradation_evidence" else "model_lifecycle_commit_missing" if kind == "model_lifecycle" else "runtime_commit_missing",
                 "message": "The process exited without a valid immutable commit.", "retryable": kind != "model_lifecycle"})
         return
-    completion = {"committedAssessmentId": job["assessmentId"]} if kind == "dataset_assessment" else {"committedOutcomeId": job["outcomeId"]} if kind == "forecast_outcome" else {"committedEvidenceId": job["evidenceId"]} if kind == "degradation_evidence" else {"committedLifecycleDecisionId":job["lifecycleDecisionId"]} if kind=="model_lifecycle" else {"committedRunId": job["runId"]}
+    if kind in {"quick_forecast", "approved_forecast"}:
+        try:
+            from runtime_operational_preparedness import enqueue_operational_preparedness_job
+            enqueue_operational_preparedness_job(root, str(job["deploymentId"]))
+        except Exception:
+            # Forecast authority is independent; the authenticated recalculation endpoint remains available.
+            pass
+    completion = {"committedAssessmentId": job["assessmentId"]} if kind == "dataset_assessment" else {"committedOutcomeId": job["outcomeId"]} if kind == "forecast_outcome" else {"committedEvidenceId": job["evidenceId"]} if kind == "degradation_evidence" else {"committedLifecycleDecisionId":job["lifecycleDecisionId"]} if kind=="model_lifecycle" else {"committedPreparednessId":job["preparednessId"]} if kind=="operational_preparedness" else {"committedRunId": job["runId"]}
     finalize_job(job_path, root / "jobs" / "completed" / job_path.name, job, status="completed", progress="completed", completedAt=now(), heartbeatAt=now(),
         processId=None, error=None, **completion)
 

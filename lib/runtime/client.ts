@@ -1,4 +1,4 @@
-import type { CurrentModelAssignmentResponse, DatasetAssessmentResponse, DecisionChoice, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, ModelLifecycleResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartModelAssignmentRequest, StartModelAssignmentResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
+import type { CurrentModelAssignmentResponse, DatasetAssessmentResponse, DecisionChoice, DecisionResponse, JobStatusResponse, LatestDashboardResponse, ModelDegradationResponse, ModelLifecycleResponse, MonitoringSummaryResponse, RecordDecisionRequest, RuntimeValidationResponse, StartApprovedForecastRequest, StartApprovedForecastResponse, StartAssessmentRequest, StartAssessmentResponse, StartModelAssignmentRequest, StartModelAssignmentResponse, StartOperationalPreparednessResponse, StartQuickForecastRequest, StartQuickForecastResponse, WorkflowMode } from "./contracts";
 
 export async function validateRuntimeDatasets(input: {
   dengueFile: File;
@@ -15,6 +15,15 @@ export async function validateRuntimeDatasets(input: {
   const response = await fetch("/api/runtime/validate", { method: "POST", body: form, signal: input.signal });
   const payload = (await response.json()) as RuntimeValidationResponse;
   return payload;
+}
+
+export async function validateAssessedDataset(): Promise<RuntimeValidationResponse> {
+  const response = await fetch("/api/runtime/validate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ source: "current_assignment_assessment" }),
+  });
+  return await response.json() as RuntimeValidationResponse;
 }
 
 export async function startQuickForecast(input: StartQuickForecastRequest): Promise<StartQuickForecastResponse> {
@@ -61,6 +70,8 @@ export async function getRuntimeJob(jobId: string): Promise<JobStatusResponse> {
   const response = await fetch(`/api/runtime/jobs/${encodeURIComponent(jobId)}`, { cache: "no-store" });
   return await response.json() as JobStatusResponse;
 }
+
+export async function startOperationalPreparedness():Promise<StartOperationalPreparednessResponse>{const response=await fetch("/api/runtime/preparedness",{method:"POST",headers:{"content-type":"application/json"},body:"{}"});return await response.json() as StartOperationalPreparednessResponse;}
 
 export async function getRuntimeJobByStatusUrl(statusUrl: string): Promise<JobStatusResponse> {
   if (!/^\/api\/runtime\/jobs\/[0-9a-f-]+$/i.test(statusUrl)) throw new Error("The returned job status URL is invalid.");

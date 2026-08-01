@@ -4,7 +4,9 @@ import StatusBadge from "@/components/ui/StatusBadge";
 
 export const metadata = { title: "Model Assessment and Assignment — DengueOps AI" };
 
-export default function ForecastPage() {
+export default async function ForecastPage({ searchParams }: { searchParams: Promise<{ intent?: string | string[] }> }) {
+  const query = await searchParams;
+  const entryIntent = query.intent === "reassess" ? "reassess" : "resume";
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-7 rounded-2xl border border-border bg-surface p-6">
@@ -14,7 +16,9 @@ export default function ForecastPage() {
         </div>
         <h1 className="mt-4 text-3xl font-bold text-primary">Model Assessment and Assignment</h1>
         <p className="mt-2 max-w-3xl text-sm text-secondary">
-          Validate assessment data, review the complete governed candidate ranking, record a bounded model-use decision, run qualification evidence, and publish a governed assignment.
+          {entryIntent === "reassess"
+            ? "Upload updated labelled dengue and climate history to compare the governed candidate models again. The current assignment remains active unless a new governed assignment is successfully published."
+            : "Validate assessment data, review the complete governed candidate ranking, record a bounded model-use decision, run qualification evidence, and publish a governed assignment."}
         </p>
         <div className="mt-4 flex gap-2 rounded-xl border border-warning/25 bg-warning/10 p-4 text-sm text-warning">
           <ShieldCheck className="h-5 w-5 shrink-0" />
@@ -23,7 +27,7 @@ export default function ForecastPage() {
           </p>
         </div>
       </header>
-      <ForecastRunWorkflow />
+      <ForecastRunWorkflow entryIntent={entryIntent} />
     </div>
   );
 }

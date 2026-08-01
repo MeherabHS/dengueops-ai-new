@@ -3,18 +3,12 @@
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  BedDouble,
-  Droplets,
-  PackageSearch,
-  ShieldAlert,
   TrendingUp,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ForecastTrendChart from "@/components/overview/ForecastTrendChart";
-import PreparednessCountCard from "@/components/overview/PreparednessCountCard";
-import FacilityAttentionList from "@/components/overview/FacilityAttentionList";
-import AlertList from "@/components/overview/AlertList";
+import OperationalPreparednessTable from "@/components/overview/OperationalPreparednessTable";
 import LatestRunCard from "@/components/overview/LatestRunCard";
 import DashboardRefreshStatus from "@/components/overview/DashboardRefreshStatus";
 import type {OverviewViewModel} from "@/lib/dashboard-view-model";
@@ -197,88 +191,39 @@ export default function DashboardPage() {
       </section>
 
       {vm.preparedness.availabilityStatus === "available" ? (
-        <section aria-labelledby="preparedness-count-title">
+        <section aria-labelledby="operational-preparedness-title" className="space-y-4">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-accent">
-                Planning Base
+                Current operational authority
               </p>
-              <h2
-                id="preparedness-count-title"
-                className="mt-1 text-xl font-bold text-primary"
-              >
-                Preparedness count indicators
-              </h2>
+              <h2 id="operational-preparedness-title" className="mt-1 text-xl font-bold text-primary">Operational preparedness summary</h2>
+              <p className="mt-2 text-sm text-secondary">{vm.preparedness.formulaLabel}. Official capacity references are not live availability or hospital-approved requirements.</p>
             </div>
             <Button href="/preparedness" variant="quiet">
               Open preparedness <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <PreparednessCountCard
-              label="Bed-deficit facilities"
-              affected={vm.preparedness.bedDeficitFacilities}
-              total={vm.preparedness.totalFacilities}
-              note="Projected demand exceeds configured dengue beds."
-              icon={<BedDouble className="h-4 w-4" />}
-            />
-            <PreparednessCountCard
-              label="NS1/RDT stock horizon ≤14 days"
-              affected={vm.preparedness.ns1StockHorizonFacilities}
-              total={vm.preparedness.totalFacilities}
-              note="Stock-horizon indicator; not necessarily a critical alert."
-              icon={<PackageSearch className="h-4 w-4" />}
-            />
-            <PreparednessCountCard
-              label="IV-fluid stock horizon ≤14 days"
-              affected={vm.preparedness.ivFluidStockHorizonFacilities}
-              total={vm.preparedness.totalFacilities}
-              note="Stock-horizon indicator; not necessarily a critical alert."
-              icon={<Droplets className="h-4 w-4" />}
-            />
-            <PreparednessCountCard
-              label="Facilities requiring critical review"
-              affected={vm.preparedness.criticalReviewFacilities}
-              total={vm.preparedness.totalFacilities}
-              note="Counted separately from stock-horizon review."
-              icon={<ShieldAlert className="h-4 w-4" />}
-            />
-          </div>
+          <OperationalPreparednessTable rows={vm.preparedness.rows}/>
         </section>
       ) : (
         <section className="rounded-2xl border border-warning/25 bg-warning/10 p-6">
+          {vm.preparedness.availabilityStatus==="calculating"?<span className="mb-3 inline-block h-5 w-5 animate-spin rounded-full border-2 border-warning border-t-transparent" aria-hidden="true"/>:null}
           <h2 className="text-xl font-bold text-primary">
-            Preparedness unavailable
+            {vm.preparedness.availabilityStatus==="calculating"?"Preparedness calculating":"Preparedness unavailable"}
           </h2>
           <p className="mt-2 text-sm text-secondary">
-            No governed runtime planning-scenario policy is currently approved.
-            No scenarios, facilities, inventory alerts, or directives were
-            generated.
+            {vm.preparedness.reason ?? "No exact-current governed operational preparedness artifact is available."}
           </p>
+          <p className="mt-2 text-xs text-text-muted">Bundled and synthetic qualification availability is never substituted for current operational evidence.</p>
         </section>
       )}
-
-      {vm.preparedness.availabilityStatus === "available" ? (
-        <FacilityAttentionList facilities={vm.facilitiesRequiringAttention} />
-      ) : null}
 
       <section
         className="grid gap-5 lg:grid-cols-2"
         aria-label="Alerts and latest committed run"
       >
-        {vm.preparedness.availabilityStatus === "available" ? (
-          <AlertList alerts={vm.alerts} />
-        ) : (
-          <div className="rounded-2xl border border-border bg-surface p-5">
-            <h2 className="font-semibold text-primary">
-              No runtime preparedness alerts
-            </h2>
-            <p className="mt-2 text-sm text-secondary">
-              Preparedness generation was not authorized for this uploaded
-              forecast.
-            </p>
-          </div>
-        )}
+        <div className="rounded-2xl border border-border bg-surface p-5"><h2 className="font-semibold text-primary">Preparedness evidence boundary</h2><p className="mt-2 text-sm text-secondary">Formula-derived planning estimates use the exact-current forecast and current governed inventory. Current live availability remains Not reported.</p></div>
         <LatestRunCard run={vm.latestRun} />
       </section>
     </div>

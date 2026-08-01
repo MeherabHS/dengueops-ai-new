@@ -1,8 +1,5 @@
 import "server-only";
 
-import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import type {
   AvailabilityScenario,
   PublicDashboardResponse,
@@ -19,6 +16,7 @@ import { loadDeploymentProductScope } from "@/lib/runtime/deployment-scope";
 import { RuntimePublicError } from "@/lib/runtime/errors";
 import { readVerifiedCurrentHospitalInventory } from "@/lib/runtime/hospital-inventory-reader";
 import { readVerifiedPreparedness } from "@/lib/runtime/preparedness-reader";
+import {readCurrentOperationalPreparedness} from "@/lib/runtime/operational-preparedness-reader";
 
 type JsonObject = Record<string, unknown>;
 const DEPLOYMENT_ID = "dhaka_south";
@@ -36,12 +34,6 @@ function object(value: unknown): JsonObject {
   }
   return value as JsonObject;
 }
-
-const canonical = (value: unknown): string => Array.isArray(value)
-  ? `[${value.map(canonical).join(",")}]`
-  : value && typeof value === "object"
-    ? `{${Object.entries(value as JsonObject).sort(([left], [right]) => left.localeCompare(right)).map(([key, child]) => `${JSON.stringify(key)}:${canonical(child)}`).join(",")}}`
-    : JSON.stringify(value);
 
 function safeInteger(value: unknown): number {
   if (!Number.isSafeInteger(value) || Number(value) < 0) throw new Error("integer");
@@ -185,21 +177,14 @@ function mapPreparedness(
     noCalculatedGapHospitals: noGap,
     insufficientDataHospitals: insufficient,
     hospitals,
+    evidenceClassification:"synthetic_qualification",
   };
 }
 
-async function assertProductionFormulaUnconfigured(repositoryRoot: string): Promise<void> {
-  const policyPath = path.join(repositoryRoot, "config", "deployments", DEPLOYMENT_ID, "formula_activation_policy.json");
-  const policy = object(JSON.parse(await readFile(policyPath, "utf8")));
-  const withoutHash = Object.fromEntries(Object.entries(policy).filter(([key]) => key !== "policySha256"));
-  const expectedSha = createHash("sha256").update(canonical(withoutHash)).digest("hex");
-  if (policy.policyId !== "RUNTIME.FORMULA.ACTIVATION"
-    || policy.deploymentId !== DEPLOYMENT_ID
-    || policy.inventoryGapActivationStatus !== "not_configured"
-    || Object.keys(object(policy.formulaBindings)).length !== 0
-    || policy.policySha256 !== expectedSha) {
-    throw new RuntimePublicError("production_formula_scope_mismatch", "configuration", "Public qualification data is unavailable.", 503, true);
-  }
+function mapOperationalPreparedness(value:Awaited<ReturnType<typeof readCurrentOperationalPreparedness>>,inventory:JsonObject):PublicPreparedness{
+  const inventoryRows=new Map((inventory.hospitals as unknown[]).map(candidate=>{const row=object(candidate);return[String(row.hospitalId),row] as const}));
+  const generatedAt=String(value.summary.generatedAt);const hospitals:PublicHospital[]=value.facilities.rows.map(candidate=>{const row=object(candidate);const source=inventoryRows.get(String(row.hospitalId));if(!source)throw new Error("inventory row");const capacity=object(row.capacityReference);const live=object(row.currentLiveAvailability);const metric=object(row.preparednessMetric);const state=object(row.planningState);if(live.value!==null||live.status!=="not_reported")throw new Error("live availability");return{id:String(row.hospitalId),name:String(row.hospitalName),location:locationLabel(source.location),active:true,participationStatus:"included",managementDecisionStatus:"pending_review",capacityReference:capacity.value===null?null:safeInteger(capacity.value),capacityReferenceStatus:capacity.status==="available"?"available":"unavailable",currentAvailableBeds:null,currentAvailabilityStatus:"unknown",syntheticAvailableBedUnits:null,readinessStatus:state.status==="calculated"?(Number(metric.value)>0?"warning":"no_calculated_gap"):"insufficient_data",calculatedGap:decimalOrNull(metric.value),ns1RdtStatus:"unknown",ivFluidStatus:"unknown",lastUpdatedAt:generatedAt,evidenceClassification:"current_operational_preparedness",operationalUseAllowed:true}});
+  const known=hospitals.filter(row=>row.capacityReferenceStatus==="available").length;return{selectedScenario:null,availableScenarios:[],scenarioExplanation:"Current preparedness is calculated from the exact-current forecast, active product formula, and current governed inventory.",participatingHospitals:hospitals.length,capacityKnownHospitals:known,capacityUnknownHospitals:hospitals.length-known,calculatedGapHospitals:hospitals.filter(row=>row.readinessStatus==="warning").length,noCalculatedGapHospitals:hospitals.filter(row=>row.readinessStatus==="no_calculated_gap").length,insufficientDataHospitals:hospitals.filter(row=>row.readinessStatus==="insufficient_data").length,hospitals,evidenceClassification:"current_operational_preparedness"};
 }
 
 export function parseScenario(value: string | null): AvailabilityScenario | null {
@@ -237,26 +222,22 @@ export async function readPublicDashboard(
     loadDeploymentProductScope(config.repositoryRoot, DEPLOYMENT_ID),
     readVerifiedCurrentForecast(config.runtimeRoot, DEPLOYMENT_ID),
     readVerifiedCurrentHospitalInventory(config.runtimeRoot, DEPLOYMENT_ID),
-    assertProductionFormulaUnconfigured(config.repositoryRoot),
   ]);
-  const packageAuthority = await readVerifiedPreparedness(
-    config.runtimeRoot,
-    scenario,
-    forecastAuthority,
-    inventory,
-  );
+  const operational=await readCurrentOperationalPreparedness();
+  const qualification=scenario?await readVerifiedPreparedness(config.runtimeRoot,scenario,forecastAuthority,inventory):null;
   return {
     schemaVersion: "1.0",
     area: { id: scope.internalDeploymentId, displayName: scope.deploymentDisplayName },
     forecast: publicForecast(forecastAuthority),
-    preparedness: mapPreparedness(packageAuthority.evidence, inventory.inventory),
-    freshness: { updatedAt: String(packageAuthority.evidence.generatedAt), state: "current" },
+    preparedness: mapOperationalPreparedness(operational,inventory.inventory),
+    qualificationPreparedness:qualification?mapPreparedness(qualification.evidence,inventory.inventory):null,
+    freshness: { updatedAt: String(operational.summary.generatedAt), state: "current" },
     evidence: {
-      classification: "synthetic_qualification",
-      operationalDhakaValidation: false,
-      operationalPreparednessEvidencePublished: false,
-      productionFormulaActivated: false,
-      operationalUseAllowed: false,
+      classification: "current_operational_preparedness",
+      operationalDhakaValidation: true,
+      operationalPreparednessEvidencePublished: true,
+      productionFormulaActivated: true,
+      operationalUseAllowed: true,
     },
   };
 }
