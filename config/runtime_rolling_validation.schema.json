@@ -290,6 +290,9 @@
         },
         "scientificValidation": {
           "$ref": "#/$defs/scientificValidation"
+        },
+        "uncertaintyCalibration": {
+          "$ref": "#/$defs/uncertaintyCalibration"
         }
       },
       "allOf": [
@@ -347,6 +350,22 @@
         "qualificationScope": {"const": "workflow_execution_on_assessment_history"},
         "qualificationUntouchedHoldout": {"const": false},
         "leakageAuditStatus": {"const": "passed"}
+      }
+    },
+    "uncertaintyCalibration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "method", "nominalLevel", "residualDefinition", "quantileRule", "sourceValidationStrategy", "sourceValidationPolicy", "leakageAuditStatus", "snapshotClassification", "candidateCalibrations"],
+      "properties": {
+        "policy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.FORECAST.UNCERTAINTY"}, "policyVersion": {"const": "b9.pi-v1"}, "policySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+        "method": {"const": "rolling_origin_oof_absolute_residual_v1"},
+        "nominalLevel": {"const": 0.9},
+        "residualDefinition": {"const": "absolute_actual_minus_raw_prediction"},
+        "quantileRule": {"const": "k_equals_ceil_n_plus_1_times_level_bounded_1_to_n_higher_order_statistic"},
+        "sourceValidationStrategy": {"const": "rolling_origin_expanding_window"},
+        "sourceValidationPolicy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"}, "policyVersion": {"const": "b9.l-v1"}, "policySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+        "leakageAuditStatus": {"const": "passed"},
+        "snapshotClassification": {"const": "retrospective_latest_revision"},
+        "candidateCalibrations": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["candidateId", "status", "reason", "sampleCount", "minimumRequired", "quantileRank", "absoluteResidualQuantile"], "properties": {"candidateId": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}, "status": {"enum": ["available", "point_only"]}, "reason": {"type": ["string", "null"]}, "sampleCount": {"type": "integer", "minimum": 0}, "minimumRequired": {"const": 9}, "quantileRank": {"type": ["integer", "null"], "minimum": 1}, "absoluteResidualQuantile": {"type": ["number", "null"], "minimum": 0}}}}
       }
     },
     "p1": {

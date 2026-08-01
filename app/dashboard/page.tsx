@@ -142,7 +142,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
                 {vm.empiricalRange.availabilityStatus === "available"||vm.empiricalRange.availabilityStatus === "governed_available"
-                  ? "Calibrated prediction interval"
+                  ? `${Math.round((vm.empiricalRange.nominalCoverage ?? 0) * 100)}% empirical prediction interval`
                   : "Point forecast only"}
               </p>
               {vm.empiricalRange.lower !== null &&
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 <p className="mt-4 text-lg font-semibold text-warning">
-                  Prediction interval unavailable
+                  Expected range not available
                 </p>
               )}
               <p className="mt-2 text-sm leading-relaxed text-secondary">
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                   <dt className="text-secondary">Range status</dt>
                   <dd className="text-right text-primary">
                     {vm.empiricalRange.availabilityStatus === "available"||vm.empiricalRange.availabilityStatus === "governed_available"
-                      ? "Calibrated interval"
+                      ? "Rolling-origin calibrated"
                       : "Unavailable"}
                   </dd>
                 </div>

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "RUNTIME.FORECAST.UNCERTAINTY",
+  "policy_version": "b9.pi-v1",
+  "policy_status": "active",
+  "policy_sha256": "0b26c8c7f220cf0ea3e19db1530518a671c7c11a5578c9c921817ab86994293d",
+  "deployment_id": "dhaka_south",
+  "method": "rolling_origin_oof_absolute_residual_v1",
+  "nominal_interval_level": 0.9,
+  "minimum_calibration_observations": 9,
+  "residual_definition": "absolute_actual_minus_raw_prediction",
+  "quantile_rule": "k_equals_ceil_n_plus_1_times_level_bounded_1_to_n_higher_order_statistic",
+  "count_rounding": "lower_floor_upper_ceil",
+  "lower_bound_rule": "clip_at_zero",
+  "permitted_calibration_source": {
+    "validation_policy_id": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION",
+    "validation_policy_version": "b9.l-v1",
+    "leakage_audit_status": "passed",
+    "prediction_scope": "rolling_origin_out_of_fold_only",
+    "candidate_pooling_allowed": false
+  },
+  "insufficiency_behavior": "point_only"
+}

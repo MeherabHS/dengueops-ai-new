@@ -15,6 +15,7 @@ from runtime_commit import atomic_json, sha256_file
 from runtime_context import ROOT, require_absolute_directory, require_within
 from feature_engineering import FEATURE_COLUMNS
 from model_factory import load_and_validate_candidate_registry, load_historical_candidate_registry
+from prediction_interval import verify_assessment_calibration
 from runtime_assessment_evidence import (
     AssessmentEvidenceError,
     aggregate_candidate,
@@ -412,6 +413,11 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
         or summary.get("scientificValidation") != rolling.get("scientificValidation")
     ):
         raise RuntimeAssessmentCommitError("Temporal validation evidence does not reconcile.")
+    if temporal_policy is not None:
+        try:
+            verify_assessment_calibration(rolling)
+        except Exception as exc:
+            raise RuntimeAssessmentCommitError("Assessment uncertainty calibration does not reconcile.") from exc
     _reconcile(rolling, comparison, recommendation, feature_rows, policy, temporal_policy)
     if policy["policy_version"] in {"p2-v1", "p2-v2", "p2-v3"}:
         dynamic = (summary["labelledRows"], summary["availableFoldCount"], summary["foldPolicy"]["plannedFoldCount"], summary["foldPolicy"]["foldCapApplied"], summary["foldPolicy"]["selectedValidationStartIndex"], summary["foldPolicy"]["selectedValidationEndIndex"])

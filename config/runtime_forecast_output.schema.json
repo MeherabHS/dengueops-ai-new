@@ -42,7 +42,7 @@
       },
       "allOf": [
         {"if": {"properties": {"calibrationStatus": {"const": "governed_available"}}, "required": ["calibrationStatus"]}, "then": {"properties": {"uncertaintyAvailability": {"const": "governed_available"}, "forecastPresentationMode": {"const": "point_and_interval"}, "uncertaintyReasonCode": {"type": "null"}}}},
-        {"if": {"properties": {"calibrationStatus": {"const": "unavailable"}}, "required": ["calibrationStatus"]}, "then": {"properties": {"uncertaintyAvailability": {"const": "unavailable"}, "forecastPresentationMode": {"const": "point_only"}, "uncertaintyReasonCode": {"const": "model_calibration_unavailable"}}}}
+        {"if": {"properties": {"calibrationStatus": {"const": "unavailable"}}, "required": ["calibrationStatus"]}, "then": {"properties": {"uncertaintyAvailability": {"const": "unavailable"}, "forecastPresentationMode": {"const": "point_only"}, "uncertaintyReasonCode": {"enum": ["calibration_not_available_for_assignment", "insufficient_calibration_evidence"]}}}}
       ]
     }
   }

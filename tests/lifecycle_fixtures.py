@@ -17,6 +17,10 @@ from runtime_assessment_evidence import (
     aggregate_candidate,
     select_technical_winner,
 )
+from prediction_interval import (
+    build_assessment_calibration,
+    load_and_validate_uncertainty_policy,
+)
 from tests.test_runtime_assessment_commit import build_ready_assessment_runtime, iso_now
 from tests.test_runtime_forecast_outcome import build_outcome_job
 from tests.test_runtime_model_degradation_evidence import degradation_job
@@ -345,6 +349,17 @@ def _rebuild_assessment_hashes(
     Persist all patched assessment artifacts and recompute the full hash chain.
     Returns the new assessment commit SHA-256.
     """
+    if "uncertaintyCalibration" in rolling:
+        uncertainty_policy, uncertainty_policy_sha = load_and_validate_uncertainty_policy(
+            rolling["deploymentId"]
+        )
+        rolling["uncertaintyCalibration"] = build_assessment_calibration(
+            rolling["folds"],
+            rolling["candidateIds"],
+            rolling["scientificValidation"],
+            uncertainty_policy,
+            uncertainty_policy_sha,
+        )
     atomic_json(rolling_path, rolling)
     comparison["rollingValidationSha256"] = sha256_file(rolling_path)
     atomic_json(comparison_path, comparison)

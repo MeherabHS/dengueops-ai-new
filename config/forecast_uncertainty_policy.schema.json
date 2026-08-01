@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_id", "policy_version", "policy_status", "policy_sha256", "deployment_id", "method", "nominal_interval_level", "minimum_calibration_observations", "residual_definition", "quantile_rule", "count_rounding", "lower_bound_rule", "permitted_calibration_source", "insufficiency_behavior"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "RUNTIME.FORECAST.UNCERTAINTY"},
+    "policy_version": {"const": "b9.pi-v1"},
+    "policy_status": {"const": "active"},
+    "policy_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "deployment_id": {"const": "dhaka_south"},
+    "method": {"const": "rolling_origin_oof_absolute_residual_v1"},
+    "nominal_interval_level": {"const": 0.9},
+    "minimum_calibration_observations": {"const": 9},
+    "residual_definition": {"const": "absolute_actual_minus_raw_prediction"},
+    "quantile_rule": {"const": "k_equals_ceil_n_plus_1_times_level_bounded_1_to_n_higher_order_statistic"},
+    "count_rounding": {"const": "lower_floor_upper_ceil"},
+    "lower_bound_rule": {"const": "clip_at_zero"},
+    "permitted_calibration_source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["validation_policy_id", "validation_policy_version", "leakage_audit_status", "prediction_scope", "candidate_pooling_allowed"],
+      "properties": {
+        "validation_policy_id": {"const": "RUNTIME.MODEL_ASSESSMENT.TEMPORAL_VALIDATION"},
+        "validation_policy_version": {"const": "b9.l-v1"},
+        "leakage_audit_status": {"const": "passed"},
+        "prediction_scope": {"const": "rolling_origin_out_of_fold_only"},
+        "candidate_pooling_allowed": {"const": false}
+      }
+    },
+    "insufficiency_behavior": {"const": "point_only"}
+  }
+}

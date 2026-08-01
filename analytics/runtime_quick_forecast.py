@@ -33,6 +33,12 @@ from empirical_range import (
     generate_runtime_rf_residuals,
 )
 from model_factory import build_candidate_estimator, load_and_validate_candidate_registry, load_historical_candidate_registry
+from prediction_interval import (
+    PredictionIntervalError,
+    calibration_metrics as assessment_calibration_metrics,
+    construct_count_interval,
+    resolve_assignment_calibration,
+)
 from runtime_commit import atomic_json, commit_runtime_run, patch_running_job, sha256_file
 from runtime_active_model import resolve_active_model_p2_v2, resolve_historical_active_model_p2_v1
 from runtime_assessment_policy import PREVIOUS_CANDIDATE_REGISTRY_PATH
@@ -118,6 +124,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if (is_p2 and contract_version not in {"2.0", "2.1"}) or (not is_p2 and contract_version != "1.0"):
         raise ValueError("Quick Forecast job contract is incompatible with the governed policy.")
     is_p21 = is_p2 and contract_version == "2.1"
+    is_pi = is_p21
     artifact_schema_version = contract_version if is_p2 else "1.0"
     if (
         job.get("policyId"),
@@ -339,16 +346,32 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     (artifacts / "model_features.csv").write_bytes(feature_bytes)
     policy_identity = {"id": policy.get("policy_id") or policy.get("policyId"), "version": policy.get("policy_version") or policy.get("policyVersion"), "sha256": policy_hash}
 
-    # Calibration evaluation
+    # Calibration evaluation. Current p2 forecasts consume only the assigned candidate's
+    # immutable B9.L assessment OOF residuals; the legacy p1 path remains readable.
     available_fold_count = max(0, len(training) - INITIAL_TRAINING_ROWS - EMBARGO_ROWS)
-    supports_calibration = (assigned_model_id == "random_forest")
-    calibration_result = None
+    supports_calibration = (assigned_model_id == "random_forest") if not is_pi else True
+    calibration_result: dict[str, Any] | None = None
     calibration_metrics = None
     final_quantile_rank = None
     final_quantile_value = None
     calibration_available = False
 
-    if supports_calibration:
+    if is_pi:
+        if active_authority is None:
+            raise ValueError("Current assignment authority is unavailable for calibration.")
+        try:
+            calibration_result = resolve_assignment_calibration(runtime_root, active_authority, assigned_model_id)
+        except PredictionIntervalError as exc:
+            if str(exc) == "calibration_not_available_for_assignment":
+                calibration_result = {"status": "point_only", "reason": str(exc), "residuals": []}
+            else:
+                raise ValueError(f"assessment_calibration_integrity_failed: {exc}") from exc
+        calibration_available = calibration_result["status"] == "available"
+        if calibration_available:
+            final_quantile_rank = int(calibration_result["quantileRank"])
+            final_quantile_value = float(calibration_result["absoluteResidualQuantile"])
+            calibration_metrics = assessment_calibration_metrics(calibration_result["residuals"], final_quantile_value)
+    elif supports_calibration:
         calibration_result = generate_runtime_rf_residuals(
             training,
             registry,
@@ -369,22 +392,35 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     if calibration_result is None:
         calibration_result = {"status": "unavailable", "folds": [], "foldPlanSha256": "0" * 64}
 
+    calibration_reason = None if calibration_available else (
+        calibration_result.get("reason", "model_calibration_unavailable") if is_pi else "insufficient_residual_folds"
+    )
     calibration_limitations = ([
+        f"The empirical prediction interval uses only leakage-safe rolling-origin OOF residuals for {assigned_model_family} from its exact source assessment.",
+        "The calibration folds also informed model selection; this is not an untouched post-selection or prospective coverage guarantee.",
+        "The source snapshot is retrospective latest-revision evidence; historical data vintages are unavailable.",
+        "Preparedness scenarios, bundled bounds, in-sample residuals, and RMSE sensitivity are not calibration inputs.",
+    ] if calibration_available and is_pi else ([
         f"The empirical range uses dataset-specific out-of-sample {assigned_model_family} rolling-origin residuals.",
         "Targets overlap and residuals are temporally dependent; historical coverage does not guarantee future coverage.",
         "The range is not a probability statement or prediction interval.",
         "The currently governed uploaded source scope is deterministic synthetic benchmark data.",
         "Preparedness scenarios, bundled bounds, and RMSE sensitivity are not calibration inputs.",
     ] if calibration_available else [
-        f"Dataset-specific calibration requires exactly 68 complete residual folds; this dataset provides {available_fold_count}.",
-        "No partial residual pool, benchmark range, preparedness scenario, or RMSE fallback was used.",
-    ])
-    width_summary = None if calibration_metrics is None else {
-        "average": calibration_metrics["average_interval_width"],
-        "median": calibration_metrics["median_interval_width"],
-        "minimum": calibration_metrics["minimum_interval_width"],
-        "maximum": calibration_metrics["maximum_interval_width"],
-    }
+        "The assigned model's source assessment does not contain sufficient governed B9.PI calibration evidence." if is_pi else f"Dataset-specific calibration requires exactly 68 complete residual folds; this dataset provides {available_fold_count}.",
+        "The point forecast remains valid; no in-sample, pooled-candidate, benchmark, preparedness, or percentage fallback was used.",
+    ]))
+    width_summary = None if calibration_metrics is None else (
+        calibration_metrics["intervalWidthSummary"] if is_pi else {
+            "average": calibration_metrics["average_interval_width"],
+            "median": calibration_metrics["median_interval_width"],
+            "minimum": calibration_metrics["minimum_interval_width"],
+            "maximum": calibration_metrics["maximum_interval_width"],
+        }
+    )
+    source_residuals = calibration_result.get("residuals", []) if is_pi else calibration_result.get("folds", [])
+    calibration_policy = calibration_result.get("policy", {}) if is_pi else {}
+    nominal_coverage = float(calibration_result.get("nominalLevel", NOMINAL_COVERAGE)) if is_pi else NOMINAL_COVERAGE
     calibration_artifact = {
         "schemaVersion": artifact_schema_version, "runId": job["runId"], "jobId": job["jobId"], "datasetId": job["datasetId"],
         "deploymentProfileId": job["deploymentId"], "policyId": policy_identity["id"], "policyVersion": policy_identity["version"],
@@ -392,20 +428,22 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "modelParametersSha256": candidate["parameters_sha256"], "candidateRegistrySha256": registry_hash,
         "featureOrder": list(FEATURE_COLUMNS), "featureOrderSha256": feature_hash, "targetColumn": TARGET,
         "forecastHorizonWeeks": CALIBRATION_HORIZON_WEEKS, "initialTrainingRows": INITIAL_TRAINING_ROWS,
-        "embargoRows": EMBARGO_ROWS, "foldStepRows": FOLD_STEP_ROWS, "requiredResidualCount": REQUIRED_RESIDUALS,
-        "calibrationWarmupFoldCount": WARMUP_FOLDS, "nominalCoverage": NOMINAL_COVERAGE,
-        "calibrationMethod": "prequential_expanding_window_prior_residuals_only", "uncertaintyMethod": METHOD_ID,
-        "uncertaintyMethodVersion": METHOD_VERSION,
+        "embargoRows": 2 if is_pi else EMBARGO_ROWS, "foldStepRows": FOLD_STEP_ROWS,
+        "requiredResidualCount": int(calibration_result.get("minimumRequired", 9)) if is_pi else REQUIRED_RESIDUALS,
+        "calibrationWarmupFoldCount": 0 if is_pi else WARMUP_FOLDS, "nominalCoverage": nominal_coverage,
+        "calibrationMethod": "rolling_origin_out_of_fold_absolute_residuals" if is_pi else "prequential_expanding_window_prior_residuals_only",
+        "uncertaintyMethod": calibration_result.get("method", "rolling_origin_oof_absolute_residual_v1") if is_pi else METHOD_ID,
+        "uncertaintyMethodVersion": calibration_policy.get("policyVersion", "b9.pi-v1") if is_pi else METHOD_VERSION,
         "calibrationStatus": ("governed_available" if calibration_available else "unavailable") if is_p2 else calibration_result["status"],
-        "residualCount": len(calibration_result["folds"]), "foldPlanSha256": calibration_result["foldPlanSha256"],
+        "residualCount": len(source_residuals), "foldPlanSha256": calibration_result.get("sourceFoldPlanSha256", calibration_result.get("foldPlanSha256", "0" * 64)),
         "finalQuantileRank": final_quantile_rank, "finalQuantileValue": final_quantile_value,
-        "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
-        "coveredFoldCount": None if calibration_metrics is None else calibration_metrics["covered_fold_count"],
-        "evaluatedFoldCount": None if calibration_metrics is None else calibration_metrics["evaluated_fold_count"],
-        "lowerMissCount": None if calibration_metrics is None else calibration_metrics["lower_miss_count"],
-        "upperMissCount": None if calibration_metrics is None else calibration_metrics["upper_miss_count"],
+        "historicalCoverage": None if calibration_metrics is None else calibration_metrics["historicalCoverage" if is_pi else "observed_coverage"],
+        "coveredFoldCount": None if calibration_metrics is None else calibration_metrics["coveredFoldCount" if is_pi else "covered_fold_count"],
+        "evaluatedFoldCount": None if calibration_metrics is None else calibration_metrics["evaluatedFoldCount" if is_pi else "evaluated_fold_count"],
+        "lowerMissCount": None if calibration_metrics is None else calibration_metrics["lowerMissCount" if is_pi else "lower_miss_count"],
+        "upperMissCount": None if calibration_metrics is None else calibration_metrics["upperMissCount" if is_pi else "upper_miss_count"],
         "intervalWidthSummary": width_summary, "generatedAt": generated_at,
-        "limitations": calibration_limitations, "folds": calibration_result["folds"],
+        "limitations": calibration_limitations, "folds": calibration_result.get("folds", []) if not is_pi else [],
     }
     if is_p2:
         calibration_artifact.update({
@@ -413,21 +451,37 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "preprocessingIdentity": assigned_preprocessing_identity,
             "assignmentId": assigned_assignment_id,
             "assignmentCommitSha256": assigned_commit_sha,
-            "uncertaintyReasonCode": None if calibration_available else "model_calibration_unavailable",
+            "uncertaintyReasonCode": calibration_reason if is_pi else (None if calibration_available else "model_calibration_unavailable"),
+        })
+        if is_pi:
+            calibration_artifact.update({
+            "uncertaintyPolicyId": calibration_policy.get("policyId", "RUNTIME.FORECAST.UNCERTAINTY"),
+            "uncertaintyPolicyVersion": calibration_policy.get("policyVersion", "b9.pi-v1"),
+            "uncertaintyPolicySha256": calibration_policy.get("policySha256", "0" * 64),
+            "sourceAssessmentId": calibration_result.get("sourceAssessmentId"),
+            "sourceAssessmentCommitSha256": calibration_result.get("sourceAssessmentCommitSha256"),
+            "sourceRollingValidationSha256": calibration_result.get("sourceRollingValidationSha256"),
+            "sourceSnapshotClassification": calibration_result.get("sourceSnapshotClassification"),
+                "assessmentOofResiduals": source_residuals,
         })
     _write_json_artifact(artifacts / "forecast_calibration.json", calibration_artifact)
     calibration_sha = sha256_file(artifacts / "forecast_calibration.json")
     if calibration_available:
         _update_job(job_path, job, progress="finalizing_empirical_range")
-        bounds = construct_raw_interval(raw, float(final_quantile_value))
-        lower_raw, upper_raw = bounds["lower_raw"], bounds["upper_raw"]
-        lower_reported, upper_reported = math.floor(lower_raw), math.ceil(upper_raw)
+        if is_pi:
+            bounds = construct_count_interval(raw, float(final_quantile_value))
+            lower_raw, upper_raw = float(bounds["lowerRaw"]), float(bounds["upperRaw"])
+            lower_reported, upper_reported = int(bounds["lowerReported"]), int(bounds["upperReported"])
+        else:
+            bounds = construct_raw_interval(raw, float(final_quantile_value))
+            lower_raw, upper_raw = bounds["lower_raw"], bounds["upper_raw"]
+            lower_reported, upper_reported = math.floor(lower_raw), math.ceil(upper_raw)
         uncertainty_status = "governed_available" if is_p2 else "available"
         uncertainty_reason_code = None
     else:
         lower_raw = upper_raw = lower_reported = upper_reported = None
         uncertainty_status = "unavailable" if is_p2 else "pending_dataset_specific_calibration"
-        uncertainty_reason_code = "model_calibration_unavailable" if is_p2 else "insufficient_residual_folds"
+        uncertainty_reason_code = calibration_reason if is_p2 else "insufficient_residual_folds"
 
     source_family = "quick_forecast_p2" if is_p2 else "quick_forecast_p1"
 
@@ -469,18 +523,18 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "deploymentId": job["deploymentId"], "activeModelId": assigned_model_id,
         "parameterHash": candidate["parameters_sha256"], "uncertaintyStatus": uncertainty_status,
         "lowerRaw": lower_raw, "upperRaw": upper_raw,
-        "lowerReported": lower_reported, "upperReported": upper_reported, "isPredictionInterval": False,
-        "calibratedOnSyntheticData": calibration_available,
-        "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
-        "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
-        "calibrationMethod": "prequential_expanding_window_prior_residuals_only" if calibration_available else None,
-        "residualCount": REQUIRED_RESIDUALS if calibration_available else (0 if is_p2 else None),
-        "coveredFoldCount": None if calibration_metrics is None else calibration_metrics["covered_fold_count"],
-        "calibrationWarmupFoldCount": WARMUP_FOLDS if calibration_available else None,
-        "lowerMissCount": None if calibration_metrics is None else calibration_metrics["lower_miss_count"],
-        "upperMissCount": None if calibration_metrics is None else calibration_metrics["upper_miss_count"],
-        "intervalWidthSummary": width_summary, "uncertaintyMethod": METHOD_ID if calibration_available else None,
-        "uncertaintyMethodVersion": METHOD_VERSION if calibration_available else None,
+        "lowerReported": lower_reported, "upperReported": upper_reported, "isPredictionInterval": bool(is_pi and calibration_available),
+        "calibratedOnSyntheticData": bool(calibration_available and not is_pi),
+        "nominalCoverage": nominal_coverage if calibration_available else None,
+        "historicalCoverage": None if calibration_metrics is None else calibration_metrics["historicalCoverage" if is_pi else "observed_coverage"],
+        "calibrationMethod": ("rolling_origin_out_of_fold_absolute_residuals" if is_pi else "prequential_expanding_window_prior_residuals_only") if calibration_available else None,
+        "residualCount": len(source_residuals) if calibration_available else (0 if is_p2 else None),
+        "coveredFoldCount": None if calibration_metrics is None else calibration_metrics["coveredFoldCount" if is_pi else "covered_fold_count"],
+        "calibrationWarmupFoldCount": (0 if is_pi else WARMUP_FOLDS) if calibration_available else None,
+        "lowerMissCount": None if calibration_metrics is None else calibration_metrics["lowerMissCount" if is_pi else "lower_miss_count"],
+        "upperMissCount": None if calibration_metrics is None else calibration_metrics["upperMissCount" if is_pi else "upper_miss_count"],
+        "intervalWidthSummary": width_summary, "uncertaintyMethod": (calibration_result.get("method") if is_pi else METHOD_ID) if calibration_available else None,
+        "uncertaintyMethodVersion": (calibration_policy.get("policyVersion") if is_pi else METHOD_VERSION) if calibration_available else None,
         "residualSourceArtifactPath": "artifacts/forecast_calibration.json" if calibration_available else None,
         "residualSourceArtifactSha256": calibration_sha if calibration_available else None,
         "rmseFallbackAllowed": False, "bundledP13RangeReused": False,
@@ -498,6 +552,15 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
             "forecastPresentationMode": "point_and_interval" if calibration_available else "point_only",
             "calibrationStatus": "governed_available" if calibration_available else "unavailable",
             "uncertaintyReasonCode": uncertainty_reason_code,
+            **({"calibrationProvenance": ({
+                "sourceAssessmentId": calibration_result["sourceAssessmentId"],
+                "sourceAssessmentCommitSha256": calibration_result["sourceAssessmentCommitSha256"],
+                "sourceRollingValidationSha256": calibration_result["sourceRollingValidationSha256"],
+                "candidateId": assigned_model_id,
+                "policyId": calibration_policy["policyId"], "policyVersion": calibration_policy["policyVersion"],
+                "policySha256": calibration_policy["policySha256"],
+                "snapshotClassification": calibration_result["sourceSnapshotClassification"],
+            } if calibration_available else None)} if is_pi else {}),
         })
     _write_json_artifact(artifacts / "forecast_uncertainty.json", uncertainty)
 
@@ -524,9 +587,9 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "forecast": {"latestObservedCases": latest_cases, "forecastRaw": raw, "forecastReported": reported,
             "targetPeriod": target_period, "target": TARGET, "horizonWeeks": 2, "direction": direction,
             "uncertaintyStatus": uncertainty_status, "empiricalLower": lower_reported, "empiricalUpper": upper_reported,
-            "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
-            "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
-            "isPredictionInterval": False},
+            "nominalCoverage": nominal_coverage if calibration_available else None,
+            "historicalCoverage": None if calibration_metrics is None else calibration_metrics["historicalCoverage" if is_pi else "observed_coverage"],
+            "isPredictionInterval": bool(is_pi and calibration_available)},
         "history": history,
         "preparedness": {"availabilityStatus": "unavailable_missing_planning_policy", "scenarios": None, "counts": None, "facilities": [], "alerts": []},
         "evidence": {"validation": {"sha256": job["validationRecordSha256"], "acceptedPeriod": validation.get("acceptedPeriod")},
@@ -604,12 +667,12 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "training": training_identity, "policy": policy_identity, "comparisonPerformed": False, "bestModelClaim": False,
         "uncertaintyStatus": uncertainty_status,
         "calibration": {"artifactPath": "artifacts/forecast_calibration.json", "artifactSha256": calibration_sha,
-            "status": uncertainty_status, "methodId": METHOD_ID if calibration_available else None,
-            "methodVersion": METHOD_VERSION if calibration_available else None,
-            "residualCount": REQUIRED_RESIDUALS if calibration_available else (0 if is_p2 else None),
-            "nominalCoverage": NOMINAL_COVERAGE if calibration_available else None,
-            "historicalCoverage": None if calibration_metrics is None else calibration_metrics["observed_coverage"],
-            "isPredictionInterval": False, "limitations": calibration_limitations},
+            "status": uncertainty_status, "methodId": (calibration_result.get("method") if is_pi else METHOD_ID) if calibration_available else None,
+            "methodVersion": (calibration_policy.get("policyVersion") if is_pi else METHOD_VERSION) if calibration_available else None,
+            "residualCount": len(source_residuals) if calibration_available else (0 if is_p2 else None),
+            "nominalCoverage": nominal_coverage if calibration_available else None,
+            "historicalCoverage": None if calibration_metrics is None else calibration_metrics["historicalCoverage" if is_pi else "observed_coverage"],
+            "isPredictionInterval": bool(is_pi and calibration_available), "limitations": calibration_limitations},
         "preparednessStatus": "unavailable_missing_planning_policy",
         "inputHashes": {"originalDengue": validation["files"]["original"]["dengueSha256"], "originalClimate": validation["files"]["original"]["climateSha256"],
             "canonicalDengue": validation["files"]["canonical"]["dengueSha256"], "canonicalClimate": validation["files"]["canonical"]["climateSha256"]},

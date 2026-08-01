@@ -69,7 +69,7 @@ export default function ForecastTrendChart({ history, targetPeriod, forecast, lo
             <Line type="monotone" dataKey="observed" name="Observed" stroke={CHART_COLORS.observed} strokeWidth={2.5} dot={false} isAnimationActive={!reduceMotion} animationDuration={700} />
             <Line type="linear" dataKey="connector" name="Forecast connector" stroke={CHART_COLORS.forecast} strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls isAnimationActive={!reduceMotion} animationBegin={650} animationDuration={420} />
             <Scatter dataKey="forecast" name="Forecast" fill={CHART_COLORS.forecast} isAnimationActive={!reduceMotion} animationBegin={1050} animationDuration={250} />
-            {rangeAvailable?<Scatter dataKey="rangeCenter" name="Prediction interval" fill={CHART_COLORS.range} isAnimationActive={!reduceMotion} animationBegin={1200} animationDuration={400}>
+            {rangeAvailable?<Scatter dataKey="rangeCenter" name="Empirical prediction interval" fill={CHART_COLORS.range} isAnimationActive={!reduceMotion} animationBegin={1200} animationDuration={400}>
               <ErrorBar dataKey="rangeError" direction="y" width={14} stroke={CHART_COLORS.forecast} strokeWidth={7} />
             </Scatter>:null}
           </ComposedChart>

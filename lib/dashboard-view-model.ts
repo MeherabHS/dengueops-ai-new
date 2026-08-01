@@ -71,7 +71,7 @@ export interface OverviewViewModel {
     upper: number | null;
     nominalCoverage: number | null;
     historicalCoverage: number | null;
-    isPredictionInterval: false;
+    isPredictionInterval: boolean;
     reason: string | null;
   };
   activeModel: {

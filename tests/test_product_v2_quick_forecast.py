@@ -201,6 +201,44 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         self.assertEqual(binding["authoritySnapshotSha256"], authority["authoritySnapshotSha256"])
         self.assertEqual(binding["assignedCandidateId"], authority["modelId"])
 
+    def test_b9pi_interval_uses_exact_assigned_candidate_oof_calibration(self):
+        runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="poisson_gam")
+        authority = resolve_active_model_p2_v2(repository_root=ROOT, runtime_root=runtime_root)
+        workspace_dir, dataset_id, val_sha = build_ready_workspace(runtime_root)
+        job, job_file, staging_dir = _setup_quick_run_job(runtime_root, workspace_dir.name, dataset_id, val_sha)
+        uncertainty_policy = json.loads((ROOT / "config/deployments/dhaka_south/forecast_uncertainty_policy.json").read_text())
+        residuals = [{
+            "foldId": f"fold-{index}", "forecastOrigin": f"2024-W{index + 1:02d}", "targetPeriod": f"2024-W{index + 3:02d}",
+            "actualTarget": float(100 + index), "rawPrediction": float(98 + index), "absoluteResidual": 2.0,
+        } for index in range(10)]
+        source = {
+            "candidateId": "poisson_gam", "status": "available", "reason": None, "sampleCount": 10,
+            "minimumRequired": 9, "quantileRank": 10, "absoluteResidualQuantile": 2.0,
+            "sourceAssessmentId": str(uuid.uuid4()), "sourceAssessmentCommitSha256": "1" * 64,
+            "sourceRollingValidationSha256": "2" * 64, "sourceFoldPlanSha256": "3" * 64,
+            "sourceSnapshotClassification": "retrospective_latest_revision",
+            "policy": {"policyId": uncertainty_policy["policy_id"], "policyVersion": uncertainty_policy["policy_version"], "policySha256": uncertainty_policy["policy_sha256"]},
+            "method": uncertainty_policy["method"], "nominalLevel": 0.9, "residuals": residuals,
+        }
+        args = SimpleNamespace(runtime_root=str(runtime_root), job_record=str(job_file), workspace=str(workspace_dir), staging=str(staging_dir))
+        with patch("runtime_quick_forecast.resolve_assignment_calibration", return_value=source), \
+             patch("runtime_commit.resolve_assignment_calibration", return_value=source):
+            result = execute(args)
+        self.assertTrue(result["committed"])
+        run = runtime_root / "runs" / job["runId"]
+        forecast = json.loads((run / "artifacts/forecast_output.json").read_text())
+        calibration = json.loads((run / "artifacts/forecast_calibration.json").read_text())
+        uncertainty = json.loads((run / "artifacts/forecast_uncertainty.json").read_text())
+        self.assertEqual(forecast["activeModelId"], "poisson_gam")
+        self.assertEqual(calibration["modelId"], "poisson_gam")
+        self.assertEqual(calibration["assessmentOofResiduals"], residuals)
+        self.assertEqual(calibration["uncertaintyMethod"], "rolling_origin_oof_absolute_residual_v1")
+        self.assertEqual(uncertainty["calibrationProvenance"]["candidateId"], "poisson_gam")
+        self.assertFalse(uncertainty["calibratedOnSyntheticData"])
+        self.assertLessEqual(uncertainty["lowerReported"], forecast["forecastReported"])
+        self.assertGreaterEqual(uncertainty["upperReported"], forecast["forecastReported"])
+        self.assertTrue(uncertainty["isPredictionInterval"])
+
     def test_quick_forecast_p2_succeeds_for_all_current_learned_candidates(self):
         learned_candidates = [
             "random_forest",
@@ -293,14 +331,11 @@ class ProductV2QuickForecastTests(unittest.TestCase):
                 self.assertEqual(run_record["preprocessingIdentity"], candidate["preprocessing_identity"])
                 self.assertEqual(run_record["candidateRegistrySha256"], registry_sha)
                 self.assertEqual(run_record["featureOrderSha256"], candidate["feature_order_sha256"])
-                if model_id == "random_forest":
-                    self.assertEqual(calibration["calibrationStatus"], "governed_available")
-                    self.assertEqual(calibration["residualCount"], 68)
-                    self.assertEqual(len(calibration["folds"]), 68)
-                else:
-                    self.assertEqual(calibration["calibrationStatus"], "unavailable")
-                    self.assertEqual(calibration["residualCount"], 0)
-                    self.assertEqual(calibration["folds"], [])
+                self.assertEqual(calibration["calibrationStatus"], "governed_available")
+                self.assertIsNone(calibration["uncertaintyReasonCode"])
+                self.assertGreaterEqual(calibration["residualCount"], calibration["requiredResidualCount"])
+                self.assertEqual(calibration["folds"], [])
+                self.assertEqual(len(calibration["assessmentOofResiduals"]), calibration["residualCount"])
 
 
     def test_quick_forecast_p2_fails_when_active_model_not_assigned(self):
@@ -681,7 +716,16 @@ class ProductV2QuickForecastTests(unittest.TestCase):
             staging=str(staging_dir)
         )
 
-        result = execute(args)
+        policy = json.loads((ROOT / "config/deployments/dhaka_south/forecast_uncertainty_policy.json").read_text())
+        source = {
+            "status": "point_only", "reason": "calibration_not_available_for_assignment",
+            "policy": {"policyId": policy["policy_id"], "policyVersion": policy["policy_version"], "policySha256": policy["policy_sha256"]},
+            "method": policy["method"], "nominalLevel": policy["nominal_interval_level"],
+            "minimumRequired": policy["minimum_calibration_observations"], "residuals": [],
+        }
+        with patch("runtime_quick_forecast.resolve_assignment_calibration", return_value=source), \
+             patch("runtime_commit.resolve_assignment_calibration", return_value=source):
+            result = execute(args)
         self.assertTrue(result["committed"])
 
         committed_run = runtime_root / "runs" / job["runId"]
@@ -691,13 +735,15 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         self.assertEqual(uncertainty["forecastPresentationMode"], "point_only")
         self.assertEqual(uncertainty["calibrationStatus"], "unavailable")
-        self.assertEqual(uncertainty["uncertaintyReasonCode"], "model_calibration_unavailable")
+        self.assertEqual(uncertainty["uncertaintyReasonCode"], "calibration_not_available_for_assignment")
         self.assertIsNone(uncertainty["lowerRaw"])
         self.assertIsNone(uncertainty["upperRaw"])
         self.assertIsNone(uncertainty["lowerReported"])
         self.assertIsNone(uncertainty["upperReported"])
+        self.assertFalse(uncertainty["calibratedOnSyntheticData"])
         self.assertEqual(calibration["calibrationStatus"], "unavailable")
         self.assertEqual(calibration["residualCount"], 0)
+        self.assertEqual(calibration["assessmentOofResiduals"], [])
         self.assertEqual(calibration["folds"], [])
 
     def test_quick_forecast_p2_point_and_interval_requires_exact_calibration_provenance(self):
@@ -730,7 +776,10 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         self.assertLessEqual(uncertainty["lowerReported"], uncertainty["upperReported"])
         self.assertEqual(uncertainty["residualSourceArtifactSha256"], sha256_file(calibration_path))
         self.assertEqual(calibration["calibrationStatus"], "governed_available")
-        self.assertEqual(len(calibration["folds"]), 68)
+        self.assertEqual(calibration["folds"], [])
+        self.assertEqual(len(calibration["assessmentOofResiduals"]), calibration["residualCount"])
+        self.assertEqual(calibration["uncertaintyMethod"], "rolling_origin_oof_absolute_residual_v1")
+        self.assertTrue(uncertainty["isPredictionInterval"])
 
     def test_p2_commit_rejects_mixed_contracts_artifact_tampering_fold_tampering_and_authority_change(self):
         runtime_root = _create_p2_v2_assignment(self.test_dir, ROOT, model_id="random_forest")
@@ -746,7 +795,7 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         calibration_path = staging_dir / "artifacts/forecast_calibration.json"
         original_calibration = calibration_path.read_bytes()
         calibration = json.loads(original_calibration)
-        calibration["folds"][0]["absoluteResidual"] += 1
+        calibration["assessmentOofResiduals"][0]["absoluteResidual"] += 1
         atomic_json(calibration_path, calibration)
         tampered_calibration_sha = sha256_file(calibration_path)
         card_path = staging_dir / "artifacts/model_card.json"
@@ -760,7 +809,24 @@ class ProductV2QuickForecastTests(unittest.TestCase):
         dashboard = json.loads(original_dashboard)
         dashboard["evidence"]["calibration"]["sha256"] = tampered_calibration_sha
         atomic_json(dashboard_path, dashboard)
-        with self.assertRaisesRegex(RuntimeCommitError, "residual does not recompute"):
+        with self.assertRaisesRegex(RuntimeCommitError, "residuals differ"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        calibration_path.write_bytes(original_calibration)
+        card_path.write_bytes(original_card)
+        dashboard_path.write_bytes(original_dashboard)
+
+        calibration = json.loads(original_calibration)
+        calibration["finalQuantileValue"] += 1
+        atomic_json(calibration_path, calibration)
+        tampered_calibration_sha = sha256_file(calibration_path)
+        card = json.loads(original_card)
+        card["calibration"]["artifactSha256"] = tampered_calibration_sha
+        card["artifactHashes"]["forecast_calibration.json"] = tampered_calibration_sha
+        atomic_json(card_path, card)
+        dashboard = json.loads(original_dashboard)
+        dashboard["evidence"]["calibration"]["sha256"] = tampered_calibration_sha
+        atomic_json(dashboard_path, dashboard)
+        with self.assertRaisesRegex(RuntimeCommitError, "summary does not recompute"):
             commit_runtime_run(runtime_root, staging_dir, claimed_job)
         calibration_path.write_bytes(original_calibration)
         card_path.write_bytes(original_card)
@@ -768,6 +834,13 @@ class ProductV2QuickForecastTests(unittest.TestCase):
 
         uncertainty_path = staging_dir / "artifacts/forecast_uncertainty.json"
         original_uncertainty = uncertainty_path.read_bytes()
+        uncertainty = json.loads(original_uncertainty)
+        uncertainty["lowerRaw"] += 1
+        atomic_json(uncertainty_path, uncertainty)
+        with self.assertRaisesRegex(RuntimeCommitError, "lowerRaw does not recompute"):
+            commit_runtime_run(runtime_root, staging_dir, claimed_job)
+        uncertainty_path.write_bytes(original_uncertainty)
+
         uncertainty = json.loads(original_uncertainty)
         uncertainty["schemaVersion"] = "2.0"
         atomic_json(uncertainty_path, uncertainty)

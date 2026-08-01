@@ -234,9 +234,9 @@ function overviewFromVerified(verified: VerifiedCurrentForecast,operational:Awai
       upper: calibrated ? value.forecast.empiricalUpper : null,
       nominalCoverage: calibrated ? value.forecast.nominalCoverage : null,
       historicalCoverage: calibrated ? value.forecast.historicalCoverage : null,
-      isPredictionInterval: false,
+      isPredictionInterval: calibrated && forecast.isPredictionInterval === true,
       reason: calibrated
-        ? "Dataset-specific empirical range from prior-only rolling-origin residual evidence; historical coverage does not guarantee future coverage."
+        ? "Leakage-safe rolling-origin out-of-fold empirical calibration; retrospective coverage does not guarantee future coverage."
         : "Prediction interval unavailable — model-specific calibration has not yet been completed.",
     },
     activeModel: {

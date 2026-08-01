@@ -262,6 +262,12 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             self.assertEqual(rolling["scientificValidation"]["foldCountCompleted"], 67)
             self.assertEqual(rolling["scientificValidation"]["datasetSnapshotClassification"], "retrospective_latest_revision")
             self.assertFalse(rolling["scientificValidation"]["qualificationUntouchedHoldout"])
+            calibration = rolling["uncertaintyCalibration"]
+            self.assertEqual(calibration["method"], "rolling_origin_oof_absolute_residual_v1")
+            self.assertEqual(calibration["leakageAuditStatus"], "passed")
+            self.assertEqual(calibration["nominalLevel"], 0.9)
+            self.assertEqual(len(calibration["candidateCalibrations"]), len(rolling["candidateIds"]))
+            self.assertTrue(all(item["candidateId"] in rolling["candidateIds"] for item in calibration["candidateCalibrations"]))
             current_registry = json.loads((ROOT / "config/candidate_models.json").read_text())
             self.assertTrue(
                 all(

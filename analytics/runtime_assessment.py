@@ -20,6 +20,7 @@ from sklearn.exceptions import ConvergenceWarning
 from feature_engineering import FEATURE_COLUMNS, build_features
 from model_factory import (build_candidate_estimator, canonical_sha256, load_and_validate_candidate_registry,
                            load_historical_candidate_registry)
+from prediction_interval import build_assessment_calibration, load_and_validate_uncertainty_policy
 from runtime_assessment_commit import commit_runtime_assessment
 from runtime_assessment_evidence import (
     aggregate_candidate,
@@ -377,6 +378,22 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     selected_end_index = int(assessment_policy_result["selectedValidationEndIndex"])
     selected_evaluation_period = {"start": plan[0]["forecastOrigin"], "end": plan[-1]["forecastOrigin"]}
     scientific_validation = temporal_evidence(temporal_policy, str(temporal_policy_hash), planned_fold_count) if temporal_policy is not None else None
+    uncertainty_calibration = None
+    if scientific_validation is not None:
+        uncertainty_policy, uncertainty_policy_hash = load_and_validate_uncertainty_policy(job["deploymentId"])
+        uncertainty_calibration = build_assessment_calibration(
+            [
+                {
+                    **{key: value for key, value in descriptor.items() if key not in {"trainStartIndex", "trainEndExclusive", "embargoIndex", "validationIndex"}},
+                    "predictions": [predictions[model_id][index] for model_id in candidate_ids],
+                }
+                for index, descriptor in enumerate(plan)
+            ],
+            candidate_ids,
+            scientific_validation,
+            uncertainty_policy,
+            uncertainty_policy_hash,
+        )
     phase_two_dynamic = {
         "labelledRows": labelled_row_count, "availableFoldCount": available_fold_count,
         "foldCapApplied": fold_cap_applied,
@@ -484,6 +501,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         "candidateIds": list(candidate_ids),
         "featureOrderSha256": feature_hash, "target": TARGET, "horizonWeeks": 2, "folds": fold_values,
         **({"scientificValidation": scientific_validation} if scientific_validation is not None else {}),
+        **({"uncertaintyCalibration": uncertainty_calibration} if uncertainty_calibration is not None else {}),
         "generatedAt": generated_at,
     }
     rolling_path = staging / "artifacts/rolling_validation.json"

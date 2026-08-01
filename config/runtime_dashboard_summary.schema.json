@@ -253,7 +253,7 @@
         "empiricalUpper": { "type": ["integer", "null"], "minimum": 0 },
         "nominalCoverage": { "type": ["number", "null"] },
         "historicalCoverage": { "type": ["number", "null"] },
-        "isPredictionInterval": { "const": false }
+        "isPredictionInterval": { "type": "boolean" }
       },
       "allOf": [
         {
@@ -289,7 +289,7 @@
               "uncertaintyStatus": { "const": "unavailable" },
               "forecastPresentationMode": { "const": "point_only" },
               "uncertaintyReasonCode": {
-                "const": "model_calibration_unavailable"
+                "enum": ["model_calibration_unavailable", "calibration_not_available_for_assignment", "insufficient_calibration_evidence"]
               },
               "empiricalLower": { "type": "null" },
               "empiricalUpper": { "type": "null" },

@@ -23,6 +23,13 @@ from empirical_range import (
     finite_sample_quantile,
 )
 from model_factory import load_and_validate_candidate_registry
+from prediction_interval import (
+    METHOD_ID as B9PI_METHOD_ID,
+    PredictionIntervalError,
+    calibration_metrics as b9pi_calibration_metrics,
+    construct_count_interval,
+    resolve_assignment_calibration,
+)
 from runtime_context import require_absolute_directory, require_within
 from runtime_policy import canonical_policy_sha256
 
@@ -277,7 +284,7 @@ def _close(left: Any, right: Any, tolerance: float = 1e-9) -> bool:
 def _validate_calibration_bundle(
     artifacts: Path, forecast: dict[str, Any], calibration: dict[str, Any],
     uncertainty: dict[str, Any], dashboard: dict[str, Any], card: dict[str, Any],
-    job: dict[str, Any], run: dict[str, Any],
+    job: dict[str, Any], run: dict[str, Any], runtime_root: Path,
 ) -> None:
     pipeline = _load_json(artifacts / "pipeline_run_summary.json")
     calibration_sha = sha256_file(artifacts / "forecast_calibration.json")
@@ -309,6 +316,103 @@ def _validate_calibration_bundle(
         raise RuntimeCommitError("Runtime model card does not bind the calibration artifact.")
     if dashboard.get("evidence", {}).get("calibration") != {"path": "artifacts/forecast_calibration.json", "sha256": calibration_sha}:
         raise RuntimeCommitError("Runtime dashboard does not bind the calibration artifact.")
+
+    if run.get("schemaVersion") == "2.1" and calibration.get("uncertaintyMethod") == B9PI_METHOD_ID:
+        authority = {
+            "deploymentId": run.get("deploymentId"), "assignmentId": run.get("assignmentId"),
+            "assignmentCommitSha256": run.get("assignmentCommitSha256"), "candidateRegistrySha256": run.get("candidateRegistrySha256"),
+        }
+        try:
+            source = resolve_assignment_calibration(runtime_root, authority, str(run.get("activeModelId")))
+        except PredictionIntervalError as exc:
+            raise RuntimeCommitError(f"B9.PI source calibration verification failed: {exc}") from exc
+        source_available = source.get("status") == "available"
+        expected_status = "governed_available" if source_available else "unavailable"
+        expected_reason = None if source_available else source.get("reason")
+        policy = source.get("policy", {})
+        expected_source = {
+            "uncertaintyPolicyId": policy.get("policyId"), "uncertaintyPolicyVersion": policy.get("policyVersion"),
+            "uncertaintyPolicySha256": policy.get("policySha256"), "sourceAssessmentId": source.get("sourceAssessmentId"),
+            "sourceAssessmentCommitSha256": source.get("sourceAssessmentCommitSha256"),
+            "sourceRollingValidationSha256": source.get("sourceRollingValidationSha256"),
+            "sourceSnapshotClassification": source.get("sourceSnapshotClassification"),
+        }
+        if any(calibration.get(key) != value for key, value in expected_source.items()) \
+                or calibration.get("calibrationStatus") != expected_status \
+                or calibration.get("uncertaintyReasonCode") != expected_reason \
+                or calibration.get("modelId") != run.get("activeModelId") \
+                or calibration.get("foldPlanSha256") != source.get("sourceFoldPlanSha256", "0" * 64):
+            raise RuntimeCommitError("B9.PI calibration source identity does not reconcile.")
+        residuals = source.get("residuals", []) if source_available else []
+        if calibration.get("assessmentOofResiduals") != residuals or calibration.get("folds") != []:
+            raise RuntimeCommitError("B9.PI calibration residuals differ from exact assessment OOF evidence.")
+        if source_available:
+            quantile = float(source["absoluteResidualQuantile"])
+            metrics = b9pi_calibration_metrics(residuals, quantile)
+            expected_summary = {
+                "residualCount": len(residuals), "requiredResidualCount": int(source["minimumRequired"]),
+                "finalQuantileRank": int(source["quantileRank"]), "finalQuantileValue": quantile,
+                **metrics,
+            }
+            if any(not _close(calibration.get(key), value) if isinstance(value, float) else calibration.get(key) != value
+                   for key, value in expected_summary.items() if key != "intervalWidthSummary") \
+                    or any(not _close(calibration.get("intervalWidthSummary", {}).get(key), value)
+                           for key, value in metrics["intervalWidthSummary"].items()):
+                raise RuntimeCommitError("B9.PI calibration summary does not recompute.")
+            bounds = construct_count_interval(float(forecast["forecastRaw"]), quantile)
+            expected_uncertainty = {
+                "uncertaintyStatus": "governed_available", "forecastPresentationMode": "point_and_interval",
+                "calibrationStatus": "governed_available", "uncertaintyReasonCode": None,
+                "lowerRaw": bounds["lowerRaw"], "upperRaw": bounds["upperRaw"],
+                "lowerReported": bounds["lowerReported"], "upperReported": bounds["upperReported"],
+                "isPredictionInterval": True, "nominalCoverage": float(source["nominalLevel"]),
+                "calibrationMethod": "rolling_origin_out_of_fold_absolute_residuals",
+                "residualCount": len(residuals), "calibrationWarmupFoldCount": 0,
+                "uncertaintyMethod": B9PI_METHOD_ID, "uncertaintyMethodVersion": policy["policyVersion"],
+                "historicalCoverage": metrics["historicalCoverage"],
+                "coveredFoldCount": metrics["coveredFoldCount"],
+                "lowerMissCount": metrics["lowerMissCount"], "upperMissCount": metrics["upperMissCount"],
+            }
+            provenance = {
+                "sourceAssessmentId": source["sourceAssessmentId"], "sourceAssessmentCommitSha256": source["sourceAssessmentCommitSha256"],
+                "sourceRollingValidationSha256": source["sourceRollingValidationSha256"], "candidateId": run["activeModelId"],
+                "policyId": policy["policyId"], "policyVersion": policy["policyVersion"], "policySha256": policy["policySha256"],
+                "snapshotClassification": source["sourceSnapshotClassification"],
+            }
+            if uncertainty.get("calibrationProvenance") != provenance:
+                raise RuntimeCommitError("B9.PI uncertainty provenance mismatch.")
+            if any(not _close(uncertainty.get("intervalWidthSummary", {}).get(key), value)
+                   for key, value in metrics["intervalWidthSummary"].items()):
+                raise RuntimeCommitError("B9.PI uncertainty width summary does not recompute.")
+        else:
+            expected_uncertainty = {
+                "uncertaintyStatus": "unavailable", "forecastPresentationMode": "point_only",
+                "calibrationStatus": "unavailable", "uncertaintyReasonCode": expected_reason,
+                "lowerRaw": None, "upperRaw": None, "lowerReported": None, "upperReported": None,
+                "isPredictionInterval": False, "nominalCoverage": None, "calibrationMethod": None,
+                "residualCount": 0, "calibrationWarmupFoldCount": None,
+                "uncertaintyMethod": None, "uncertaintyMethodVersion": None,
+            }
+            if uncertainty.get("calibrationProvenance") is not None:
+                raise RuntimeCommitError("Point-only B9.PI forecast contains calibration provenance.")
+        for key, value in expected_uncertainty.items():
+            actual = uncertainty.get(key)
+            if (isinstance(value, float) and not _close(actual, value)) or (not isinstance(value, float) and actual != value):
+                raise RuntimeCommitError(f"B9.PI uncertainty {key} does not recompute.")
+        dashboard_forecast = dashboard.get("forecast", {})
+        if (
+            dashboard_forecast.get("uncertaintyStatus") != uncertainty.get("uncertaintyStatus")
+            or dashboard_forecast.get("empiricalLower") != uncertainty.get("lowerReported")
+            or dashboard_forecast.get("empiricalUpper") != uncertainty.get("upperReported")
+            or dashboard_forecast.get("isPredictionInterval") != uncertainty.get("isPredictionInterval")
+            or dashboard_forecast.get("nominalCoverage") != uncertainty.get("nominalCoverage")
+            or dashboard_forecast.get("historicalCoverage") != uncertainty.get("historicalCoverage")
+            or card.get("calibration", {}).get("artifactSha256") != calibration_sha
+            or card.get("calibration", {}).get("isPredictionInterval") != uncertainty.get("isPredictionInterval")
+            or pipeline.get("uncertaintyCalibrationPerformed") is not source_available
+        ):
+            raise RuntimeCommitError("B9.PI presentation evidence does not reconcile.")
+        return
 
     frame = pd.read_csv(artifacts / "model_features.csv")
     expected_plan, expected_plan_sha = build_runtime_fold_plan(frame)
@@ -559,7 +663,7 @@ def commit_runtime_run(runtime_root: Path, staging_path: Path, job: dict[str, An
         "counts": None, "facilities": [], "alerts": [],
     }:
         raise RuntimeCommitError("Runtime preparedness must remain unavailable and empty.")
-    _validate_calibration_bundle(artifacts, forecast, calibration, uncertainty, dashboard, card, job, run)
+    _validate_calibration_bundle(artifacts, forecast, calibration, uncertainty, dashboard, card, job, run, runtime_root)
 
     artifact_hashes = {name: sha256_file(artifacts / name) for name in sorted(REQUIRED_ARTIFACTS)}
     expected_card_hashes = card.get("artifactHashes", {})
