@@ -2,14 +2,59 @@ import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { loadRuntimeConfig, type RuntimeConfig } from "@/lib/runtime/config";
-import type { ApprovedForecastJobRecord, JobStatusResponse, RuntimeJobRecord } from "@/lib/runtime/contracts";
+import type { ApprovedForecastJobRecord, DatasetAssessmentJobRecord, JobStatusResponse, RuntimeJobRecord } from "@/lib/runtime/contracts";
 import { readVerifiedDecision } from "@/lib/runtime/decision-store";
 import { errorResponse, RuntimePublicError } from "@/lib/runtime/errors";
 import { assertContained, jobRecordPath, runtimeCollectionPaths } from "@/lib/runtime/paths";
+import { loadDecisionPolicy } from "@/lib/runtime/decision-policy";
+import { validateStrictJsonSchema } from "@/lib/runtime/strict-json-schema";
 
 export const runtime = "nodejs";
 
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
+
+async function verifiedAssessmentCandidateCount(
+  config: RuntimeConfig,
+  job: DatasetAssessmentJobRecord,
+): Promise<number | undefined> {
+  try {
+    const policyPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "deployments", job.deploymentId, "assessment_policy.json"));
+    const registryPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.json"));
+    const policySchemaPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "runtime_assessment_policy.schema.json"));
+    const registrySchemaPath = assertContained(config.repositoryRoot, path.join(config.repositoryRoot, "config", "candidate_models.schema.json"));
+    const [policyBytes, registryBytes, policySchemaBytes, registrySchemaBytes] = await Promise.all([
+      readFile(policyPath), readFile(registryPath), readFile(policySchemaPath), readFile(registrySchemaPath),
+    ]);
+    const policy = JSON.parse(policyBytes.toString("utf8")) as Record<string, unknown>;
+    const registry = JSON.parse(registryBytes.toString("utf8")) as Record<string, unknown>;
+    validateStrictJsonSchema(JSON.parse(policySchemaBytes.toString("utf8")), policy);
+    validateStrictJsonSchema(JSON.parse(registrySchemaBytes.toString("utf8")), registry);
+    const policyId = String(policy.policy_id ?? "");
+    const policyVersion = String(policy.policy_version ?? "");
+    const policySha256 = String(policy.policy_sha256 ?? "");
+    if (
+      policyId !== job.assessmentPolicyId
+      || policyVersion !== job.assessmentPolicyVersion
+      || policySha256 !== job.assessmentPolicySha256
+      || sha256(registryBytes) !== job.candidateRegistrySha256
+    ) return undefined;
+    const decisionPolicy = job.assessmentPolicyVersion === "p1.4d-1-v1"
+      ? await loadDecisionPolicy(config.repositoryRoot, job.deploymentId, {
+          schemaVersion: "1.0", policyId: job.assessmentPolicyId,
+          policyVersion: job.assessmentPolicyVersion, policySha256,
+        })
+      : await loadDecisionPolicy(config.repositoryRoot, job.deploymentId, {
+          schemaVersion: "2.0", policyId: job.assessmentPolicyId,
+          policyVersion: job.assessmentPolicyVersion, policySha256,
+        });
+    if (decisionPolicy.candidateRegistrySha256 !== job.candidateRegistrySha256) return undefined;
+    const candidates = registry.candidates;
+    if (!Array.isArray(candidates) || !Number.isSafeInteger(candidates.length) || candidates.length <= 0) return undefined;
+    return candidates.length;
+  } catch {
+    return undefined;
+  }
+}
 
 async function verifiedApprovedForecastCommitSha256(
   config: RuntimeConfig,
@@ -81,7 +126,8 @@ export async function GET(_request: Request, context: RouteContext<"/api/runtime
 
     let response: JobStatusResponse;
     if (job.jobKind === "dataset_assessment") {
-      response = { ok: true, jobKind: "dataset_assessment", jobId: job.jobId, assessmentId: job.assessmentId, status: job.status, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: job.error?.retryable ?? false, error: job.error, committedAssessmentId: job.committedAssessmentId };
+      const verifiedCandidateCount = await verifiedAssessmentCandidateCount(config, job);
+      response = { ok: true, jobKind: "dataset_assessment", jobId: job.jobId, assessmentId: job.assessmentId, status: job.status, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: job.error?.retryable ?? false, error: job.error, committedAssessmentId: job.committedAssessmentId, ...(verifiedCandidateCount ? { verifiedCandidateCount } : {}) };
     } else if (job.jobKind === "approved_forecast") {
       const base = { ok: true as const, jobKind: "approved_forecast" as const, jobId: job.jobId, runId: job.runId, decisionId: job.decisionId, assessmentId: job.assessmentId, authorizationId: job.authorizationId, progress: job.progress, createdAt: job.createdAt, startedAt: job.startedAt, updatedAt: job.updatedAt, completedAt: job.completedAt, retryable: false as const, error: job.error };
       response = job.status === "completed"

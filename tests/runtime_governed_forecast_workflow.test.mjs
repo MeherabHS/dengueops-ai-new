@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { require as tsxRequire } from "tsx/cjs/api";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+const suitabilityModule = tsxRequire("../components/forecast/ModelSuitabilitySummary.tsx", import.meta.url);
+const approvedForecastModule = tsxRequire("../components/forecast/ApprovedForecastPanel.tsx", import.meta.url);
+const { friendlyWinnerSelectionReason } = suitabilityModule;
+const { runQualificationStartOnce } = approvedForecastModule;
 const [
   workflow,
   approval,
@@ -45,6 +50,38 @@ test("technical winner is assessment-derived and is the bounded default decision
   assert.match(winner, /expectedAssessmentSummarySha256/);
   assert.match(winner, /uncertaintyLimitationsAcknowledged: true/);
   assert.doesNotMatch(winner, /selectedModelId/);
+});
+
+test("technical winner reason replaces only the exact raw winner token", () => {
+  const raw = "poisson_gam was the best-performing eligible learned model within this governed assessment.";
+  assert.equal(
+    friendlyWinnerSelectionReason(raw, "poisson_gam"),
+    "Poisson GAM was the best-performing eligible learned model within this governed assessment.",
+  );
+  assert.equal(friendlyWinnerSelectionReason("not_poisson_gam_extra remains technical.", "poisson_gam"), "not_poisson_gam_extra remains technical.");
+  assert.match(leaderboard, /Candidate ID[\s\S]*candidate\.modelId/);
+});
+
+test("qualification initiating guard is synchronous while the POST is unresolved", async () => {
+  let resolveStart;
+  let postCalls = 0;
+  const startingStates = [];
+  const deferred = new Promise((resolve) => { resolveStart = resolve; });
+  const guard = { current: false };
+  const operation = () => {
+    postCalls += 1;
+    return deferred;
+  };
+  const first = runQualificationStartOnce(guard, (value) => startingStates.push(value), operation);
+  const second = runQualificationStartOnce(guard, (value) => startingStates.push(value), operation);
+  assert.equal(postCalls, 1);
+  assert.equal(guard.current, true);
+  assert.deepEqual(startingStates, [true]);
+  resolveStart({ ok: true, status: "queued" });
+  assert.deepEqual(await first, { ok: true, status: "queued" });
+  assert.equal(await second, null);
+  assert.equal(guard.current, false);
+  assert.deepEqual(startingStates, [true, false]);
 });
 
 test("governed override is explicit and contains only verified eligible non-winners", () => {
@@ -122,6 +159,8 @@ test("approved forecast sends no model identity, polls the returned job URL, and
   assert.doesNotMatch(requestCall, /selectedModelId|modelId/);
   assert.match(generate, /getRuntimeJobByStatusUrl\(started\.statusUrl\)/);
   assert.match(approvedForecast, /polling\.current/);
+  assert.match(approvedForecast, /runQualificationStartOnce/);
+  assert.match(approvedForecast, /startingRef/);
   assert.match(approvedForecast, /state\.status !== "idle"/);
   assert.match(client, /fetch\(statusUrl, \{ cache: "no-store" \}\)/);
 });

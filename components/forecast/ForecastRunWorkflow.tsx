@@ -371,11 +371,18 @@ export default function ForecastRunWorkflow() {
     && state.validatedWorkflowMode === "assess_dataset"
     && state.serverValidation.response.eligibility.assessDataset.assessmentStatus === "full_assessment_eligible";
   const approvedState = useMemo(() => state.approvedForecast, [state.approvedForecast]);
-  const assessmentCandidateCount = state.serverValidation.status === "ready"
+  const validationCandidateCount = state.serverValidation.status === "ready"
     && state.serverValidation.response.workflowMode === "assess_dataset"
     && state.serverValidation.response.eligibility.assessDataset.candidateSetStatus === "complete_candidate_set"
     ? Object.keys(state.serverValidation.response.eligibility.assessDataset.candidateEligibility).length
     : undefined;
+  const recoveredJobCandidateCount = state.job?.ok
+    && state.job.jobKind === "dataset_assessment"
+    && Number.isSafeInteger(state.job.verifiedCandidateCount)
+    && Number(state.job.verifiedCandidateCount) > 0
+    ? state.job.verifiedCandidateCount
+    : undefined;
+  const assessmentCandidateCount = validationCandidateCount ?? recoveredJobCandidateCount;
   const approvedEvidenceReady = Boolean(
     recordedDecision
     && approvedState.status === "completed"

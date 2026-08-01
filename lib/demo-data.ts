@@ -17,6 +17,7 @@ import directivesFileRaw from "@/data/directives.json";
 // Dashboard-ready outputs from analytics/dashboard_exporter.py
 import dashboardSummaryRaw from "@/data/dashboard_summary.json";
 import modelComparisonRaw from "@/data/model_comparison.json";
+import candidateModelComparisonRaw from "@/data/candidate_model_comparison.json";
 import chartDataRaw from "@/data/chart_data.json";
 // Pipeline run log
 import pipelineRunSummaryRaw from "@/data/pipeline_run_summary.json";
@@ -77,6 +78,9 @@ if (!Array.isArray(directivesRecord.directives) || directivesRecord.directives.s
 
 const directivesFile = directivesFileRaw as unknown as { directives: Directive[]; summary: Record<string, number | string> };
 const dashboardSummaryTyped = dashboardSummaryRaw as unknown as DashboardSummary;
+const historicalCandidateModelComparison = candidateModelComparisonRaw as {
+  candidates: Array<{ model_id: string }>;
+};
 
 export const forecastOutput = forecastOutputRaw as unknown as ForecastOutput;
 export const validationMetrics = validationMetricsRaw as unknown as ValidationMetrics;
@@ -116,7 +120,7 @@ export const historicalBenchmarkEvidence = {
     status: dashboardSummary.candidate_model_comparison.model_selection_status,
     winnerModelId: dashboardSummary.candidate_model_comparison.comparison_selected_model,
     aggregateMetrics: dashboardSummary.candidate_model_comparison.aggregate_metrics,
-    candidates: dashboardSummary.candidate_model_comparison.candidates,
+    candidates: historicalCandidateModelComparison.candidates,
     selectionEligibility: dashboardSummary.candidate_model_comparison.selection_eligibility,
     winnerMetrics: dashboardSummary.candidate_model_comparison.active_model_rolling_metrics,
   },

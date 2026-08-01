@@ -1,10 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import Module from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { require as tsxRequire } from "tsx/cjs/api";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const runFile = promisify(execFile);
@@ -12,6 +15,64 @@ const root = path.resolve(import.meta.dirname, "..");
 const python = process.env.DENGUEOPS_TEST_PYTHON
   || process.env.PYTHON
   || "C:\\Users\\CUBE\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+
+const originalModuleLoad = Module._load;
+Module._load = function loadAssessmentJobRoute(request, parent, isMain) {
+  if (request === "server-only") return {};
+  return originalModuleLoad.call(this, request, parent, isMain);
+};
+const jobRouteImported = tsxRequire("../app/api/runtime/jobs/[jobId]/route.ts", import.meta.url);
+Module._load = originalModuleLoad;
+const { GET: getRuntimeJob } = jobRouteImported.default ?? jobRouteImported;
+
+test("dataset-assessment job GET returns only a server-verified dynamic candidate count", async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "assessment-job-count-"));
+  const previousRuntimeRoot = process.env.DENGUEOPS_RUNTIME_ROOT;
+  const previousPython = process.env.DENGUEOPS_PYTHON_EXECUTABLE;
+  try {
+    process.env.DENGUEOPS_RUNTIME_ROOT = temporary;
+    process.env.DENGUEOPS_PYTHON_EXECUTABLE = process.execPath;
+    const pending = path.join(temporary, "jobs", "pending");
+    await mkdir(pending, { recursive: true });
+    const registryBytes = await readFile(path.join(root, "config", "candidate_models.json"));
+    const registry = JSON.parse(registryBytes.toString("utf8"));
+    const policy = JSON.parse(await readFile(path.join(root, "config", "deployments", "dhaka_south", "assessment_policy.json"), "utf8"));
+    const jobId = "11111111-1111-4111-8111-111111111111";
+    const assessmentId = "22222222-2222-4222-8222-222222222222";
+    const jobPath = path.join(pending, `${jobId}.json`);
+    const job = {
+      schemaVersion: "1.0", jobKind: "dataset_assessment", jobId, assessmentId,
+      workspaceId: "33333333-3333-4333-8333-333333333333", datasetId: "a".repeat(64),
+      deploymentId: "dhaka_south", workflowMode: "assess_dataset", validationRecordSha256: "b".repeat(64),
+      assessmentPolicyId: policy.policy_id, assessmentPolicyVersion: policy.policy_version,
+      assessmentPolicySha256: policy.policy_sha256,
+      candidateRegistrySha256: createHash("sha256").update(registryBytes).digest("hex"),
+      status: "running", progress: "evaluating_candidates", createdAt: "2026-08-01T00:00:00.000Z",
+      claimedAt: "2026-08-01T00:00:01.000Z", startedAt: "2026-08-01T00:00:01.000Z",
+      updatedAt: "2026-08-01T00:00:02.000Z", completedAt: null, heartbeatAt: "2026-08-01T00:00:02.000Z",
+      workerId: "test-worker", processId: 1, timeoutSeconds: 1800, retryCount: 0, error: null,
+      committedAssessmentId: null,
+    };
+    await writeFile(jobPath, JSON.stringify(job));
+    const verifiedResponse = await getRuntimeJob(new Request(`http://localhost/api/runtime/jobs/${jobId}`), { params: Promise.resolve({ jobId }) });
+    assert.equal(verifiedResponse.status, 200);
+    const verified = await verifiedResponse.json();
+    assert.equal(verified.verifiedCandidateCount, registry.candidates.length);
+    assert.notEqual(registry.candidates.length, 0);
+
+    await writeFile(jobPath, JSON.stringify({ ...job, candidateRegistrySha256: "0".repeat(64) }));
+    const mismatchResponse = await getRuntimeJob(new Request(`http://localhost/api/runtime/jobs/${jobId}`), { params: Promise.resolve({ jobId }) });
+    assert.equal(mismatchResponse.status, 200);
+    const mismatch = await mismatchResponse.json();
+    assert.equal("verifiedCandidateCount" in mismatch, false);
+  } finally {
+    if (previousRuntimeRoot === undefined) delete process.env.DENGUEOPS_RUNTIME_ROOT;
+    else process.env.DENGUEOPS_RUNTIME_ROOT = previousRuntimeRoot;
+    if (previousPython === undefined) delete process.env.DENGUEOPS_PYTHON_EXECUTABLE;
+    else process.env.DENGUEOPS_PYTHON_EXECUTABLE = previousPython;
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
 
 test("assessment start uses the schema-verified current policy and registry without a fixed candidate set", async () => {
   const source = await read("app/api/runtime/assessments/route.ts");

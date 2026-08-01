@@ -3,6 +3,9 @@ import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { require as tsxRequire } from "tsx/cjs/api";
 
 const root = path.resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 const read = (file) => readFile(path.join(root, file), "utf8");
@@ -58,8 +61,26 @@ test("assessment running status uses a trusted optional count without hardcoding
   assert.match(workflow, /candidateSetStatus === "complete_candidate_set"/);
   assert.match(workflow, /Object\.keys\(state\.serverValidation\.response\.eligibility\.assessDataset\.candidateEligibility\)\.length/);
   assert.match(workflow, /candidateCount=\{assessmentCandidateCount\}/);
+  assert.match(workflow, /validationCandidateCount \?\? recoveredJobCandidateCount/);
+  assert.match(workflow, /state\.job\.verifiedCandidateCount/);
   assert.match(processing, /assessmentRunningLabel\(candidateCount\)/);
   assert.doesNotMatch(`${workflow}\n${processing}`, /candidateCount\s*=\s*11/);
+  const dynamicFixtureCount = 3;
+  const labels = tsxRequire("../lib/status-labels.ts", import.meta.url);
+  assert.equal(labels.assessmentRunningLabel(dynamicFixtureCount), "Evaluating 3 governed candidates");
+});
+
+test("qualification pre-POST presentation includes real spinner, elapsed time, and a disabled control", async () => {
+  const qualification = await read("components/forecast/ApprovedForecastPanel.tsx");
+  const indicatorModule = tsxRequire("../components/forecast/AsyncStatusIndicator.tsx", import.meta.url);
+  const AsyncStatusIndicator = indicatorModule.default ?? indicatorModule;
+  const html = renderToStaticMarkup(createElement(AsyncStatusIndicator, { label: "Starting qualification run…" }));
+  assert.match(html, /Starting qualification run…/);
+  assert.match(html, /animate-spin/);
+  assert.match(html, /0s elapsed/);
+  assert.match(qualification, /isStartingQualification[\s\S]*<Button disabled>Starting qualification run…<\/Button>/);
+  assert.match(qualification, /runQualificationStartOnce/);
+  assert.doesNotMatch(qualification, /setTimeout\([^)]*Starting qualification|sleep/i);
 });
 
 test("active steps expose spinner, completion check, failure, and conflict icons", async () => {
@@ -81,6 +102,7 @@ test("governed mutation panels show operation-specific progress labels", async (
   const combined = sources.join("\n");
   for (const label of [
     "Recording governed decision",
+    "Starting qualification run…",
     "Waiting for qualification worker",
     "Executing selected candidate for assignment evidence",
     "Publishing governed assignment",

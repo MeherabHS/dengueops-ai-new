@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import StatusBadge from "@/components/ui/StatusBadge";
 import AsyncStatusIndicator from "./AsyncStatusIndicator";
@@ -13,6 +13,22 @@ type RecordedDecision = DecisionResultSuccess | AssessmentDecisionWorkflowProjec
 const SHA = /^[a-f0-9]{64}$/;
 const terminal = new Set(["completed", "failed", "timed_out", "cancelled"]);
 
+export async function runQualificationStartOnce<T>(
+  guard: { current: boolean },
+  setStarting: (starting: boolean) => void,
+  operation: () => Promise<T>,
+): Promise<T | null> {
+  if (guard.current) return null;
+  guard.current = true;
+  setStarting(true);
+  try {
+    return await operation();
+  } finally {
+    guard.current = false;
+    setStarting(false);
+  }
+}
+
 export default function ApprovedForecastPanel({
   decision,
   state,
@@ -23,7 +39,9 @@ export default function ApprovedForecastPanel({
   onStateChange: (state: ApprovedForecastWorkflowState) => void;
 }) {
   const polling = useRef(false);
+  const startingRef = useRef(false);
   const mounted = useRef(true);
+  const [isStartingQualification, setIsStartingQualification] = useState(false);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -100,11 +118,17 @@ export default function ApprovedForecastPanel({
       progress: "approved_forecast_queued",
       error: null,
     };
-    onStateChange(queued);
     try {
-      const started = await startApprovedForecast(decision.decisionId, {
-        expectedDecisionCommitSha256: decision.decisionCommitSha256,
-      });
+      const started = await runQualificationStartOnce(
+        startingRef,
+        (starting) => {
+          if (mounted.current) setIsStartingQualification(starting);
+        },
+        () => startApprovedForecast(decision.decisionId, {
+          expectedDecisionCommitSha256: decision.decisionCommitSha256,
+        }),
+      );
+      if (!started) return;
       if (!started.ok) throw new Error(started.error.message);
       const retained = { ...queued, jobId: started.jobId, statusUrl: started.statusUrl, runId: started.runId };
       onStateChange(retained);
@@ -146,7 +170,8 @@ export default function ApprovedForecastPanel({
     {state.progress && state.status !== "completed" ? <p className="mt-3 text-sm text-ink-muted">Status: {statusLabel(state.progress)}</p> : null}
     {state.error ? <p className="mt-3 rounded-lg border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive" role="alert">{state.error}</p> : null}
     <div className="mt-4 rounded-lg border border-border-subtle bg-surface-muted p-4 text-sm text-ink-muted"><p>Executes the governed selected candidate once to verify that it can run and to create evidence required for assignment.</p><ul className="mt-2 space-y-1 text-xs"><li>• It does not publish the normal current forecast.</li><li>• It does not change the active assignment by itself.</li><li>• It does not start operational forecasting.</li></ul></div>
-    {state.status === "idle" ? <Button className="mt-4" disabled={!authorized || !selectedModelId} onClick={() => void generate()}>Run qualification</Button> : null}
+    {state.status === "idle" && !isStartingQualification ? <Button className="mt-4" disabled={!authorized || !selectedModelId} onClick={() => void generate()}>Run qualification</Button> : null}
+    {state.status === "idle" && isStartingQualification ? <div className="mt-4 space-y-3"><Button disabled>Starting qualification run…</Button><AsyncStatusIndicator label="Starting qualification run…" delayedAfterSeconds={10} /></div> : null}
     {["queued", "running", "committing"].includes(state.status) ? <div className="mt-4 space-y-3"><Button disabled>{state.status === "queued" ? "Waiting for qualification worker…" : state.status === "running" ? "Qualification run in progress…" : "Verifying qualification evidence…"}</Button><AsyncStatusIndicator label={state.status === "queued" ? "Waiting for qualification worker" : state.status === "running" ? "Executing selected candidate for assignment evidence" : "Verifying qualification evidence"} delayedAfterSeconds={state.status === "queued" ? 15 : state.status === "running" ? 30 : 10} onCheckStatus={() => void checkStatus()} /></div> : null}
     {state.status === "completed" ? <div className="mt-5 rounded-lg border border-success/25 bg-surface p-4"><p className="font-semibold text-success">Ready for governed assignment</p><p className="mt-1 text-sm text-ink-muted">The qualification run is verified and retained as assignment evidence. It did not publish an operational forecast.</p><details className="mt-3"><summary className="cursor-pointer text-xs font-semibold text-accent outline-none focus-visible:ring-2 focus-visible:ring-focus">Technical evidence</summary><dl className="mt-2 space-y-1 text-xs text-ink-muted"><div><dt className="inline font-medium text-ink">Qualification run ID: </dt><dd className="inline break-all font-mono">{state.committedRunId}</dd></div><div><dt className="inline font-medium text-ink">Commit SHA-256: </dt><dd className="inline break-all font-mono">{state.approvedForecastCommitSha256}</dd></div></dl></details></div> : null}
   </section>;

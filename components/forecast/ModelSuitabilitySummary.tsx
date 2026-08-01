@@ -4,6 +4,18 @@ import type { ModelSuitabilityAssessment } from "@/lib/forecast-workflow-types";
 import ModelLeaderboard from "./ModelLeaderboard";
 import RecommendationStrengthBadge from "./RecommendationStrengthBadge";
 
+export function friendlyWinnerSelectionReason(reason: string, technicalWinnerModelId: string | null): string {
+  if (!technicalWinnerModelId) return reason;
+  const index = reason.indexOf(technicalWinnerModelId);
+  if (index < 0) return reason;
+  const candidateTokenCharacter = /[a-z0-9_]/i;
+  const before = index > 0 ? reason[index - 1] : "";
+  const afterIndex = index + technicalWinnerModelId.length;
+  const after = afterIndex < reason.length ? reason[afterIndex] : "";
+  if ((before && candidateTokenCharacter.test(before)) || (after && candidateTokenCharacter.test(after))) return reason;
+  return `${reason.slice(0, index)}${modelLabel(technicalWinnerModelId)}${reason.slice(afterIndex)}`;
+}
+
 export default function ModelSuitabilitySummary({ assessment }: { assessment: ModelSuitabilityAssessment | null }) {
   if (!assessment) return <EmptyState title="Assessment not completed" description="Start the governed temporal assessment to produce technical comparison evidence. No winner or forecast has been generated." />;
   const workflow = assessment.workflow;
@@ -15,7 +27,7 @@ export default function ModelSuitabilitySummary({ assessment }: { assessment: Mo
         <div><p className="text-xs uppercase tracking-wide text-ink-muted">Technical winner for this dataset</p><h2 id="assessment-result-title" className="mt-1 text-xl font-semibold text-ink">{assessment.technicalWinnerModelId ? modelLabel(assessment.technicalWinnerModelId) : "No technical winner"}</h2></div>
         <RecommendationStrengthBadge strength={assessment.recommendationStrength} />
       </div>
-      <p className="mt-3 text-sm text-ink-muted">{assessment.selectionReason}</p>
+      <p className="mt-3 text-sm text-ink-muted">{friendlyWinnerSelectionReason(assessment.selectionReason, assessment.technicalWinnerModelId)}</p>
       <p className="mt-2 text-xs text-warning">The winner was derived from the uploaded dataset&apos;s verified assessment performance. {decisionAvailable ? "The current governed policy permits a separate Super User decision and qualification-run authorization; automatic adoption remains disabled." : "No governed decision policy matches this committed identity, so decision controls fail closed."}</p>
       {!workflow.technicalWinnerDeployable && assessment.technicalWinnerModelId && decisionAvailable ? <p className="mt-2 text-xs font-medium text-warning">This technical winner is an evaluation-only baseline and cannot authorize a qualification run. No learned candidate is substituted automatically.</p> : null}
     </div>

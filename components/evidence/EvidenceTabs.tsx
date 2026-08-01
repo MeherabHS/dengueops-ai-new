@@ -90,7 +90,7 @@ function Provenance() {
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-border bg-surface p-4"><p className="text-xs text-text-muted">Historical run status</p><p className="mt-1 font-semibold text-primary">{statusLabel(historicalBenchmarkEvidence.pipelineRun.status)}</p></div>
         <div className="rounded-xl border border-border bg-surface p-4"><p className="text-xs text-text-muted">Historical benchmark winner</p><p className="mt-1 font-semibold text-primary">{modelLabel(historicalBenchmarkEvidence.comparison.winnerModelId)}</p></div>
-        <div className="rounded-xl border border-border bg-surface p-4"><p className="text-xs text-text-muted">Operational classification</p><p className="mt-1 font-semibold text-primary">Benchmark evidence only</p></div>
+        <div className="rounded-xl border border-border bg-surface p-4"><p className="text-xs text-text-muted">Evidence classification</p><p className="mt-1 font-semibold text-primary">Benchmark evidence only</p></div>
       </div>
       <details className="rounded-xl border border-border bg-surface p-4">
         <summary className="cursor-pointer font-semibold text-primary">Technical evidence</summary>
