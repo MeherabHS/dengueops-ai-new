@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "deploymentId", "monitoringId", "policyId", "policyVersion", "policySha256", "authoritySnapshotSha256", "assignmentId", "assignmentPointerSha256", "forecastRunId", "forecastLatestSha256", "datasetId", "evidencePath", "evidenceSha256", "commitPath", "commitSha256", "publishedAt"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "deploymentId": {"const": "dhaka_south"}, "monitoringId": {"format": "uuid"},
+    "policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"}, "policyVersion": {"const": "b9.d-v1"}, "policySha256": {"$ref": "#/$defs/sha"},
+    "authoritySnapshotSha256": {"$ref": "#/$defs/sha"}, "assignmentId": {"format": "uuid"}, "assignmentPointerSha256": {"$ref": "#/$defs/sha"},
+    "forecastRunId": {"format": "uuid"}, "forecastLatestSha256": {"$ref": "#/$defs/sha"}, "datasetId": {"$ref": "#/$defs/sha"},
+    "evidencePath": {"type": "string", "pattern": "^degradation-evidence/[0-9a-f-]+/artifacts/governed_monitoring.json$"}, "evidenceSha256": {"$ref": "#/$defs/sha"},
+    "commitPath": {"type": "string", "pattern": "^degradation-evidence/[0-9a-f-]+/metadata/governed_monitoring_commit.json$"}, "commitSha256": {"$ref": "#/$defs/sha"},
+    "publishedAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {"sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

@@ -56,6 +56,17 @@ export interface OperationalPreparednessRowViewModel {
   planningState:{status:"calculated"|"insufficient_data";reason:string};planningSuggestion:string|null;
 }
 
+export interface MonitoringViewModel {
+  availabilityStatus:"available"|"pending"|"unavailable";
+  reason:string|null;
+  confidence:{status:"available"|"pending"|"unavailable";score:number|null;band:"high"|"moderate"|"low"|null;reasonCodes:string[]};
+  featureDrift:{status:"stable"|"watch"|"material_drift"|"insufficient_monitoring_history"|"incompatible_feature_authority"|"unavailable";maximumPsi:number|null;materialFeatureCount:number};
+  performanceDrift:{status:"awaiting_outcomes"|"insufficient_outcomes"|"stable"|"watch"|"material_degradation"|"identity_mismatch"|"reference_unavailable"|"unavailable";matureOutcomeCount:number};
+  rankingInstability:{status:"no_new_reassessment"|"stable"|"technical_winner_changed"|"unavailable";winnerChanged:boolean;currentTechnicalWinner:string|null;latestTechnicalWinner:string|null};
+  recommendation:{state:"not_recommended"|"monitor"|"recommended"|"review_required";reasonCodes:string[];actionHref:"/forecast?intent=reassess"};
+  technicalEvidence:{monitoringId:string;policyId:string;policyVersion:string;policySha256:string;authoritySnapshotSha256:string;components:Record<string,unknown>;weights:Record<string,unknown>}|null;
+}
+
 export interface OverviewViewModel {
   sourceType: "bundled_benchmark" | "uploaded";
   latestObservedCases: number;
@@ -91,6 +102,12 @@ export interface OverviewViewModel {
     ns1StockHorizonFacilities: number;
     ivFluidStockHorizonFacilities: number;
     criticalReviewFacilities: number;
+  };
+  monitoring: MonitoringViewModel;
+  downstreamEvidence: {
+    preparednessStatus: "available" | "pending" | "unavailable" | "failed";
+    monitoringStatus: "available" | "pending" | "unavailable" | "failed";
+    confidenceStatus: "available" | "pending" | "unavailable";
   };
   facilitiesRequiringAttention: FacilityAttentionViewModel[];
   alerts: AlertViewModel[];
@@ -173,6 +190,15 @@ export function buildBundledOverviewViewModel(): OverviewViewModel {
       ivFluidStockHorizonFacilities: directives.filter((facility) => (facility.sdh_iv_fluid_expected ?? Infinity) <= 14).length,
       criticalReviewFacilities: directives.filter((facility) => facility.inventory_alerts.some((alert) => alert.alert_level.toLowerCase() === "critical")).length,
     },
+    monitoring: {
+      availabilityStatus:"unavailable",reason:"Forecast monitoring was not available for this historical bundled demonstration.",
+      confidence:{status:"unavailable",score:null,band:null,reasonCodes:["legacy_monitoring_unavailable"]},
+      featureDrift:{status:"unavailable",maximumPsi:null,materialFeatureCount:0},
+      performanceDrift:{status:"unavailable",matureOutcomeCount:0},
+      rankingInstability:{status:"unavailable",winnerChanged:false,currentTechnicalWinner:null,latestTechnicalWinner:null},
+      recommendation:{state:"not_recommended",reasonCodes:[],actionHref:"/forecast?intent=reassess"},technicalEvidence:null,
+    },
+    downstreamEvidence:{preparednessStatus:"available",monitoringStatus:"unavailable",confidenceStatus:"unavailable"},
     facilitiesRequiringAttention: buildFacilityAttention(),
     alerts: directives.flatMap((facility) => facility.inventory_alerts.map((alert, index) => ({
       id: `${facility.facility_id}-${index}`,

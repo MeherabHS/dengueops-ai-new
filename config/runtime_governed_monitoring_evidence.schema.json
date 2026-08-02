@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "monitoringId", "deploymentId", "policy", "authority", "featureDrift", "performanceDrift", "rankingInstability", "recommendation", "confidence", "invariants", "generatedAt"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "monitoringId": {"format": "uuid"},
+    "deploymentId": {"const": "dhaka_south"},
+    "policy": {"type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policySha256"], "properties": {"policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"}, "policyVersion": {"const": "b9.d-v1"}, "policySha256": {"$ref": "#/$defs/sha"}}},
+    "authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authoritySnapshotSha256", "assignmentId", "assignmentPointerSha256", "assignmentCommitSha256", "sourceAssessmentId", "sourceAssessmentCommitSha256", "sourceFeatureMatrixSha256", "forecastRunId", "forecastLatestSha256", "forecastCommitSha256", "currentFeatureMatrixSha256", "datasetId", "featureOrderSha256", "calibrationSha256", "uncertaintySha256", "outcomeMonitoringLatestSha256", "latestReassessmentCommitSha256"],
+      "properties": {
+        "authoritySnapshotSha256": {"$ref": "#/$defs/sha"}, "assignmentId": {"format": "uuid"},
+        "assignmentPointerSha256": {"$ref": "#/$defs/sha"}, "assignmentCommitSha256": {"$ref": "#/$defs/sha"},
+        "sourceAssessmentId": {"format": "uuid"}, "sourceAssessmentCommitSha256": {"$ref": "#/$defs/sha"},
+        "sourceFeatureMatrixSha256": {"$ref": "#/$defs/sha"}, "forecastRunId": {"format": "uuid"},
+        "forecastLatestSha256": {"$ref": "#/$defs/sha"}, "forecastCommitSha256": {"$ref": "#/$defs/sha"},
+        "currentFeatureMatrixSha256": {"$ref": "#/$defs/sha"}, "datasetId": {"$ref": "#/$defs/sha"},
+        "featureOrderSha256": {"$ref": "#/$defs/sha"}, "calibrationSha256": {"$ref": "#/$defs/sha"},
+        "uncertaintySha256": {"$ref": "#/$defs/sha"}, "outcomeMonitoringLatestSha256": {"oneOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]},
+        "latestReassessmentCommitSha256": {"oneOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]}
+      }
+    },
+    "featureDrift": {"$ref": "#/$defs/evidenceObject"},
+    "performanceDrift": {"$ref": "#/$defs/evidenceObject"},
+    "rankingInstability": {"$ref": "#/$defs/evidenceObject"},
+    "recommendation": {"$ref": "#/$defs/evidenceObject"},
+    "confidence": {
+      "type": "object", "additionalProperties": true,
+      "required": ["status", "classification", "rawNormalizedScore", "score", "band", "components", "appliedWeights", "reasonCodes"],
+      "properties": {
+        "status": {"enum": ["available", "unavailable"]}, "classification": {"const": "forecast_evidence_confidence"},
+        "rawNormalizedScore": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "score": {"type": ["integer", "null"], "minimum": 0, "maximum": 100}, "band": {"enum": ["high", "moderate", "low", null]},
+        "components": {"type": "object"}, "appliedWeights": {"type": "object"}, "reasonCodes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "invariants": {
+      "type": "object", "additionalProperties": false,
+      "required": ["confidenceScoreChangesModelSelection", "confidenceAffectsForecastPoint", "confidenceAffectsPredictionInterval", "confidenceAffectsPreparedness", "reassessmentAutoStarted", "modelAutoReassigned"],
+      "properties": {
+        "confidenceScoreChangesModelSelection": {"const": false}, "confidenceAffectsForecastPoint": {"const": false},
+        "confidenceAffectsPredictionInterval": {"const": false}, "confidenceAffectsPreparedness": {"const": false},
+        "reassessmentAutoStarted": {"const": false}, "modelAutoReassigned": {"const": false}
+      }
+    },
+    "generatedAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "evidenceObject": {"type": "object", "minProperties": 1}
+  }
+}

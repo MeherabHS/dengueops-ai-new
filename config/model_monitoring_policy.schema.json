@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "policy_id", "policy_version", "policy_status", "policy_sha256",
+    "policy_hash_method", "deployment_id", "feature_authority", "feature_drift",
+    "performance_drift", "ranking_instability", "recommendation", "confidence",
+    "invariants", "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"},
+    "policy_version": {"const": "b9.d-v1"},
+    "policy_status": {"const": "active"},
+    "policy_sha256": {"$ref": "#/$defs/sha"},
+    "policy_hash_method": {"const": "sha256_canonical_json_excluding_policy_sha256"},
+    "deployment_id": {"const": "dhaka_south"},
+    "feature_authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reference_source", "current_source", "feature_order_sha256", "features"],
+      "properties": {
+        "reference_source": {"const": "current_assignment_exact_source_assessment_model_features"},
+        "current_source": {"const": "exact_current_forecast_model_features"},
+        "feature_order_sha256": {"const": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85"},
+        "features": {"type": "array", "minItems": 18, "maxItems": 18, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "feature_drift": {
+      "type": "object", "additionalProperties": false,
+      "required": ["metric", "binning_method", "maximum_bin_count", "zero_proportion_epsilon", "current_window_rows", "minimum_observations", "warning_threshold", "material_threshold", "aggregation"],
+      "properties": {
+        "metric": {"const": "population_stability_index"},
+        "binning_method": {"const": "reference_only_deterministic_quantiles"},
+        "maximum_bin_count": {"type": "integer", "minimum": 2, "maximum": 20},
+        "zero_proportion_epsilon": {"type": "number", "exclusiveMinimum": 0, "maximum": 0.01},
+        "current_window_rows": {"type": "integer", "minimum": 2},
+        "minimum_observations": {"type": "integer", "minimum": 2},
+        "warning_threshold": {"type": "number", "minimum": 0},
+        "material_threshold": {"type": "number", "exclusiveMinimum": 0},
+        "aggregation": {
+          "type": "object", "additionalProperties": false,
+          "required": ["material_feature_count", "warning_share", "single_feature_guard"],
+          "properties": {
+            "material_feature_count": {"type": "integer", "minimum": 1},
+            "warning_share": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+            "single_feature_guard": {"const": true}
+          }
+        }
+      }
+    },
+    "performance_drift": {
+      "type": "object", "additionalProperties": false,
+      "required": ["horizon_weeks", "minimum_mature_outcomes", "metrics", "warning_ratio", "material_ratio", "reference_source"],
+      "properties": {
+        "horizon_weeks": {"const": 2},
+        "minimum_mature_outcomes": {"type": "integer", "minimum": 2},
+        "metrics": {"const": ["mae", "rmse", "wape"]},
+        "warning_ratio": {"type": "number", "exclusiveMinimum": 1},
+        "material_ratio": {"type": "number", "exclusiveMinimum": 1},
+        "reference_source": {"const": "assigned_candidate_leakage_safe_oof"}
+      }
+    },
+    "ranking_instability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "winner_change_state", "assignment_mutation_allowed"],
+      "properties": {
+        "source": {"const": "latest_verified_governed_reassessment_after_source_assessment"},
+        "winner_change_state": {"const": "review_required"},
+        "assignment_mutation_allowed": {"const": false}
+      }
+    },
+    "recommendation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["states", "material_feature_drift", "material_performance_degradation", "incompatible_feature_authority", "technical_winner_changed", "watch_evidence", "automatic_reassessment_allowed", "automatic_assignment_allowed"],
+      "properties": {
+        "states": {"const": ["not_recommended", "monitor", "recommended", "review_required"]},
+        "material_feature_drift": {"const": "recommended"},
+        "material_performance_degradation": {"const": "recommended"},
+        "incompatible_feature_authority": {"const": "review_required"},
+        "technical_winner_changed": {"const": "review_required"},
+        "watch_evidence": {"const": "monitor"},
+        "automatic_reassessment_allowed": {"const": false},
+        "automatic_assignment_allowed": {"const": false}
+      }
+    },
+    "confidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["classification", "point_only_behavior", "weights", "calibration_component_weights", "calibration_coverage_tolerance", "minimum_reference_outcome_scale", "interval_width_ratio_at_zero", "bands", "missing_component_behavior", "rounding"],
+      "properties": {
+        "classification": {"const": "forecast_evidence_confidence"},
+        "point_only_behavior": {"const": "unavailable"},
+        "weights": {
+          "type": "object", "additionalProperties": false,
+          "required": ["calibrationEvidenceScore", "intervalPrecisionScore", "inputStabilityScore", "dataQualityScore", "performanceScore"],
+          "properties": {
+            "calibrationEvidenceScore": {"type": "number", "minimum": 0, "maximum": 1},
+            "intervalPrecisionScore": {"type": "number", "minimum": 0, "maximum": 1},
+            "inputStabilityScore": {"type": "number", "minimum": 0, "maximum": 1},
+            "dataQualityScore": {"type": "number", "minimum": 0, "maximum": 1},
+            "performanceScore": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "calibration_component_weights": {
+          "type": "object", "additionalProperties": false,
+          "required": ["sample_sufficiency", "coverage_alignment"],
+          "properties": {
+            "sample_sufficiency": {"type": "number", "minimum": 0, "maximum": 1},
+            "coverage_alignment": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "calibration_coverage_tolerance": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "minimum_reference_outcome_scale": {"type": "number", "exclusiveMinimum": 0},
+        "interval_width_ratio_at_zero": {"type": "number", "exclusiveMinimum": 0},
+        "bands": {
+          "type": "object", "additionalProperties": false,
+          "required": ["high_minimum", "moderate_minimum"],
+          "properties": {
+            "high_minimum": {"type": "number", "minimum": 0, "maximum": 1},
+            "moderate_minimum": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "missing_component_behavior": {"const": "renormalize_permitted_available_components"},
+        "rounding": {"const": "half_up_integer"}
+      }
+    },
+    "invariants": {
+      "type": "object", "additionalProperties": false,
+      "required": ["confidenceScoreChangesModelSelection", "confidenceAffectsForecast", "confidenceAffectsPreparedness", "monitoringFailureInvalidatesForecast"],
+      "properties": {
+        "confidenceScoreChangesModelSelection": {"const": false},
+        "confidenceAffectsForecast": {"const": false},
+        "confidenceAffectsPreparedness": {"const": false},
+        "monitoringFailureInvalidatesForecast": {"const": false}
+      }
+    },
+    "limitations": {"type": "array", "minItems": 3, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {"sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "monitoringId", "deploymentId", "policyId", "policyVersion", "policySha256", "authoritySnapshotSha256", "evidenceSha256", "status", "committedAt", "assignmentModified", "forecastModified", "preparednessModified"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "monitoringId": {"format": "uuid"}, "deploymentId": {"const": "dhaka_south"},
+    "policyId": {"const": "RUNTIME.MODEL_DEGRADATION.EVIDENCE"}, "policyVersion": {"const": "b9.d-v1"}, "policySha256": {"$ref": "#/$defs/sha"},
+    "authoritySnapshotSha256": {"$ref": "#/$defs/sha"}, "evidenceSha256": {"$ref": "#/$defs/sha"}, "status": {"const": "committed"},
+    "committedAt": {"type": "string", "format": "date-time"}, "assignmentModified": {"const": false}, "forecastModified": {"const": false}, "preparednessModified": {"const": false}
+  },
+  "$defs": {"sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

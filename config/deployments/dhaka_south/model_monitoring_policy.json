@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "RUNTIME.MODEL_DEGRADATION.EVIDENCE",
+  "policy_version": "b9.d-v1",
+  "policy_status": "active",
+  "policy_sha256": "3ebf8c09d8ffa45ad6c46462580796969d80b782da8c255fac027395b1c80172",
+  "policy_hash_method": "sha256_canonical_json_excluding_policy_sha256",
+  "deployment_id": "dhaka_south",
+  "feature_authority": {
+    "reference_source": "current_assignment_exact_source_assessment_model_features",
+    "current_source": "exact_current_forecast_model_features",
+    "feature_order_sha256": "aeccbe517da452e1132f08c02599418523fb003280b11ff9cda66cfb3aa55a85",
+    "features": [
+      "rainfall_lag_2w", "rainfall_lag_4w", "temp_lag_2w", "temp_lag_4w",
+      "humidity_lag_2w", "humidity_lag_4w", "cases_lag_1w", "cases_lag_2w",
+      "cases_lag_4w", "cases_rolling_3w", "cases_rolling_4w", "cases_rolling_8w",
+      "growth_rate_1w", "growth_rate_2w", "epi_week_sin", "epi_week_cos",
+      "monsoon_flag", "post_monsoon_flag"
+    ]
+  },
+  "feature_drift": {
+    "metric": "population_stability_index",
+    "binning_method": "reference_only_deterministic_quantiles",
+    "maximum_bin_count": 10,
+    "zero_proportion_epsilon": 0.0001,
+    "current_window_rows": 52,
+    "minimum_observations": 52,
+    "warning_threshold": 0.1,
+    "material_threshold": 0.25,
+    "aggregation": {"material_feature_count": 1, "warning_share": 0.25, "single_feature_guard": true}
+  },
+  "performance_drift": {
+    "horizon_weeks": 2,
+    "minimum_mature_outcomes": 8,
+    "metrics": ["mae", "rmse", "wape"],
+    "warning_ratio": 1.15,
+    "material_ratio": 1.35,
+    "reference_source": "assigned_candidate_leakage_safe_oof"
+  },
+  "ranking_instability": {
+    "source": "latest_verified_governed_reassessment_after_source_assessment",
+    "winner_change_state": "review_required",
+    "assignment_mutation_allowed": false
+  },
+  "recommendation": {
+    "states": ["not_recommended", "monitor", "recommended", "review_required"],
+    "material_feature_drift": "recommended",
+    "material_performance_degradation": "recommended",
+    "incompatible_feature_authority": "review_required",
+    "technical_winner_changed": "review_required",
+    "watch_evidence": "monitor",
+    "automatic_reassessment_allowed": false,
+    "automatic_assignment_allowed": false
+  },
+  "confidence": {
+    "classification": "forecast_evidence_confidence",
+    "point_only_behavior": "unavailable",
+    "weights": {
+      "calibrationEvidenceScore": 0.25,
+      "intervalPrecisionScore": 0.2,
+      "inputStabilityScore": 0.25,
+      "dataQualityScore": 0.15,
+      "performanceScore": 0.15
+    },
+    "calibration_component_weights": {"sample_sufficiency": 0.7, "coverage_alignment": 0.3},
+    "calibration_coverage_tolerance": 0.2,
+    "minimum_reference_outcome_scale": 1,
+    "interval_width_ratio_at_zero": 2,
+    "bands": {"high_minimum": 0.8, "moderate_minimum": 0.6},
+    "missing_component_behavior": "renormalize_permitted_available_components",
+    "rounding": "half_up_integer"
+  },
+  "invariants": {
+    "confidenceScoreChangesModelSelection": false,
+    "confidenceAffectsForecast": false,
+    "confidenceAffectsPreparedness": false,
+    "monitoringFailureInvalidatesForecast": false
+  },
+  "limitations": [
+    "PSI thresholds are governed operational monitoring thresholds, not universal scientific laws.",
+    "Forecast evidence confidence is an evidence index, not a probability of correctness or accuracy percentage.",
+    "Monitoring recommends review only and never starts reassessment or changes the assigned model."
+  ]
+}

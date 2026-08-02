@@ -8,6 +8,8 @@ import { RuntimePublicError } from "./errors";
 import { assertContained, deploymentRuntimePaths, runtimeCollectionPaths } from "./paths";
 import {readCurrentOperationalPreparedness} from "./operational-preparedness-reader";
 import {resolveCurrentPreparednessAuthority} from "./preparedness-authority";
+import {readCurrentGovernedMonitoring} from "./governed-monitoring-reader";
+import type {MonitoringViewModel} from "@/lib/dashboard-view-model";
 
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -188,7 +190,7 @@ export async function readVerifiedCurrentForecast(
   }
 }
 
-function overviewFromVerified(verified: VerifiedCurrentForecast,operational:Awaited<ReturnType<typeof readCurrentOperationalPreparedness>>|null,preparednessReason:string|null,calculating=false): OverviewViewModel {
+function overviewFromVerified(verified: VerifiedCurrentForecast,operational:Awaited<ReturnType<typeof readCurrentOperationalPreparedness>>|null,preparednessReason:string|null,monitoring:MonitoringViewModel,calculating=false): OverviewViewModel {
   const dashboard = verified.dashboard;
   const forecast = object(dashboard.forecast);
   const model = object(dashboard.model);
@@ -252,6 +254,12 @@ function overviewFromVerified(verified: VerifiedCurrentForecast,operational:Awai
       availabilityStatus:"available",reason:null,formulaLabel:String(object(operational.summary.formula).label),rows:operational.facilities.rows as unknown as OverviewViewModel["preparedness"]["rows"],
       totalFacilities:operational.facilities.rows.length,bedDeficitFacilities:operational.facilities.rows.filter(row=>Number(object(row.preparednessMetric).value)>0).length,ns1StockHorizonFacilities:0,ivFluidStockHorizonFacilities:0,criticalReviewFacilities:0,
     }:{availabilityStatus:calculating?"calculating":value.preparedness.availabilityStatus,reason:calculating?"Operational preparedness is calculating for the current forecast, formula, policy, and inventory.":preparednessReason,formulaLabel:null,rows:[],totalFacilities:0,bedDeficitFacilities:0,ns1StockHorizonFacilities:0,ivFluidStockHorizonFacilities:0,criticalReviewFacilities:0},
+    monitoring,
+    downstreamEvidence:{
+      preparednessStatus:operational?"available":calculating?"pending":"unavailable",
+      monitoringStatus:monitoring.availabilityStatus,
+      confidenceStatus:monitoring.confidence.status,
+    },
     facilitiesRequiringAttention: [],
     alerts: [],
     latestRun: {
@@ -271,7 +279,11 @@ export async function readLatestDashboard(
 ): Promise<{ sourceType: "uploaded"; runId: string; dashboard: OverviewViewModel }> {
   const config = loadRuntimeConfig(false);
   const verified = await readVerifiedCurrentForecast(config.runtimeRoot, deploymentId);
+  const committedAt=Date.parse(String(verified.commit.committedAt));
+  const downstreamPending=Number.isFinite(committedAt)&&Date.now()-committedAt<=120_000;
+  let monitoring:MonitoringViewModel;
+  try{monitoring=await readCurrentGovernedMonitoring(config.runtimeRoot,process.cwd(),verified)}catch(error){monitoring={availabilityStatus:downstreamPending?"pending":"unavailable",reason:downstreamPending?"Monitoring and forecast confidence are calculating for the exact-current forecast.":error instanceof RuntimePublicError?error.message:"Monitoring evidence is unavailable.",confidence:{status:downstreamPending?"pending":"unavailable",score:null,band:null,reasonCodes:[downstreamPending?"monitoring_pending":"monitoring_unavailable"]},featureDrift:{status:"unavailable",maximumPsi:null,materialFeatureCount:0},performanceDrift:{status:"unavailable",matureOutcomeCount:0},rankingInstability:{status:"unavailable",winnerChanged:false,currentTechnicalWinner:null,latestTechnicalWinner:null},recommendation:{state:"not_recommended",reasonCodes:[],actionHref:"/forecast?intent=reassess"},technicalEvidence:null}}
   let operational:Awaited<ReturnType<typeof readCurrentOperationalPreparedness>>|null=null;let reason:string|null=null;let calculating=false;
   try{operational=await readCurrentOperationalPreparedness()}catch(error){if(error instanceof RuntimePublicError){reason=error.message;try{const authority=await resolveCurrentPreparednessAuthority();const collections=runtimeCollectionPaths(config.runtimeRoot);for(const directory of [collections.pendingJobs,collections.runningJobs])for(const name of await readdir(directory)){if(!name.endsWith(".json"))continue;const job=object(JSON.parse(await readFile(path.join(directory,name),"utf8")));if(job.jobKind==="operational_preparedness"&&job.authoritySnapshotSha256===authority.authoritySnapshotSha256)calculating=true}}catch{}}else throw error}
-  return { sourceType: "uploaded", runId: String(verified.pointer.runId), dashboard: overviewFromVerified(verified,operational,reason,calculating) };
+  return { sourceType: "uploaded", runId: String(verified.pointer.runId), dashboard: overviewFromVerified(verified,operational,reason,monitoring,calculating||downstreamPending) };
 }

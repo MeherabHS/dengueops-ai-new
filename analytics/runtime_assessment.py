@@ -636,7 +636,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     (logs / "events.jsonl").write_text(json.dumps({"timestamp": _now(), "eventType": "assessment_evidence_ready", "assessmentId": job["assessmentId"]}) + "\n", encoding="utf-8")
     _update_job(job_path, job, progress="committing_assessment")
     committed = commit_runtime_assessment(runtime_root, staging, job)
-    return {"assessmentId": job["assessmentId"], "technicalWinnerModelId": winner, "foldPlanSha256": plan_hash, "committed": True, "commit": committed["commit"]}
+    return {"assessmentId": job["assessmentId"], "technicalWinnerModelId": winner, "foldPlanSha256": plan_hash,
+            "committed": True, "commit": committed["commit"]}
 
 
 def main() -> int:

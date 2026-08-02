@@ -711,7 +711,8 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     (logs / "events.jsonl").write_text(json.dumps({"timestamp": _now(), "eventType": "artifacts_ready", "runId": job["runId"]}) + "\n", encoding="utf-8")
     _update_job(job_path, job, progress="committing_run")
     committed = commit_runtime_run(runtime_root, staging, job)
-    return {"runId": job["runId"], "forecastReported": reported, "committed": True, "latest": committed["pointer"]}
+    return {"runId": job["runId"], "forecastReported": reported, "committed": True,
+            "latest": committed["pointer"]}
 
 
 def main() -> int:

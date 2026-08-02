@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
+  Info,
   TrendingUp,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -14,6 +15,12 @@ import DashboardRefreshStatus from "@/components/overview/DashboardRefreshStatus
 import type {OverviewViewModel} from "@/lib/dashboard-view-model";
 import { formatDhakaDateTime } from "@/lib/formatters";
 import { getLatestDashboard } from "@/lib/runtime/client";
+import { useDashboardLiveRefresh } from "@/components/overview/useDashboardLiveRefresh";
+
+function evidenceLabel(value:string):string{return value.split("_").map(part=>part.charAt(0).toUpperCase()+part.slice(1)).join(" ")}
+function recommendationText(state:OverviewViewModel["monitoring"]["recommendation"]["state"]):string{
+  return state==="recommended"||state==="review_required"?"Model reassessment recommended":state==="monitor"?"Continue monitoring":"No reassessment currently required";
+}
 
 export default function DashboardPage() {
   const [state,setState]=useState<
@@ -21,6 +28,9 @@ export default function DashboardPage() {
     |{status:"verified";vm:OverviewViewModel}
     |{status:"unavailable";message:string}
   >({status:"loading"});
+  const verifiedVm=state.status==="verified"?state.vm:null;
+  const acceptVerified=useCallback((dashboard:OverviewViewModel)=>setState({status:"verified",vm:dashboard}),[]);
+  const {timedOut}=useDashboardLiveRefresh(verifiedVm,acceptVerified);
   const load=async()=>{
     setState({status:"loading"});
     try{
@@ -117,6 +127,9 @@ export default function DashboardPage() {
                     ? "Uploaded dataset"
                     : "Bundled benchmark"}
                 </p>
+                <div className="mt-4 inline-flex items-center gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3" title="Evidence-based score derived from calibration, current data quality and drift monitoring. It is not a probability that the forecast will be correct.">
+                  <div><p className="flex items-center gap-1 text-xs text-secondary">Forecast confidence <Info className="h-3.5 w-3.5" aria-hidden="true" /></p>{vm.monitoring.confidence.status==="available"?<p className="mt-1 text-lg font-bold text-primary">{vm.monitoring.confidence.score} / 100 <span className="text-sm font-semibold text-secondary">· {evidenceLabel(vm.monitoring.confidence.band??"")}</span></p>:<p className="mt-1 text-sm font-semibold text-warning">{vm.monitoring.confidence.status==="pending"?(timedOut?"Still processing — refresh later":"Calculating…"):"Not available"}</p>}</div>
+                </div>
               </div>
               <div className="rounded-xl border border-success/25 bg-success/10 px-4 py-3 text-right">
                 <p className="text-xs text-secondary">
@@ -136,6 +149,8 @@ export default function DashboardPage() {
               forecast={vm.forecastCases}
               lower={vm.empiricalRange.lower}
               upper={vm.empiricalRange.upper}
+              confidence={vm.monitoring.confidence}
+              driftStatus={vm.monitoring.featureDrift.status}
             />
           </div>
           <aside className="flex flex-col justify-between bg-surface-raised p-5 sm:p-6">
@@ -152,7 +167,7 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 <p className="mt-4 text-lg font-semibold text-warning">
-                  Expected range not available
+                  Prediction interval unavailable
                 </p>
               )}
               <p className="mt-2 text-sm leading-relaxed text-secondary">
@@ -190,6 +205,20 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="model-monitoring-title">
+        <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Governed evidence</p><h2 id="model-monitoring-title" className="mt-1 text-xl font-bold text-primary">Model monitoring</h2></div><StatusBadge label={vm.monitoring.availabilityStatus==="available"?"Exact-current":vm.monitoring.availabilityStatus==="pending"?"Calculating":"Unavailable"} variant={vm.monitoring.availabilityStatus==="available"?"success":"warning"}/></div>
+        {vm.monitoring.availabilityStatus==="available"?<><dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-border bg-surface-raised p-4"><dt className="text-xs text-secondary">Input drift</dt><dd className="mt-1 font-semibold text-primary">{evidenceLabel(vm.monitoring.featureDrift.status)}</dd></div>
+          <div className="rounded-xl border border-border bg-surface-raised p-4"><dt className="text-xs text-secondary">Performance monitoring</dt><dd className="mt-1 font-semibold text-primary">{evidenceLabel(vm.monitoring.performanceDrift.status)}</dd></div>
+          <div className="rounded-xl border border-border bg-surface-raised p-4"><dt className="text-xs text-secondary">Latest reassessment</dt><dd className="mt-1 font-semibold text-primary">{vm.monitoring.rankingInstability.winnerChanged?"Technical winner changed":vm.monitoring.rankingInstability.status==="no_new_reassessment"?"No newer reassessment":"No material ranking change"}</dd></div>
+          <div className="rounded-xl border border-border bg-surface-raised p-4"><dt className="text-xs text-secondary">Recommendation</dt><dd className="mt-1 font-semibold text-primary">{recommendationText(vm.monitoring.recommendation.state)}</dd></div>
+        </dl>
+        <p className="mt-4 flex max-w-3xl items-start gap-2 text-xs text-secondary"><Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />Evidence-based forecast confidence summarizes calibration, current data quality and drift evidence; it is not a probability of correctness.</p>
+        {vm.monitoring.rankingInstability.winnerChanged?<p className="mt-3 text-sm text-secondary">Current source winner: <span className="font-semibold text-primary">{vm.monitoring.rankingInstability.currentTechnicalWinner}</span>. Latest technical winner: <span className="font-semibold text-primary">{vm.monitoring.rankingInstability.latestTechnicalWinner}</span>. The current assignment remains unchanged.</p>:null}
+        {vm.monitoring.recommendation.state==="recommended"||vm.monitoring.recommendation.state==="review_required"?<div className="mt-5"><p className="mb-3 text-sm font-semibold text-warning">Model reassessment recommended</p><Button href="/forecast?intent=reassess" variant="secondary">Reassess models with updated data <ArrowRight className="h-4 w-4" /></Button></div>:null}
+        <details className="mt-4 text-xs text-secondary"><summary className="cursor-pointer font-semibold text-primary">Technical evidence</summary><p className="mt-2">Confidence classification: forecast_evidence_confidence. Policy: {vm.monitoring.technicalEvidence?.policyId} {vm.monitoring.technicalEvidence?.policyVersion}. Mature outcomes: {vm.monitoring.performanceDrift.matureOutcomeCount}.</p></details></>:<><p className="mt-3 text-sm text-secondary">{timedOut&&vm.monitoring.availabilityStatus==="pending"?"Monitoring is still processing. Refresh later.":vm.monitoring.reason??"Monitoring unavailable."} The committed forecast remains valid.</p><Button className="mt-4" href="/forecast?intent=reassess" variant="quiet">Reassess models with updated data</Button></>}
+      </section>
+
       {vm.preparedness.availabilityStatus === "available" ? (
         <section aria-labelledby="operational-preparedness-title" className="space-y-4">
           <div className="mb-4 flex items-end justify-between gap-4">
@@ -210,10 +239,10 @@ export default function DashboardPage() {
         <section className="rounded-2xl border border-warning/25 bg-warning/10 p-6">
           {vm.preparedness.availabilityStatus==="calculating"?<span className="mb-3 inline-block h-5 w-5 animate-spin rounded-full border-2 border-warning border-t-transparent" aria-hidden="true"/>:null}
           <h2 className="text-xl font-bold text-primary">
-            {vm.preparedness.availabilityStatus==="calculating"?"Preparedness calculating":"Preparedness unavailable"}
+            {vm.preparedness.availabilityStatus==="calculating"?(timedOut?"Preparedness is still processing":"Preparedness calculating"):"Preparedness unavailable"}
           </h2>
           <p className="mt-2 text-sm text-secondary">
-            {vm.preparedness.reason ?? "No exact-current governed operational preparedness artifact is available."}
+            {timedOut&&vm.preparedness.availabilityStatus==="calculating"?"Automatic updates stopped after two minutes. Refresh later.":vm.preparedness.reason ?? "No exact-current governed operational preparedness artifact is available."}
           </p>
           <p className="mt-2 text-xs text-text-muted">Bundled and synthetic qualification availability is never substituted for current operational evidence.</p>
         </section>

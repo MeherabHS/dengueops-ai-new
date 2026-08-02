@@ -469,3 +469,56 @@ def commit_runtime_assessment(runtime_root: Path, staging_path: Path, job: dict[
     _fsync_directory(assessments)
     _make_immutable(committed)
     return {"assessmentRoot": str(committed), "commit": commit}
+
+
+def verify_committed_runtime_assessment(
+    runtime_root: Path, committed_path: Path, job: dict[str, Any]
+) -> dict[str, Any]:
+    """Verify an immutable assessment for lost-response job reconciliation."""
+    runtime_root = require_absolute_directory(runtime_root, "runtime root")
+    committed = require_within(runtime_root, committed_path, "committed assessment")
+    expected_parent = (runtime_root / "assessments").resolve()
+    if committed.parent != expected_parent or committed.name != job.get("assessmentId"):
+        raise RuntimeAssessmentCommitError("Committed assessment identity does not match the job.")
+
+    commit = _validate(committed / "metadata/commit.json", "runtime_assessment_commit.schema.json")
+    identity_fields = ("assessmentId", "jobId", "workspaceId", "datasetId", "deploymentId")
+    if any(commit.get(field) != job.get(field) for field in identity_fields):
+        raise RuntimeAssessmentCommitError("Committed assessment job binding mismatch.")
+    if commit.get("status") != "committed" or commit.get("latestPointerUpdated") is not False:
+        raise RuntimeAssessmentCommitError("Committed assessment finalization state is invalid.")
+
+    artifacts = committed / "artifacts"
+    present = {path.name for path in artifacts.iterdir()} if artifacts.is_dir() else set()
+    if REQUIRED_ARTIFACTS - present or PROHIBITED_ARTIFACTS & present:
+        raise RuntimeAssessmentCommitError("Committed assessment artifact set is invalid.")
+    hashes = commit.get("artifactHashes")
+    if not isinstance(hashes, dict) or set(hashes) != REQUIRED_ARTIFACTS:
+        raise RuntimeAssessmentCommitError("Committed assessment hash manifest is incomplete.")
+    for name in REQUIRED_ARTIFACTS:
+        if sha256_file(artifacts / name) != hashes.get(name):
+            raise RuntimeAssessmentCommitError(f"Committed assessment artifact hash mismatch: {name}.")
+
+    values = {
+        relative: _validate(committed / relative, schema)
+        for relative, schema in SCHEMAS.items()
+    }
+    expected_identity = tuple(job[field] for field in ("assessmentId", "jobId", "datasetId", "deploymentId"))
+    for value in values.values():
+        if tuple(value.get(field) for field in ("assessmentId", "jobId", "datasetId", "deploymentId")) != expected_identity:
+            raise RuntimeAssessmentCommitError("Committed assessment artifact identity mismatch.")
+    assessment = values["metadata/assessment.json"]
+    summary = values["artifacts/assessment_summary.json"]
+    expected_hash_fields = {
+        "inputManifestSha256": "input_manifest.json",
+        "modelFeaturesSha256": "model_features.csv",
+        "rollingValidationSha256": "rolling_validation.json",
+        "candidateComparisonSha256": "candidate_model_comparison.json",
+        "recommendationSha256": "recommendation.json",
+        "assessmentSummarySha256": "assessment_summary.json",
+    }
+    if any(assessment.get("artifactHashes", {}).get(field) != hashes[name] for field, name in expected_hash_fields.items()):
+        raise RuntimeAssessmentCommitError("Committed assessment metadata hash binding mismatch.")
+    if summary.get("committedAt") != commit.get("committedAt"):
+        raise RuntimeAssessmentCommitError("Committed assessment timestamp binding mismatch.")
+    return {"assessmentRoot": str(committed), "commit": commit}
