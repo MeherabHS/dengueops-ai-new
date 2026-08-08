@@ -13,5 +13,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/forecast/:path*", "/validation/:path*"],
+  matcher: ["/forecast/:path*", "/validation/:path*", "/vector-surveillance/:path*"],
 };

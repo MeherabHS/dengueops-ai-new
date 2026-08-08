@@ -29,6 +29,7 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/forecast/run", label: "Run Forecast" },
   { href: "/preparedness", label: "Preparedness" },
   { href: "/validation", label: "Evidence" },
+  { href: "/vector-surveillance", label: "Vector Surveillance" },
 ];
 
 export const PUBLIC_NAV_LINKS: NavLink[] = [

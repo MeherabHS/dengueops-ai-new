@@ -2,6 +2,7 @@ import "server-only";
 
 import type {
   AvailabilityScenario,
+  CommunityCurrentV1,
   PublicDashboardResponse,
   PublicForecast,
   PublicForecastResponse,
@@ -17,6 +18,7 @@ import { RuntimePublicError } from "@/lib/runtime/errors";
 import { readVerifiedCurrentHospitalInventory } from "@/lib/runtime/hospital-inventory-reader";
 import { readVerifiedPreparedness } from "@/lib/runtime/preparedness-reader";
 import {readCurrentOperationalPreparedness} from "@/lib/runtime/operational-preparedness-reader";
+import type { OverviewViewModel } from "@/lib/dashboard-view-model";
 
 type JsonObject = Record<string, unknown>;
 const DEPLOYMENT_ID = "dhaka_south";
@@ -195,6 +197,25 @@ export function parseScenario(value: string | null): AvailabilityScenario | null
   return value as AvailabilityScenario;
 }
 
+export function deriveCommunityTrend(
+  latestObservedCases: number | null | undefined,
+  pointCases: number | null | undefined,
+): CommunityCurrentV1["forecast"]["trend"] {
+  if (
+    typeof latestObservedCases !== "number"
+    || !Number.isFinite(latestObservedCases)
+    || typeof pointCases !== "number"
+    || !Number.isFinite(pointCases)
+  ) {
+    return { direction: "unknown", changeCases: null };
+  }
+  const changeCases = pointCases - latestObservedCases;
+  return {
+    direction: changeCases > 0 ? "up" : changeCases < 0 ? "down" : "stable",
+    changeCases,
+  };
+}
+
 export async function readPublicForecast(): Promise<PublicForecastResponse> {
   const config = loadRuntimeConfig(false);
   const [scope, verified] = await Promise.all([
@@ -238,6 +259,58 @@ export async function readPublicDashboard(
       operationalPreparednessEvidencePublished: true,
       productionFormulaActivated: true,
       operationalUseAllowed: true,
+    },
+  };
+}
+
+export async function readCommunityCurrentV1(): Promise<CommunityCurrentV1> {
+  const config = loadRuntimeConfig(false);
+  const scope = await loadDeploymentProductScope(config.repositoryRoot, DEPLOYMENT_ID);
+  let dashboard: OverviewViewModel;
+  try {
+    dashboard = (await import("@/lib/runtime/dashboard-reader").then(module => module.readLatestDashboard(DEPLOYMENT_ID))).dashboard;
+  } catch (error) {
+    if (!(error instanceof RuntimePublicError) || error.code !== "current_forecast_unavailable") throw error;
+    return {
+      schemaVersion: "1.0", deployment: { id: scope.internalDeploymentId, displayName: scope.deploymentDisplayName }, generatedAt: new Date().toISOString(),
+      forecast: { status: "unavailable", targetPeriod: null, pointCases: null, trend: { direction: "unknown", changeCases: null }, series: { observed: [], forecast: [] }, uncertainty: { status: "point_only", nominalLevel: null }, confidence: { status: "unavailable", score: null, band: null } },
+      preparedness: { status: "unavailable", facilities: [] },
+    };
+  }
+  const interval = dashboard.empiricalRange.availabilityStatus === "governed_available"
+    && dashboard.empiricalRange.isPredictionInterval
+    && dashboard.empiricalRange.lower !== null
+    && dashboard.empiricalRange.upper !== null;
+  const preparednessStatus = dashboard.downstreamEvidence.preparednessStatus === "available"
+    ? "available" : dashboard.downstreamEvidence.preparednessStatus === "pending" ? "pending" : "unavailable";
+  return {
+    schemaVersion: "1.0",
+    deployment: { id: scope.internalDeploymentId, displayName: scope.deploymentDisplayName },
+    generatedAt: dashboard.latestRun.timestamp,
+    forecast: {
+      status: "available",
+      targetPeriod: dashboard.targetPeriod,
+      pointCases: dashboard.forecastCases,
+      trend: deriveCommunityTrend(dashboard.latestObservedCases, dashboard.forecastCases),
+      series: {
+        observed: [...dashboard.history].sort((a, b) => a.period.localeCompare(b.period)).map(point => ({ period: point.period, cases: point.cases })),
+        forecast: [{ period: dashboard.targetPeriod, cases: dashboard.forecastCases, lower: interval ? dashboard.empiricalRange.lower : null, upper: interval ? dashboard.empiricalRange.upper : null }],
+      },
+      uncertainty: { status: interval ? "available" : "point_only", nominalLevel: interval ? dashboard.empiricalRange.nominalCoverage : null },
+      confidence: dashboard.monitoring.confidence.status === "available"
+        ? { status: "available", score: dashboard.monitoring.confidence.score, band: dashboard.monitoring.confidence.band }
+        : { status: dashboard.monitoring.confidence.status, score: null, band: null },
+    },
+    preparedness: {
+      status: preparednessStatus,
+      facilities: preparednessStatus === "available" ? dashboard.preparedness.rows.map(row => ({
+        facilityName: row.hospitalName,
+        participation: "included",
+        officialCapacityReference: row.capacityReference.value,
+        liveAvailability: null,
+        formulaDerivedPreparedness: { value: row.preparednessMetric.value, unit: row.preparednessMetric.unit },
+        planningState: row.planningState.status,
+      })) : [],
     },
   };
 }

@@ -106,3 +106,58 @@ export interface PublicDashboardResponse {
 }
 
 export type PublicHospitalsResponse = PublicDashboardResponse;
+
+export interface CommunityCurrentV1 {
+  schemaVersion: "1.0";
+  deployment: { id: "dhaka_south"; displayName: "Dhaka" };
+  generatedAt: string;
+  forecast: {
+    status: "available" | "unavailable";
+    targetPeriod: string | null;
+    pointCases: number | null;
+    trend: {
+      direction: "up" | "down" | "stable" | "unknown";
+      changeCases: number | null;
+    };
+    series: {
+      observed: Array<{ period: string; cases: number }>;
+      forecast: Array<{ period: string; cases: number; lower: number | null; upper: number | null }>;
+    };
+    uncertainty: { status: "available" | "point_only"; nominalLevel: number | null };
+    confidence: { status: "available" | "unavailable" | "pending"; score: number | null; band: "high" | "moderate" | "low" | null };
+  };
+  preparedness: {
+    status: "available" | "pending" | "unavailable";
+    facilities: Array<{
+      facilityName: string;
+      participation: "included";
+      officialCapacityReference: number | null;
+      liveAvailability: null;
+      formulaDerivedPreparedness: { value: number | null; unit: string };
+      planningState: "calculated" | "insufficient_data";
+    }>;
+  };
+}
+
+export interface VectorSubmissionMetadataV1 {
+  schemaVersion: "1.0";
+  submissionId: string;
+  receivedAt: string;
+  capturedAt: string | null;
+  contentType: "image/jpeg" | "image/png" | "image/webp";
+  byteSize: number;
+  sha256: string;
+  storageKey: string;
+  latitude: number | null;
+  longitude: number | null;
+  locationAccuracyM: number | null;
+  note: string | null;
+  status: "received";
+}
+
+export interface VectorSubmissionReceiptV1 {
+  schemaVersion: "1.0";
+  submissionId: string;
+  status: "received";
+  receivedAt: string;
+}
