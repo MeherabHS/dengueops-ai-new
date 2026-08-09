@@ -371,22 +371,32 @@ def execute_claimed(root: Path, job_path: Path, worker_id: str) -> None:
     if kind == "approved_forecast": command.extend(["--assessment", str(root / "assessments" / job["assessmentId"])])
     elif kind not in {"forecast_outcome", "degradation_evidence", "model_lifecycle", "operational_preparedness"}: command.extend(["--workspace", str(workspace)])
     command.extend(["--staging", str(staging)])
-    process = subprocess.Popen(command, cwd=ROOT, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        start_new_session=(os.name != "nt"), creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0))
-    job = update_job(job_path, job, processId=process.pid)
-    deadline = time.monotonic() + int(job["timeoutSeconds"])
-    next_heartbeat = time.monotonic() + HEARTBEAT_SECONDS
+    capture_root = root / "jobs" / "captures"
+    capture_root.mkdir(parents=True, exist_ok=True)
+    stdout_capture = capture_root / f"{job['jobId']}.stdout"
+    stderr_capture = capture_root / f"{job['jobId']}.stderr"
     timed_out = False
-    while process.poll() is None:
-        if time.monotonic() >= deadline:
-            timed_out = True
-            terminate_process(process)
-            break
-        if time.monotonic() >= next_heartbeat:
-            job = update_job(job_path, job, heartbeatAt=now())
+    try:
+        with stdout_capture.open("wb") as stdout_stream, stderr_capture.open("wb") as stderr_stream:
+            process = subprocess.Popen(command, cwd=ROOT, shell=False, stdout=stdout_stream, stderr=stderr_stream,
+                start_new_session=(os.name != "nt"), creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0))
+            job = update_job(job_path, job, processId=process.pid)
+            deadline = time.monotonic() + int(job["timeoutSeconds"])
             next_heartbeat = time.monotonic() + HEARTBEAT_SECONDS
-        time.sleep(0.25)
-    stdout_bytes, stderr_bytes = process.communicate()
+            while process.poll() is None:
+                if time.monotonic() >= deadline:
+                    timed_out = True
+                    terminate_process(process)
+                    break
+                if time.monotonic() >= next_heartbeat:
+                    job = update_job(job_path, job, heartbeatAt=now())
+                    next_heartbeat = time.monotonic() + HEARTBEAT_SECONDS
+                time.sleep(0.25)
+        stdout_bytes = stdout_capture.read_bytes()[-1_000_000:]
+        stderr_bytes = stderr_capture.read_bytes()[-1_000_000:]
+    finally:
+        stdout_capture.unlink(missing_ok=True)
+        stderr_capture.unlink(missing_ok=True)
     if process.returncode != 0 and staging.exists():
         stdout_path.write_bytes(stdout_bytes[-1_000_000:])
         stderr_path.write_bytes(stderr_bytes[-1_000_000:])

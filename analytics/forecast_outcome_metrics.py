@@ -40,9 +40,22 @@ def _uncertainty_status(uncertainty: Mapping[str, Any]) -> str:
         uncertainty.get("calibrationProvenance"),
     )
     if legacy is not None:
-        if (legacy, normalized) == ("governed_available", ("point_and_interval", "governed_available", None, None)):
+        if (
+            legacy == "governed_available"
+            and normalized[:3] == ("point_and_interval", "governed_available", None)
+            and (normalized[3] is None or isinstance(normalized[3], Mapping))
+        ):
             return "available"
-        if (legacy, normalized) == ("unavailable", ("point_only", "unavailable", "model_calibration_unavailable", None)):
+        if (
+            legacy == "unavailable"
+            and normalized[:2] == ("point_only", "unavailable")
+            and normalized[2] in {
+                "model_calibration_unavailable",
+                "calibration_not_available_for_assignment",
+                "insufficient_calibration_evidence",
+            }
+            and normalized[3] is None
+        ):
             return "not_evaluable_model_calibration_unavailable"
         if any(key in uncertainty for key in ("forecastPresentationMode", "calibrationStatus", "uncertaintyReasonCode", "calibrationProvenance")):
             raise ValueError("Mixed committed uncertainty contracts are unsupported.")

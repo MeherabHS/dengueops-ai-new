@@ -15,11 +15,11 @@ const forecastPage = await read("app/forecast/page.tsx");
 
 test("validation route remains Node-only, multipart, bounded, and shell-free", () => {
   assert.match(route, /export const runtime = "nodejs"/);
-  assert.match(route, /request\.formData\(\)/);
+  assert.match(route, /readBoundedFormData\(request,/);
   assert.match(route, /getAll\(name\)/);
   assert.match(route, /shell: false/);
   assert.match(route, /validationTimeoutMs/);
-  assert.ok(route.indexOf("await requireSuperUserMutation(request)") < route.indexOf("await request.formData()"));
+  assert.ok(route.indexOf("await requireSuperUserMutation(request)") < route.indexOf("await readBoundedFormData(request"));
   assert.match(route, /new Set\(\["dengueFile", "climateFile", "deploymentId", "workflowMode"\]\)/);
 });
 
@@ -41,7 +41,7 @@ test("governance and operational forecasting use separate deliberate handoffs", 
 });
 
 test("Quick Forecast mutation authenticates before parsing and rejects unbounded fields", () => {
-  assert.ok(quickRoute.indexOf("await requireSuperUserMutation(request)") < quickRoute.indexOf("await request.json()"));
+  assert.ok(quickRoute.indexOf("await requireSuperUserMutation(request)") < quickRoute.indexOf("await readBoundedJson"));
   assert.match(quickRoute, /expectedAssignmentPointerSha256/);
   assert.match(quickRoute, /unexpected_quick_forecast_field/);
   assert.match(quickRoute, /quick_forecast_assignment_conflict/);

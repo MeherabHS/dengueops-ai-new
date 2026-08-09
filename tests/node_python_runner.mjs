@@ -14,7 +14,10 @@ let selected;
 function candidates() {
   const values = [];
   if (process.env.PYTHON?.trim()) values.push({ command: process.env.PYTHON.trim(), prefix: [] });
-  if (process.platform === "win32") values.push({ command: "py", prefix: ["-3"] });
+  if (process.platform === "win32") {
+    values.push({ command: "py", prefix: ["-3.13"] });
+    values.push({ command: "py", prefix: ["-3"] });
+  }
   values.push({ command: "python3", prefix: [] }, { command: "python", prefix: [] });
   return values;
 }

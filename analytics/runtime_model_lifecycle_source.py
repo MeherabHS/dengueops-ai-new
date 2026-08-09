@@ -132,7 +132,7 @@ def _verify_assessment(repository_root: Path, runtime_root: Path, commit_sha: st
             raise ValueError("assessment_artifact_hash_mismatch")
     if set(commit.get("artifactHashes",{}))!=set(artifacts): raise ValueError("assessment_commit_artifact_set_invalid")
     summary, rolling, comparison, recommendation = values["assessment_summary.json"], values["rolling_validation.json"], values["candidate_model_comparison.json"], values["recommendation.json"]
-    policy,_=load_and_validate_assessment_policy("dhaka_south","p2-v1",ASSESSMENT_POLICY[2]);reconcile_assessment(rolling,comparison,recommendation,feature_rows,policy)
+    policy,_=load_and_validate_assessment_policy("dhaka_south","p2-v1",ASSESSMENT_POLICY[2]);reconcile_assessment(rolling,comparison,recommendation,feature_rows,policy,None)
     identity=(commit.get("assessmentId"),commit.get("jobId"),commit.get("workspaceId"),commit.get("datasetId"),commit.get("deploymentId"))
     for value in (assessment,summary,rolling,comparison,recommendation):
         if tuple(value.get(k) for k in ("assessmentId","jobId","workspaceId","datasetId","deploymentId"))!=identity: raise ValueError("assessment_artifact_identity_mismatch")

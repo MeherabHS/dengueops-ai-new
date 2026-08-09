@@ -106,14 +106,15 @@ class RuntimeJobRunnerTests(unittest.TestCase):
         self.assertIn('"degradation_evidence"',source)
         self.assertIn('"degradation-staging"',source)
         self.assertIn('"degradation-evidence"',source)
-        self.assertIn('"degradation/latest.json"',source)
-        self.assertIn('"degradation/latest_{job.get(\'policyVersion\')}.json"',source)
+        self.assertIn('name = f"latest_{version}.json"',source)
+        self.assertIn('else "latest.json"',source)
+        self.assertIn('/ "degradation" / name',source)
     def test_worker_has_isolated_model_lifecycle_dispatch(self):
         source=(ROOT/"analytics/runtime_worker.py").read_text()
         self.assertIn('"model_lifecycle"',source)
         self.assertIn('"lifecycle-staging"',source)
         self.assertIn('"model-lifecycle"',source)
-        self.assertIn('"model-assignment/latest.json"',source)
+        self.assertIn('recover_committed_bundle',source)
     def test_atomic_claim_has_one_winner(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

@@ -154,7 +154,7 @@ def build_common_fold_plan(
             "embargoIndex": validation_index - 1, "validationIndex": validation_index,
             "trainingPeriod": {"start": _period(train.iloc[0]), "end": _period(train.iloc[-1])},
             "trainingRowCount": len(train), "embargoPeriod": _period(embargo),
-            "targetPurgeRows": purge_rows,
+            **({"targetPurgeRows": purge_rows} if temporal_policy is not None else {}),
             "forecastOrigin": origin, "targetPeriod": target_period, "actualTarget": float(validation[TARGET]),
             "targetTrajectory": trajectory, "featureOrderSha256": policy["feature_contract"]["feature_order_sha256"],
             "trainingMatrixSha256": _matrix_sha(train),

@@ -9,6 +9,7 @@ import { createPendingJob, createWorkspaceStartMarker, initializeRuntimeRoot } f
 import {resolveActiveModel} from "@/lib/runtime/active-model";
 import { loadCurrentModelLifecyclePolicy } from "@/lib/runtime/model-lifecycle-policy";
 import { requireSuperUserMutation } from "@/lib/auth/authorization";
+import { readBoundedJson } from "@/lib/http/request-body";
 
 export const runtime = "nodejs";
 
@@ -175,7 +176,7 @@ export async function POST(request: Request): Promise<Response> {
   const correlationId = randomUUID();
   try {
     await requireSuperUserMutation(request);
-    const body = await request.json() as Partial<StartQuickForecastRequest> & Record<string, unknown>;
+    const body = await readBoundedJson<Partial<StartQuickForecastRequest> & Record<string, unknown>>(request);
     const allowed = new Set(["workspaceId", "datasetId", "deploymentId", "validationRecordSha256", "expectedAssignmentPointerSha256"]);
     if (Object.keys(body).some(key => !allowed.has(key))) throw new RuntimePublicError("unexpected_quick_forecast_field", "validation", "The Quick Forecast request contains an unsupported field.", 400);
     if (!UUID.test(String(body.workspaceId ?? "")) || !SHA.test(String(body.datasetId ?? "")) || !SHA.test(String(body.validationRecordSha256 ?? "")) || !SHA.test(String(body.expectedAssignmentPointerSha256 ?? ""))) {

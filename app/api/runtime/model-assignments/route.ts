@@ -4,6 +4,7 @@ import { mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { requireSuperUser, requireSuperUserMutation } from "@/lib/auth/authorization";
+import { readBoundedJson } from "@/lib/http/request-body";
 import { resolveActiveModelP2V2 } from "@/lib/runtime/active-model";
 import { loadRuntimeConfig } from "@/lib/runtime/config";
 import type {
@@ -267,7 +268,7 @@ export async function POST(request: Request): Promise<Response> {
   let lockAcquired = false;
   try {
     const session = await requireSuperUserMutation(request);
-    const body = await request.json() as Record<string, unknown>;
+    const body = await readBoundedJson<Record<string, unknown>>(request);
     if (!exactRequest(body)) {
       throw new RuntimePublicError("invalid_assignment_request", "validation", "The assignment request contains unsupported fields.", 400);
     }

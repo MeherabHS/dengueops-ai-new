@@ -481,7 +481,11 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     else:
         lower_raw = upper_raw = lower_reported = upper_reported = None
         uncertainty_status = "unavailable" if is_p2 else "pending_dataset_specific_calibration"
-        uncertainty_reason_code = calibration_reason if is_p2 else "insufficient_residual_folds"
+        uncertainty_reason_code = (
+            calibration_reason if is_pi
+            else "model_calibration_unavailable" if is_p2
+            else "insufficient_residual_folds"
+        )
 
     source_family = "quick_forecast_p2" if is_p2 else "quick_forecast_p1"
 

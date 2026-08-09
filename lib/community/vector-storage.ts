@@ -65,10 +65,10 @@ export async function saveImage(bytes: Uint8Array, declaredType: string, metadat
   const storageKey = `submissions/${submissionId}/image${TYPES[contentType]}`;
   const record: VectorSubmissionMetadataV1 = { schemaVersion: "1.0", submissionId, receivedAt, contentType, byteSize: bytes.byteLength, sha256: createHash("sha256").update(bytes).digest("hex"), storageKey, status: "received", ...metadata };
   try {
-    await mkdir(directory, { recursive: true });
-    const image = await open(path.join(root(), storageKey), "wx");
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    const image = await open(path.join(root(), storageKey), "wx", 0o600);
     try { await image.writeFile(bytes); } finally { await image.close(); }
-    const manifest = await open(path.join(directory, "metadata.json"), "wx");
+    const manifest = await open(path.join(directory, "metadata.json"), "wx", 0o600);
     try { await manifest.writeFile(`${JSON.stringify(record, null, 2)}\n`, "utf8"); } finally { await manifest.close(); }
   } catch (error) {
     if (error instanceof VectorStorageError) throw error;

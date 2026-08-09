@@ -113,6 +113,15 @@ class RuntimeFinalizationStabilityTests(unittest.TestCase):
         self.assertNotIn("publish_current_monitoring", preparedness)
         self.assertNotIn("enqueue_operational_preparedness_job(root", quick)
 
+    def test_worker_uses_file_capture_instead_of_blocking_child_output_pipes(self):
+        worker = (ROOT / "analytics/runtime_worker.py").read_text(encoding="utf-8")
+        self.assertNotIn("stdout=subprocess.PIPE", worker)
+        self.assertNotIn("stderr=subprocess.PIPE", worker)
+        self.assertNotIn("process.communicate()", worker)
+        self.assertIn('capture_root = root / "jobs" / "captures"', worker)
+        self.assertIn('capture_root / f"{job[\'jobId\']}.stdout"', worker)
+        self.assertIn('capture_root / f"{job[\'jobId\']}.stderr"', worker)
+
 
 if __name__ == "__main__":
     unittest.main()

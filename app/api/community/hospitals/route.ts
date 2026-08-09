@@ -14,6 +14,7 @@ export async function GET(request: Request) {
       area: dashboard.area,
       forecast: dashboard.forecast,
       preparedness: dashboard.preparedness,
+      qualificationPreparedness: dashboard.qualificationPreparedness,
       freshness: dashboard.freshness,
       evidence: dashboard.evidence,
     }, { headers });

@@ -8,13 +8,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { require as tsxRequire } from "tsx/cjs/api";
+import { findPython } from "./node_python_runner.mjs";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const runFile = promisify(execFile);
 const root = path.resolve(import.meta.dirname, "..");
-const python = process.env.DENGUEOPS_TEST_PYTHON
-  || process.env.PYTHON
-  || "C:\\Users\\CUBE\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+const python = process.env.DENGUEOPS_TEST_PYTHON || findPython().command;
 
 const originalModuleLoad = Module._load;
 Module._load = function loadAssessmentJobRoute(request, parent, isMain) {
@@ -128,7 +127,7 @@ test("current assessment authority binds every current registry candidate and it
 test("assessment request candidate injection remains prohibited before durable enqueue", async () => {
   const source = await read("app/api/runtime/assessments/route.ts");
   assert.match(source, /allowed = new Set\(\["workspaceId", "datasetId", "deploymentId", "validationRecordSha256"\]\)/);
-  assert.match(source, /await requireSuperUserMutation\(request\)[\s\S]*await request\.json\(\)/);
+  assert.match(source, /await requireSuperUserMutation\(request\)[\s\S]*await readBoundedJson/);
   assert.match(source, /sha256\(registryBytes\) !== policy\.candidate_registry\?\.sha256/);
   assert.match(source, /registry\.candidate_registry_version !== policy\.candidate_registry\?\.version/);
   assert.match(source, /assess\.policyVersion !== policy\.policy_version/);

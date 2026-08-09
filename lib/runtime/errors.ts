@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { RequestBodyError } from "@/lib/http/request-body";
 import type { RuntimeErrorResponse } from "./contracts";
 
 export class RuntimePublicError extends Error {
@@ -28,6 +29,21 @@ export function errorResponse(error: unknown, correlationId = randomUUID()): {
   body: RuntimeErrorResponse;
   status: number;
 } {
+  if (error instanceof RequestBodyError) {
+    return {
+      status: error.status,
+      body: {
+        ok: false,
+        error: {
+          code: error.code,
+          category: "validation",
+          message: error.message,
+          retryable: false,
+          correlationId,
+        },
+      },
+    };
+  }
   if (error instanceof RuntimePublicError) {
     return {
       status: error.statusCode,

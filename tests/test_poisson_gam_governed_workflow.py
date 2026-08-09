@@ -22,7 +22,7 @@ from tests.test_runtime_model_degradation_evidence import degradation_job
 
 
 class PoissonGamGovernedWorkflowTests(unittest.TestCase):
-    def test_assigned_gam_is_point_only_through_quick_monitoring_and_degradation(self):
+    def test_assigned_gam_uses_exact_calibration_through_quick_monitoring_and_degradation(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime = Path(
                 _create_p2_v2_assignment(
@@ -73,11 +73,17 @@ class PoissonGamGovernedWorkflowTests(unittest.TestCase):
                 (quick_run / "artifacts/forecast_calibration.json").read_text()
             )
             self.assertEqual(forecast["activeModelId"], "poisson_gam")
-            self.assertEqual(forecast["forecastPresentationMode"], "point_only")
-            self.assertEqual(forecast["calibrationStatus"], "unavailable")
-            self.assertEqual(calibration["calibrationStatus"], "unavailable")
-            self.assertEqual(calibration["residualCount"], 0)
+            self.assertEqual(forecast["forecastPresentationMode"], "point_and_interval")
+            self.assertEqual(forecast["calibrationStatus"], "governed_available")
+            self.assertEqual(calibration["calibrationStatus"], "governed_available")
+            self.assertGreaterEqual(
+                calibration["residualCount"], calibration["requiredResidualCount"]
+            )
             self.assertEqual(calibration["folds"], [])
+            self.assertEqual(
+                len(calibration["assessmentOofResiduals"]),
+                calibration["residualCount"],
+            )
 
             outcome_job, outcome_path = build_outcome_job(
                 runtime,
@@ -105,10 +111,10 @@ class PoissonGamGovernedWorkflowTests(unittest.TestCase):
             self.assertEqual(outcome["modelId"], "poisson_gam")
             self.assertEqual(
                 outcome["empiricalRangeStatus"],
-                "not_evaluable_model_calibration_unavailable",
+                "available",
             )
-            self.assertIsNone(outcome["lowerRaw"])
-            self.assertIsNone(outcome["upperRaw"])
+            self.assertIsNotNone(outcome["lowerRaw"])
+            self.assertIsNotNone(outcome["upperRaw"])
 
             evidence_job, evidence_path = degradation_job(runtime)
             degradation = execute_degradation(
@@ -132,8 +138,8 @@ class PoissonGamGovernedWorkflowTests(unittest.TestCase):
             )
             cohort = evidence["cohorts"][0]
             self.assertEqual(cohort["identity"]["modelId"], "poisson_gam")
-            self.assertEqual(cohort["identity"]["calibrationStatus"], "unavailable")
-            self.assertIsNone(
+            self.assertEqual(cohort["identity"]["calibrationStatus"], "governed_available")
+            self.assertIsNotNone(
                 cohort["actualPopulation"]["empiricalCoverage"]
             )
             self.assertEqual(degradation["pointer"]["policyVersion"], "p2-v3")

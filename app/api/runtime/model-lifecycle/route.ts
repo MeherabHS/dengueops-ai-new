@@ -6,6 +6,7 @@ import {MODEL_LIFECYCLE_POLICY_SHA,LIFECYCLE_PROFILE_SHA} from "@/lib/runtime/mo
 import {createPendingJob,initializeRuntimeRoot} from "@/lib/runtime/store";
 import {jobRecordPath,runtimeCollectionPaths} from "@/lib/runtime/paths";
 import type {LifecycleAction,ModelLifecycleJobRecord} from "@/lib/runtime/contracts";
+import {readBoundedJson} from "@/lib/http/request-body";
 
 export const runtime="nodejs";
 const SHA=/^[a-f0-9]{64}$/;
@@ -23,7 +24,7 @@ export async function GET(){const correlationId=randomUUID();try{const config=lo
 export async function POST(request:Request){const correlationId=randomUUID();try{
   const config=loadRuntimeConfig(false);if(!config.internalModelLifecycleEnabled)throw new RuntimePublicError("model_lifecycle_disabled","configuration","Model lifecycle ingress is disabled.",503);
   const supplied=request.headers.get("x-dengueops-model-lifecycle-secret")??"";if(!secretEqual(supplied,config.internalModelLifecycleSecret))throw new RuntimePublicError("model_lifecycle_unauthorized","validation","Model lifecycle authorization failed.",401);
-  const body=await request.json() as Record<string,unknown>,action=body.action as LifecycleAction;
+  const body=await readBoundedJson<Record<string,unknown>>(request),action=body.action as LifecycleAction;
   if(body.deployment!=="dhaka_south"||!actions.has(action)||typeof body.reason!=="string"||!body.reason.trim()||body.reason.length>1000||acknowledgements.some(key=>body[key]!==true))throw new RuntimePublicError("invalid_model_lifecycle_request","validation","The lifecycle action, reason, or acknowledgement set is invalid.",400);
   if(!["absent","present"].includes(String(body.expectedAssignmentPointerState))||(body.expectedAssignmentPointerState==="present"?!SHA.test(String(body.expectedAssignmentPointerSha256??"")):body.expectedAssignmentPointerSha256!==null))throw new RuntimePublicError("invalid_assignment_pointer_expectation","validation","The expected assignment pointer state is invalid.",400);
   let actionFields:Record<string,unknown>={};

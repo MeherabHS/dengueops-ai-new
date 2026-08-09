@@ -9,6 +9,7 @@ import {jobRecordPath,operationalPreparednessPaths,runtimeCollectionPaths} from 
 import {resolveCurrentPreparednessAuthority} from "@/lib/runtime/preparedness-authority";
 import {readCurrentOperationalPreparedness} from "@/lib/runtime/operational-preparedness-reader";
 import {createPendingJob,initializeRuntimeRoot} from "@/lib/runtime/store";
+import {readBoundedJson} from "@/lib/http/request-body";
 
 export const runtime="nodejs";
 
@@ -17,7 +18,7 @@ async function existingJob(runtimeRoot:string,jobId:string):Promise<OperationalP
 export async function GET(request:Request):Promise<Response>{try{await requireSuperUser(request);const value=await readCurrentOperationalPreparedness();return Response.json({ok:true,...value},{headers:{"Cache-Control":"no-store"}})}catch(error){const failure=errorResponse(error,randomUUID());return Response.json(failure.body,{status:failure.status,headers:{"Cache-Control":"no-store"}})}}
 
 export async function POST(request:Request):Promise<Response>{const correlationId=randomUUID();try{
-  await requireSuperUserMutation(request);const body=await request.json().catch(()=>null);if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).length!==0)throw new RuntimePublicError("invalid_preparedness_request","validation","Preparedness recalculation accepts no client-selected authority.",400);
+  await requireSuperUserMutation(request);const body=await readBoundedJson<Record<string,unknown>>(request).catch(()=>null);if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).length!==0)throw new RuntimePublicError("invalid_preparedness_request","validation","Preparedness recalculation accepts no client-selected authority.",400);
   const config=loadRuntimeConfig();await initializeRuntimeRoot(config.runtimeRoot);const authority=await resolveCurrentPreparednessAuthority();
   try{const current=await readCurrentOperationalPreparedness();if(current.summary.authoritySnapshotSha256===authority.authoritySnapshotSha256){const response:StartOperationalPreparednessResponse={ok:true,jobId:null,preparednessId:String(current.pointer.preparednessId),status:"completed",statusUrl:null,recovered:true,authoritySnapshotSha256:authority.authoritySnapshotSha256};return Response.json(response,{headers:{"Cache-Control":"no-store"}})}}catch(error){if(error instanceof RuntimePublicError&&!['operational_preparedness_unavailable','operational_preparedness_stale'].includes(error.code))throw error}
   const authorityPaths=operationalPreparednessPaths(config.runtimeRoot,"dhaka_south");await mkdir(authorityPaths.requests,{recursive:true,mode:0o700});const markerPath=path.join(authorityPaths.requests,`${authority.authoritySnapshotSha256}.json`);

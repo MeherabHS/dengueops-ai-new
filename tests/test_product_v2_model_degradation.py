@@ -23,7 +23,7 @@ from tests.test_runtime_model_degradation_evidence import degradation_job
 
 
 class ProductV2ModelDegradationTests(unittest.TestCase):
-    def test_quick_p2_ridge_is_point_only_descriptive_evidence(self):
+    def test_quick_p2_ridge_has_interval_descriptive_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime, _, forecast_job = build_pending_governed_quick_job(Path(directory), "2.1")
             self.assertTrue(run_once(runtime, "b8-quick-p2"))
@@ -58,12 +58,12 @@ class ProductV2ModelDegradationTests(unittest.TestCase):
 
             self.assertEqual(cohort["identity"]["sourceFamily"], "quick_forecast_p2")
             self.assertEqual(cohort["identity"]["modelId"], "ridge_regression")
-            self.assertEqual(cohort["identity"]["forecastPresentationMode"], "point_only")
-            self.assertEqual(cohort["identity"]["calibrationStatus"], "unavailable")
-            self.assertEqual(population["rangeEligibleCount"], 0)
-            self.assertEqual(population["empiricalRangeEvaluatedCount"], 0)
-            self.assertIsNone(population["empiricalCoverage"])
-            self.assertIn("range_metric_unavailable", cohort["warnings"])
+            self.assertEqual(cohort["identity"]["forecastPresentationMode"], "point_and_interval")
+            self.assertEqual(cohort["identity"]["calibrationStatus"], "governed_available")
+            self.assertEqual(population["rangeEligibleCount"], 1)
+            self.assertEqual(population["empiricalRangeEvaluatedCount"], 1)
+            self.assertIsNotNone(population["empiricalCoverage"])
+            self.assertNotIn("range_metric_unavailable", cohort["warnings"])
             self.assertEqual(evidence["evidenceStatus"], "evidence_only")
             self.assertEqual(evidence["degradationThresholdStatus"], "not_governed")
             self.assertFalse(evidence["materialWorseningClassificationAllowed"])
@@ -112,7 +112,7 @@ class ProductV2ModelDegradationTests(unittest.TestCase):
             self.assertEqual(len(merged["cohorts"]), 1)
             self.assertEqual(len(merged["cohorts"][0]["assignmentProvenance"]), 2)
 
-    def test_poisson_gam_remains_point_only_descriptive(self):
+    def test_poisson_gam_has_interval_descriptive_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime, _, forecast_job = build_pending_governed_quick_job(
                 Path(directory),
@@ -153,13 +153,13 @@ class ProductV2ModelDegradationTests(unittest.TestCase):
             self.assertEqual(cohort["identity"]["modelId"], "poisson_gam")
             self.assertEqual(cohort["identity"]["sourceFamily"], "quick_forecast_p2")
             self.assertEqual(
-                cohort["identity"]["forecastPresentationMode"], "point_only"
+                cohort["identity"]["forecastPresentationMode"], "point_and_interval"
             )
-            self.assertEqual(cohort["identity"]["calibrationStatus"], "unavailable")
+            self.assertEqual(cohort["identity"]["calibrationStatus"], "governed_available")
             self.assertEqual(
-                cohort["actualPopulation"]["empiricalRangeEvaluatedCount"], 0
+                cohort["actualPopulation"]["empiricalRangeEvaluatedCount"], 1
             )
-            self.assertIsNone(cohort["actualPopulation"]["empiricalCoverage"])
+            self.assertIsNotNone(cohort["actualPopulation"]["empiricalCoverage"])
             self.assertEqual(evidence["evidenceStatus"], "evidence_only")
             self.assertEqual(evidence["materialWorseningStatus"], "not_governed")
 

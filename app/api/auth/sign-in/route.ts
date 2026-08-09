@@ -1,6 +1,7 @@
-import { clearSignInFailures, currentSession, recordFailedSignIn, signInAllowed } from "@/lib/auth/authorization";
+import { assertSameOrigin, clearSignInFailures, currentSession, recordFailedSignIn, signInAllowed } from "@/lib/auth/authorization";
 import { credentialsConfigured, verifyConfiguredCredentials } from "@/lib/auth/credentials";
 import { createSessionToken, sessionCookie } from "@/lib/auth/session";
+import { readBoundedJson, RequestBodyError } from "@/lib/http/request-body";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,14 @@ export async function GET(request: Request): Promise<Response> {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  try {
+    assertSameOrigin(request);
+  } catch {
+    return Response.json(
+      { ok: false, error: "The request is not allowed." },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   if (!signInAllowed(request)) return genericFailure();
   if (!credentialsConfigured()) {
     return Response.json(
@@ -27,8 +36,14 @@ export async function POST(request: Request): Promise<Response> {
   }
   let body: Record<string, unknown>;
   try {
-    body = await request.json() as Record<string, unknown>;
-  } catch {
+    body = await readBoundedJson<Record<string, unknown>>(request);
+  } catch (error) {
+    if (error instanceof RequestBodyError && error.status === 413) {
+      return Response.json(
+        { ok: false, error: "The request body is too large." },
+        { status: 413, headers: { "Cache-Control": "no-store" } },
+      );
+    }
     recordFailedSignIn(request);
     return genericFailure();
   }

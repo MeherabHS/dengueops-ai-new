@@ -22,6 +22,7 @@ import {resolveActiveModel} from "@/lib/runtime/active-model";
 import { inspectCsvUpload } from "@/lib/runtime/uploads";
 import { requireSuperUserMutation } from "@/lib/auth/authorization";
 import { resolveCurrentAssessmentDataset, type VerifiedAssessmentDatasetSource } from "@/lib/runtime/assessment-dataset-source";
+import { readBoundedFormData, readBoundedJson } from "@/lib/http/request-body";
 
 export const runtime = "nodejs";
 
@@ -225,7 +226,7 @@ export async function POST(request: Request): Promise<Response> {
     let dengue: { bytes: Buffer; originalName: string; sizeBytes: number; sha256: string };
     let climate: { bytes: Buffer; originalName: string; sizeBytes: number; sha256: string };
     if (contentType.toLowerCase().startsWith("application/json")) {
-      const body = await request.json() as Record<string, unknown>;
+      const body = await readBoundedJson<Record<string, unknown>>(request);
       if (Object.keys(body).sort().join("|") !== "source" || body.source !== "current_assignment_assessment") {
         throw new RuntimePublicError("invalid_assessment_dataset_handoff", "validation", "The assessment-dataset handoff request is invalid.", 400);
       }
@@ -238,7 +239,7 @@ export async function POST(request: Request): Promise<Response> {
       if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
         throw new RuntimePublicError("multipart_required", "upload", "The validation endpoint requires multipart/form-data or a bounded governed dataset-source intent.", 415);
       }
-      const form = await request.formData();
+      const form = await readBoundedFormData(request, config.maxUploadBytes * 2 + 1_048_576);
       const permitted = new Set(["dengueFile", "climateFile", "deploymentId", "workflowMode"]);
       for (const key of form.keys()) {
         if (!permitted.has(key)) throw new RuntimePublicError("unexpected_multipart_field", "upload", "The upload contains an unexpected field.", 400);

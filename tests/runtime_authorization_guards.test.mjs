@@ -36,6 +36,7 @@ async function startServer() {
     cwd: root,
     env: {
       ...process.env,
+      __NEXT_PROCESSED_ENV: "true",
       DENGUEOPS_RUNTIME_ROOT: runtime,
       DENGUEOPS_PYTHON_EXECUTABLE: process.execPath,
       DENGUEOPS_SUPER_USER_USERNAME: username,
@@ -73,7 +74,7 @@ async function stopServer(instance) {
 async function cookieFor(instance) {
   const response = await fetch(`${instance.url}/api/auth/sign-in`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", origin: instance.url },
     body: JSON.stringify({ username, password }),
   });
   assert.equal(response.status, 200);

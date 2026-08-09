@@ -6,12 +6,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
+import { findPython } from "./node_python_runner.mjs";
 
 const runFile = promisify(execFile);
 const root = path.resolve(import.meta.dirname, "..");
-const python = process.env.DENGUEOPS_TEST_PYTHON
-  || process.env.PYTHON
-  || "C:\\Users\\CUBE\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+const python = process.env.DENGUEOPS_TEST_PYTHON || findPython().command;
 const sessionSecret = "assignment-route-isolated-session-secret-value";
 const sha = value => createHash("sha256").update(value).digest("hex");
 
@@ -109,7 +108,7 @@ function requestBody(fixture, overrides = {}) {
 test("assignment route is bounded, server-derived, locked, and post-verifies publication", async () => {
   const source = await readFile(path.join(root, "app/api/runtime/model-assignments/route.ts"), "utf8");
   assert.match(source, /export async function GET\(request: Request\)[\s\S]*await requireSuperUser\(request\)[\s\S]*verifiedCurrentAssignment/);
-  assert.match(source, /await requireSuperUserMutation\(request\)[\s\S]*await request\.json\(\)/);
+  assert.match(source, /await requireSuperUserMutation\(request\)[\s\S]*await readBoundedJson/);
   assert.match(source, /assignment_pointer_conflict/);
   assert.match(source, /\.publication-lock/);
   assert.match(source, /await verifiedPointer\(config, expectedAssignmentPointerSha256\)[\s\S]*runFile/);

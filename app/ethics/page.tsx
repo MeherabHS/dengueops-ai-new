@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import EthicsHero from "@/components/ethics/EthicsHero";
 import EthicalPrinciples from "@/components/ethics/EthicalPrinciples";
 import DataEthicsSection from "@/components/ethics/DataEthicsSection";
@@ -28,12 +29,12 @@ export default function EthicsPage() {
       <nav className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2.5 scrollbar-hide">
-            <a
+            <Link
               href="/"
               className="whitespace-nowrap text-[11px] font-semibold text-slate-400 hover:text-slate-700 mr-3 flex-shrink-0"
             >
               ← Home
-            </a>
+            </Link>
             {JUMP_LINKS.map((l) => (
               <a
                 key={l.href}

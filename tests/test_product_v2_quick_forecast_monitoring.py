@@ -66,7 +66,7 @@ class ProductV2QuickForecastMonitoringTests(unittest.TestCase):
         shutil.copytree(source, runtime)
         return runtime, copy.deepcopy(job)
 
-    def test_rf_interval_and_non_rf_point_only_monitoring(self):
+    def test_exact_assigned_candidate_interval_monitoring(self):
         for model_id in ("random_forest", "ridge_regression", "poisson_gam"):
             with self.subTest(model_id=model_id):
                 runtime, job = self.cloned_runtime(f"monitoring-{model_id}", model_id)
@@ -79,13 +79,11 @@ class ProductV2QuickForecastMonitoringTests(unittest.TestCase):
                 self.assertEqual(summary["evaluatedForecastCount"], 1)
                 self.assertEqual(len(summary["performanceAuthorityBreakdowns"]), 1)
                 self.assertEqual(len(summary["assignmentProvenanceBreakdowns"]), 1)
-                if model_id == "random_forest":
-                    self.assertEqual(outcome["empiricalRangeStatus"], "available")
-                    self.assertEqual(summary["empiricalRangeEvaluatedCount"], 1)
-                else:
-                    self.assertEqual(outcome["empiricalRangeStatus"], "not_evaluable_model_calibration_unavailable")
-                    self.assertEqual(summary["empiricalRangeEvaluatedCount"], 0)
-                    self.assertIsNone(outcome["lowerRaw"]);self.assertIsNone(outcome["upperRaw"]);self.assertIsNone(outcome["intervalWidth"])
+                self.assertEqual(outcome["empiricalRangeStatus"], "available")
+                self.assertEqual(summary["empiricalRangeEvaluatedCount"], 1)
+                self.assertIsNotNone(outcome["lowerRaw"])
+                self.assertIsNotNone(outcome["upperRaw"])
+                self.assertIsNotNone(outcome["intervalWidth"])
 
     def test_publisher_generated_assignment_2_0_schemas_and_hashes(self):
         runtime, job = self.cloned_runtime("assignment-schema", "ridge_regression")

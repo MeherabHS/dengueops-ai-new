@@ -25,14 +25,14 @@ class DarkFrontendContractTest(unittest.TestCase):
         self.assertEqual(uncertainty["evaluated_fold_count"], 48)
         self.assertEqual(uncertainty["calibration_warmup_fold_count"], 20)
 
-    def test_overview_uses_typed_committed_adapter_and_no_metric_literals(self):
+    def test_overview_uses_exact_current_typed_adapter_and_no_metric_literals(self):
         page = (ROOT / "app" / "dashboard" / "page.tsx").read_text(encoding="utf-8")
-        adapter = (ROOT / "lib" / "dashboard-view-model.ts").read_text(encoding="utf-8")
-        self.assertIn("bundledOverviewViewModel", page)
+        self.assertIn("OverviewViewModel", page)
+        self.assertIn("getLatestDashboard", page)
+        self.assertIn("latest.dashboard.latestRun.runId===latest.runId", page)
+        self.assertIn("Bundled benchmark or cached qualification evidence is not shown as current", page)
         self.assertNotIn("dashboardSummary", page)
         self.assertNotIn("forecastOutput", page)
-        self.assertIn('from "@/lib/demo-data"', adapter)
-        self.assertIn('refreshState: "committed"', adapter)
         for literal in ("53–187", "43 / 48", "146.9243"):
             self.assertNotIn(literal, page)
 
@@ -42,20 +42,18 @@ class DarkFrontendContractTest(unittest.TestCase):
             self.assertIn(term, chart)
         self.assertIn("figcaption", chart)
 
-    def test_preparedness_is_count_based_and_horizon_labelled(self):
+    def test_preparedness_uses_exact_current_operational_table(self):
         page = (ROOT / "app" / "dashboard" / "page.tsx").read_text(encoding="utf-8")
-        card = (ROOT / "components" / "overview" / "PreparednessCountCard.tsx").read_text(encoding="utf-8")
-        self.assertIn("NS1/RDT stock horizon ≤14 days", page)
-        self.assertIn("IV-fluid stock horizon ≤14 days", page)
-        self.assertIn("of {total} facilities", card)
-        self.assertIn('role="progressbar"', card)
-        self.assertIn("criticalReviewFacilities", page)
+        self.assertIn("OperationalPreparednessTable", page)
+        self.assertIn("vm.preparedness.formulaLabel", page)
+        self.assertIn('vm.preparedness.availabilityStatus === "available"', page)
+        self.assertIn("Current live availability remains Not reported", page)
 
     def test_active_rf_and_historical_gbr_are_unambiguous(self):
         evidence = (ROOT / "components" / "evidence" / "EvidenceTabs.tsx").read_text(encoding="utf-8")
-        self.assertIn("Active Random Forest rolling performance", evidence)
-        self.assertIn("Historical P1.1 Gradient Boosting rolling-validation evidence — not active-model performance", evidence)
-        self.assertIn("Not active-model evidence", evidence)
+        self.assertIn("Historical Random Forest rolling performance", evidence)
+        self.assertIn("Historical Gradient Boosting validation evidence", evidence)
+        self.assertIn("or current model performance", evidence)
 
     def test_machine_statuses_are_centralized(self):
         labels = (ROOT / "lib" / "status-labels.ts").read_text(encoding="utf-8")

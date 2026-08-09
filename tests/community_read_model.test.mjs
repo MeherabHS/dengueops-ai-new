@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import test from "node:test";
+import { copyRuntimeWithCurrentQualifications } from "./current_qualification_fixture.mjs";
 
 const cwd = path.resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 
@@ -20,8 +21,7 @@ function run(code, runtimeRoot = path.join(cwd, "runtime")) {
 }
 
 async function operationalRuntime() {
-  const root = await mkdtemp(path.join(os.tmpdir(), "dengueops-community-operational-"));
-  await cp(path.join(cwd, "runtime"), root, { recursive: true });
+  const root = await copyRuntimeWithCurrentQualifications(cwd, "dengueops-community-operational-");
   const code = `import json,sys,uuid\nfrom datetime import datetime,timezone\nfrom pathlib import Path\nsys.path.insert(0,'analytics')\nfrom runtime_operational_preparedness import resolve_authorities,build_artifacts,write_staging\nfrom runtime_operational_preparedness_commit import commit_staging\nr=Path(sys.argv[1]);a=resolve_authorities(r);pid=str(uuid.uuid4());jid=str(uuid.uuid4());st=r/'operational-preparedness-staging'/pid;summary,facilities=build_artifacts(a,pid,datetime.now(timezone.utc).isoformat().replace('+00:00','Z'));write_staging(st,summary,facilities);commit_staging(r,st,{'preparednessId':pid,'jobId':jid,'deploymentId':'dhaka_south','authoritySnapshotSha256':a['authoritySnapshotSha256']},a)`;
   const executable = process.platform === "win32" ? "py" : (process.env.DENGUEOPS_PYTHON_EXECUTABLE || "python");
   const args = process.platform === "win32" ? ["-3.13", "-c", code, root] : ["-c", code, root];
@@ -46,23 +46,24 @@ test("canonical public model prefers current operational preparedness and separa
       api.mapReadinessStatus('insufficient_capacity_reference')
     ]}));
   `, runtimeRoot);
-  assert.equal(value.forecast.forecast.forecastedCases, 144);
-  assert.deepEqual(value.forecast.forecast.latestObservedPoint, { period: "2024-W24", date: null, cases: 107 });
+  assert.equal(value.forecast.forecast.forecastedCases, value.web.dashboard.forecastCases);
+  assert.equal(value.forecast.forecast.latestObservedPoint.cases, value.web.dashboard.latestObservedCases);
+  assert.equal(value.forecast.forecast.latestObservedPoint.period, value.web.dashboard.history.at(-1).period);
   assert.equal(value.forecast.forecast.forecast_growth_category, "increasing");
   assert.equal(value.forecast.forecast.directionLabel, "Expected rise");
   assert.equal(value.forecast.forecast.growthPercentage, null);
-  assert.equal(value.forecast.forecast.uncertainty.intervalAvailable, false);
-  assert.equal(value.forecast.forecast.uncertainty.lower, null);
-  assert.equal(value.forecast.forecast.uncertainty.upper, null);
-  assert.equal(value.forecast.forecast.uncertainty.publicLabel, "Prediction interval unavailable");
-  assert.match(value.forecast.forecast.uncertainty.reason, /model-specific calibration has not yet been completed/);
+  assert.equal(value.forecast.forecast.uncertainty.intervalAvailable, value.web.dashboard.empiricalRange.isPredictionInterval);
+  assert.equal(value.forecast.forecast.uncertainty.lower, value.web.dashboard.empiricalRange.lower);
+  assert.equal(value.forecast.forecast.uncertainty.upper, value.web.dashboard.empiricalRange.upper);
+  assert.equal(value.forecast.forecast.uncertainty.publicLabel, "Calibrated prediction interval");
+  assert.match(value.forecast.forecast.uncertainty.reason, /available for this exact committed forecast/);
   assert.equal(value.forecast.forecast.recentObservedSeries.length, 52);
   assert.equal(value.web.dashboard.preparedness.availabilityStatus,"available");
   assert.equal(value.web.dashboard.preparedness.rows.length,13);
   assert.deepEqual(value.dashboards.map(d => d.preparedness.selectedScenario), [null,null,null,null]);
   assert.deepEqual(value.dashboards.map(d => d.qualificationPreparedness?.selectedScenario ?? null), [null,"baseline_availability","constrained_availability","severe_constraint"]);
   for (const dashboard of value.dashboards) {
-    assert.equal(dashboard.forecast.forecastedCases, 144);
+    assert.equal(dashboard.forecast.forecastedCases, value.web.dashboard.forecastCases);
     assert.equal(dashboard.preparedness.participatingHospitals, 13);
     assert.equal(dashboard.preparedness.capacityKnownHospitals, 9);
     assert.equal(dashboard.preparedness.capacityUnknownHospitals, 4);

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { authorizeSuperUserOrService } from "@/lib/auth/authorization";
+import { readBoundedJson } from "@/lib/http/request-body";
 import { mkdir, open, rm } from "node:fs/promises";
 import path from "node:path";
 import { loadRuntimeConfig } from "@/lib/runtime/config";
@@ -44,7 +45,7 @@ export async function POST(
       );
     }
     const { decisionId } = await context.params;
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = await readBoundedJson<Record<string, unknown>>(request);
     if (
       Object.keys(body).join("|") !== "expectedDecisionCommitSha256" ||
       !/^[a-f0-9]{64}$/.test(String(body.expectedDecisionCommitSha256 ?? ""))

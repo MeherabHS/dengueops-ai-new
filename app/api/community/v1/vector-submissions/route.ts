@@ -1,9 +1,11 @@
 import { authenticateCommunityApi, communityApiErrorResponse } from "@/lib/community/api-auth";
 import { parseVectorMetadata, saveImage, VectorStorageError, vectorImageMaxBytes } from "@/lib/community/vector-storage";
+import { readBoundedFormData, RequestBodyError } from "@/lib/http/request-body";
 
 export const runtime = "nodejs";
 
 function failure(error: unknown): Response {
+  if (error instanceof RequestBodyError) return Response.json({ error: { code: error.code, message: error.message } }, { status: error.status, headers: { "Cache-Control": "no-store" } });
   if (error instanceof VectorStorageError) return Response.json({ error: { code: error.code, message: error.message } }, { status: error.status, headers: { "Cache-Control": "no-store" } });
   return communityApiErrorResponse(error);
 }
@@ -14,8 +16,11 @@ export async function POST(request: Request): Promise<Response> {
     const length = Number(request.headers.get("content-length"));
     if (Number.isFinite(length) && length > vectorImageMaxBytes() + 64 * 1024) throw new VectorStorageError("image_too_large", 413, "The image exceeds the configured upload limit.");
     let form: FormData;
-    try { form = await request.formData(); }
-    catch { return Response.json({ error: { code: "invalid_multipart", message: "A valid multipart form is required." } }, { status: 400, headers: { "Cache-Control": "no-store" } }); }
+    try { form = await readBoundedFormData(request, vectorImageMaxBytes() + 64 * 1024); }
+    catch (error) {
+      if (error instanceof RequestBodyError && error.status === 413) throw error;
+      return Response.json({ error: { code: "invalid_multipart", message: "A valid multipart form is required." } }, { status: 400, headers: { "Cache-Control": "no-store" } });
+    }
     const image = form.get("image");
     if (!(image instanceof File)) return Response.json({ error: { code: "image_required", message: "An image is required." } }, { status: 400, headers: { "Cache-Control": "no-store" } });
     const receipt = await saveImage(new Uint8Array(await image.arrayBuffer()), image.type, parseVectorMetadata(form));

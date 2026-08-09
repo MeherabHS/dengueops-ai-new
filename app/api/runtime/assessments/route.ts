@@ -10,6 +10,7 @@ import { createPendingJob, createWorkspaceStartMarker, initializeRuntimeRoot } f
 import { requireSuperUserMutation } from "@/lib/auth/authorization";
 import { validateStrictJsonSchema } from "@/lib/runtime/strict-json-schema";
 import { loadDecisionPolicy } from "@/lib/runtime/decision-policy";
+import { readBoundedJson } from "@/lib/http/request-body";
 
 export const runtime = "nodejs";
 
@@ -54,7 +55,7 @@ export async function POST(request: Request): Promise<Response> {
   const correlationId = randomUUID();
   try {
     await requireSuperUserMutation(request);
-    const body = await request.json() as Partial<StartAssessmentRequest> & Record<string, unknown>;
+    const body = await readBoundedJson<Partial<StartAssessmentRequest> & Record<string, unknown>>(request);
     const allowed = new Set(["workspaceId", "datasetId", "deploymentId", "validationRecordSha256"]);
     if (Object.keys(body).some(key => !allowed.has(key))) throw new RuntimePublicError("unexpected_assessment_field", "validation", "The assessment request contains an unsupported field.", 400);
     if (!UUID.test(String(body.workspaceId ?? "")) || !SHA.test(String(body.datasetId ?? "")) || !SHA.test(String(body.validationRecordSha256 ?? ""))) {

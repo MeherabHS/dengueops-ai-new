@@ -8,6 +8,7 @@ const root = path.resolve(new URL("..", import.meta.url).pathname.replace(/^\/([
 
 function runFormatter(env) {
   return execFileSync(process.execPath, [
+    "--conditions=react-server",
     "--import=tsx",
     "--eval",
     "const imported=await import('./lib/formatters.ts');const m=imported.default||imported;console.log(m.formatDhakaDateTime('2026-07-16T11:26:36.000Z'));console.log(m.formatDhakaDateTime('invalid'));",
@@ -16,6 +17,7 @@ function runFormatter(env) {
 
 function runDashboardLabels() {
   return execFileSync(process.execPath, [
+    "--conditions=react-server",
     "--import=tsx",
     "--eval",
     "const imported=await import('./lib/runtime/dashboard-reader.ts');const m=imported.default||imported;console.log(m.dashboardModelLabel('poisson_gam'));console.log(m.dashboardModelLabel('hist_gradient_boosting'));for(const value of ['SplinePoissonRegressor','unsupported_model',null]){try{m.dashboardModelLabel(value);console.log('unsafe')}catch{console.log('rejected')}}",
@@ -48,6 +50,11 @@ test("active dashboard rendering uses the shared deterministic formatter", async
   assert.match(card, /formatDhakaDateTime\(run\.timestamp\)/);
   assert.doesNotMatch(`${page}\n${card}`, /toLocaleString\(/);
   assert.doesNotMatch(`${page}\n${card}`, /suppressHydrationWarning/);
+});
+
+test("normal dashboard summary hides internal authority identifiers", async () => {
+  const card = await readFile(path.join(root, "components/overview/LatestRunCard.tsx"), "utf8");
+  assert.doesNotMatch(card, /run\.runId|Run ID|SHA-256|assignmentId|assessmentId/);
 });
 
 test("dashboard waits for exact current authority and never promotes cache or bundled evidence",async()=>{

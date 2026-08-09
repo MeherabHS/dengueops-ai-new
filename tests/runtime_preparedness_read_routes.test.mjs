@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { cp, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { copyRuntimeWithCurrentQualifications } from "./current_qualification_fixture.mjs";
 
 const cwd = path.resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 
-test("current and explicit availability packages verify against one current forecast", () => {
+test("current and explicit availability packages verify against one current forecast", async t => {
+  const runtimeRoot = await copyRuntimeWithCurrentQualifications(cwd, "dengueops-preparedness-current-");
+  t.after(() => rm(runtimeRoot, { recursive: true, force: true }));
   const output = execFileSync(process.execPath, [
     "--conditions=react-server",
     "--import=tsx",
@@ -19,11 +22,11 @@ test("current and explicit availability packages verify against one current fore
      console.log(JSON.stringify({run:f.pointer.runId,rows}));`,
   ], {
     cwd,
-    env: { ...process.env, DENGUEOPS_RUNTIME_ROOT: path.join(cwd, "runtime") },
+    env: { ...process.env, DENGUEOPS_RUNTIME_ROOT: runtimeRoot },
     encoding: "utf8",
   });
   const value = JSON.parse(output);
-  assert.equal(value.run, "8845b4f8-1661-4d84-a26d-e4ccc25e4416");
+  assert.match(value.run, /^[0-9a-f-]{36}$/);
   assert.deepEqual(value.rows.map(row => row.scenario), [
     "severe_constraint", "baseline_availability", "constrained_availability", "severe_constraint",
   ]);

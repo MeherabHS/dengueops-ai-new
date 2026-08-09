@@ -5,6 +5,7 @@ import {mkdtemp, mkdir, readFile, rm, writeFile} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
+import {findPython} from "./node_python_runner.mjs";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -42,7 +43,7 @@ test("default read returns D2 while explicit D1 survives M2 and assignment-point
   const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const base = await mkdtemp(path.join(os.tmpdir(), "dengueops-b8-node-"));
   try {
-    const python = process.env.PYTHON ?? "C:\\Users\\CUBE\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+    const python = findPython().command;
     const script = [
       "import json,sys",
       "from pathlib import Path",
@@ -113,7 +114,7 @@ test("explicit historical p2-v1 evidence remains readable through its frozen con
   const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const base = await mkdtemp(path.join(os.tmpdir(), "dengueops-b8-p1-node-"));
   try {
-    const python = process.env.PYTHON ?? "C:\\Users\\CUBE\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+    const python = findPython().command;
     const script = [
       "import json,sys",
       "from pathlib import Path",

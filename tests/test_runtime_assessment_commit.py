@@ -94,6 +94,7 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             self.assertEqual(rolling["assessmentPolicy"]["policyVersion"], "p1.4d-1-v1")
             self.assertEqual(rolling["plannedFoldCount"], 68)
             self.assertNotIn("labelledRows", rolling)
+            self.assertTrue(all("targetPurgeRows" not in fold for fold in rolling["folds"]))
             self.assertEqual(commit["schemaVersion"], "1.0")
             self.assertNotIn("assessmentPolicyVersion", commit)
 
@@ -202,7 +203,7 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             )
             self.assertEqual(
                 rolling["foldPlanSha256"],
-                "23894ebae72417819a7010ce6d4aa1c020406880593184947454864eded9292b",
+                "0a1fe5ebc1aa197add849390023fad47ca8ffd9ff7e00fe73ae34e0210564f23",
             )
             existing_prediction_parity = [
                 {
@@ -222,11 +223,11 @@ class RuntimeAssessmentCommitTests(unittest.TestCase):
             ]
             self.assertEqual(
                 digest(existing_prediction_parity),
-                "6ab7a6de8c47a85090f99a2f945a45b8dbb3fd9b3dc343f92c9fc15b54c7c6bd",
+                "b1b4f61fc00392c56e7f2c7e4896e4124c0665a9de1847cd8588d7743969da51",
             )
             self.assertEqual(
                 digest(existing_metrics_parity),
-                "99cabc7531d43800b494d2bca8eb7c03b664b97799334753c6b8a794333d79fe",
+                "65699930ac22340276a92d046e00992b2c840f0e09e8b2a800d523b581ede8f0",
             )
             gam = next(
                 candidate

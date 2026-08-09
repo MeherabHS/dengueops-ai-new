@@ -338,6 +338,7 @@ test("uploaded dashboard uses explicit unavailable states", async () => {
   assert.match(source, /availabilityStatus: value\.forecast\.uncertaintyStatus/);
   assert.match(source, /lower: calibrated \? value\.forecast\.empiricalLower : null/);
   assert.match(source, /historicalCoverage: calibrated \? value\.forecast\.historicalCoverage : null/);
-  assert.match(source, /availabilityStatus: value\.preparedness\.availabilityStatus/);
+  assert.match(source, /preparedness: operational\?\{/);
+  assert.match(source, /availabilityStatus:calculating\?"calculating":value\.preparedness\.availabilityStatus/);
   assert.doesNotMatch(source, /53\s*[â€“-]\s*187|87\s*\/\s*120\s*\/\s*153/);
 });

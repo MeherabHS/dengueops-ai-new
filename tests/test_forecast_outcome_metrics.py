@@ -62,6 +62,22 @@ class ForecastOutcomeMetricTests(unittest.TestCase):
         value=evaluate_outcome(10.0,13,{"uncertaintyStatus":"governed_available","forecastPresentationMode":"point_and_interval","calibrationStatus":"governed_available","uncertaintyReasonCode":None,"lowerRaw":9.0,"upperRaw":14.0},True)
         self.assertEqual(value["empiricalRangeStatus"],"available");self.assertEqual(value["coverageOutcome"],"covered")
 
+    def test_b9pi_contracts_are_point_evaluable_and_interval_truthful(self):
+        available = evaluate_outcome(10.0, 13, {
+            "uncertaintyStatus": "governed_available", "forecastPresentationMode": "point_and_interval",
+            "calibrationStatus": "governed_available", "uncertaintyReasonCode": None,
+            "calibrationProvenance": {"sourceAssessmentId": "assessment"},
+            "lowerRaw": 9.0, "upperRaw": 14.0,
+        }, True)
+        self.assertEqual(available["empiricalRangeStatus"], "available")
+        for reason in ("calibration_not_available_for_assignment", "insufficient_calibration_evidence"):
+            point_only = evaluate_outcome(10.0, 13, {
+                "uncertaintyStatus": "unavailable", "forecastPresentationMode": "point_only",
+                "calibrationStatus": "unavailable", "uncertaintyReasonCode": reason,
+                "calibrationProvenance": None, "lowerRaw": None, "upperRaw": None,
+            }, True)
+            self.assertEqual(point_only["empiricalRangeStatus"], "not_evaluable_model_calibration_unavailable")
+
     def test_iso_completion_and_validation(self):
         self.assertEqual(parse_target_period("2024-W52"), (2024, 52))
         self.assertEqual(calculate_period_completion("2024-W52"), datetime(2024, 12, 29, 18, tzinfo=timezone.utc))

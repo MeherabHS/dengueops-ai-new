@@ -4,13 +4,13 @@ import { readFile } from "node:fs/promises";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("Validation accepts only a UUID and separates uploaded from bundled evidence", async () => {
+test("Validation accepts only a UUID and separates uploaded from historical evidence", async () => {
   const source = await read("app/validation/page.tsx");
   assert.match(source, /searchParams: Promise/);
   assert.match(source, /await searchParams/);
   assert.match(source, /UUID\.test/);
-  assert.match(source, /Uploaded Dataset Assessment/);
-  assert.match(source, /Bundled Benchmark Evidence/);
+  assert.match(source, /Uploaded assessment evidence/);
+  assert.match(source, /Historical benchmark evidence/);
   assert.match(source, /RuntimeAssessmentWorkflow/);
   assert.match(source, /No runtime path was accessed/);
 });
@@ -22,7 +22,7 @@ test("runtime assessment panel renders governed evidence and existing decision w
   assert.match(source, /ApprovalPanel/);
   assert.match(source, /recordAssessmentDecision/);
   assert.match(source, /startApprovedForecast/);
-  assert.match(source, /getLatestDashboard/);
+  assert.doesNotMatch(source, /getLatestDashboard/);
   assert.match(source, /Labelled rows/);
   assert.match(source, /Available folds/);
   assert.match(source, /Planned folds/);

@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { copyRuntimeWithCurrentQualifications } from "./current_qualification_fixture.mjs";
 
 const cwd = path.resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 const forbidden = new Set([
@@ -22,13 +23,15 @@ function assertPublicKeys(value) {
   }
 }
 
-test("community routes return curated no-store responses and reject unsupported scenarios", async () => {
+test("community routes return curated no-store responses and reject unsupported scenarios", async t => {
+  const runtimeRoot = await copyRuntimeWithCurrentQualifications(cwd, "dengueops-community-routes-");
+  t.after(() => rm(runtimeRoot, { recursive: true, force: true }));
   const pointers = [
-    "runtime/deployments/dhaka_south/latest.json",
-    "runtime/deployments/dhaka_south/hospital-inventory/latest.json",
-    "runtime/deployments/dhaka_south/hospital-preparedness-qualification/latest.json",
+    "deployments/dhaka_south/latest.json",
+    "deployments/dhaka_south/hospital-inventory/latest.json",
+    "deployments/dhaka_south/hospital-preparedness-qualification/latest.json",
   ];
-  const before = await Promise.all(pointers.map(file => readFile(path.join(cwd, file), "utf8")));
+  const before = await Promise.all(pointers.map(file => readFile(path.join(runtimeRoot, file), "utf8")));
   const output = execFileSync(process.execPath, [
     "--conditions=react-server",
     "--import=tsx",
@@ -40,13 +43,13 @@ test("community routes return curated no-store responses and reject unsupported 
        ['forecast',f.GET()],
        ['hospitals',h.GET(new Request('http://localhost/api/community/hospitals'))],
        ['baseline',h.GET(new Request('http://localhost/api/community/hospitals?scenario=baseline_availability'))],
-       ['dashboard',d.GET(new Request('http://localhost/api/community/dashboard'))],
+       ['dashboard',d.GET(new Request('http://localhost/api/community/dashboard?scenario=severe_constraint'))],
        ['invalid',d.GET(new Request('http://localhost/api/community/dashboard?scenario=unsupported'))],
      ]){const r=await promise;responses.push({name,status:r.status,cache:r.headers.get('cache-control'),body:await r.json()});}
      console.log(JSON.stringify(responses));`,
   ], {
     cwd,
-    env: { ...process.env, DENGUEOPS_RUNTIME_ROOT: path.join(cwd, "runtime") },
+    env: { ...process.env, DENGUEOPS_RUNTIME_ROOT: runtimeRoot },
     encoding: "utf8",
   });
   const responses = JSON.parse(output);
@@ -55,12 +58,14 @@ test("community routes return curated no-store responses and reject unsupported 
     assertPublicKeys(response.body);
   }
   assert.deepEqual(responses.map(item => item.status), [200, 200, 200, 200, 400]);
-  assert.equal(responses[0].body.forecast.forecastedCases, 144);
+  assert.equal(responses[0].body.forecast.forecastedCases, responses[3].body.forecast.forecastedCases);
   assert.equal(responses[1].body.preparedness.participatingHospitals, 13);
-  assert.equal(responses[2].body.preparedness.selectedScenario, "baseline_availability");
-  assert.equal(responses[3].body.preparedness.selectedScenario, "severe_constraint");
+  assert.equal(responses[2].body.preparedness.selectedScenario, null);
+  assert.equal(responses[2].body.qualificationPreparedness.selectedScenario, "baseline_availability");
+  assert.equal(responses[3].body.preparedness.selectedScenario, null);
+  assert.equal(responses[3].body.qualificationPreparedness.selectedScenario, "severe_constraint");
   assert.equal(JSON.stringify(responses).includes("\\\\"), false);
-  const after = await Promise.all(pointers.map(file => readFile(path.join(cwd, file), "utf8")));
+  const after = await Promise.all(pointers.map(file => readFile(path.join(runtimeRoot, file), "utf8")));
   assert.deepEqual(after, before);
 });
 

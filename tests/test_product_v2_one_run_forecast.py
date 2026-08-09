@@ -112,7 +112,7 @@ class ProductV2OneRunForecastTests(unittest.TestCase):
     def test_all_eight_models_execute_without_adopting_assignment(self):
         profile_before=hashlib.sha256((ROOT/"config/deployments/dhaka_south/profile.json").read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory() as directory:
-            base,_,_,assessment_job=build_ready_assessment_runtime(Path(directory)/"base",source_rows=164)
+            base,_,_,assessment_job=build_ready_assessment_runtime(Path(directory)/"base",source_rows=165)
             self.assertTrue(run_once(base,"phase-b-assessment"))
             for model_id in MODELS:
                 with self.subTest(model=model_id):

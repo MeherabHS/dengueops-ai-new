@@ -13,7 +13,7 @@ from tests.test_runtime_assessment_commit import build_ready_assessment_runtime
 
 def main() -> int:
     base = Path(sys.argv[1]).resolve()
-    runtime, _workspace, _pending, job = build_ready_assessment_runtime(base, source_rows=164)
+    runtime, _workspace, _pending, job = build_ready_assessment_runtime(base, source_rows=165)
     if not run_once(runtime, "phase-b-fixture-worker"):
         raise RuntimeError("Phase B assessment fixture did not execute")
     assessment = runtime / "assessments" / job["assessmentId"]
