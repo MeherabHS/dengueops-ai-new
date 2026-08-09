@@ -1,193 +1,147 @@
-﻿# DengueOps AI
+# DengueOps AI
 
-**Simulation-Based Dengue Surge Preparedness Decision Support for Dhaka South**
+DengueOps AI is a governed dengue forecasting and preparedness research platform for Dhaka South. It combines a Next.js application with a separately supervised Python analytics worker, immutable runtime evidence, model lifecycle controls, Community-facing read APIs, and protected vector-surveillance intake.
 
-DengueOps AI is a research prototype that turns a two-week dengue case forecast into transparent preparedness signals: planning scenarios, zone priorities, projected bed pressure, supply depletion horizons, and suggested operational actions. A Next.js dashboard presents the outputs; a governed Python pipeline produces the underlying evidence and artifacts.
+> [!CAUTION]
+> DengueOps AI is a research and capability-demonstration system. The bundled Dhaka South profile uses deterministic synthetic data. It is not locally calibrated, epidemiologically validated, hospital-approved, or authorized for clinical care, official public-health action, or automatic resource allocation.
 
-The repository also contains a trusted-internal runtime workflow for validating uploaded datasets, running an eligible point forecast, comparing governed candidate models, recording a one-run model-use decision, and committing an approved forecast without overwriting the bundled benchmark until a complete run passes its integrity checks.
+## What is included
 
-> **Important:** this is a synthetic, benchmark-only capability demonstration. It is not locally calibrated, epidemiologically validated, hospital-approved, or authorized for clinical or operational use. It does not diagnose dengue or recommend patient-level treatment.
+- A two-week dengue case forecasting workflow.
+- CSV validation in isolated runtime workspaces.
+- Governed comparison of 11 frozen candidate models.
+- Immutable assessment, decision, authorization, forecast, monitoring, degradation, and lifecycle evidence.
+- Exact-current runtime authority with hash-bound commits and pointers.
+- Operational preparedness and hospital-inventory projections.
+- Super User authentication and protected operational routes.
+- Scoped Community read and vector-submit APIs.
+- Raster-only vector image intake with bounded storage outside `public/`.
+- A file-backed queue consumed by exactly one long-lived analytics worker.
+- A PM2 ecosystem definition for independently supervised web and worker processes.
 
-## What the system provides
+## System boundary
 
-- A two-week, lag-aware dengue case forecast.
-- Deterministic temporal validation and governed candidate-model comparison.
-- A prior-only empirical forecast range for the bundled synthetic benchmark.
-- Preparedness scenarios for low, base, and high planning conditions.
-- Zone-level exposure allocation and an Experimental Growth Score used only as a provisional analytical indicator.
-- Facility-level bed-load, bed-deficit, and supply-depletion estimates.
-- Role-oriented dashboard views for operations, facilities, and technical review.
-- Run-specific provenance, formula-registry bindings, model cards, and explainability artifacts.
-- Isolated CSV upload workspaces and file-backed runtime job execution.
-- Immutable dataset assessments and trusted-internal, one-run forecast authorization.
-
-All readiness values, inventory levels, sub-city operational inputs, alerts, directives, and notification outputs in the bundled demonstration are synthetic. The Experimental Growth Score and related planning-priority outputs are provisional and not institution-approved for clinical or operational decision-making. No patient-level records are used or stored.
-
-## Current governed benchmark
-
-The committed `dhaka_south` profile is a deterministic `synthetic_benchmark` deployment with a `benchmark_only` gate.
-
-| Item | Current implementation |
-| --- | --- |
-| Forecast horizon | 2 weeks |
-| Feature contract | 18 lag, rolling, trend, seasonality, and climate features |
-| Primary validation | Expanding-window rolling origin with 104 initial training rows, a 1-row embargo, and 68 one-row folds |
-| Candidate set | Previous-week naive, 4-week moving average, 52-week seasonal naive, Ridge, Poisson, Random Forest, Gradient Boosting |
-| Selected benchmark model | Frozen `RandomForestRegressor`, selected by lowest eligible rolling-origin MAE |
-| Forecast range | Prior-only expanding absolute-residual empirical range: 20 warm-up folds and 48 evaluated folds |
-| Operational layer | Spatial exposure allocation, bed pressure, supply depletion, planning priority, directives |
-| Governance | Versioned JSON Schemas, formula registry, evidence registry, deployment profile, provenance hashes, model card |
-
-The empirical range is synthetic temporal evidence—not a confidence interval, prediction interval, or probability guarantee. The separate low/base/high preparedness scenarios are compatibility planning inputs and do not define forecast uncertainty.
-
-## Architecture
+The product separates bundled demonstration evidence from mutable runtime evidence:
 
 ```text
-Governed configuration
-  config/formulas.json
-  config/candidate_models.json
-  config/deployments/dhaka_south/*
-              |
-              v
-Python analytics pipeline
-  input production and validation
-    -> 18-feature matrix
-    -> temporal validation and model comparison
-    -> selected-model forecast and diagnostics
-    -> empirical range
-    -> operational preparedness engine
-    -> dashboard export
-              |
-              v
-Bundled artifacts in data/
-              |
-              v
-Next.js App Router dashboard
-
-Uploaded CSVs -> isolated runtime workspace -> queued file-backed worker
-  -> Quick Forecast -> atomic runtime run -> deployment latest pointer
-  -> Dataset Assessment -> immutable evidence -> internal one-run decision
-     -> approved point forecast -> atomic runtime run -> latest pointer
+Governed policies and schemas
+          |
+          +--> Bundled synthetic pipeline --> data/ --> public dashboard
+          |
+          +--> Runtime API --> isolated workspace / file-backed queue
+                                  |
+                                  v
+                         Python runtime worker
+                                  |
+                                  v
+                    immutable commits and latest pointers
+                                  |
+                                  +--> Super User workflows
+                                  +--> curated Community read model
 ```
 
-The bundled pipeline writes governed artifacts to `data/`. Uploaded files and their results live under a separate absolute runtime root; runtime processing never writes uploaded inputs into `data/`. The dashboard API serves the bundled benchmark until a runtime forecast has been fully validated, atomically committed, and assigned as the deployment's latest run.
+The browser never chooses model parameters, filesystem paths, authority hashes, or deployment policy. Runtime jobs become current only after their artifacts and commit bindings pass verification.
 
 ## Technology
 
 | Layer | Stack |
 | --- | --- |
-| Web application | Next.js 16.2.6 App Router, React 19.2, TypeScript 5 |
+| Web | Next.js 16.2.6 App Router, React 19.2, TypeScript 5 |
 | UI | Tailwind CSS 4, Recharts 3, Lucide React |
-| Analytics | Python 3.10+, pandas, NumPy, SciPy, scikit-learn |
-| Validation | Python `unittest`, Node.js test runner, JSON Schema Draft 2020-12 |
-| Storage | Source-controlled benchmark artifacts plus isolated file-backed runtime workspaces and jobs |
+| Analytics | Python, NumPy, pandas, SciPy, scikit-learn, statsmodels |
+| Validation | JSON Schema Draft 2020-12, Python `unittest`, Node test runner |
+| Runtime storage | File-backed workspaces, queues, immutable evidence, atomic pointers |
+| Production supervision | PM2 with separate web and runtime-worker processes |
 
-## Quick start
-
-### Requirements
+## Requirements
 
 - Node.js 20.9 or newer
 - npm
-- Python 3.10 or newer
-- `pip`
+- Python 3.13 for the release-tested environment
+- A Python virtual environment
 
-On Windows, replace `python` with `py -3` in the commands below if the Python launcher is installed but `python.exe` resolves to the Microsoft Store alias.
-
-### Install and run the bundled dashboard
+Install the dependencies:
 
 ```bash
-npm install
-pip install -r requirements.txt
-npm run dev
+npm ci
+python -m venv .venv
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The repository already includes a complete governed benchmark artifact set, so regenerating the analytics output is optional for viewing the application.
-
-### Regenerate the governed benchmark
+Activate the virtual environment and install Python packages:
 
 ```bash
-python analytics/run_pipeline.py \
-  --deployment-profile dhaka_south \
-  --run-model-comparison
+# Linux
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
-
-This regenerates the deterministic synthetic benchmark, runs the seven-candidate comparison, adopts the governed winner for that run, produces the empirical forecast range and operational outputs, validates cross-artifact provenance, and refreshes the dashboard exports.
-
-Useful pipeline commands:
-
-```bash
-# Default controlled synthetic-demo pipeline without the profiled candidate adoption
-python analytics/run_pipeline.py
-
-# Reuse existing inputs
-python analytics/run_pipeline.py --skip-data-generation
-
-# Validate the committed output bundle without running producers
-python analytics/run_pipeline.py --validate-only
-
-# Rebuild only dashboard-facing exports from existing artifacts
-python analytics/run_pipeline.py --export-dashboard-only
-```
-
-Run `python analytics/run_pipeline.py --help` for all source, benchmark-scenario, acknowledgment, and deployment-gate options.
-
-## Data modes
-
-| Mode | Purpose | Status |
-| --- | --- | --- |
-| `synthetic_benchmark` | Deterministic, wholly synthetic governed capability benchmark | Active `dhaka_south` profile |
-| `synthetic_demo` | Controlled 2024–2026 demonstration data | Default unprofiled pipeline |
-| OpenDengue | Bangladesh national aggregate case data | Experimental adapter |
-| NASA POWER | Point-based meteorological inputs used as a Dhaka South proxy | Experimental adapter |
-
-Experimental source commands:
-
-```bash
-python analytics/run_pipeline.py --use-opendengue
-python analytics/run_pipeline.py --use-nasa-power-climate
-python analytics/run_pipeline.py --use-opendengue --use-nasa-power-climate
-```
-
-Mixing source types or treating point climate data as a city-level proxy may require explicit acknowledgment flags. The pipeline rejects unsupported combinations rather than silently treating them as equivalent. Real epidemiology or climate inputs do not make the synthetic operational readiness layer real, calibrated, or approved.
-
-See [`data/README.md`](data/README.md) for input columns, provenance fields, source coverage, and artifact descriptions.
-
-## Runtime forecasting and assessment
-
-The `/forecast` workflow is separate from the bundled analytics pipeline. It accepts dengue and climate CSVs, stores them in an isolated workspace, normalizes and validates their contracts, and exposes only workflows allowed by the active deployment policies.
-
-### Quick Forecast
-
-Quick Forecast is available only when an upload matches the active `dhaka_south` compatibility policy. It:
-
-- requires the governed geography, source, temporal, and 18-feature contracts;
-- fits only the frozen approved Random Forest configuration;
-- produces a point forecast for the two-week horizon;
-- does not compare candidate models or calibrate upload-specific uncertainty;
-- publishes null uncertainty bounds with `pending_dataset_specific_calibration`;
-- disables scenarios, facilities, alerts, and directives because no uploaded-data planning policy is approved.
-
-### Dataset Assessment
-
-An eligible Phase 2 assessment upload must produce at least 157 labelled rows and 52–68 governed folds; histories with more available folds use the most recent contiguous 68-fold evaluation plan while retaining older validated rows in expanding training. The worker evaluates the same seven candidates on identical precommitted folds and commits rolling validation, comparison, recommendation, and summary evidence. A separate trusted-internal decision under decision policy `p2-v1` may authorize one selected learned model for one forecast run; assessment evidence alone never authorizes forecasting or changes the deployment model.
-
-Recommendation-strength thresholds are not governed, so a technical winner remains `evidence_only` with strength `not_available`.
-
-### One-run model decision and approved forecast
-
-When trusted-internal decisions are enabled, an operator may record one of four immutable outcomes for a committed assessment: approve the technical winner, keep the current model, defer, or reject the assessment. An approving decision can create one authorization for one point-forecast run.
-
-An approved forecast is bound to the assessment inputs, selected candidate parameters, decision commit, and authorization. It does not change the deployment-wide active model, rerun comparison, calibrate uncertainty, produce preparedness outputs, verify the operator's identity, or constitute institutional approval.
-
-## Running the runtime worker locally
-
-The web process validates uploads and queues jobs; a separate long-lived Python worker executes them. Both processes must use the same absolute runtime root.
-
-PowerShell example:
 
 ```powershell
-$env:DENGUEOPS_RUNTIME_ROOT = 'G:\dengueops-runtime'
-$env:DENGUEOPS_PYTHON_EXECUTABLE = (Resolve-Path '.venv\Scripts\python.exe')
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+## Configuration
+
+Keep local values in an ignored `.env.local`. Production values must be supplied through a restrictive server-side environment or secret store. Never commit credentials.
+
+### Required operational values
+
+| Variable | Requirement |
+| --- | --- |
+| `DENGUEOPS_RUNTIME_ROOT` | Absolute path outside the governed `data/` tree |
+| `DENGUEOPS_PYTHON_EXECUTABLE` | Absolute path to the approved virtual-environment interpreter; no PATH fallback |
+| `PYTHONDONTWRITEBYTECODE` | Set to `1` for runtime and release execution |
+| `DENGUEOPS_SUPER_USER_USERNAME` | Super User sign-in name |
+| `DENGUEOPS_SUPER_USER_PASSWORD_HASH` | Governed scrypt hash, never a plaintext password |
+| `DENGUEOPS_SESSION_SECRET` | Random secret of at least 32 characters |
+| `DENGUEOPS_COMMUNITY_READ_API_KEY` | Community read credential of at least 16 characters |
+| `DENGUEOPS_VECTOR_SUBMIT_API_KEY` | Distinct vector-submit credential of at least 16 characters |
+| `DENGUEOPS_COMMUNITY_UPLOAD_ROOT` | Absolute private upload path outside `public/` |
+
+The Community credentials must be different. Identical, missing, or undersized keys fail closed.
+
+### Optional runtime controls
+
+| Variable | Default | Purpose |
+| --- | ---: | --- |
+| `DENGUEOPS_DEFAULT_DEPLOYMENT_ID` | `dhaka_south` | Active deployment |
+| `DENGUEOPS_MAX_UPLOAD_BYTES` | `10485760` | Maximum bytes per CSV |
+| `DENGUEOPS_VECTOR_IMAGE_MAX_BYTES` | `8388608` | Maximum vector image bytes |
+| `DENGUEOPS_VALIDATION_TIMEOUT_MS` | `60000` | CSV validation timeout |
+| `DENGUEOPS_QUICK_FORECAST_TIMEOUT_SECONDS` | `600` | Quick Forecast timeout |
+| `DENGUEOPS_ASSESSMENT_TIMEOUT_SECONDS` | `1800` | Assessment timeout |
+| `DENGUEOPS_APPROVED_FORECAST_TIMEOUT_SECONDS` | `600` | Approved forecast timeout |
+| `DENGUEOPS_FORECAST_OUTCOME_TIMEOUT_SECONDS` | `120` | Outcome-processing timeout |
+| `DENGUEOPS_WORKSPACE_MAX_AGE_SECONDS` | `86400` | Maximum accepted workspace age |
+| `DENGUEOPS_DECISION_VALIDITY_SECONDS` | `2592000` | Assessment decision validity |
+| `DENGUEOPS_DECISION_REASON_MAX_LENGTH` | `1000` | Maximum decision-reason length |
+
+Internal decision, monitoring, and lifecycle ingress are disabled by default. When enabled, each requires a distinct server-only credential of at least 16 characters and a bounded operator identifier:
+
+- `DENGUEOPS_INTERNAL_DECISION_ENABLED`
+- `DENGUEOPS_INTERNAL_DECISION_SECRET`
+- `DENGUEOPS_INTERNAL_OPERATOR_ID`
+- `DENGUEOPS_INTERNAL_MONITORING_ENABLED`
+- `DENGUEOPS_INTERNAL_MONITORING_SECRET`
+- `DENGUEOPS_INTERNAL_MONITORING_OPERATOR_ID`
+- `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_ENABLED`
+- `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_SECRET`
+- `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_OPERATOR_ID`
+
+## Run locally
+
+The web application and analytics worker are separate processes and must share the same runtime root.
+
+PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force -Path '.\runtime' | Out-Null
+$env:DENGUEOPS_RUNTIME_ROOT = (Resolve-Path '.\runtime')
+$env:DENGUEOPS_PYTHON_EXECUTABLE = (Resolve-Path '.\.venv\Scripts\python.exe')
+$env:PYTHONDONTWRITEBYTECODE = '1'
 
 # Terminal 1
 npm run dev
@@ -196,136 +150,203 @@ npm run dev
 npm run runtime:worker
 ```
 
-Linux/macOS example:
+Linux:
 
 ```bash
-export DENGUEOPS_RUNTIME_ROOT=/var/lib/dengueops-ai
-export DENGUEOPS_PYTHON_EXECUTABLE=/absolute/path/to/.venv/bin/python
+mkdir -p runtime
+export DENGUEOPS_RUNTIME_ROOT="$(pwd)/runtime"
+export DENGUEOPS_PYTHON_EXECUTABLE="$(pwd)/.venv/bin/python"
+export PYTHONDONTWRITEBYTECODE=1
 
-# Run in separate terminals or services
+# Terminal 1
 npm run dev
+
+# Terminal 2
 npm run runtime:worker
 ```
 
-The runtime root must be absolute and must not be the governed `data/` directory. Run `python analytics/runtime_worker.py --once` to process at most one queued job, which is useful for controlled development and testing.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Runtime environment variables
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `DENGUEOPS_RUNTIME_ROOT` | `<repository>/runtime` | Absolute workspace, job, assessment, decision, and runtime-run storage root |
-| `DENGUEOPS_PYTHON_EXECUTABLE` | None | Required absolute Python interpreter path for upload validation from the web process |
-| `DENGUEOPS_MAX_UPLOAD_BYTES` | `10485760` | Maximum bytes per uploaded CSV |
-| `DENGUEOPS_VALIDATION_TIMEOUT_MS` | `60000` | Upload validation timeout |
-| `DENGUEOPS_QUICK_FORECAST_TIMEOUT_SECONDS` | `600` | Quick Forecast worker timeout |
-| `DENGUEOPS_ASSESSMENT_TIMEOUT_SECONDS` | `1800` | Dataset Assessment worker timeout |
-| `DENGUEOPS_APPROVED_FORECAST_TIMEOUT_SECONDS` | `600` | Approved forecast worker timeout |
-| `DENGUEOPS_WORKSPACE_MAX_AGE_SECONDS` | `86400` | Maximum workspace age accepted when starting a job |
-| `DENGUEOPS_DEFAULT_DEPLOYMENT_ID` | `dhaka_south` | Deployment served by the runtime dashboard API |
-| `DENGUEOPS_INTERNAL_DECISION_ENABLED` | `false` | Enables trusted-internal assessment decisions |
-| `DENGUEOPS_INTERNAL_DECISION_SECRET` | None | Server-side decision credential; must be at least 16 characters when enabled |
-| `DENGUEOPS_INTERNAL_OPERATOR_ID` | None | Server-configured unverified internal operator identifier |
-| `DENGUEOPS_DECISION_VALIDITY_SECONDS` | `2592000` | Maximum accepted assessment age for a decision |
-| `DENGUEOPS_DECISION_REASON_MAX_LENGTH` | `1000` | Maximum decision-reason length |
-| `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_ENABLED` | `false` | Enables trusted-internal lifecycle decisions; it does not bootstrap automatically |
-| `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_SECRET` | None | Distinct server-only lifecycle credential; must be at least 16 characters when enabled |
-| `DENGUEOPS_INTERNAL_MODEL_LIFECYCLE_OPERATOR_ID` | None | Server-derived lifecycle operator identifier |
-
-Internal decision POST routes expect the protected `x-dengueops-internal-decision-secret` header. The secret must remain server-side and must never be exposed to browser JavaScript.
-
-Model lifecycle POST ingress uses the separate `x-dengueops-model-lifecycle-secret` credential. The browser exposes read-only lifecycle state only. Historical-profile bootstrap is an explicit manual action, and policy `p2-v1` permits only the exact P1.4F-compatible Random Forest identity to become active.
-
-## Web routes
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Project positioning, workflow, roles, and prototype overview |
-| `/dashboard` | Latest committed operational overview with role-based views |
-| `/forecast` | Upload validation, Quick Forecast, Dataset Assessment, and internal approval workflow |
-| `/preparedness` | Preparedness-focused facility and operational views |
-| `/validation` | Rolling validation, candidate comparison, errors, and uncertainty evidence |
-| `/methodology` | Inputs, feature engineering, formulas, and operational logic |
-| `/assumptions` | Data boundaries, assumptions, limitations, and validation roadmap |
-| `/ethics` | Safety boundaries, ethical principles, and user responsibilities |
-| `/about` | Project and author information |
-
-### API routes
-
-| Method and route | Purpose |
-| --- | --- |
-| `GET /api/dashboard/latest` | Return the latest committed runtime dashboard or fall back to the bundled benchmark |
-| `POST /api/runtime/validate` | Store, normalize, and validate dengue and climate CSVs in an isolated workspace |
-| `POST /api/runtime/runs/quick` | Queue an eligible Quick Forecast |
-| `POST /api/runtime/assessments` | Queue an eligible Dataset Assessment |
-| `GET /api/runtime/assessments/:assessmentId` | Read a committed assessment summary |
-| `GET /api/runtime/jobs/:jobId` | Poll a runtime job |
-| `POST /api/runtime/assessments/:assessmentId/decisions` | Record a protected trusted-internal model-use decision |
-| `GET /api/runtime/decisions/:decisionId` | Read a protected decision record |
-| `POST /api/runtime/decisions/:decisionId/forecast` | Reserve authorization and queue the approved one-run forecast |
-
-## Testing and quality checks
-
-The Python suite uses the standard-library `unittest` runner; the API route suite uses Node's built-in test runner.
+The launcher refuses missing or relative Python paths. For a bounded development check that consumes at most one queued job:
 
 ```bash
-# Python analytics, schemas, governance, provenance, runtime, and frontend contracts
-python -m unittest discover -s tests -p test_*.py
+"$DENGUEOPS_PYTHON_EXECUTABLE" analytics/runtime_worker.py --once
+```
 
-# Next.js route contract tests
+## Main workflows
+
+### Quick Forecast
+
+Validates an uploaded dengue/climate dataset against the current deployment and model authority, then queues a governed forecast. The web layer publishes no result until the worker commits an internally consistent artifact set.
+
+### Dataset Assessment
+
+Evaluates every current registry candidate on one precommitted rolling-origin plan. The current registry contains two comparison baselines and nine selectable learned models. Assessment evidence does not change the active model by itself.
+
+### Decision and approved forecast
+
+A Super User or explicitly enabled trusted service may record a bounded decision against a committed assessment. An approval reserves a one-run authorization; it does not silently adopt a deployment-wide model.
+
+### Monitoring, degradation, and lifecycle
+
+Observed outcomes, monitoring summaries, degradation evidence, and lifecycle decisions are stored as separate immutable evidence families. Current pointers are version-aware and fail closed on tampering or stale authority.
+
+### Operational preparedness
+
+Preparedness publication binds the current forecast, governed formulas, hospital inventory, and planning policy. Qualification preparedness and current operational preparedness remain distinct.
+
+### Community and vector surveillance
+
+- Community read access uses a dedicated bearer credential.
+- Vector submission uses a different bearer credential and a lower rate limit.
+- JPEG, PNG, and WebP are accepted only when MIME and magic bytes agree.
+- SVG and arbitrary bytes are rejected.
+- Uploads use server-generated UUID paths, bounded metadata, `0700` directories, and `0600` files.
+- Images remain outside `public/` and are retrieved only through an authenticated, `nosniff` response.
+
+## Routes
+
+| Route | Access | Purpose |
+| --- | --- | --- |
+| `/` | Public | Project overview |
+| `/dashboard` | Public curated view | Latest verified operational summary |
+| `/forecast` | Super User | Upload, Quick Forecast, assessment, and approval workflow |
+| `/validation` | Super User | Validation, comparison, monitoring, and lifecycle evidence |
+| `/vector-surveillance` | Super User | Protected vector submission review |
+| `/preparedness` | Public curated view | Preparedness presentation |
+| `/methodology` | Public | Methods and governance |
+| `/assumptions` | Public | Assumptions and limitations |
+| `/ethics` | Public | Responsible-use boundaries |
+| `/sign-in` | Public | Super User authentication |
+
+Versioned integration endpoints:
+
+| Method and route | Credential | Purpose |
+| --- | --- | --- |
+| `GET /api/community/v1/current` | Community read bearer | Curated current forecast and preparedness |
+| `POST /api/community/v1/vector-submissions` | Vector-submit bearer | Raster evidence intake |
+| `GET /api/vector-surveillance/submissions` | Super User session | Protected submission listing |
+| `GET /api/vector-surveillance/submissions/:id/image` | Super User session | Protected image retrieval |
+
+Runtime mutation routes require a valid Super User session and same-origin request unless an explicitly enabled, distinct trusted-service credential applies.
+
+## Tests and release checks
+
+Python regression:
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE = '1'
+py -3.13 -m unittest discover -s tests -p "test_*.py"
+```
+
+Focused route tests:
+
+```bash
 npm run test:runtime-routes
+```
 
-# Frontend lint and production build
+Type, lint, and production build:
+
+```bash
+npx tsc --noEmit
 npm run lint
 npm run build
 ```
 
-Many Python tests exercise deterministic model fitting and full runtime commit paths and can take several minutes.
+The complete Node regression contains server-only and general test partitions. Run the four server-only files with the React Server condition:
+
+```bash
+node --conditions=react-server --import=tsx --test --test-concurrency=1 \
+  tests/product_v2_cross_version_routing.test.mjs \
+  tests/runtime_active_model_resolver.test.mjs \
+  tests/runtime_degradation_cross_version.test.mjs \
+  tests/request_body_security.test.mjs
+```
+
+Run every other `tests/*.test.mjs` file serially with `node --import=tsx --test --test-concurrency=1`. Do not apply the React Server condition globally because several client contracts intentionally run without it.
+
+## Production with PM2
+
+Production requires two independently supervised processes:
+
+1. `dengueops-web`
+2. `dengueops-runtime-worker`
+
+The committed [`ecosystem.config.cjs`](ecosystem.config.cjs) pins each process to one PM2 fork instance, enables restart supervision, binds Next.js to `127.0.0.1`, and passes the explicit Python/runtime environment to the worker.
+
+Before starting PM2:
+
+```bash
+export DENGUEOPS_PYTHON_EXECUTABLE=/absolute/path/to/venv/bin/python
+export DENGUEOPS_RUNTIME_ROOT=/absolute/private/runtime/path
+export DENGUEOPS_COMMUNITY_UPLOAD_ROOT=/absolute/private/upload/path
+export DENGUEOPS_WEB_PORT=3000
+
+"$DENGUEOPS_PYTHON_EXECUTABLE" -c "import numpy, pandas, scipy, sklearn, statsmodels, jsonschema"
+npm ci
+npm run build
+pm2 start ecosystem.config.cjs
+pm2 status
+pm2 save
+```
+
+Inspect the existing PM2 owner and installation before configuring startup. Review the command produced by `pm2 startup` before running it with elevated privileges. On a multi-site server, do not change global firewall, SSH, Fail2ban, aaPanel, OpenResty, or Nginx settings until unrelated services and ownership are understood.
+
+Production acceptance requires evidence that:
+
+- one web process and one worker are online without an SSH session;
+- the worker auto-restarts after a controlled crash and does not crash-loop;
+- PM2 restores both processes after reboot or its startup integration is structurally verified;
+- the internal Node port is reachable only through the reverse proxy;
+- runtime and upload roots are owned by the service user and are not world-writable;
+- the selected virtual environment imports all required analytics dependencies;
+- the idle worker does not hold `analytics.lock`;
+- logs are bounded and contain no credentials;
+- TLS, proxy limits, rollback, current runtime authority, Community API, and vector upload all pass production smoke tests.
+
+Passing tests and `next build` alone does not make the deployment production-ready.
+
+## Security model
+
+- Super User passwords are verified with the configured scrypt contract.
+- Sessions are HMAC-signed and use Secure, HttpOnly, SameSite=Strict cookies in production.
+- Mutations enforce same-origin checks where browser sessions apply.
+- Authentication and API credentials fail closed; there is no development fallback.
+- Credential comparisons are timing-safe.
+- Sign-in and Community APIs apply bounded in-memory rate limits; production should add reverse-proxy limits.
+- JSON and multipart bodies are read through application-level bounded readers.
+- Security headers include CSP, nosniff, Referrer-Policy, Permissions-Policy, frame protection, and production HSTS.
+- Runtime and upload paths are containment-checked and kept outside public assets.
+- Public errors are sanitized and correlation identifiers do not reveal credentials or filesystem paths.
 
 ## Repository layout
 
 ```text
-app/                         Next.js pages and API route handlers
-components/                  Dashboard, forecast workflow, charts, and shared UI
-lib/                         Frontend view models, contracts, utilities, and runtime storage
-analytics/                   Pipeline stages, adapters, model evaluation, and runtime worker
-analytics/benchmark/         Deterministic synthetic benchmark generator and scenarios
-config/                      Schemas, model/formula registries, and deployment policies
-config/deployments/          Deployment-specific profiles and runtime policies
-data/                        Bundled inputs, evidence, model cards, and dashboard artifacts
-docs/                        Methodology, ethics, limitations, roadmap, and project materials
-tests/                       Python and Node contract/regression tests
+app/                  Next.js pages and route handlers
+components/           Dashboard and workflow UI
+lib/auth/             Super User credentials, sessions, and authorization
+lib/community/        Scoped API authentication and vector storage
+lib/http/             Bounded request-body handling
+lib/runtime/          Runtime contracts, readers, stores, and authority resolution
+analytics/            Governed pipeline stages and long-lived worker
+config/               Schemas, registries, policies, and deployment configuration
+data/                 Bundled synthetic evidence and dashboard artifacts
+scripts/              Process launchers
+tests/                Python and Node regression suites
+docs/                 Technical, methodological, ethics, and planning documents
 ```
-
-Important governance files:
-
-- [`config/deployments/dhaka_south/profile.json`](config/deployments/dhaka_south/profile.json) — benchmark deployment scope, maturity, and prohibited claims.
-- [`config/candidate_models.json`](config/candidate_models.json) — frozen seven-model candidate registry.
-- [`config/formulas.json`](config/formulas.json) — versioned operational formula and threshold registry.
-- [`config/evidence_registry.json`](config/evidence_registry.json) — linked scientific and institutional evidence records; currently empty.
-- [`data/model_card.json`](data/model_card.json) — run-bound model, validation, uncertainty, provenance, and maturity statements.
-- [`data/pipeline_run_summary.json`](data/pipeline_run_summary.json) — latest bundled pipeline status and output summary.
-
-## Production boundary
-
-The runtime design targets a persistent Linux host with two long-lived unprivileged services: `next start` and `python analytics/runtime_worker.py`. A reverse proxy should enforce HTTPS, an upload limit no larger than the application limit, request and rate limits, and a private network or IP allowlist for trusted-internal decision routes.
-
-The current secret-header mechanism is not a complete authentication or authorization system. Public exposure requires real identity, authentication, authorization, audit, secret management, retention, backup, monitoring, and incident-response controls. A production deployment also requires official and timely surveillance data, validated facility and inventory data, local calibration, epidemiological review, hospital and public-health approval, and institution-owned action thresholds.
 
 ## Documentation
 
-- [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md) — comprehensive technical and user documentation.
-- [`docs/METHODOLOGY_SUMMARY.md`](docs/METHODOLOGY_SUMMARY.md) — concise methods and formulas.
-- [`docs/ASSUMPTIONS_AND_LIMITATIONS.md`](docs/ASSUMPTIONS_AND_LIMITATIONS.md) — assumptions, evidence boundaries, and known limitations.
-- [`docs/ETHICS_STATEMENT.md`](docs/ETHICS_STATEMENT.md) — ethical commitments and safety constraints.
-- [`docs/PHASE_ROADMAP.md`](docs/PHASE_ROADMAP.md) — implementation and validation roadmap.
-- [`analytics/README.md`](analytics/README.md) — stage-level analytics notes and artifact behavior.
-- [`data/README.md`](data/README.md) — input and output data reference.
+- [Technical documentation](docs/DOCUMENTATION.md)
+- [Methodology summary](docs/METHODOLOGY_SUMMARY.md)
+- [Assumptions and limitations](docs/ASSUMPTIONS_AND_LIMITATIONS.md)
+- [Ethics statement](docs/ETHICS_STATEMENT.md)
+- [Analytics pipeline reference](analytics/README.md)
+- [Data reference](data/README.md)
 
-## Product ownership
+## Ownership and responsible use
 
-DengueOps AI is a research, forecasting, and preparedness decision-support product developed and owned by Research and Management Consultants Ltd. (RMCL).
+DengueOps AI is developed and owned by Research and Management Consultants Ltd. (RMCL).
 
----
-
-For research and educational demonstration only. Human review is required for every output. Do not use this prototype for clinical care, automated public-health action, or operational resource allocation without validated data and institutional oversight.
-
+Human review is required for every output. Do not use this repository for patient-level diagnosis, automated clinical decisions, official public-health action, or real-world resource allocation without authorized data, local validation, institutional governance, and accountable operational approval.
