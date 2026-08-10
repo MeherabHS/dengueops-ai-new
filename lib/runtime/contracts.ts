@@ -183,7 +183,7 @@ export interface StartAssessmentRequest {
 export interface StartModelAssignmentRequest {
   approvedForecastRunId: string;
   expectedApprovedForecastCommitSha256: string;
-  expectedAssignmentPointerSha256: string;
+  expectedAssignmentPointerSha256: string | null;
   reason: string;
   assignmentAcknowledged: true;
 }
@@ -545,8 +545,8 @@ export interface AssessmentWorkflowProjection {
   assessmentPolicy: { policyId: string; policyVersion: string; policySha256: string };
   target: "target_cases_next_2w";
   horizonWeeks: 2;
-  currentApprovedModelId: RuntimeCandidateId;
-  currentApprovedModelFamily: string;
+  currentApprovedModelId: RuntimeCandidateId | null;
+  currentApprovedModelFamily: string | null;
   candidates: AssessmentCandidateProjection[];
   technicalWinnerModelId: RuntimeCandidateId | null;
   technicalWinnerDeployable: boolean;

@@ -147,19 +147,29 @@ async function verifiedValidationResponse(input: {
   if (verifiedWorkflowMode !== input.requestedWorkflowMode) {
     throw new RuntimePublicError("invalid_validation_output", "validation", "Authoritative validation did not match the requested workflow mode.", 500, true);
   }
-  const currentAuthority = await resolveActiveModel(input.config.repositoryRoot, input.config.runtimeRoot, validation.deploymentId);
-  if (verifiedWorkflowMode === "quick_forecast" && (
-    !validation.activeModelAuthority
-    || !validationAuthorityMatches(validation.activeModelAuthority, currentAuthority)
-    || validation.eligibility.quickForecast.assignedCandidateId !== currentAuthority.modelId
-  )) {
-    throw new RuntimePublicError(
-      "quick_validation_authority_mismatch",
-      "validation",
-      "Quick Forecast validation could not be reconciled with the current governed assignment.",
-      409,
+  let currentAuthority: Awaited<ReturnType<typeof resolveActiveModel>> | undefined;
+
+  if (verifiedWorkflowMode === "quick_forecast") {
+    currentAuthority = await resolveActiveModel(
+      input.config.repositoryRoot,
+      input.config.runtimeRoot,
+      validation.deploymentId,
     );
+
+    if (
+      !validation.activeModelAuthority
+      || !validationAuthorityMatches(validation.activeModelAuthority, currentAuthority)
+      || validation.eligibility.quickForecast.assignedCandidateId !== currentAuthority.modelId
+    ) {
+      throw new RuntimePublicError(
+        "quick_validation_authority_mismatch",
+        "validation",
+        "Quick Forecast validation could not be reconciled with the current governed assignment.",
+        409,
+      );
+    }
   }
+
   return {
     ok: true,
     status: validation.status,
@@ -172,7 +182,7 @@ async function verifiedValidationResponse(input: {
     counts: validation.counts,
     issues: validation.issues,
     eligibility: validation.eligibility,
-    activeModelAuthority: currentAuthority,
+    ...(currentAuthority ? { activeModelAuthority: currentAuthority } : {}),
   };
 }
 

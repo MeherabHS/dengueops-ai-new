@@ -119,9 +119,7 @@ export default function QuickForecastRunPanel({
             && latest.dashboard.latestRun.runId === committedRunId
             && latest.dashboard.modelUse.workflowMode === "quick_forecast";
           if (exactCurrent) {
-            // Downstream authority is server-resolved and idempotent; forecast publication never waits for it.
-            void startOperationalPreparedness().catch(() => undefined);
-            onStateChange({
+            const verifiedState: QuickForecastWorkflowState = {
               ...state,
               status: "current_verified",
               jobId,
@@ -133,7 +131,28 @@ export default function QuickForecastRunPanel({
               exactCurrentRunId: committedRunId,
               errorCode: null,
               error: null,
-            });
+            };
+            onStateChange(verifiedState);
+
+            // Preparedness is downstream of the committed forecast. A failure must
+            // never invalidate the forecast, but it must not be silently hidden.
+            void startOperationalPreparedness()
+              .then((preparedness) => {
+                if (!mounted.current || preparedness.ok) return;
+                onStateChange({
+                  ...verifiedState,
+                  errorCode: preparedness.error.code,
+                  error: `Forecast is current. Preparedness could not be started: ${preparedness.error.message}`.slice(0, 500),
+                });
+              })
+              .catch((reason) => {
+                if (!mounted.current) return;
+                onStateChange({
+                  ...verifiedState,
+                  errorCode: "preparedness_start_failed",
+                  error: `Forecast is current. Preparedness could not be started: ${reason instanceof Error ? reason.message : "request failed"}`.slice(0, 500),
+                });
+              });
             return;
           }
         }

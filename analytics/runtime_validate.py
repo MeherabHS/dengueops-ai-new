@@ -271,17 +271,22 @@ def _contains_approximated_values(frame: pd.DataFrame) -> bool | None:
 
 
 def validate(args: argparse.Namespace) -> dict[str, Any]:
-    runtime_root=getattr(args,"runtime_root",None)
+    runtime_root = getattr(args, "runtime_root", None)
     active_model_authority: dict[str, Any] | None = None
-    if runtime_root:
+
+    if args.workflow_mode == "quick_forecast":
+        if not runtime_root:
+            raise RuntimeContextError(
+                "Quick Forecast validation requires current assignment authority."
+            )
+
         from runtime_active_model import resolve_active_model
+
         active_model_authority = resolve_active_model(
             ROOT,
             require_absolute_directory(runtime_root, "runtime root"),
             args.deployment_id,
         )
-    elif args.workflow_mode == "quick_forecast":
-        raise RuntimeContextError("Quick Forecast validation requires current assignment authority.")
     workspace = Path(args.workspace_root).resolve()
     dengue_input = require_within(workspace, args.dengue_input, "dengue input")
     climate_input = require_within(workspace, args.climate_input, "climate input")

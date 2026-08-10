@@ -49,7 +49,7 @@ export default function ModelSuitabilitySummary({ assessment }: { assessment: Mo
         <div><dt className="font-medium text-ink">Dataset ID</dt><dd className="break-all font-mono">{assessment.datasetId}</dd></div>
         <div><dt className="font-medium text-ink">Policy ID</dt><dd>{workflow.assessmentPolicy.policyId}</dd></div>
         <div><dt className="font-medium text-ink">Policy version</dt><dd>{workflow.assessmentPolicy.policyVersion}</dd></div>
-        <div><dt className="font-medium text-ink">Current estimator family</dt><dd>{workflow.currentApprovedModelFamily}</dd></div>
+        <div><dt className="font-medium text-ink">Current estimator family</dt><dd>{(workflow.currentApprovedModelFamily ?? "Not assigned yet")}</dd></div>
       </dl>
     </details>
     <ModelLeaderboard assessment={assessment} />

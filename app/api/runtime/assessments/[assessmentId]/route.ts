@@ -60,15 +60,27 @@ export async function GET(
       assessmentPolicy.policyVersion === "p2-v1" ||
       assessmentPolicy.policyVersion === "p2-v2" ||
       assessmentPolicy.policyVersion === "p2-v3";
-    let activeModel;
+    let activeModel:
+      | Awaited<ReturnType<typeof resolveActiveModel>>
+      | Awaited<ReturnType<typeof resolveHistoricalActiveModelP2V1>>
+      | null = null;
     switch (assessmentPolicy.policyVersion) {
       case "p2-v2":
       case "p2-v3":
-        activeModel = await resolveActiveModel(
-          config.repositoryRoot,
-          config.runtimeRoot,
-          summary.deploymentId,
-        );
+        try {
+          activeModel = await resolveActiveModel(
+            config.repositoryRoot,
+            config.runtimeRoot,
+            summary.deploymentId,
+          );
+        } catch (error) {
+          if (
+            !(error instanceof RuntimePublicError)
+            || error.code !== "active_model_not_assigned"
+          ) {
+            throw error;
+          }
+        }
         break;
       case "p1.4d-1-v1":
       case "p2-v1":
@@ -172,7 +184,7 @@ export async function GET(
         displayRank: rank.get(candidate.modelId) ?? null,
         modelFamily: families.get(candidate.modelId) ?? candidate.modelLabel,
         technicalWinner: candidate.modelId === summary.technicalWinnerModelId,
-        currentApprovedModel: candidate.modelId === activeModel.modelId,
+        currentApprovedModel: activeModel !== null && candidate.modelId === activeModel.modelId,
         deployableForOneRun:
           candidate.deployabilityClass === "deployable_learned_model" &&
           candidate.selectionEligible &&
@@ -224,8 +236,8 @@ export async function GET(
         },
         target: "target_cases_next_2w",
         horizonWeeks: 2,
-        currentApprovedModelId: activeModel.modelId,
-        currentApprovedModelFamily: activeModel.modelFamily,
+        currentApprovedModelId: activeModel?.modelId ?? null,
+        currentApprovedModelFamily: activeModel?.modelFamily ?? null,
         candidates: projectedCandidates,
         technicalWinnerModelId: summary.technicalWinnerModelId,
         technicalWinnerDeployable: winner?.deployableForOneRun ?? false,

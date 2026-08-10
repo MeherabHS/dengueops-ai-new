@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, rm } from "node:fs/promises";
+import { lstat, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { requireSuperUser, requireSuperUserMutation } from "@/lib/auth/authorization";
@@ -64,6 +64,42 @@ async function verifiedPointer(config: ReturnType<typeof loadRuntimeConfig>, exp
     );
   }
   return authority;
+}
+
+async function verifiedExpectedPointer(
+  config: ReturnType<typeof loadRuntimeConfig>,
+  expectedSha: string | null,
+) {
+  if (expectedSha !== null) {
+    return verifiedPointer(config, expectedSha);
+  }
+
+  const pointerPath = assertContained(
+    config.runtimeRoot,
+    path.join(
+      config.runtimeRoot,
+      "deployments",
+      config.defaultDeploymentId,
+      "model-assignment",
+      "latest.json",
+    ),
+  );
+
+  try {
+    await lstat(pointerPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+
+  throw new RuntimePublicError(
+    "assignment_pointer_conflict",
+    "storage",
+    "A governed assignment now exists where no assignment was expected.",
+    409,
+  );
 }
 
 async function readStrictJson(
@@ -274,12 +310,14 @@ export async function POST(request: Request): Promise<Response> {
     }
     const approvedForecastRunId = String(body.approvedForecastRunId ?? "");
     const expectedApprovedForecastCommitSha256 = String(body.expectedApprovedForecastCommitSha256 ?? "");
-    const expectedAssignmentPointerSha256 = String(body.expectedAssignmentPointerSha256 ?? "");
+    const expectedAssignmentPointerSha256 = body.expectedAssignmentPointerSha256 === null
+      ? null
+      : String(body.expectedAssignmentPointerSha256 ?? "");
     const reason = String(body.reason ?? "").trim();
     if (
       !UUID.test(approvedForecastRunId)
       || !SHA.test(expectedApprovedForecastCommitSha256)
-      || !SHA.test(expectedAssignmentPointerSha256)
+      || (expectedAssignmentPointerSha256 !== null && !SHA.test(expectedAssignmentPointerSha256))
       || !reason
       || reason.length > 1000
       || body.assignmentAcknowledged !== true
@@ -291,7 +329,7 @@ export async function POST(request: Request): Promise<Response> {
     if (config.defaultDeploymentId !== "dhaka_south") {
       throw new RuntimePublicError("assignment_deployment_unavailable", "configuration", "Model assignment is unavailable for this deployment.", 503);
     }
-    const priorAuthority = await verifiedPointer(config, expectedAssignmentPointerSha256);
+    const priorAuthority = await verifiedExpectedPointer(config, expectedAssignmentPointerSha256);
     const approvedCommitPath = assertContained(
       config.runtimeRoot,
       path.join(config.runtimeRoot, "runs", approvedForecastRunId, "metadata", "commit.json"),
@@ -310,6 +348,7 @@ export async function POST(request: Request): Promise<Response> {
       config.runtimeRoot,
       path.join(config.runtimeRoot, "deployments", config.defaultDeploymentId, "model-assignment"),
     );
+    await mkdir(assignmentRoot, { recursive: true, mode: 0o750 });
     lockPath = assertContained(config.runtimeRoot, path.join(assignmentRoot, ".publication-lock"));
     try {
       await mkdir(lockPath);
@@ -321,7 +360,7 @@ export async function POST(request: Request): Promise<Response> {
       throw error;
     }
 
-    await verifiedPointer(config, expectedAssignmentPointerSha256);
+    await verifiedExpectedPointer(config, expectedAssignmentPointerSha256);
     if (sha256(await readFile(approvedCommitPath)) !== expectedApprovedForecastCommitSha256) {
       throw new RuntimePublicError("approved_forecast_commit_mismatch", "storage", "The approved forecast changed after review.", 409);
     }
@@ -365,16 +404,19 @@ export async function POST(request: Request): Promise<Response> {
     if (
       active.assignmentId !== cli.assignmentId
       || active.selectedCandidateId !== cli.selectedCandidateId
-      || active.assignmentId === priorAuthority.assignmentId
+      || (priorAuthority !== null && active.assignmentId === priorAuthority.assignmentId)
     ) {
       throw new RuntimePublicError("assignment_publication_failed", "storage", "The governed assignment failed post-publication verification.", 409);
     }
     const record = current.record;
+    const expectedPriorAssignmentId = priorAuthority?.assignmentId ?? null;
+    const expectedPriorAssignmentCommitSha256 = priorAuthority?.assignmentCommitSha256 ?? null;
     if (
       record.sourceApprovedForecastRunId !== approvedForecastRunId
       || record.operatorIdentifier !== session.sub
       || record.modelId !== active.selectedCandidateId
-      || record.priorAssignmentId !== priorAuthority.assignmentId
+      || record.priorAssignmentId !== expectedPriorAssignmentId
+      || record.priorAssignmentCommitSha256 !== expectedPriorAssignmentCommitSha256
     ) {
       throw new RuntimePublicError("assignment_publication_failed", "storage", "The governed assignment failed evidence verification.", 409);
     }

@@ -17,7 +17,9 @@ test("forecast handoff is nonblocking and preparedness start is idempotently rec
   const panel=await read("components/forecast/QuickForecastRunPanel.tsx");
   const route=await read("app/api/runtime/preparedness/route.ts");
   const worker=await read("analytics/runtime_worker.py");
-  assert.match(panel,/void startOperationalPreparedness\(\)\.catch/);
+  assert.match(panel,/void startOperationalPreparedness\(\)/);
+  assert.match(panel,/preparedness\.ok/);
+  assert.match(panel,/Preparedness could not be started/);
   assert.match(worker,/enqueue_operational_preparedness_job/);
   assert.match(worker,/kind in \{"quick_forecast", "approved_forecast"\}/);
   assert.match(route,/operationalPreparednessPaths/);
@@ -30,6 +32,8 @@ test("dashboard and Community consume verified operational evidence without qual
   const community=await read("lib/community/public-read-model.ts");
   const table=await read("components/overview/OperationalPreparednessTable.tsx");
   assert.match(dashboard,/readCurrentOperationalPreparedness/);
+  assert.match(dashboard,/overviewFromVerified\(verified,operational,reason,monitoring,calculating\)/);
+  assert.doesNotMatch(dashboard,/calculating\|\|downstreamPending/);
   assert.match(community,/mapOperationalPreparedness/);
   assert.match(community,/qualificationPreparedness/);
   assert.match(table,/Current live availability/);

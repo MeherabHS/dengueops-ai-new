@@ -103,12 +103,23 @@ export default function ModelAssignmentPanel({
   const verifyCurrent = async (
     mode: RefreshMode,
     posted?: ModelAssignmentResultSuccess,
-    priorPointerSha256?: string,
+    priorPointerSha256: string | null = null,
   ) => {
     try {
       await verifiedApprovedRun();
       const current = await getCurrentModelAssignment();
       if (!current.ok) {
+        if (current.error.code === "active_model_not_assigned") {
+          onStateChange({
+            status: "ready",
+            current: null,
+            approvedJobVerified: true,
+            expectedAssignmentPointerSha256: null,
+            errorCode: null,
+            error: null,
+          });
+          return;
+        }
         onStateChange({
           ...state,
           status: current.error.code === "authentication_required" ? "authentication_required" : "failed_uncertain",
@@ -200,8 +211,7 @@ export default function ModelAssignmentPanel({
       publishing.current
       || state.status !== "ready"
       || !state.approvedJobVerified
-      || !expectedPointer
-      || !SHA.test(expectedPointer)
+      || (expectedPointer !== null && !SHA.test(expectedPointer))
       || trimmedReason.length < MIN_REASON_LENGTH
       || trimmedReason.length > MAX_REASON_LENGTH
       || !acknowledged
@@ -268,7 +278,11 @@ export default function ModelAssignmentPanel({
 
     <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
       <div><dt className="font-medium text-ink">Qualification evidence</dt><dd className="mt-1 text-ink-muted">Verified run available</dd></div>
-      <div><dt className="font-medium text-ink">Pointer read</dt><dd className="mt-1 text-ink-muted">{state.approvedJobVerified && state.expectedAssignmentPointerSha256 ? "Verified current pointer identity available" : "Verification pending"}</dd></div>
+      <div><dt className="font-medium text-ink">Pointer read</dt><dd className="mt-1 text-ink-muted">{state.approvedJobVerified
+        ? state.expectedAssignmentPointerSha256
+          ? "Verified current pointer identity available"
+          : "Verified absent — first governed assignment"
+        : "Verification pending"}</dd></div>
       {state.current ? <>
         <div><dt className="font-medium text-ink">Current assignment ID</dt><dd className="mt-1 break-all text-ink-muted">{state.current.assignmentId}</dd></div>
         <div><dt className="font-medium text-ink">{immutable?"Current governed model":"Currently active model"}</dt><dd className="mt-1 text-ink-muted">{state.current.selectedCandidateLabel}</dd></div>
