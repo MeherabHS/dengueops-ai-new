@@ -139,6 +139,23 @@ export interface CommunityCurrentV1 {
   };
 }
 
+export type VectorGovernanceReason =
+  | "test_submission"
+  | "duplicate"
+  | "unusable_image"
+  | "invalid_location"
+  | "irrelevant_content"
+  | "user_request"
+  | "other";
+
+export interface VectorAnalysisDispositionV1 {
+  status: "included" | "excluded";
+  reason: VectorGovernanceReason | null;
+  note: string | null;
+  changedAt: string | null;
+  changedBy: string | null;
+}
+
 export interface VectorSubmissionMetadataV1 {
   schemaVersion: "1.0";
   submissionId: string;
@@ -154,6 +171,7 @@ export interface VectorSubmissionMetadataV1 {
   locationAccuracyM: number | null;
   note: string | null;
   status: "received";
+  analysisDisposition: VectorAnalysisDispositionV1;
 }
 
 export interface VectorAnalyticalSubmissionV1 {
@@ -167,6 +185,17 @@ export interface VectorAnalyticalSubmissionV1 {
   classificationStatus: "unreviewed";
   processingState: "received";
   logicalObservationStatus: "client_id_bound" | "legacy_unverified";
+  analysisDisposition: "included";
+}
+
+export interface VectorDeletionTombstoneV1 {
+  schemaVersion: "1.0";
+  submissionId: string;
+  clientSubmissionId: string | null;
+  deletedAt: string;
+  deletedBy: string;
+  deletionReason: VectorGovernanceReason;
+  originalEvidenceSha256: string;
 }
 
 export interface VectorSubmissionReceiptV1 {

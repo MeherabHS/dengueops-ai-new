@@ -45,7 +45,7 @@ test("Community v1 current is no-store, scoped, ordered, sanitized, and truthful
   assert.equal(body.forecast.series.observed.every((p, i, a) => i === 0 || a[i - 1].period.localeCompare(p.period) <= 0), true);
   assert.equal(body.preparedness.facilities.every(row => row.liveAvailability === null), true);
   const serialized = JSON.stringify(body);
-  for (const forbidden of ["modelId", "assessmentId", "assignmentId", "policySha", "formulaExpression", "workspaceId", "technicalWinner", "activeModel", "authoritySnapshotSha256", "latitude", "longitude", "locationAccuracyM", "clientSubmissionId"]) assert.equal(serialized.includes(forbidden), false);
+  for (const forbidden of ["modelId", "assessmentId", "assignmentId", "policySha", "formulaExpression", "workspaceId", "technicalWinner", "activeModel", "authoritySnapshotSha256", "latitude", "longitude", "locationAccuracyM", "clientSubmissionId", "analysisDisposition", "deletedAt", "deletedBy", "deletionReason", "originalEvidenceSha256"]) assert.equal(serialized.includes(forbidden), false);
 });
 
 test("Community trend is server-derived from latest observed and point forecast", () => {
@@ -95,14 +95,16 @@ test("vector submission route validates scope, multipart, metadata, receipt, and
   assert.deepEqual(Object.keys(value.valid.body).sort(), ["receivedAt", "schemaVersion", "status", "submissionId"]);
 });
 
-test("Super User vector surfaces and protected image route are guarded", async () => {
-  const sources = ["proxy.ts", "app/vector-surveillance/page.tsx", "app/vector-surveillance/saved-datasets-images/page.tsx", "app/api/vector-surveillance/submissions/route.ts", "app/api/vector-surveillance/submissions/[submissionId]/image/route.ts"].map(file => execFileSync(process.execPath, ["-e", `process.stdout.write(require('fs').readFileSync(${JSON.stringify(path.join(cwd, "FILE"))}.replace('FILE',${JSON.stringify(file)}),'utf8'))`], { encoding: "utf8" })).join("\n");
+test("Super User vector surfaces, governance mutations, and protected image route are guarded", async () => {
+  const sources = ["proxy.ts", "app/vector-surveillance/page.tsx", "app/vector-surveillance/saved-datasets-images/page.tsx", "app/api/vector-surveillance/submissions/route.ts", "app/api/vector-surveillance/submissions/[submissionId]/route.ts", "app/api/vector-surveillance/submissions/[submissionId]/image/route.ts"].map(file => execFileSync(process.execPath, ["-e", `process.stdout.write(require('fs').readFileSync(${JSON.stringify(path.join(cwd, "FILE"))}.replace('FILE',${JSON.stringify(file)}),'utf8'))`], { encoding: "utf8" })).join("\n");
   assert.match(sources, /vector-surveillance\/:path\*/);
   assert.match(sources, /requireSuperUser/);
   assert.match(sources, /No Community image submissions have been received yet/);
   assert.match(sources, /Datasets/);
   assert.match(sources, /Planned|future governed dataset-intake/);
   assert.match(sources, /X-Content-Type-Options/);
+  assert.match(sources, /requireSuperUserMutation/);
+  assert.match(sources, /delete_permanently/);
 });
 
 test("protected listing returns stored location and image retrieval requires a valid Super User session", async t => {

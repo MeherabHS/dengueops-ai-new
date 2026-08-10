@@ -227,10 +227,14 @@ Versioned integration endpoints:
 | `POST /api/community/v1/vector-submissions` | Vector-submit bearer | Raster evidence intake |
 | `GET /api/vector-surveillance/submissions` | Super User session | Protected submission listing |
 | `GET /api/vector-surveillance/submissions/:id/image` | Super User session | Protected image retrieval |
+| `PATCH /api/vector-surveillance/submissions/:id` | Super User session + same origin | Exclude evidence from analysis |
+| `DELETE /api/vector-surveillance/submissions/:id` | Super User session + same origin | Confirmed permanent deletion with tombstone |
 
 Vector image intake uses `multipart/form-data`. The image field is `image`; optional evidence fields are `latitude`, `longitude`, `locationAccuracyM`, `capturedAt`, `note`, and `clientSubmissionId`. Latitude and longitude must be supplied together as finite JSON-format decimal numbers within valid coordinate bounds. `locationAccuracyM`, when supplied, must be finite and nonnegative. `capturedAt`, when supplied, must be an ISO-8601 timestamp with a timezone.
 
 `clientSubmissionId` is a UUID generated once when the mobile app creates its local logical report. The app must persist it with the queued report and reuse it across timeout retries, background synchronization, and app restarts. Repeating the same evidence with that UUID returns the original receipt; reusing it for different evidence returns `409 idempotency_conflict`. It is temporarily optional for compatibility with clients deployed before this contract, but submissions without it are analytically marked `legacy_unverified` and are not retry-deduplicated.
+
+Super Users may exclude a submission from analytical eligibility while retaining its image and immutable intake metadata. Permanent deletion requires an explicit reason and confirmation, removes the active image and metadata, and retains only a minimal private tombstone. A later retry carrying the deleted `clientSubmissionId` receives `410 submission_deleted`; tombstones contain no coordinates, image, or original note.
 
 Runtime mutation routes require a valid Super User session and same-origin request unless an explicitly enabled, distinct trusted-service credential applies.
 
