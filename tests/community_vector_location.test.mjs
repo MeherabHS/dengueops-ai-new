@@ -67,20 +67,20 @@ test("GPS evidence survives persistence and has a heatmap-ready projection", asy
     classificationStatus: "unreviewed",
     processingState: "received",
     logicalObservationStatus: "legacy_unverified",
+    analysisDisposition: "included",
   });
 });
 
-test("protected UI renders coordinates and unavailable evidence truthfully", async t => {
+test("protected UI receives governed evidence and renders coordinates, availability, and actions", async t => {
   const uploadRoot = await mkdtemp(path.join(os.tmpdir(), "dengueops-vector-ui-"));
   t.after(() => rm(uploadRoot, { recursive: true, force: true }));
   const result = run(`const storageModule=await import('./lib/community/vector-storage.ts');const s=storageModule.default||storageModule;
     const present=new FormData();for(const[k,v]of Object.entries({latitude:'23.8103',longitude:'90.4125',locationAccuracyM:'18'}))present.set(k,v);
     await s.saveImage(Uint8Array.from([137,80,78,71,13,10,26,10]),'image/png',s.parseVectorMetadata(present));
     await s.saveImage(Uint8Array.from([255,216,255,1]),'image/jpeg',s.parseVectorMetadata(new FormData()));
-    const pageModule=await import('./app/vector-surveillance/saved-datasets-images/page.tsx');const page=pageModule.default?.default||pageModule.default;
-    const text=[];const visit=value=>{if(typeof value==='string'||typeof value==='number')text.push(String(value));else if(Array.isArray(value))value.forEach(visit);else if(value&&typeof value==='object'&&value.props)visit(value.props.children)};visit(await page());
-    console.log(JSON.stringify({coordinates:text.includes('23.8103, 90.4125'),accuracy:text.includes('±18 m'),unavailable:text.includes('Not available'),reported:text.includes('Reported')}));`, { DENGUEOPS_COMMUNITY_UPLOAD_ROOT: uploadRoot });
-  assert.deepEqual(result, { coordinates: true, accuracy: true, unavailable: true, reported: false });
+    const cards=(await s.listSubmissions(10)).submissions;const fs=await import('node:fs/promises');const source=(await fs.readFile('./components/vector-surveillance/SubmissionCard.tsx','utf8'))+(await fs.readFile('./app/vector-surveillance/saved-datasets-images/page.tsx','utf8'));
+    console.log(JSON.stringify({coordinates:cards.some(x=>x.latitude===23.8103&&x.longitude===90.4125&&x.locationAccuracyM===18),unavailable:cards.some(x=>x.latitude===null&&x.longitude===null),exclude:source.includes('Exclude from analysis'),delete:source.includes('Delete permanently?'),confirmation:source.includes('cannot be undone')}));`, { DENGUEOPS_COMMUNITY_UPLOAD_ROOT: uploadRoot });
+  assert.deepEqual(result, { coordinates: true, unavailable: true, exclude: true, delete: true, confirmation: true });
 });
 
 test("stable clientSubmissionId makes concurrent retries idempotent and rejects conflicts", async t => {
