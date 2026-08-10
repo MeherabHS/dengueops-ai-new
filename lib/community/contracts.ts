@@ -142,6 +142,7 @@ export interface CommunityCurrentV1 {
 export interface VectorSubmissionMetadataV1 {
   schemaVersion: "1.0";
   submissionId: string;
+  clientSubmissionId: string | null;
   receivedAt: string;
   capturedAt: string | null;
   contentType: "image/jpeg" | "image/png" | "image/webp";
@@ -153,6 +154,19 @@ export interface VectorSubmissionMetadataV1 {
   locationAccuracyM: number | null;
   note: string | null;
   status: "received";
+}
+
+export interface VectorAnalyticalSubmissionV1 {
+  submissionId: string;
+  clientSubmissionId: string | null;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  capturedAt: string | null;
+  receivedAt: string;
+  classificationStatus: "unreviewed";
+  processingState: "received";
+  logicalObservationStatus: "client_id_bound" | "legacy_unverified";
 }
 
 export interface VectorSubmissionReceiptV1 {

@@ -45,7 +45,7 @@ test("Community v1 current is no-store, scoped, ordered, sanitized, and truthful
   assert.equal(body.forecast.series.observed.every((p, i, a) => i === 0 || a[i - 1].period.localeCompare(p.period) <= 0), true);
   assert.equal(body.preparedness.facilities.every(row => row.liveAvailability === null), true);
   const serialized = JSON.stringify(body);
-  for (const forbidden of ["modelId", "assessmentId", "assignmentId", "policySha", "formulaExpression", "workspaceId", "technicalWinner", "activeModel", "authoritySnapshotSha256"]) assert.equal(serialized.includes(forbidden), false);
+  for (const forbidden of ["modelId", "assessmentId", "assignmentId", "policySha", "formulaExpression", "workspaceId", "technicalWinner", "activeModel", "authoritySnapshotSha256", "latitude", "longitude", "locationAccuracyM", "clientSubmissionId"]) assert.equal(serialized.includes(forbidden), false);
 });
 
 test("Community trend is server-derived from latest observed and point forecast", () => {
@@ -105,16 +105,17 @@ test("Super User vector surfaces and protected image route are guarded", async (
   assert.match(sources, /X-Content-Type-Options/);
 });
 
-test("protected listing and image retrieval require a valid Super User session", async t => {
+test("protected listing returns stored location and image retrieval requires a valid Super User session", async t => {
   const uploadRoot = await mkdtemp(path.join(os.tmpdir(), "dengueops-vector-protected-"));
   t.after(() => rm(uploadRoot, { recursive: true, force: true }));
-  const result = run(`const storage=await import('./lib/community/vector-storage.ts');const s=storage.default||storage;const receipt=await s.saveImage(Uint8Array.from([255,216,255,1]),'image/jpeg',{capturedAt:null,latitude:null,longitude:null,locationAccuracyM:null,note:null});
+  const result = run(`const storage=await import('./lib/community/vector-storage.ts');const s=storage.default||storage;const receipt=await s.saveImage(Uint8Array.from([255,216,255,1]),'image/jpeg',{capturedAt:'2026-08-10T02:03:00.000Z',latitude:23.8103,longitude:90.4125,locationAccuracyM:18,note:null});
     const listModule=await import('./app/api/vector-surveillance/submissions/route.ts');const list=listModule.default||listModule;const imageModule=await import('./app/api/vector-surveillance/submissions/[submissionId]/image/route.ts');const images=imageModule.default||imageModule;const sessions=await import('./lib/auth/session.ts');const auth=sessions.default||sessions;const token=await auth.createSessionToken('admin@rmcl');const cookie=auth.sessionCookie(token).split(';')[0];
     const unauth=await list.GET(new Request('http://local/api/vector-surveillance/submissions'));const listed=await list.GET(new Request('http://local/api/vector-surveillance/submissions',{headers:{cookie}}));const fetched=await images.GET(new Request('http://local/image',{headers:{cookie}}),{params:Promise.resolve({submissionId:receipt.submissionId})});const traversal=await images.GET(new Request('http://local/image',{headers:{cookie}}),{params:Promise.resolve({submissionId:'../../etc/passwd'})});
     console.log(JSON.stringify({unauth:unauth.status,listed:listed.status,listBody:await listed.json(),fetched:fetched.status,type:fetched.headers.get('content-type'),nosniff:fetched.headers.get('x-content-type-options'),traversal:traversal.status}));`, { DENGUEOPS_COMMUNITY_UPLOAD_ROOT: uploadRoot, DENGUEOPS_SESSION_SECRET: "focused-test-session-secret-at-least-32-bytes" });
   assert.equal(result.unauth, 401);
   assert.equal(result.listed, 200);
   assert.equal(result.listBody.submissions[0].submissionId.length, 36);
+  assert.deepEqual({latitude:result.listBody.submissions[0].latitude,longitude:result.listBody.submissions[0].longitude,accuracy:result.listBody.submissions[0].locationAccuracyM,capturedAt:result.listBody.submissions[0].capturedAt},{latitude:23.8103,longitude:90.4125,accuracy:18,capturedAt:'2026-08-10T02:03:00.000Z'});
   assert.equal(result.fetched, 200);
   assert.equal(result.type, "image/jpeg");
   assert.equal(result.nosniff, "nosniff");
