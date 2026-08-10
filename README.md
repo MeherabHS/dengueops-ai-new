@@ -228,6 +228,10 @@ Versioned integration endpoints:
 | `GET /api/vector-surveillance/submissions` | Super User session | Protected submission listing |
 | `GET /api/vector-surveillance/submissions/:id/image` | Super User session | Protected image retrieval |
 
+Vector image intake uses `multipart/form-data`. The image field is `image`; optional evidence fields are `latitude`, `longitude`, `locationAccuracyM`, `capturedAt`, `note`, and `clientSubmissionId`. Latitude and longitude must be supplied together as finite JSON-format decimal numbers within valid coordinate bounds. `locationAccuracyM`, when supplied, must be finite and nonnegative. `capturedAt`, when supplied, must be an ISO-8601 timestamp with a timezone.
+
+`clientSubmissionId` is a UUID generated once when the mobile app creates its local logical report. The app must persist it with the queued report and reuse it across timeout retries, background synchronization, and app restarts. Repeating the same evidence with that UUID returns the original receipt; reusing it for different evidence returns `409 idempotency_conflict`. It is temporarily optional for compatibility with clients deployed before this contract, but submissions without it are analytically marked `legacy_unverified` and are not retry-deduplicated.
+
 Runtime mutation routes require a valid Super User session and same-origin request unless an explicitly enabled, distinct trusted-service credential applies.
 
 ## Tests and release checks
